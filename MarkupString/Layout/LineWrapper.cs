@@ -63,9 +63,10 @@ internal static class LineWrapper
 				endsParagraph = false;
 			}
 
-			// A cluster wider than the column would otherwise take no cells and never advance.
-			// It overflows its line instead, which is what makes the walk terminate.
-			if (end <= position && position < text.Length)
+			// A cluster wider than the column takes no cells, so the walk would sit still. It
+			// overflows its line instead, which is what makes the walk terminate. An empty line
+			// between two hard breaks is not this case: there the break itself moves us on.
+			if (next >= 0 && next <= position && position < text.Length)
 			{
 				end = Graphemes.SnapEnd(text, position + 1);
 				next = end >= text.Length ? -1 : end;

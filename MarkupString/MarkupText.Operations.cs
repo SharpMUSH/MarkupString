@@ -93,6 +93,17 @@ public sealed partial class MarkupText
 	}
 
 	/// <summary>
+	/// Shapes this text and draws it as a column: every line exactly
+	/// <see cref="ColumnFormat.Width"/> display cells wide, filled and aligned.
+	/// </summary>
+	/// <remarks>
+	/// A line runs wider than the column only under <see cref="TruncationType.Overflow"/>, or
+	/// where a single grapheme cluster is wider than the column and had to go somewhere.
+	/// </remarks>
+	public MarkupText[] FormatColumn(ColumnFormat format) =>
+		ColumnRenderer.Render(Shape(format), format);
+
+	/// <summary>
 	/// Shapes this text into the lines of a column: tabs expanded, cut to the cell budget, then
 	/// wrapped with the indent applied and stopped at the line budget.
 	/// </summary>
