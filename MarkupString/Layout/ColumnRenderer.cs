@@ -24,9 +24,16 @@ internal static class ColumnRenderer
 	/// The column drawn with nothing in it, for a row where it has run out of lines. Penn's
 	/// filler fills an exhausted column, so this is the same drawing a blank line gets.
 	/// </summary>
-	internal static MarkupText Blank(ColumnFormat format)
+	internal static MarkupText Blank(ColumnFormat format) => Blank(format, format.Width);
+
+	/// <summary>
+	/// The same, at a width the format does not carry. A column that merged a neighbour's cells
+	/// is wider from the merge row on than its own <see cref="ColumnFormat.Width"/> says, and a
+	/// blank drawn at the narrower width would leave the row short.
+	/// </summary>
+	internal static MarkupText Blank(ColumnFormat format, int width)
 	{
-		var body = Blank(new TextLine(MarkupText.Empty, 0, Math.Max(0, format.Width), true), format);
+		var body = Blank(new TextLine(MarkupText.Empty, 0, Math.Max(0, width), true), format);
 		return format.Markup is null ? body : MarkupText.Wrap(format.Markup, body);
 	}
 

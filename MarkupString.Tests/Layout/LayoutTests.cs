@@ -167,6 +167,70 @@ public class LayoutTests
 		await Assert.That(rows[0]).IsEqualTo("aa bb cc    ");
 	}
 
+	// Every one of these is a row-width invariant, which the merge and shift paths broke while
+	// the example-based tests above still passed.
+	[Test]
+	public async Task MergedColumn_ThatRunsOutOfLines_StillFillsItsWidenedWidth()
+	{
+		var rows = TextLayout.Rows(
+		[
+			new LayoutColumn(MarkupText.Plain("aaaa bbbb"), new ColumnFormat { Width = 6, Wrap = WrapMode.Word }),
+			Empty("X", 6, WhenEmpty.GiveSpaceToLeft),
+			Column("1\n2\n3\n4\n5", 4, WrapMode.HardBreaks),
+		], Plain);
+
+		await Assert.That(rows.Length).IsEqualTo(5);
+		foreach (var row in rows) await Assert.That(row.DisplayWidth).IsEqualTo(16);
+	}
+
+	[Test]
+	public async Task MergeOntoAnIndentedNeighbour_LeavesTheRowWidthAlone()
+	{
+		// The neighbour already carries an indent, so it cannot also carry the merge's widening —
+		// a single Indent cannot express two different widths from two different lines. The merge
+		// is abandoned rather than half-applied, which would drop the cells entirely.
+		var rows = TextLayout.Rows(
+		[
+			new LayoutColumn(
+				MarkupText.Plain("aa bb cc dd"),
+				new ColumnFormat { Width = 6, Wrap = WrapMode.Word, Indent = new Indent(2) }),
+			Empty("X", 6, WhenEmpty.GiveSpaceToLeft),
+		], Plain);
+
+		foreach (var row in rows) await Assert.That(row.DisplayWidth).IsEqualTo(12);
+	}
+
+	[Test]
+	public async Task SuppressBlankLast_KeepsARowARepeatingColumnStillDrawsOn()
+	{
+		var rows = Rows(
+			new LayoutColumn(MarkupText.Plain("*"), new ColumnFormat { Width = 1, Repeat = true, SuppressBlankLast = true }),
+			new LayoutColumn(
+				MarkupText.Plain("a\nb\n"),
+				new ColumnFormat { Width = 1, Wrap = WrapMode.HardBreaks, SuppressBlankLast = true }));
+
+		await Assert.That(rows).IsEquivalentTo(new[] { "*a", "*b", "* " });
+	}
+
+	[Test]
+	public async Task EveryWhenEmpty_KeepsTheRowWidthConstant()
+	{
+		foreach (var whenEmpty in Enum.GetValues<WhenEmpty>())
+		{
+			var rows = TextLayout.Rows(
+			[
+				Column("aa bb cc dd ee", 6, WrapMode.Word),
+				new LayoutColumn(
+					MarkupText.Plain("X\nY"),
+					new ColumnFormat { Width = 6, Wrap = WrapMode.HardBreaks, WhenEmpty = whenEmpty }),
+				Column("1\n2\n3\n4", 4, WrapMode.HardBreaks),
+			], Plain);
+
+			foreach (var row in rows)
+				await Assert.That(row.DisplayWidth).IsEqualTo(16).Because($"WhenEmpty.{whenEmpty}");
+		}
+	}
+
 	[Test]
 	public async Task Render_JoinsRowsWithTheRowSeparator()
 	{

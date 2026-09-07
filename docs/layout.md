@@ -137,6 +137,13 @@ both behaviours are here and neither is the library's opinion:
   cells and goes on wrapping into the extra room.
 - `PullRightColumnLeft` / `PushLeftColumnRight` — RhostMUSH's shift. The neighbour's line is drawn
   at this column's position and its own position is left blank. The text moves; nothing widens.
+  The two slots trade widths along with the line, so a shift between columns of different widths
+  still leaves the row the width it was.
+
+A merge onto a column that already carries an `Indent` is abandoned rather than half-applied: one
+`Indent` cannot describe one width from one line and another from another, and going silent
+without widening anybody would drop the cells and leave the row short. Give the merge target no
+indent of its own if you need both.
 
 The rest maps straight across. PennMUSH's `x` is `Wrap = HardBreaks`; its `X` is that plus
 `MaxLines = 1`; its `$` is `NoFill`, its `#` is `NoSeparatorAfter`, its `.` is `Repeat`, and its

@@ -25,6 +25,8 @@ internal sealed class Plan
 	private readonly int[] _lentFrom;
 	/// <summary>Whether a lent column still occupies its cells, blank, or vacates them entirely.</summary>
 	private readonly bool[] _lentBlank;
+	/// <summary>The column a lent line was drawn at, whose width this one takes in exchange.</summary>
+	private readonly int[] _lentTo;
 	/// <summary>The row from which each column has nothing more to say.</summary>
 	private readonly int[] _exhausted;
 
@@ -38,6 +40,7 @@ internal sealed class Plan
 		int[] source,
 		int[] lentFrom,
 		bool[] lentBlank,
+		int[] lentTo,
 		int[] exhausted,
 		int rowCount)
 	{
@@ -48,6 +51,7 @@ internal sealed class Plan
 		_source = source;
 		_lentFrom = lentFrom;
 		_lentBlank = lentBlank;
+		_lentTo = lentTo;
 		_exhausted = exhausted;
 		RowCount = rowCount;
 	}
@@ -69,7 +73,9 @@ internal sealed class Plan
 		var lentFrom = Filled(count);
 		var source = new int[count];
 		var lentBlank = new bool[count];
+		var lentTo = new int[count];
 		Array.Fill(source, -1);
+		Array.Fill(lentTo, -1);
 
 		// Every widening has to be known before anything is drawn, so this pass only records.
 		for (var i = 0; i < count; i++)
@@ -84,11 +90,15 @@ internal sealed class Plan
 			switch (column.Format.WhenEmpty)
 			{
 				case WhenEmpty.GiveSpaceToLeft:
-					formats[neighbour] = Widen(formats[neighbour]!, column.Format.Width, from);
+					// A merge that cannot widen its neighbour is abandoned outright. Going silent
+					// anyway would hand the cells to nobody and leave every merged row short.
+					if (!TryWiden(formats[neighbour]!, column.Format.Width, from, out var toLeft2)) break;
+					formats[neighbour] = toLeft2;
 					silentFrom[i] = from;
 					break;
 				case WhenEmpty.GiveSpaceToRight:
-					formats[neighbour] = Widen(formats[neighbour]!, column.Format.Width, from);
+					if (!TryWiden(formats[neighbour]!, column.Format.Width, from, out var toRight)) break;
+					formats[neighbour] = toRight;
 					borrowFrom[i] = from;
 					source[i] = neighbour;
 					lentFrom[neighbour] = from;
@@ -99,6 +109,9 @@ internal sealed class Plan
 					source[i] = neighbour;
 					lentFrom[neighbour] = from;
 					lentBlank[neighbour] = true;
+					// The two slots trade places, widths included, so the row stays square when
+					// the columns are not the same width.
+					lentTo[neighbour] = i;
 					break;
 			}
 		}
@@ -118,7 +131,7 @@ internal sealed class Plan
 		}
 
 		return new Plan(
-			blocks, formats, silentFrom, borrowFrom, source, lentFrom, lentBlank, exhausted,
+			blocks, formats, silentFrom, borrowFrom, source, lentFrom, lentBlank, lentTo, exhausted,
 			driven > 0 ? driven : any);
 	}
 
@@ -129,16 +142,22 @@ internal sealed class Plan
 	internal MarkupText? LineOf(int index, LayoutColumn column, int row)
 	{
 		if (row >= _silentFrom[index]) return null;
-		if (row >= _lentFrom[index]) return _lentBlank[index] ? ColumnRenderer.Blank(column.Format) : null;
-		if (row >= _borrowFrom[index]) return Line(_source[index], row) ?? Blank(_source[index], column);
-		return Line(index, row) ?? ColumnRenderer.Blank(column.Format);
+		if (row >= _lentFrom[index])
+			return _lentBlank[index] ? Blank(index, row, _lentTo[index]) : null;
+		if (row >= _borrowFrom[index]) return Line(_source[index], row) ?? Blank(_source[index], row);
+		return Line(index, row) ?? Blank(index, row);
 	}
 
 	/// <summary>True when every column has run out of text by <paramref name="row"/>.</summary>
 	internal bool AllExhaustedAt(ReadOnlySpan<LayoutCell> cells, int row)
 	{
 		for (var i = 0; i < cells.Length; i++)
-			if (cells[i] is LayoutColumn && row < _exhausted[i]) return false;
+		{
+			if (cells[i] is not LayoutColumn column) continue;
+			// A repeating column cycles its lines for as long as the layout runs, so it is never
+			// out of text — its own height says nothing about whether this row is blank.
+			if (column.Format.Repeat ? _exhausted[i] > 0 : row < _exhausted[i]) return false;
+		}
 		return true;
 	}
 
@@ -152,9 +171,26 @@ internal sealed class Plan
 		return row < block.Length ? block[row] : null;
 	}
 
-	/// <summary>A blank of the borrowed column's width, so a shifted row keeps the layout square.</summary>
-	private MarkupText Blank(int source, LayoutColumn fallback) =>
-		ColumnRenderer.Blank(source >= 0 && _formats[source] is { } format ? format : fallback.Format);
+	/// <summary>
+	/// A blank of the width column <paramref name="index"/> occupies on <paramref name="row"/>,
+	/// so a row below an exhausted or shifted column stays as wide as the ones above it.
+	/// </summary>
+	private MarkupText Blank(int index, int row, int widthOf = -1)
+	{
+		if (index < 0) return MarkupText.Empty;
+		var format = _formats[index]!;
+		// A shifted column keeps its own fill and markup but takes the width of the slot its line
+		// went to, so the pair of them still covers the cells they covered before.
+		var measure = widthOf >= 0 && _formats[widthOf] is { } other ? other : format;
+		return ColumnRenderer.Blank(format, WidthAt(measure, row));
+	}
+
+	/// <summary>
+	/// The cells a column occupies on a row. A merged column is wider from the merge row on than
+	/// its own width says, the extra living in the indent the merge gave it.
+	/// </summary>
+	private static int WidthAt(ColumnFormat format, int row) =>
+		row >= format.Indent.FromLine ? format.Width + Math.Max(0, format.Indent.Widen) : format.Width;
 
 	private static int[] Filled(int count)
 	{
@@ -164,13 +200,21 @@ internal sealed class Plan
 	}
 
 	/// <summary>
-	/// The neighbour widened by <paramref name="cells"/> from <paramref name="fromLine"/>. A
-	/// column that already carries an indent keeps it: composing the two has no obvious meaning.
+	/// The neighbour widened by <paramref name="cells"/> from <paramref name="fromLine"/>, or
+	/// false when it cannot be: a column that already carries an indent has one width from one
+	/// line, and a single <see cref="Indent"/> cannot also express a different width from a
+	/// different line. The caller abandons the merge rather than applying half of it.
 	/// </summary>
-	private static ColumnFormat Widen(ColumnFormat format, int cells, int fromLine) =>
-		format.Indent.Amount > 0 || format.Indent.Widen > 0
-			? format
-			: format with { Indent = new Indent(0, fromLine, cells) };
+	private static bool TryWiden(ColumnFormat format, int cells, int fromLine, out ColumnFormat widened)
+	{
+		if (format.Indent.Amount > 0 || format.Indent.Widen > 0)
+		{
+			widened = format;
+			return false;
+		}
+		widened = format with { Indent = new Indent(0, fromLine, cells) };
+		return true;
+	}
 
 	/// <summary>The nearest column on the given side, stepping over separators.</summary>
 	private static int Neighbour(ReadOnlySpan<LayoutCell> cells, int index, bool toLeft)
