@@ -1,3 +1,4 @@
+using TUnit.Assertions.Enums;
 using MarkupString.Layout;
 
 namespace MarkupString.Tests.Layout;
@@ -20,7 +21,7 @@ public class LayoutTests
 			new LayoutSeparator(MarkupText.Plain("|")),
 			Column("x y z", 3, WrapMode.Word));
 
-		await Assert.That(rows).IsEquivalentTo(new[] { "a  |x y", "   |z  " });
+		await Assert.That(rows).IsEquivalentTo(new[] { "a  |x y", "   |z  " }, CollectionOrdering.Matching);
 	}
 
 	// PennMUSH inserts its separator on every row.
@@ -44,7 +45,7 @@ public class LayoutTests
 			new LayoutSeparator(MarkupText.Plain("|"), SeparatorRows.FirstRowOnly),
 			Column("x y z", 3, WrapMode.Word));
 
-		await Assert.That(rows).IsEquivalentTo(new[] { "a  |x y", "    z  " });
+		await Assert.That(rows).IsEquivalentTo(new[] { "a  |x y", "    z  " }, CollectionOrdering.Matching);
 	}
 
 	// PennMUSH's '.' option.
@@ -55,7 +56,7 @@ public class LayoutTests
 			new LayoutColumn(MarkupText.Plain("*"), new ColumnFormat { Width = 1, Repeat = true }),
 			Column("x y z", 1, WrapMode.Word));
 
-		await Assert.That(rows).IsEquivalentTo(new[] { "*x", "*y", "*z" });
+		await Assert.That(rows).IsEquivalentTo(new[] { "*x", "*y", "*z" }, CollectionOrdering.Matching);
 	}
 
 	[Test]
@@ -65,7 +66,7 @@ public class LayoutTests
 			new LayoutColumn(MarkupText.Plain("a\nb\nc"), new ColumnFormat { Width = 1, Wrap = WrapMode.HardBreaks, Repeat = true }),
 			Column("x", 1));
 
-		await Assert.That(rows).IsEquivalentTo(new[] { "ax" });
+		await Assert.That(rows).IsEquivalentTo(new[] { "ax" }, CollectionOrdering.Matching);
 	}
 
 	[Test]
@@ -75,7 +76,7 @@ public class LayoutTests
 			new LayoutColumn(MarkupText.Plain("a"), new ColumnFormat { Width = 3, Fill = MarkupText.Plain(".") }),
 			Column("x\ny", 1, WrapMode.HardBreaks));
 
-		await Assert.That(rows).IsEquivalentTo(new[] { "a..x", "...y" });
+		await Assert.That(rows).IsEquivalentTo(new[] { "a..x", "...y" }, CollectionOrdering.Matching);
 	}
 
 	private static LayoutColumn Empty(string text, int width, WhenEmpty whenEmpty) =>
@@ -154,7 +155,7 @@ public class LayoutTests
 	{
 		var rows = Rows(Empty("a", 3, WhenEmpty.GiveSpaceToLeft));
 
-		await Assert.That(rows).IsEquivalentTo(new[] { "a  " });
+		await Assert.That(rows).IsEquivalentTo(new[] { "a  " }, CollectionOrdering.Matching);
 	}
 
 	[Test]
@@ -209,7 +210,7 @@ public class LayoutTests
 				MarkupText.Plain("a\nb\n"),
 				new ColumnFormat { Width = 1, Wrap = WrapMode.HardBreaks, SuppressBlankLast = true }));
 
-		await Assert.That(rows).IsEquivalentTo(new[] { "*a", "*b", "* " });
+		await Assert.That(rows).IsEquivalentTo(new[] { "*a", "*b", "* " }, CollectionOrdering.Matching);
 	}
 
 	[Test]
@@ -229,6 +230,71 @@ public class LayoutTests
 			foreach (var row in rows)
 				await Assert.That(row.DisplayWidth).IsEqualTo(16).Because($"WhenEmpty.{whenEmpty}");
 		}
+	}
+
+	[Test]
+	public async Task SpaceOnlyLine_UnderFullJustification_StillFillsTheColumn()
+	{
+		// A line of nothing but spaces has no words, so there is no gap to widen. It must still
+		// occupy its column rather than collapsing to nothing.
+		var format = new ColumnFormat { Width = 6, Wrap = WrapMode.HardBreaks, Alignment = Alignment.Full };
+
+		var lines = MarkupText.Plain("a\n   \nb").FormatColumn(format);
+
+		foreach (var line in lines) await Assert.That(line.DisplayWidth).IsEqualTo(6);
+	}
+
+	[Test]
+	public async Task ZeroWidthColumn_WithAnIndent_NeverStartsBeforeTheColumn()
+	{
+		var format = new ColumnFormat { Width = 0, Wrap = WrapMode.Word, Indent = new Indent(2) };
+
+		foreach (var line in MarkupText.Plain("aa bb cc").Shape(format))
+			await Assert.That(line.Start).IsGreaterThanOrEqualTo(0);
+
+		foreach (var line in MarkupText.Plain("aa bb cc").FormatColumn(format))
+			await Assert.That(line.DisplayWidth).IsEqualTo(0);
+	}
+
+	[Test]
+	public async Task ChainedMerges_KeepTheRowWidthConstant()
+	{
+		// The middle column receives a merge and would also give one away. It cannot pass on
+		// cells it does not own at its base width, so the merge out of it is abandoned and the
+		// merge into it wins.
+		var rows = TextLayout.Rows(
+		[
+			new LayoutColumn(MarkupText.Plain("aaa bbb ccc ddd eee"), new ColumnFormat { Width = 6, Wrap = WrapMode.Word }),
+			new LayoutColumn(
+				MarkupText.Plain("xx yy zz ww vv"),
+				new ColumnFormat { Width = 6, Wrap = WrapMode.Word, WhenEmpty = WhenEmpty.GiveSpaceToLeft }),
+			new LayoutColumn(
+				MarkupText.Plain("Q"),
+				new ColumnFormat { Width = 6, Wrap = WrapMode.HardBreaks, WhenEmpty = WhenEmpty.GiveSpaceToLeft }),
+		], Plain);
+
+		await Assert.That(rows.Length).IsGreaterThan(3);
+		foreach (var row in rows) await Assert.That(row.DisplayWidth).IsEqualTo(18);
+	}
+
+	[Test]
+	public async Task WhenEmpty_WithSuppressBlankLast_KeepsTheRowWidthConstant()
+	{
+		var rows = TextLayout.Rows(
+		[
+			new LayoutColumn(
+				MarkupText.Plain("aa\n"),
+				new ColumnFormat { Width = 4, Wrap = WrapMode.HardBreaks, SuppressBlankLast = true }),
+			new LayoutColumn(
+				MarkupText.Plain("X\n"),
+				new ColumnFormat
+				{
+					Width = 4, Wrap = WrapMode.HardBreaks, SuppressBlankLast = true,
+					WhenEmpty = WhenEmpty.GiveSpaceToLeft,
+				}),
+		], Plain);
+
+		foreach (var row in rows) await Assert.That(row.DisplayWidth).IsEqualTo(8);
 	}
 
 	[Test]
@@ -260,7 +326,7 @@ public class LayoutTests
 			new LayoutColumn(MarkupText.Plain("a\n"), format),
 			new LayoutColumn(MarkupText.Plain("b\n"), format));
 
-		await Assert.That(rows).IsEquivalentTo(new[] { "a  b  " });
+		await Assert.That(rows).IsEquivalentTo(new[] { "a  b  " }, CollectionOrdering.Matching);
 	}
 
 	[Test]
@@ -285,7 +351,7 @@ public class LayoutTests
 			new LayoutColumn(MarkupText.Plain("a\n"), format),
 			new LayoutColumn(MarkupText.Plain("b\nc"), format));
 
-		await Assert.That(rows).IsEquivalentTo(new[] { "a  b  ", "   c  " });
+		await Assert.That(rows).IsEquivalentTo(new[] { "a  b  ", "   c  " }, CollectionOrdering.Matching);
 	}
 
 	// PennMUSH's hash option.
@@ -297,7 +363,7 @@ public class LayoutTests
 			new LayoutSeparator(MarkupText.Plain("|")),
 			Column("b", 1));
 
-		await Assert.That(rows).IsEquivalentTo(new[] { "ab" });
+		await Assert.That(rows).IsEquivalentTo(new[] { "ab" }, CollectionOrdering.Matching);
 	}
 
 	[Test]

@@ -140,10 +140,15 @@ both behaviours are here and neither is the library's opinion:
   The two slots trade widths along with the line, so a shift between columns of different widths
   still leaves the row the width it was.
 
-A merge onto a column that already carries an `Indent` is abandoned rather than half-applied: one
-`Indent` cannot describe one width from one line and another from another, and going silent
-without widening anybody would drop the cells and leave the row short. Give the merge target no
-indent of its own if you need both.
+A merge is abandoned rather than half-applied in two cases, both because applying half of one
+would drop cells and leave the row short:
+
+- the target already carries an `Indent` — one `Indent` cannot describe one width from one line
+  and another from another;
+- the giving column is itself a merge target — from the merge row on it is wider than its own
+  `Width` says, so it cannot correctly pass "its" cells on. The merge *into* it wins.
+
+Give the merge target no indent of its own if you need both, and keep merges to one link.
 
 The rest maps straight across. PennMUSH's `x` is `Wrap = HardBreaks`; its `X` is that plus
 `MaxLines = 1`; its `$` is `NoFill`, its `#` is `NoSeparatorAfter`, its `.` is `Repeat`, and its

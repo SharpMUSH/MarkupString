@@ -91,7 +91,7 @@ internal static class LineWrapper
 		// An indent that leaves no room for text would stall the walk. A zero amount with a widen
 		// is a pure widening, which is how a merged column grows from the row it merges on.
 		return (
-			indent.Amount <= 0 ? 0 : Math.Min(indent.Amount, baseWidth - 1),
+			indent.Amount <= 0 ? 0 : Math.Clamp(indent.Amount, 0, Math.Max(0, baseWidth - 1)),
 			baseWidth + Math.Max(0, indent.Widen));
 	}
 
