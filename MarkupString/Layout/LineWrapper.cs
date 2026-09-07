@@ -87,9 +87,12 @@ internal static class LineWrapper
 	private static (int Indent, int Width) Geometry(ColumnFormat format, int baseWidth, int index)
 	{
 		var indent = format.Indent;
-		if (indent.Amount <= 0 || index < indent.FromLine) return (0, baseWidth);
-		// An indent that leaves no room for text would stall the walk.
-		return (Math.Min(indent.Amount, baseWidth - 1), baseWidth + Math.Max(0, indent.Widen));
+		if (index < indent.FromLine || (indent.Amount <= 0 && indent.Widen <= 0)) return (0, baseWidth);
+		// An indent that leaves no room for text would stall the walk. A zero amount with a widen
+		// is a pure widening, which is how a merged column grows from the row it merges on.
+		return (
+			indent.Amount <= 0 ? 0 : Math.Min(indent.Amount, baseWidth - 1),
+			baseWidth + Math.Max(0, indent.Widen));
 	}
 
 	/// <summary>
