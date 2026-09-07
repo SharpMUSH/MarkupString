@@ -228,6 +228,36 @@ public class MarkupTextOperationsTests
 			.ToPlainText()).IsEqualTo("a   b   c");
 
 	[Test]
+	public async Task Pad_MultiCharacterFill_ContinuesThePatternPastTheText()
+	{
+		// RhostMUSH's $-40:0123456789:s. Before 2.0 the fill restarted at the text's edge and
+		// this read "...filler0123456789...".
+		var padded = MarkupText.Plain("ten char filler")
+			.Pad(MarkupText.Plain("0123456789"), 40, PadType.Right, TruncationType.Truncate);
+
+		await Assert.That(padded.Text).IsEqualTo("ten char filler5678901234567890123456789");
+	}
+
+	[Test]
+	public async Task Pad_SingleCharacterFill_IsUnchangedBy2Point0()
+	{
+		var padded = MarkupText.Plain("Hi").Pad(MarkupText.Plain("-"), 6, PadType.Right, TruncationType.Truncate);
+
+		await Assert.That(padded.Text).IsEqualTo("Hi----");
+	}
+
+	[Test]
+	public async Task Pad_Full_SingleWord_NowReachesTheWidth()
+	{
+		// 1.x returned the text untouched, having no gap to widen. A padding operation that
+		// hands back something narrower than the width it was given is a trap for a caller
+		// laying out columns, so it now fills instead.
+		var padded = MarkupText.Plain("word").Pad(MarkupText.Space, 10, PadType.Full, TruncationType.Truncate);
+
+		await Assert.That(padded.DisplayWidth).IsEqualTo(10);
+	}
+
+	[Test]
 	public async Task Pad_Overflow_LeavesLongerTextUntouched()
 		=> await Assert.That(MarkupText.Plain("abcdef").Pad(MarkupText.Space, 3, PadType.Right, TruncationType.Overflow)
 			.ToPlainText()).IsEqualTo("abcdef");

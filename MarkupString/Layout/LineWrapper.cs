@@ -20,7 +20,7 @@ internal static class LineWrapper
 	internal static List<LineSpan> Break(ReadOnlySpan<char> text, ColumnFormat format)
 	{
 		var lines = new List<LineSpan>();
-		var baseWidth = Math.Max(1, format.Width);
+		var baseWidth = Math.Max(0, format.Width);
 
 		if (format.Wrap == WrapMode.None)
 		{
