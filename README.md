@@ -60,6 +60,19 @@ var prompt = MarkupText.Wrap(
 Console.WriteLine(prompt.Render(MarkupFormat.Ansi));
 ```
 
+Columns, wrapping and justification come from the same value:
+
+```csharp
+var body = new ColumnFormat { Width = 24, Wrap = WrapMode.Word, Alignment = Alignment.Paragraph };
+
+TextLayout.Rows(
+[
+  new LayoutColumn(left, body),
+  new LayoutSeparator(MarkupText.Plain("  |  ")),
+  new LayoutColumn(right, body),
+], new LayoutOptions());
+```
+
 `ToString()` is always the plain text — it is never format-specific. Rendering is explicit:
 `Render(MarkupFormat.Ansi)`, `RenderTo(format, bufferWriter)` when you have somewhere to write.
 

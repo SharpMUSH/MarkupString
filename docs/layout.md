@@ -19,6 +19,89 @@ text.WrapLines(40);                  // break at the last space that fits
 text.WrapLines(40, WrapMode.Cell);   // break at the width, mid-word
 ```
 
+## Recipes
+
+Every output below is what the code actually prints.
+
+**Wrap a paragraph.**
+
+```csharp
+MarkupText.Plain("The quick brown fox jumps over the lazy dog").WrapLines(20);
+```
+
+```
+The quick brown fox
+jumps over the lazy
+dog
+```
+
+**A centred heading in a rule.** The fill is any `MarkupText`, so it can carry its own colour.
+
+```csharp
+var heading = new ColumnFormat { Width = 34, Alignment = Alignment.Center, Fill = MarkupText.Plain("-") };
+
+MarkupText.Plain(" Inventory ").FormatColumn(heading);
+```
+
+```
+----------- Inventory ------------
+```
+
+**Leader dots between a label and a value** — two columns, the first filled with dots, the second
+right-aligned.
+
+```csharp
+var name  = new ColumnFormat { Width = 24, Fill = MarkupText.Plain(".") };
+var value = new ColumnFormat { Width = 10, Alignment = Alignment.Right };
+
+TextLayout.Rows(
+[
+    new LayoutColumn(MarkupText.Plain("Brass lantern"), name),
+    new LayoutColumn(MarkupText.Plain("1"), value),
+], new LayoutOptions());
+```
+
+```
+Brass lantern...........         1
+```
+
+**A two-column page.** `Alignment.Paragraph` justifies every line except the one that ends a
+paragraph, so the last line of each column keeps its natural spacing.
+
+```csharp
+var body = new ColumnFormat { Width = 24, Wrap = WrapMode.Word, Alignment = Alignment.Paragraph };
+
+TextLayout.Rows(
+[
+    new LayoutColumn(left, body),
+    new LayoutSeparator(MarkupText.Plain("  |  ")),
+    new LayoutColumn(right, body),
+], new LayoutOptions());
+```
+
+```
+The  hall  is  long  and  |  A  fire burns at the far
+low, its ceiling lost in  |  end.
+smoke.                    |
+```
+
+**A hanging indent**, for a command list or a glossary.
+
+```csharp
+var hanging = new ColumnFormat { Width = 34, Wrap = WrapMode.Word, Indent = new Indent(4) };
+
+MarkupText.Plain("look <thing> -- examine something in the room more closely").FormatColumn(hanging);
+```
+
+```
+look <thing> -- examine something
+    in the room more closely
+```
+
+Note what none of these had to say: nothing measures `string.Length`, and nothing special-cases
+a wide character or a combining mark. Swap any of the text above for CJK or emoji and the columns
+still line up, because every width here is a display cell.
+
 ## Three layers
 
 A column is shaped, then drawn, then assembled with its neighbours. One record,
