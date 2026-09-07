@@ -94,7 +94,9 @@ internal static class ColumnRenderer
 	{
 		if (alignment == Alignment.Paragraph) alignment = line.EndsParagraph ? Alignment.Left : Alignment.Full;
 		if (alignment != Alignment.Full) return alignment;
-		return text.Text.Contains(' ') && text.DisplayWidth < line.Width - line.Start
+		// Two words are needed before there is a gap to widen. A line of nothing but spaces has
+		// none, and would otherwise render as no cells at all.
+		return Justified.WordCount(text) > 1 && text.DisplayWidth < line.Width - line.Start
 			? Alignment.Full
 			: Alignment.Left;
 	}

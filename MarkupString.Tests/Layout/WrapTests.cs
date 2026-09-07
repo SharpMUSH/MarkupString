@@ -1,3 +1,4 @@
+using TUnit.Assertions.Enums;
 using MarkupString.Layout;
 
 namespace MarkupString.Tests.Layout;
@@ -17,7 +18,7 @@ public class WrapTests
 	{
 		var lines = MarkupText.Plain("this is wrapping the text").WrapLines(10, WrapMode.Word);
 
-		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "this is", "wrapping", "the text" });
+		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "this is", "wrapping", "the text" }, CollectionOrdering.Matching);
 	}
 
 	// RhostMUSH's published output for $|10s on the same string: it wraps mid-word.
@@ -26,7 +27,7 @@ public class WrapTests
 	{
 		var lines = MarkupText.Plain("this is wrapping the text").WrapLines(10, WrapMode.Cell);
 
-		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "this is wr", "apping the", " text" });
+		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "this is wr", "apping the", " text" }, CollectionOrdering.Matching);
 	}
 
 	[Test]
@@ -34,7 +35,7 @@ public class WrapTests
 	{
 		var lines = MarkupText.Plain("ab abcdefghijkl cd").WrapLines(6, WrapMode.Word);
 
-		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "ab", "abcdef", "ghijkl", "cd" });
+		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "ab", "abcdef", "ghijkl", "cd" }, CollectionOrdering.Matching);
 	}
 
 	[Test]
@@ -42,7 +43,7 @@ public class WrapTests
 	{
 		var lines = MarkupText.Plain("日本語").WrapLines(1, WrapMode.Cell);
 
-		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "日", "本", "語" });
+		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "日", "本", "語" }, CollectionOrdering.Matching);
 	}
 
 	[Test]
@@ -62,7 +63,7 @@ public class WrapTests
 	{
 		var lines = MarkupText.Plain("aaaa\r\nbbbb\ncc").WrapLines(80, WrapMode.HardBreaks);
 
-		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "aaaa", "bbbb", "cc" });
+		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "aaaa", "bbbb", "cc" }, CollectionOrdering.Matching);
 	}
 
 	[Test]
@@ -70,7 +71,7 @@ public class WrapTests
 	{
 		var lines = MarkupText.Plain("aaaaaaaaaa\nbb").WrapLines(3, WrapMode.HardBreaks);
 
-		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "aaaaaaaaaa", "bb" });
+		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "aaaaaaaaaa", "bb" }, CollectionOrdering.Matching);
 	}
 
 	[Test]
@@ -78,7 +79,7 @@ public class WrapTests
 	{
 		var lines = MarkupText.Plain("a\n").WrapLines(10, WrapMode.HardBreaks);
 
-		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "a", "" });
+		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "a", "" }, CollectionOrdering.Matching);
 	}
 
 	[Test]
@@ -88,7 +89,7 @@ public class WrapTests
 		// at or past the width leaked into the line instead of ending it.
 		var lines = MarkupText.Plain("aaaa\nbbbb").WrapLines(4, WrapMode.Word);
 
-		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "aaaa", "bbbb" });
+		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "aaaa", "bbbb" }, CollectionOrdering.Matching);
 	}
 
 	[Test]
@@ -96,7 +97,7 @@ public class WrapTests
 	{
 		var lines = Shaped("aaaa\nbbbb", new ColumnFormat { Width = 2, Wrap = WrapMode.None });
 
-		await Assert.That(lines).IsEquivalentTo(new[] { "aaaa\nbbbb" });
+		await Assert.That(lines).IsEquivalentTo(new[] { "aaaa\nbbbb" }, CollectionOrdering.Matching);
 	}
 
 	// PennMUSH cuts at the break space; the spaces before it stay on the line.
@@ -105,7 +106,7 @@ public class WrapTests
 	{
 		var lines = Shaped("ab   cd", new ColumnFormat { Width = 4, Wrap = WrapMode.Word });
 
-		await Assert.That(lines).IsEquivalentTo(new[] { "ab  ", "cd" });
+		await Assert.That(lines).IsEquivalentTo(new[] { "ab  ", "cd" }, CollectionOrdering.Matching);
 	}
 
 	// RhostMUSH breaks one past the space, so the line can run a cell wide.
@@ -116,7 +117,7 @@ public class WrapTests
 
 		var lines = Shaped("ab   cd", format);
 
-		await Assert.That(lines).IsEquivalentTo(new[] { "ab   ", "cd" });
+		await Assert.That(lines).IsEquivalentTo(new[] { "ab   ", "cd" }, CollectionOrdering.Matching);
 		await Assert.That(MarkupText.Plain(lines[0]).DisplayWidth).IsEqualTo(5);
 	}
 
@@ -127,7 +128,7 @@ public class WrapTests
 
 		var lines = text.WrapLines(5, WrapMode.Word);
 
-		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "hello", "world" });
+		await Assert.That(Texts(lines)).IsEquivalentTo(new[] { "hello", "world" }, CollectionOrdering.Matching);
 		await Assert.That(lines[1].Runs.Length).IsEqualTo(1);
 		await Assert.That(lines[1].Runs[0].Markups[0]).IsEqualTo(new Tag("red"));
 	}
@@ -138,7 +139,7 @@ public class WrapTests
 
 	[Test]
 	public async Task WrapLines_NonPositiveWidth_YieldsTheTextUnbroken()
-		=> await Assert.That(Texts(MarkupText.Plain("a b").WrapLines(0))).IsEquivalentTo(new[] { "a b" });
+		=> await Assert.That(Texts(MarkupText.Plain("a b").WrapLines(0))).IsEquivalentTo(new[] { "a b" }, CollectionOrdering.Matching);
 
 	[Test]
 	public async Task Shape_EmptyText_YieldsOneEmptyLine()

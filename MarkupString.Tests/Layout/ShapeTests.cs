@@ -1,3 +1,4 @@
+using TUnit.Assertions.Enums;
 using System.Collections.Immutable;
 using MarkupString.Layout;
 
@@ -18,8 +19,8 @@ public class ShapeTests
 		var lines = Shape("this is a test with wrapping some text", Wrapping with { Indent = new Indent(5) });
 
 		await Assert.That(lines.Select(l => l.Text.Text).ToArray())
-			.IsEquivalentTo(new[] { "this is a test with", "wrapping some", "text" });
-		await Assert.That(lines.Select(l => l.Start).ToArray()).IsEquivalentTo(new[] { 0, 5, 5 });
+			.IsEquivalentTo(new[] { "this is a test with", "wrapping some", "text" }, CollectionOrdering.Matching);
+		await Assert.That(lines.Select(l => l.Start).ToArray()).IsEquivalentTo(new[] { 0, 5, 5 }, CollectionOrdering.Matching);
 	}
 
 	[Test]
@@ -69,7 +70,7 @@ public class ShapeTests
 	{
 		var lines = Shape("aaa bbb ccc ddd", new ColumnFormat { Width = 10, Wrap = WrapMode.Word, MaxCells = 5 });
 
-		await Assert.That(lines.Select(l => l.Text.Text).ToArray()).IsEquivalentTo(new[] { "aaa b" });
+		await Assert.That(lines.Select(l => l.Text.Text).ToArray()).IsEquivalentTo(new[] { "aaa b" }, CollectionOrdering.Matching);
 	}
 
 	[Test]
@@ -77,7 +78,7 @@ public class ShapeTests
 	{
 		var lines = Shape("a\tb", new ColumnFormat { Width = 3, Wrap = WrapMode.Cell, TabWidth = 4 });
 
-		await Assert.That(lines.Select(l => l.Text.Text).ToArray()).IsEquivalentTo(new[] { "a  ", "  b" });
+		await Assert.That(lines.Select(l => l.Text.Text).ToArray()).IsEquivalentTo(new[] { "a  ", "  b" }, CollectionOrdering.Matching);
 	}
 
 	[Test]

@@ -34,6 +34,24 @@ internal static class Justified
 		return MarkupText.Concat(parts.ToArray().AsSpan());
 	}
 
+	/// <summary>
+	/// How many words <paramref name="text"/> has. Justification needs two before it has a gap to
+	/// widen, and a line of nothing but spaces has none at all.
+	/// </summary>
+	internal static int WordCount(MarkupText text)
+	{
+		var words = 0;
+		var position = 0;
+		while (position < text.Length)
+		{
+			while (position < text.Length && text.Text[position] == ' ') position++;
+			if (position >= text.Length) break;
+			words++;
+			while (position < text.Length && text.Text[position] != ' ') position++;
+		}
+		return words;
+	}
+
 	/// <summary>The maximal runs of non-space in <paramref name="text"/>.</summary>
 	private static List<MarkupText> Words(MarkupText text)
 	{

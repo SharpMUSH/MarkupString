@@ -68,6 +68,20 @@ internal sealed class Plan
 				exhausted[i] = Exhausted(column);
 			}
 
+		// A column that receives a merge is wider from the merge row on than its Width says, so it
+		// cannot correctly pass "its" cells on to a further neighbour — it would hand over the base
+		// width and the chain would lose the difference. Merges into such a column win; the merge
+		// out of it is abandoned. Deciding it from the intended targets, before anything is
+		// applied, keeps the outcome independent of the order these are walked in.
+		var receivesMerge = new bool[count];
+		for (var i = 0; i < count; i++)
+		{
+			if (cells[i] is not LayoutColumn giver) continue;
+			if (giver.Format.WhenEmpty is not (WhenEmpty.GiveSpaceToLeft or WhenEmpty.GiveSpaceToRight)) continue;
+			var target = Neighbour(cells, i, giver.Format.WhenEmpty == WhenEmpty.GiveSpaceToLeft);
+			if (target >= 0) receivesMerge[target] = true;
+		}
+
 		var silentFrom = Filled(count);
 		var borrowFrom = Filled(count);
 		var lentFrom = Filled(count);
@@ -87,6 +101,9 @@ internal sealed class Plan
 			if (neighbour < 0) continue;
 
 			var from = exhausted[i];
+			var merging = column.Format.WhenEmpty is WhenEmpty.GiveSpaceToLeft or WhenEmpty.GiveSpaceToRight;
+			if (merging && receivesMerge[i]) continue;
+
 			switch (column.Format.WhenEmpty)
 			{
 				case WhenEmpty.GiveSpaceToLeft:
@@ -119,7 +136,12 @@ internal sealed class Plan
 		var blocks = new MarkupText[]?[count];
 		for (var i = 0; i < count; i++)
 			if (cells[i] is LayoutColumn column)
+			{
 				blocks[i] = column.Content.FormatColumn(formats[i]!);
+				// Re-measured against the format actually drawn: a widened column fits more text
+				// per line and so may run out earlier than its own format suggested.
+				exhausted[i] = Exhausted(column.Content, formats[i]!);
+			}
 
 		var driven = 0;
 		var any = 0;
@@ -230,9 +252,11 @@ internal sealed class Plan
 	/// that ends its block. A blank line in the middle does not count, because the column has not
 	/// run out — it is merely quiet for a line.
 	/// </summary>
-	private static int Exhausted(LayoutColumn column)
+	private static int Exhausted(LayoutColumn column) => Exhausted(column.Content, column.Format);
+
+	private static int Exhausted(MarkupText content, ColumnFormat format)
 	{
-		var lines = column.Content.Shape(column.Format);
+		var lines = content.Shape(format);
 		var last = lines.Length;
 		while (last > 0 && lines[last - 1].Text.Length == 0) last--;
 		return last;

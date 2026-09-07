@@ -1,3 +1,4 @@
+using TUnit.Assertions.Enums;
 using MarkupString.Layout;
 
 namespace MarkupString.Tests.Layout;
@@ -26,7 +27,7 @@ public class RegressionTests
 		// One cell more and the text comes through intact.
 		var wider = MarkupText.Plain("日本語").FormatColumn(format with { Width = 2 });
 
-		await Assert.That(wider.Select(l => l.Text).ToArray()).IsEquivalentTo(new[] { "日", "本", "語" });
+		await Assert.That(wider.Select(l => l.Text).ToArray()).IsEquivalentTo(new[] { "日", "本", "語" }, CollectionOrdering.Matching);
 	}
 
 	[Test]
