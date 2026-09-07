@@ -12,6 +12,7 @@
          each time one goes out; drop it for a release that removes public API on purpose, and put
          it back straight after. -->
     <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageValidationBaselineVersion>1.1.0</PackageValidationBaselineVersion>
     <Description>Raw HTML tag markup for MarkupString — an MXP &lt;send&gt;, an anchor, a span — rendered as itself in the HTML, Pueblo and MXP formats, folded into terminal styling elsewhere, with the stylesheet for the ms-* classes the emitters write.</Description>
   </PropertyGroup>
 
