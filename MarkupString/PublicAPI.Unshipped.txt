@@ -1,1 +1,116 @@
 #nullable enable
+MarkupString.Layout.Alignment
+MarkupString.Layout.Alignment.Center = 2 -> MarkupString.Layout.Alignment
+MarkupString.Layout.Alignment.Full = 3 -> MarkupString.Layout.Alignment
+MarkupString.Layout.Alignment.Left = 0 -> MarkupString.Layout.Alignment
+MarkupString.Layout.Alignment.Paragraph = 4 -> MarkupString.Layout.Alignment
+MarkupString.Layout.Alignment.Right = 1 -> MarkupString.Layout.Alignment
+MarkupString.Layout.BlankLineFill
+MarkupString.Layout.BlankLineFill.Pattern = 0 -> MarkupString.Layout.BlankLineFill
+MarkupString.Layout.BlankLineFill.Spaces = 1 -> MarkupString.Layout.BlankLineFill
+MarkupString.Layout.BreakSpace
+MarkupString.Layout.BreakSpace.Drop = 0 -> MarkupString.Layout.BreakSpace
+MarkupString.Layout.BreakSpace.Keep = 1 -> MarkupString.Layout.BreakSpace
+MarkupString.Layout.ColumnFormat
+MarkupString.Layout.ColumnFormat.Alignment.get -> MarkupString.Layout.Alignment
+MarkupString.Layout.ColumnFormat.Alignment.init -> void
+MarkupString.Layout.ColumnFormat.BlankLineFill.get -> MarkupString.Layout.BlankLineFill
+MarkupString.Layout.ColumnFormat.BlankLineFill.init -> void
+MarkupString.Layout.ColumnFormat.BreakSpace.get -> MarkupString.Layout.BreakSpace
+MarkupString.Layout.ColumnFormat.BreakSpace.init -> void
+MarkupString.Layout.ColumnFormat.<Clone>$() -> MarkupString.Layout.ColumnFormat!
+MarkupString.Layout.ColumnFormat.ColumnFormat() -> void
+MarkupString.Layout.ColumnFormat.CutFrom.get -> MarkupString.Layout.CutFrom
+MarkupString.Layout.ColumnFormat.CutFrom.init -> void
+MarkupString.Layout.ColumnFormat.Equals(MarkupString.Layout.ColumnFormat? other) -> bool
+MarkupString.Layout.ColumnFormat.Fill.get -> MarkupString.MarkupText!
+MarkupString.Layout.ColumnFormat.Fill.init -> void
+MarkupString.Layout.ColumnFormat.FillPhase.get -> MarkupString.Layout.FillPhase
+MarkupString.Layout.ColumnFormat.FillPhase.init -> void
+MarkupString.Layout.ColumnFormat.FillRight.get -> MarkupString.MarkupText?
+MarkupString.Layout.ColumnFormat.FillRight.init -> void
+MarkupString.Layout.ColumnFormat.Indent.get -> MarkupString.Layout.Indent
+MarkupString.Layout.ColumnFormat.Indent.init -> void
+MarkupString.Layout.ColumnFormat.Markup.get -> MarkupString.IMarkup?
+MarkupString.Layout.ColumnFormat.Markup.init -> void
+MarkupString.Layout.ColumnFormat.MaxCells.get -> int
+MarkupString.Layout.ColumnFormat.MaxCells.init -> void
+MarkupString.Layout.ColumnFormat.MaxLines.get -> int
+MarkupString.Layout.ColumnFormat.MaxLines.init -> void
+MarkupString.Layout.ColumnFormat.NoFill.get -> bool
+MarkupString.Layout.ColumnFormat.NoFill.init -> void
+MarkupString.Layout.ColumnFormat.NoSeparatorAfter.get -> bool
+MarkupString.Layout.ColumnFormat.NoSeparatorAfter.init -> void
+MarkupString.Layout.ColumnFormat.Repeat.get -> bool
+MarkupString.Layout.ColumnFormat.Repeat.init -> void
+MarkupString.Layout.ColumnFormat.SuppressBlankLast.get -> bool
+MarkupString.Layout.ColumnFormat.SuppressBlankLast.init -> void
+MarkupString.Layout.ColumnFormat.TabWidth.get -> int
+MarkupString.Layout.ColumnFormat.TabWidth.init -> void
+MarkupString.Layout.ColumnFormat.Truncation.get -> MarkupString.TruncationType
+MarkupString.Layout.ColumnFormat.Truncation.init -> void
+MarkupString.Layout.ColumnFormat.WhenEmpty.get -> MarkupString.Layout.WhenEmpty
+MarkupString.Layout.ColumnFormat.WhenEmpty.init -> void
+MarkupString.Layout.ColumnFormat.Width.get -> int
+MarkupString.Layout.ColumnFormat.Width.init -> void
+MarkupString.Layout.ColumnFormat.Wrap.get -> MarkupString.Layout.WrapMode
+MarkupString.Layout.ColumnFormat.Wrap.init -> void
+MarkupString.Layout.CutFrom
+MarkupString.Layout.CutFrom.End = 0 -> MarkupString.Layout.CutFrom
+MarkupString.Layout.CutFrom.Start = 1 -> MarkupString.Layout.CutFrom
+MarkupString.Layout.FillPhase
+MarkupString.Layout.FillPhase.Continuous = 0 -> MarkupString.Layout.FillPhase
+MarkupString.Layout.FillPhase.Restart = 1 -> MarkupString.Layout.FillPhase
+MarkupString.Layout.Indent
+MarkupString.Layout.Indent.Amount.get -> int
+MarkupString.Layout.Indent.Amount.init -> void
+MarkupString.Layout.Indent.Deconstruct(out int Amount, out int FromLine, out int Widen) -> void
+MarkupString.Layout.Indent.Equals(MarkupString.Layout.Indent other) -> bool
+MarkupString.Layout.Indent.FromLine.get -> int
+MarkupString.Layout.Indent.FromLine.init -> void
+MarkupString.Layout.Indent.Indent(int Amount, int FromLine = 1, int Widen = 0) -> void
+MarkupString.Layout.Indent.Indent() -> void
+MarkupString.Layout.Indent.Widen.get -> int
+MarkupString.Layout.Indent.Widen.init -> void
+MarkupString.Layout.SeparatorRows
+MarkupString.Layout.SeparatorRows.EveryRow = 0 -> MarkupString.Layout.SeparatorRows
+MarkupString.Layout.SeparatorRows.FirstRowOnly = 1 -> MarkupString.Layout.SeparatorRows
+MarkupString.Layout.TextLine
+MarkupString.Layout.TextLine.Deconstruct(out MarkupString.MarkupText! Text, out int Start, out int Width, out bool EndsParagraph) -> void
+MarkupString.Layout.TextLine.EndsParagraph.get -> bool
+MarkupString.Layout.TextLine.EndsParagraph.init -> void
+MarkupString.Layout.TextLine.Equals(MarkupString.Layout.TextLine other) -> bool
+MarkupString.Layout.TextLine.Start.get -> int
+MarkupString.Layout.TextLine.Start.init -> void
+MarkupString.Layout.TextLine.Text.get -> MarkupString.MarkupText!
+MarkupString.Layout.TextLine.Text.init -> void
+MarkupString.Layout.TextLine.TextLine(MarkupString.MarkupText! Text, int Start, int Width, bool EndsParagraph) -> void
+MarkupString.Layout.TextLine.TextLine() -> void
+MarkupString.Layout.TextLine.Width.get -> int
+MarkupString.Layout.TextLine.Width.init -> void
+MarkupString.Layout.WhenEmpty
+MarkupString.Layout.WhenEmpty.GiveSpaceToLeft = 1 -> MarkupString.Layout.WhenEmpty
+MarkupString.Layout.WhenEmpty.GiveSpaceToRight = 2 -> MarkupString.Layout.WhenEmpty
+MarkupString.Layout.WhenEmpty.None = 0 -> MarkupString.Layout.WhenEmpty
+MarkupString.Layout.WhenEmpty.PullRightColumnLeft = 3 -> MarkupString.Layout.WhenEmpty
+MarkupString.Layout.WhenEmpty.PushLeftColumnRight = 4 -> MarkupString.Layout.WhenEmpty
+MarkupString.Layout.WrapMode
+MarkupString.Layout.WrapMode.Cell = 2 -> MarkupString.Layout.WrapMode
+MarkupString.Layout.WrapMode.HardBreaks = 1 -> MarkupString.Layout.WrapMode
+MarkupString.Layout.WrapMode.None = 0 -> MarkupString.Layout.WrapMode
+MarkupString.Layout.WrapMode.Word = 3 -> MarkupString.Layout.WrapMode
+override MarkupString.Layout.ColumnFormat.Equals(object? obj) -> bool
+override MarkupString.Layout.ColumnFormat.GetHashCode() -> int
+override MarkupString.Layout.ColumnFormat.ToString() -> string!
+~override MarkupString.Layout.Indent.Equals(object obj) -> bool
+override MarkupString.Layout.Indent.GetHashCode() -> int
+~override MarkupString.Layout.Indent.ToString() -> string
+~override MarkupString.Layout.TextLine.Equals(object obj) -> bool
+override MarkupString.Layout.TextLine.GetHashCode() -> int
+~override MarkupString.Layout.TextLine.ToString() -> string
+static MarkupString.Layout.ColumnFormat.operator !=(MarkupString.Layout.ColumnFormat? left, MarkupString.Layout.ColumnFormat? right) -> bool
+static MarkupString.Layout.ColumnFormat.operator ==(MarkupString.Layout.ColumnFormat? left, MarkupString.Layout.ColumnFormat? right) -> bool
+static MarkupString.Layout.Indent.operator !=(MarkupString.Layout.Indent left, MarkupString.Layout.Indent right) -> bool
+static MarkupString.Layout.Indent.operator ==(MarkupString.Layout.Indent left, MarkupString.Layout.Indent right) -> bool
+static MarkupString.Layout.TextLine.operator !=(MarkupString.Layout.TextLine left, MarkupString.Layout.TextLine right) -> bool
+static MarkupString.Layout.TextLine.operator ==(MarkupString.Layout.TextLine left, MarkupString.Layout.TextLine right) -> bool
