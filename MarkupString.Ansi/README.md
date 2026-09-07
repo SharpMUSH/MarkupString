@@ -40,6 +40,13 @@ var back = MarkupTextSerializer.Deserialize(json);
 `WithAnsi()` registers emitters for `Ansi`, `Html`, `Pueblo`, `Mxp` and `BBCode`. `Plain` needs
 none: the body passes through.
 
+## Styling the HTML output
+
+The HTML-family emitters write `ms-*` classes for the attributes with a fixed rendering (bold,
+italic, underline, strike, overline, faint, blink, invert, and command links) and inline `style`
+for colours, which are open-ended. `AnsiCss.Fixed` is the stylesheet for those classes — include
+it once per page, or copy its rules into your own sheet.
+
 ## Extension points
 
 - `IAnsiStyleSource` — implement it on your own `IMarkup` and this package's fold picks the style

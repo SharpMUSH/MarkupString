@@ -7,9 +7,11 @@
     <IsAotCompatible>true</IsAotCompatible>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>CS1591</NoWarn>
-    <!-- No PackageValidationBaselineVersion yet: nothing is published, so there is no baseline to
-         diff against. The first release sets it, and validation starts catching breaks from then on. -->
+    <!-- Every build is diffed against the last release, so a removed or re-signatured public member
+         fails here rather than in a consumer's restore. Raise this to the newest published version
+         each time one goes out. -->
     <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageValidationBaselineVersion>1.0.0</PackageValidationBaselineVersion>
     <Description>Immutable styled text: a string plus layered markup runs, rendered to ANSI, HTML, Pueblo, MXP, BBCode or plain text through a registry of emitters, and round-tripped through JSON.</Description>
   </PropertyGroup>
 

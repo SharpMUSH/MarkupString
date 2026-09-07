@@ -8,8 +8,18 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-Nothing published yet. The first release will be `v1.0.0`; everything below describes what it will
-contain.
+### Added
+
+- `AnsiCss.Fixed` in `MarkupString.Ansi` — the stylesheet for the `ms-*` classes. Every one of
+  those classes is written by this package's HTML emitter, so a consumer rendering HTML with
+  `MarkupString` + `MarkupString.Ansi` alone can now reach the rules; previously they existed only
+  in `MarkupString.Html`, a package such a consumer has no reason to take.
+
+### Deprecated
+
+- `HtmlCss.Fixed` in `MarkupString.Html`. It returns `AnsiCss.Fixed` unchanged; move to that.
+
+## 1.0.0 — 2026-09-07
 
 ### Added
 

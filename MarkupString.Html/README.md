@@ -40,8 +40,9 @@ package. Neither the tag name nor the attribute string is sanitised — validate
 ## Styling
 
 The HTML emitters write `ms-*` classes for the text attributes that have a fixed rendering, and
-inline `style` for colours, which are open-ended. `HtmlCss.Fixed` is the stylesheet for those
-classes — include it once per page, or copy its rules into your own sheet.
+inline `style` for colours, which are open-ended. Every one of those classes comes from
+[`MarkupString.Ansi`](https://www.nuget.org/packages/MarkupString.Ansi), so the stylesheet does
+too: include `AnsiCss.Fixed` once per page, or copy its rules into your own sheet.
 
 ## Extension points
 
