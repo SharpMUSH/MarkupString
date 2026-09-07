@@ -64,8 +64,8 @@ public ref struct SgrBuilder
 /// </remarks>
 public static class SgrWriter
 {
-	private const string Csi = "\u001b[";
-	private const string ResetSequence = "\u001b[0m";
+	private const string Csi = "\e[";
+	private const string ResetSequence = "\e[0m";
 
 	/// <summary>The widest sequence this writer builds: eight attributes and two 24-bit colours.</summary>
 	private const int MaxCodeLength = 80;

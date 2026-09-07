@@ -2,7 +2,7 @@ using MarkupString.Ansi;
 
 public class AnsiEscapeParserTests
 {
-	private const string E = "\u001b";
+	private const string E = "\e";
 
 	private static AnsiStyle StyleOf(MarkupText text, int runIndex = 0) =>
 		((AnsiMarkup)text.Runs[runIndex].Markups.Innermost).Style;

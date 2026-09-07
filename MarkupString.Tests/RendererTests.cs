@@ -88,11 +88,11 @@ public class RendererTests
 
 	[Test]
 	public async Task Render_PlainStripsControls()
-		=> await Assert.That(MarkupText.Plain("a\u001b[31mb\tc").Render(MarkupFormat.Plain, MarkupRegistry.Empty)).IsEqualTo("a[31mb\tc");
+		=> await Assert.That(MarkupText.Plain("a\e[31mb\tc").Render(MarkupFormat.Plain, MarkupRegistry.Empty)).IsEqualTo("a[31mb\tc");
 
 	[Test]
 	public async Task Render_AnsiFormatKeepsControls()
-		=> await Assert.That(MarkupText.Plain("a\u001b[31mb").Render(MarkupFormat.Ansi, MarkupRegistry.Empty)).IsEqualTo("a\u001b[31mb");
+		=> await Assert.That(MarkupText.Plain("a\e[31mb").Render(MarkupFormat.Ansi, MarkupRegistry.Empty)).IsEqualTo("a\e[31mb");
 
 	[Test]
 	public async Task Render_CustomFormat_IsNotAnsi()

@@ -8,7 +8,7 @@ namespace MarkupString.Tests.Html;
 /// </summary>
 public class HtmlMarkupTests
 {
-	private const string Esc = "\u001b";
+	private const string Esc = "\e";
 
 	private static readonly MarkupRegistry Registry = MarkupRegistry.Empty.WithAnsi().WithHtml();
 

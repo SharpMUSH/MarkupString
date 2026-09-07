@@ -103,6 +103,6 @@ public class FormatSnapshotTests
 
 	/// <summary>Makes the control characters in an ANSI stream legible in a checked-in snapshot.</summary>
 	private static string Visible(string rendered) =>
-		rendered.Replace("\u001b", "<ESC>", StringComparison.Ordinal)
+		rendered.Replace("\e", "<ESC>", StringComparison.Ordinal)
 			.Replace("\u0007", "<BEL>", StringComparison.Ordinal);
 }

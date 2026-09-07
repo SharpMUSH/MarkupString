@@ -2,7 +2,7 @@ using MarkupString.Ansi;
 
 public class AnsiRenderTests
 {
-	private const string Esc = "\u001b";
+	private const string Esc = "\e";
 	private const string Bel = "\u0007";
 
 	private static readonly MarkupRegistry Registry = MarkupRegistry.Empty.WithAnsi();

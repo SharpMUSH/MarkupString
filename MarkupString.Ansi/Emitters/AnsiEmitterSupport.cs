@@ -19,7 +19,7 @@ internal enum TagFlavour
 /// </summary>
 internal static class AnsiEmitterSupport
 {
-	private const string Osc8 = "\u001b]8;;";
+	private const string Osc8 = "\e]8;;";
 	private const string Bel = "\u0007";
 
 	/// <summary>

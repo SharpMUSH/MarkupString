@@ -9,7 +9,7 @@ using MarkupString.Ansi;
 /// </summary>
 public class AnsiForeignLayerTests
 {
-	private const string Esc = "\u001b";
+	private const string Esc = "\e";
 
 	/// <summary>A layer this package knows nothing about.</summary>
 	private sealed record Tag(string Name) : IMarkup;

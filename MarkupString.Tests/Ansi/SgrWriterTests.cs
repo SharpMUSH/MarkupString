@@ -3,7 +3,7 @@ using MarkupString.Ansi;
 
 public class SgrWriterTests
 {
-	private const string Esc = "\u001b";
+	private const string Esc = "\e";
 
 	private static string Transition(AnsiStyle from, AnsiStyle to)
 	{

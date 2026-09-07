@@ -7,7 +7,7 @@ namespace MarkupString.Ansi;
 /// </summary>
 public static class AnsiEscapeParser
 {
-	private const char Escape = '\u001b';
+	private const char Escape = '\e';
 	private const char Bell = '\u0007';
 
 	/// <summary>
