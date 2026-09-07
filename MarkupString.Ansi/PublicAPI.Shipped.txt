@@ -35,6 +35,7 @@ MarkupString.Ansi.AnsiColor.Xterm.Equals(MarkupString.Ansi.AnsiColor.Xterm? othe
 MarkupString.Ansi.AnsiColor.Xterm.Index.get -> byte
 MarkupString.Ansi.AnsiColor.Xterm.Index.init -> void
 MarkupString.Ansi.AnsiColor.Xterm.Xterm(byte Index) -> void
+MarkupString.Ansi.AnsiCss
 MarkupString.Ansi.AnsiEscapeParser
 MarkupString.Ansi.AnsiHtmlEmitter
 MarkupString.Ansi.AnsiHtmlEmitter.AnsiHtmlEmitter() -> void
@@ -172,6 +173,7 @@ static MarkupString.Ansi.SgrWriter.Transition(in MarkupString.Ansi.AnsiStyle fro
 static MarkupString.Ansi.SgrWriter.WriteColorCodes(MarkupString.Ansi.AnsiColor! color, bool background, ref MarkupString.Ansi.SgrBuilder codes) -> void
 static MarkupString.Ansi.UrlSafety.IsSafeNavigableUrl(string? url) -> bool
 static readonly MarkupString.Ansi.AnsiColor.Default.Instance -> MarkupString.Ansi.AnsiColor.Default!
+static readonly MarkupString.Ansi.AnsiCss.Fixed -> string!
 static readonly MarkupString.Ansi.AnsiStyle.None -> MarkupString.Ansi.AnsiStyle
 virtual MarkupString.Ansi.AnsiColor.EqualityContract.get -> System.Type!
 virtual MarkupString.Ansi.AnsiColor.Equals(MarkupString.Ansi.AnsiColor? other) -> bool

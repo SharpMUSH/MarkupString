@@ -1,3 +1,1 @@
 #nullable enable
-MarkupString.Ansi.AnsiCss
-static readonly MarkupString.Ansi.AnsiCss.Fixed -> string!

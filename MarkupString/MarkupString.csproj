@@ -12,6 +12,7 @@
          each time one goes out; drop it for a release that removes public API on purpose, and put
          it back straight after. -->
     <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageValidationBaselineVersion>1.1.0</PackageValidationBaselineVersion>
     <Description>Immutable styled text: a string plus layered markup runs, rendered to ANSI, HTML, Pueblo, MXP, BBCode or plain text through a registry of emitters, and round-tripped through JSON.</Description>
   </PropertyGroup>
 
