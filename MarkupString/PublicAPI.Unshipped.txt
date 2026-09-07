@@ -99,6 +99,8 @@ MarkupString.Layout.WrapMode.Cell = 2 -> MarkupString.Layout.WrapMode
 MarkupString.Layout.WrapMode.HardBreaks = 1 -> MarkupString.Layout.WrapMode
 MarkupString.Layout.WrapMode.None = 0 -> MarkupString.Layout.WrapMode
 MarkupString.Layout.WrapMode.Word = 3 -> MarkupString.Layout.WrapMode
+MarkupString.MarkupText.ExpandTabs(int tabWidth) -> MarkupString.MarkupText!
+MarkupString.MarkupText.TruncateToWidth(int cells, MarkupString.Layout.CutFrom from) -> MarkupString.MarkupText!
 override MarkupString.Layout.ColumnFormat.Equals(object? obj) -> bool
 override MarkupString.Layout.ColumnFormat.GetHashCode() -> int
 override MarkupString.Layout.ColumnFormat.ToString() -> string!
@@ -108,6 +110,7 @@ override MarkupString.Layout.Indent.GetHashCode() -> int
 ~override MarkupString.Layout.TextLine.Equals(object obj) -> bool
 override MarkupString.Layout.TextLine.GetHashCode() -> int
 ~override MarkupString.Layout.TextLine.ToString() -> string
+static MarkupString.DisplayWidth.IndexFromWidthEnd(System.ReadOnlySpan<char> text, int cells) -> int
 static MarkupString.Layout.ColumnFormat.operator !=(MarkupString.Layout.ColumnFormat? left, MarkupString.Layout.ColumnFormat? right) -> bool
 static MarkupString.Layout.ColumnFormat.operator ==(MarkupString.Layout.ColumnFormat? left, MarkupString.Layout.ColumnFormat? right) -> bool
 static MarkupString.Layout.Indent.operator !=(MarkupString.Layout.Indent left, MarkupString.Layout.Indent right) -> bool

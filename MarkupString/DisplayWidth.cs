@@ -71,6 +71,27 @@ public static class DisplayWidth
 		return text.Length;
 	}
 
+	/// <summary>
+	/// The smallest cluster boundary in <paramref name="text"/> whose suffix fits in
+	/// <paramref name="cells"/> columns. The mirror of <see cref="IndexAtWidth"/>: never returns
+	/// an index inside a grapheme cluster.
+	/// </summary>
+	public static int IndexFromWidthEnd(ReadOnlySpan<char> text, int cells)
+	{
+		if (cells <= 0) return text.Length;
+		var used = 0;
+		var position = text.Length;
+		while (position > 0)
+		{
+			var start = Graphemes.SnapStart(text, position - 1);
+			var width = Of(text[start..position]);
+			if (used + width > cells) return position;
+			used += width;
+			position = start;
+		}
+		return 0;
+	}
+
 	/// <summary>A printable ASCII character not followed by anything that could extend it.</summary>
 	private static bool IsSimple(ReadOnlySpan<char> text, int position) =>
 		text[position] is >= ' ' and < '\u007F'
