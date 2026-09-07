@@ -10,6 +10,10 @@ public enum TextEncoding
 	/// <summary>C0 control characters other than <c>\t</c>, <c>\n</c> and <c>\r</c> are dropped, as is U+007F.</summary>
 	StripControls,
 
-	/// <summary><see cref="StripControls"/>, then <c>&lt; &gt; &amp; " '</c> are written as HTML entities.</summary>
+	/// <summary>
+	/// <see cref="StripControls"/>, then <c>&lt; &gt; &amp;</c> -- the characters that are markup in
+	/// HTML text -- are written as HTML entities. <c>"</c> and <c>'</c> are not: they are markup only
+	/// inside an attribute value, and this encoding is never applied to one.
+	/// </summary>
 	Html,
 }

@@ -24,5 +24,5 @@
 24 html-send          | <send href="north" hint="Go north">north</send>
 25 html-b-in-colour   | <b><span style="color: #00aa00">bold green</span></b>
 26 unicode            | <span style="color: #aa0000">日本語 😀 café</span>
-27 needs-encoding     | <span class="ms-bold">&lt;a href=&quot;x&quot;&gt; &amp; &#39;y&#39; &lt;/a&gt;</span>
+27 needs-encoding     | <span class="ms-bold">&lt;a href="x"&gt; &amp; 'y' &lt;/a&gt;</span>
 28 clear-after-colour | <span style="color: #aa0000">red</span>cleared

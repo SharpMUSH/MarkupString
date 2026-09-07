@@ -266,9 +266,9 @@ public class AnsiRenderTests
 	[Test]
 	public async Task PuebloAndMxp_PlainText_IsHtmlEncoded()
 	{
-		var text = MarkupText.Plain("Tom & \"Sue\"");
-		await Assert.That(Render(text, MarkupFormat.Pueblo)).IsEqualTo("Tom &amp; &quot;Sue&quot;");
-		await Assert.That(Render(text, MarkupFormat.Mxp)).IsEqualTo("Tom &amp; &quot;Sue&quot;");
+		var text = MarkupText.Plain("Tom & \"Sue\" <it's>");
+		await Assert.That(Render(text, MarkupFormat.Pueblo)).IsEqualTo("Tom &amp; \"Sue\" &lt;it's&gt;");
+		await Assert.That(Render(text, MarkupFormat.Mxp)).IsEqualTo("Tom &amp; \"Sue\" &lt;it's&gt;");
 	}
 
 	[Test]

@@ -11,8 +11,20 @@ public static class MarkupTextRenderer
 	/// <summary>C0 controls other than tab, newline and carriage return, plus DEL.</summary>
 	private const string ControlCharacters = "\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\u0008\u000b\u000c\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f\u007f";
 
-	/// <summary>The five characters HTML encodes.</summary>
-	private const string HtmlCharacters = "<>&\"'";
+	/// <summary>
+	/// The three characters that are markup in HTML text, and so cannot survive being written
+	/// literally into it: <c>&lt;</c> opens a tag and <c>&amp;</c> opens an entity, and <c>&gt;</c>
+	/// goes with them because a parser recovering from a malformed tag looks for it.
+	/// </summary>
+	/// <remarks>
+	/// <c>"</c> and <c>'</c> are deliberately absent. They are markup only inside an attribute
+	/// value, and no attribute is written from here -- <c>HtmlTagEmitter</c> writes the body
+	/// between <c>&gt;</c> and <c>&lt;/</c>, and the layers that do emit attributes encode their own.
+	/// Encoding them here bought nothing and cost something: over a socket it inflates every
+	/// apostrophe in every line of dialogue fivefold, and it leaves Pueblo and MXP output leaning on
+	/// the two entities a client is least likely to implement.
+	/// </remarks>
+	private const string HtmlCharacters = "<>&";
 
 	private static readonly SearchValues<char> Controls = SearchValues.Create(ControlCharacters);
 
@@ -68,8 +80,6 @@ public static class MarkupTextRenderer
 				case '<': output.Write("&lt;"); break;
 				case '>': output.Write("&gt;"); break;
 				case '&': output.Write("&amp;"); break;
-				case '"': output.Write("&quot;"); break;
-				case '\'': output.Write("&#39;"); break;
 				default: break;   // a control character: dropped
 			}
 			text = text[(index + 1)..];

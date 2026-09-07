@@ -252,7 +252,7 @@ public class RendererTests
 	[Arguments(TextEncoding.StripControls, "a\u001bb\u007fc\td", "abc\td")]
 	[Arguments(TextEncoding.StripControls, "a\tb\nc\rd", "a\tb\nc\rd")]
 	[Arguments(TextEncoding.StripControls, "\u0008\u000b\u000c\u000e\u001f", "")]
-	[Arguments(TextEncoding.Html, "<a href=\"x\">it's</a>", "&lt;a href=&quot;x&quot;&gt;it&#39;s&lt;/a&gt;")]
+	[Arguments(TextEncoding.Html, "<a href=\"x\">it's</a>", "&lt;a href=\"x\"&gt;it's&lt;/a&gt;")]
 	[Arguments(TextEncoding.Html, "a\u001b&\u007fb", "a&amp;b")]
 	[Arguments(TextEncoding.Html, "a\tb\nc", "a\tb\nc")]
 	public async Task EncodeText_AppliesTheEncoding(TextEncoding encoding, string input, string expected)
