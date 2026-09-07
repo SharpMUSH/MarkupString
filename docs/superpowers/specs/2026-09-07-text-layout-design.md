@@ -227,6 +227,7 @@ public sealed record ColumnFormat
     // Layer 2 — rendering
     public Alignment Alignment { get; init; } = Alignment.Left;
     public MarkupText Fill { get; init; } = MarkupText.Space;
+    public MarkupText? FillRight { get; init; }   // Center's second fill; Fill is used when null
     public FillPhase FillPhase { get; init; } = FillPhase.Continuous;
     public BlankLineFill BlankLineFill { get; init; } = BlankLineFill.Pattern;
     public TruncationType Truncation { get; init; } = TruncationType.Truncate;
