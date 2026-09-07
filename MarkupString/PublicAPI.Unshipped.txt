@@ -100,6 +100,7 @@ MarkupString.Layout.WrapMode.HardBreaks = 1 -> MarkupString.Layout.WrapMode
 MarkupString.Layout.WrapMode.None = 0 -> MarkupString.Layout.WrapMode
 MarkupString.Layout.WrapMode.Word = 3 -> MarkupString.Layout.WrapMode
 MarkupString.MarkupText.ExpandTabs(int tabWidth) -> MarkupString.MarkupText!
+MarkupString.MarkupText.FormatColumn(MarkupString.Layout.ColumnFormat! format) -> MarkupString.MarkupText![]!
 MarkupString.MarkupText.Shape(MarkupString.Layout.ColumnFormat! format) -> System.Collections.Immutable.ImmutableArray<MarkupString.Layout.TextLine>
 MarkupString.MarkupText.TruncateToWidth(int cells, MarkupString.Layout.CutFrom from) -> MarkupString.MarkupText!
 MarkupString.MarkupText.WrapLines(int width, MarkupString.Layout.WrapMode mode) -> MarkupString.MarkupText![]!
