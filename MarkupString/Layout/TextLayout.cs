@@ -17,13 +17,12 @@ public static class TextLayout
 		ArgumentNullException.ThrowIfNull(options);
 		if (cells.Length == 0) return [];
 
-		var blocks = Draw(cells);
-		var rowCount = RowCount(cells, blocks);
-		if (rowCount == 0) return [];
+		var plan = Plan.Build(cells);
+		if (plan.RowCount == 0) return [];
 
-		var rows = new MarkupText[rowCount];
+		var rows = new MarkupText[plan.RowCount];
 		var parts = new List<MarkupText>(cells.Length);
-		for (var row = 0; row < rowCount; row++)
+		for (var row = 0; row < plan.RowCount; row++)
 		{
 			parts.Clear();
 			for (var i = 0; i < cells.Length; i++)
@@ -31,7 +30,8 @@ public static class TextLayout
 				switch (cells[i])
 				{
 					case LayoutColumn column:
-						parts.Add(LineOf(blocks[i]!, column.Format, row));
+						var line = plan.LineOf(i, column, row);
+						if (line is not null) parts.Add(line);
 						break;
 					case LayoutSeparator separator when !Suppressed(cells, i):
 						parts.Add(row == 0 || separator.Rows == SeparatorRows.EveryRow
@@ -42,7 +42,27 @@ public static class TextLayout
 			}
 			rows[row] = MarkupText.Concat(parts.ToArray().AsSpan());
 		}
-		return rows;
+		return Suppress(cells, plan, rows);
+	}
+
+	/// <summary>
+	/// Drops a final row on which every column is blank, when every column asked for that. Both
+	/// halves matter: RhostMUSH suppresses the row only when the option is on every field.
+	/// </summary>
+	private static MarkupText[] Suppress(ReadOnlySpan<LayoutCell> cells, Plan plan, MarkupText[] rows)
+	{
+		if (rows.Length == 0) return rows;
+
+		var columns = 0;
+		foreach (var cell in cells)
+		{
+			if (cell is not LayoutColumn column) continue;
+			if (!column.Format.SuppressBlankLast) return rows;
+			columns++;
+		}
+		if (columns == 0 || !plan.AllExhaustedAt(cells, rows.Length - 1)) return rows;
+
+		return rows[..^1];
 	}
 
 	/// <summary>The layout as one value, its rows joined by <see cref="LayoutOptions.RowSeparator"/>.</summary>
@@ -61,40 +81,6 @@ public static class TextLayout
 			parts[i * 2] = rows[i];
 		}
 		return MarkupText.Concat(parts.AsSpan());
-	}
-
-	private static MarkupText[]?[] Draw(ReadOnlySpan<LayoutCell> cells)
-	{
-		var blocks = new MarkupText[]?[cells.Length];
-		for (var i = 0; i < cells.Length; i++)
-			if (cells[i] is LayoutColumn column)
-				blocks[i] = column.Content.FormatColumn(column.Format);
-		return blocks;
-	}
-
-	/// <summary>
-	/// How many rows the layout has: the tallest non-repeating column, or the tallest of all of
-	/// them when every column repeats and none of them can decide when to stop.
-	/// </summary>
-	private static int RowCount(ReadOnlySpan<LayoutCell> cells, MarkupText[]?[] blocks)
-	{
-		var driven = 0;
-		var any = 0;
-		for (var i = 0; i < cells.Length; i++)
-		{
-			if (cells[i] is not LayoutColumn column) continue;
-			var height = blocks[i]!.Length;
-			any = Math.Max(any, height);
-			if (!column.Format.Repeat) driven = Math.Max(driven, height);
-		}
-		return driven > 0 ? driven : any;
-	}
-
-	private static MarkupText LineOf(MarkupText[] block, ColumnFormat format, int row)
-	{
-		if (block.Length == 0) return ColumnRenderer.Blank(format);
-		if (format.Repeat) return block[row % block.Length];
-		return row < block.Length ? block[row] : ColumnRenderer.Blank(format);
 	}
 
 	/// <summary>True when the column before this separator asked for no separator after it.</summary>
