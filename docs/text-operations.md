@@ -42,6 +42,19 @@ which is what every caller of that idiom means.
 The primitives are public if you need them yourself: `Graphemes.IsBoundary`,
 `Graphemes.SnapStart`, `Graphemes.SnapEnd`, and `DisplayWidth.Of` / `OfRune` / `IndexAtWidth`.
 
+## Wrapping and layout
+
+`Pad`, `Center` and the rest measure a single value. Breaking text into lines, drawing it as a
+column and assembling columns into rows live in `MarkupString.Layout` and have their own guide:
+[Layout](layout.md).
+
+```csharp
+text.WrapLines(40);                 // break at the last space that fits
+text.WrapLines(40, WrapMode.Cell);  // break at the width, mid-word
+text.ExpandTabs(4);
+text.TruncateToWidth(20, CutFrom.End);
+```
+
 ## Slicing and searching
 
 ```csharp
