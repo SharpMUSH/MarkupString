@@ -3,7 +3,7 @@ using System.Text;
 using CsCheck;
 using MarkupString.Ansi;
 using MarkupString.Html;
-namespace SharpMUSH.MarkupString.Tests.Properties;
+namespace MarkupString.Tests.Properties;
 
 /// <summary>
 /// Properties that have to hold for every <see cref="MarkupText"/>, checked over generated texts

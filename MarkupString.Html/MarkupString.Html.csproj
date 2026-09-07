@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>MarkupString.Html</AssemblyName>
+    <RootNamespace>MarkupString.Html</RootNamespace>
+    <PackageId>MarkupString.Html</PackageId>
+    <Title>MarkupString.Html</Title>
+    <IsAotCompatible>true</IsAotCompatible>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>CS1591</NoWarn>
+    <!-- No PackageValidationBaselineVersion yet: nothing is published, so there is no baseline to
+         diff against. The first release sets it, and validation starts catching breaks from then on. -->
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <Description>Raw HTML tag markup for MarkupString — an MXP &lt;send&gt;, an anchor, a span — rendered as itself in the HTML, Pueblo and MXP formats, folded into terminal styling elsewhere, with the stylesheet for the ms-* classes the emitters write.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="8.0.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="5.6.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MarkupString\MarkupString.csproj" />
+    <ProjectReference Include="..\MarkupString.Ansi\MarkupString.Ansi.csproj" />
+  </ItemGroup>
+</Project>

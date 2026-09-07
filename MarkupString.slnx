@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="MarkupString.Ansi/MarkupString.Ansi.csproj" />
+  <Project Path="MarkupString.AotSmoke/MarkupString.AotSmoke.csproj" />
+  <Project Path="MarkupString.Html/MarkupString.Html.csproj" />
+  <Project Path="MarkupString.Tests/MarkupString.Tests.csproj" />
+  <Project Path="MarkupString/MarkupString.csproj" />
+</Solution>

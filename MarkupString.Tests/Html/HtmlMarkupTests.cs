@@ -1,6 +1,6 @@
 using MarkupString.Ansi;
 using MarkupString.Html;
-namespace SharpMUSH.MarkupString.Tests.Html;
+namespace MarkupString.Tests.Html;
 
 /// <summary>
 /// Tests for <see cref="HtmlMarkup"/>: verbatim tag rendering in Html/Pueblo/Mxp, folding of a

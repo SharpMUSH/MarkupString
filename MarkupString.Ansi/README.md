@@ -54,4 +54,4 @@ so nothing depends on a type surviving the trimmer by name.
 
 ## Licence
 
-Apache-2.0. Part of [SharpMUSH](https://github.com/SharpMUSH/SharpMUSH).
+Apache-2.0. Source, guides and issues: [SharpMUSH/MarkupString](https://github.com/SharpMUSH/MarkupString).

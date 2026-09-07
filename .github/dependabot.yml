@@ -1,0 +1,20 @@
+version: 2
+updates:
+  # One grouped PR per ecosystem. Per-package PRs across sibling projects land at different
+  # times and leave the solution with two versions of the same transitive dependency, which
+  # TreatWarningsAsErrors turns into an NU1605 build failure.
+  - package-ecosystem: nuget
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      dotnet:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]

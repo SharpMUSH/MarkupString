@@ -58,7 +58,7 @@ it once as `MarkupRegistry.Default` (set-once: a second, different registry thro
 A registry holds **one `IMarkupSetEmitter` per format**, and the last registration wins — so a kind
 package that registers a set emitter for, say, `Html` takes that format over from whatever
 registered it before, for every layer, not only its own. `WithAnsi().WithHtml()` works because
-`SharpMUSH.MarkupString.Html` deliberately hands the styling half back: it implements
+`MarkupString.Html` deliberately hands the styling half back: it implements
 `IAnsiStyleSource` on its own markup, and the ANSI package's set emitters fold that into their
 output. If your kind wants ANSI styling applied to it, do the same — implement `IAnsiStyleSource`
 and let the ANSI set emitters run — rather than registering a competing set emitter, which would
@@ -74,4 +74,4 @@ so nothing needs a trimmer root beyond what you reference.
 
 ## Licence
 
-Apache-2.0. Part of [SharpMUSH](https://github.com/SharpMUSH/SharpMUSH).
+Apache-2.0. Source, guides and issues: [SharpMUSH/MarkupString](https://github.com/SharpMUSH/MarkupString).

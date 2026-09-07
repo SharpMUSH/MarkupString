@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+      # Folder mode, not solution mode: `dotnet format` cannot load a solution on the .NET 11
+      # SDK (the MSBuild build host crashes). Whitespace rules are syntactic, so nothing is lost.
+      - name: Verify formatting
+        run: |
+          for dir in MarkupString MarkupString.Ansi MarkupString.Html MarkupString.Tests MarkupString.AotSmoke; do
+            dotnet format whitespace --folder "$dir" --exclude "**/bin/**" --exclude "**/obj/**" --verify-no-changes
+          done
+
+  build:
+    name: Build and test
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      # The format job already covers the whole repository, so the per-project build gate is off.
+      - name: Build
+        run: dotnet build --configuration Release --no-restore -p:SkipFormatVerification=true
+
+      - name: Test
+        run: dotnet run --project MarkupString.Tests --configuration Release --no-build
+
+      - name: Pack
+        run: dotnet pack --configuration Release --no-build -p:SkipFormatVerification=true -o packages
+
+  aot:
+    name: AOT publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      # The packages promise IsAotCompatible. Publishing the smoke app with all three assemblies
+      # rooted analyses every public entry point, so a trim- or AOT-hostile addition fails here
+      # instead of in a consumer's app. Any IL2xxx/IL3xxx warning is an error.
+      - name: Publish natively and fail on any trim/AOT warning
+        run: |
+          set -o pipefail
+          sudo apt-get update && sudo apt-get install -y clang zlib1g-dev
+          dotnet publish MarkupString.AotSmoke -c Release -r linux-x64 \
+            -p:SkipFormatVerification=true 2>&1 | tee aot.log
+          if grep -Eq 'IL[0-9]{4}' aot.log; then
+            echo "::error::Trim/AOT warnings from the MarkupString packages (see the lines above)"
+            exit 1
+          fi
+
+      - name: Run the native binary
+        run: ./MarkupString.AotSmoke/bin/Release/net10.0/linux-x64/publish/MarkupString.AotSmoke

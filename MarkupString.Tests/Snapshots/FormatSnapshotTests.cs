@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text;
 using MarkupString.Ansi;
 using MarkupString.Html;
-namespace SharpMUSH.MarkupString.Tests.Snapshots;
+namespace MarkupString.Tests.Snapshots;
 
 /// <summary>
 /// Renders one fixture set through every built-in format and pins the whole table with a snapshot,

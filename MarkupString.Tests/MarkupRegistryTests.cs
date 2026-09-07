@@ -1,5 +1,5 @@
 using System.Text.Json;
-namespace SharpMUSH.MarkupString.Tests;
+namespace MarkupString.Tests;
 
 /// <summary>
 /// The registry's composition rules: what a later registration displaces, and the set-once

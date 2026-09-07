@@ -1,6 +1,6 @@
 using System.Runtime.CompilerServices;
 using DiffEngine;
-namespace SharpMUSH.MarkupString.Tests.Snapshots;
+namespace MarkupString.Tests.Snapshots;
 
 /// <summary>
 /// Verify's process-wide configuration for this assembly.

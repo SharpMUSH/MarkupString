@@ -1,0 +1,54 @@
+<Project>
+
+  <!-- Language and compilation settings shared by every project in the repository. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <!--
+    Package metadata that is identical across the three shipping packages. Everything that
+    differs per package — PackageId, AssemblyName, Description, project references — stays in
+    the project file. Test and smoke projects set IsPackable=false, so these are inert there.
+  -->
+  <PropertyGroup>
+    <Authors>SharpMUSH</Authors>
+    <Company>SharpMUSH</Company>
+    <Copyright>Copyright © MarkupString Contributors 2024-$([System.DateTime]::Now.ToString(yyyy))</Copyright>
+    <PackageTags>markup;ansi;terminal;html;mxp;pueblo;bbcode;styled-text;mud;mush</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/SharpMUSH/MarkupString</PackageProjectUrl>
+    <PackageReleaseNotes>https://github.com/SharpMUSH/MarkupString/blob/main/CHANGELOG.md</PackageReleaseNotes>
+    <RepositoryUrl>https://github.com/SharpMUSH/MarkupString.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <!--
+    Reproducibility and consumer tooling. EmbedUntrackedSources plus a snupkg means a consumer
+    can step into the library from their debugger against the exact commit that produced the
+    package; ContinuousIntegrationBuild normalises source paths, so it is only correct on CI.
+  -->
+  <PropertyGroup>
+    <Deterministic>true</Deterministic>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <!--
+    MinVer is the single source of the version: a `v1.2.3` tag builds 1.2.3, and any other
+    commit builds the next patch as `-preview.0.N`. The release workflow therefore does NOT
+    pass /p:Version — it only needs `fetch-depth: 0` so the tag is present to be read.
+  -->
+  <PropertyGroup>
+    <MinVerTagPrefix>v</MinVerTagPrefix>
+    <MinVerDefaultPreReleaseIdentifiers>preview.0</MinVerDefaultPreReleaseIdentifiers>
+  </PropertyGroup>
+
+</Project>

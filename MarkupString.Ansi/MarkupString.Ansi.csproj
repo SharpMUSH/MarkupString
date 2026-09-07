@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>MarkupString.Ansi</AssemblyName>
+    <RootNamespace>MarkupString.Ansi</RootNamespace>
+    <PackageId>MarkupString.Ansi</PackageId>
+    <Title>MarkupString.Ansi</Title>
+    <IsAotCompatible>true</IsAotCompatible>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>CS1591</NoWarn>
+    <!-- No PackageValidationBaselineVersion yet: nothing is published, so there is no baseline to
+         diff against. The first release sets it, and validation starts catching breaks from then on. -->
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <Description>Terminal styling for MarkupString: colours (16, 256 and truecolor), text attributes and links, an ansi() code parser, and emitters that fold a run's layers into one SGR sequence, HTML span, Pueblo/MXP tag or BBCode tag.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="8.0.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="5.6.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MarkupString\MarkupString.csproj" />
+  </ItemGroup>
+</Project>

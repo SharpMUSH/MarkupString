@@ -1,0 +1,135 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        required: true
+        type: string
+        description: Example - v1.0.0
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore -p:SkipFormatVerification=true
+
+      - name: Test
+        run: dotnet run --project MarkupString.Tests --configuration Release --no-build
+
+  build:
+    name: Pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: test
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      # MinVer reads the version from the tag on this commit, so the tags and the commits
+      # between them have to be present — a shallow clone would build 0.0.0-preview.0.x.
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore
+
+      # A tag on a commit that never reached main would otherwise ship as a release.
+      - name: Verify commit exists in origin/main
+        run: |
+          git fetch --no-tags --prune --depth=100 origin +refs/heads/*:refs/remotes/origin/*
+          git branch --remote --contains | grep origin/main
+
+      # Only to confirm the tag and the built version agree; the version itself comes from MinVer.
+      - name: Set VERSION variable
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tags }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "VERSION=${TAG#v}" >> $GITHUB_ENV
+
+      - name: Pack
+        run: dotnet pack --configuration Release -p:SkipFormatVerification=true -o packages
+        env:
+          CI: true
+
+      - name: Verify the packed version matches the tag
+        run: |
+          if ! ls packages/MarkupString.${VERSION}.nupkg >/dev/null 2>&1; then
+            echo "::error::Expected packages/MarkupString.${VERSION}.nupkg; MinVer produced:"
+            ls packages
+            exit 1
+          fi
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: "packages/*.nupkg"
+
+      - name: Upload NuGet packages
+        uses: actions/upload-artifact@v7
+        with:
+          name: nuget-packages
+          path: packages
+
+  release:
+    name: Publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: build
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    steps:
+      - name: Download NuGet packages
+        uses: actions/download-artifact@v8
+        with:
+          name: nuget-packages
+          path: packages
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Push to GitHub Packages
+        run: dotnet nuget push "packages/*.nupkg" --skip-duplicate --source https://nuget.pkg.github.com/SharpMUSH/index.json --api-key ${GITHUB_TOKEN}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Trusted publishing: the OIDC token minted by `id-token: write` is exchanged for a
+      # short-lived NuGet key. No long-lived secret exists to leak or rotate. It requires a
+      # trusted-publishing policy on nuget.org for this repository — see docs/releasing.md.
+      - name: NuGet Login
+        uses: NuGet/login@v1
+        id: login
+        with:
+          user: harrycordewener
+
+      - name: Push to NuGet
+        run: dotnet nuget push "packages/*.nupkg" --skip-duplicate --source https://api.nuget.org/v3/index.json -k ${{ steps.login.outputs.NUGET_API_KEY }}
