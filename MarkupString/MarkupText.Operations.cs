@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using System.Text;
+using MarkupString.Layout;
 
 // The DisplayWidth instance property below hides the type of the same name, so operations
 // reach the measuring helpers through this alias.
@@ -63,6 +64,33 @@ public sealed partial class MarkupText
 		var runs = ImmutableArray.CreateBuilder<Run>();
 		ClipInto(from, to, -from, runs);
 		return new MarkupText(Text[from..to], runs.ToImmutable());
+	}
+
+	/// <summary>
+	/// Replaces every tab with <paramref name="tabWidth"/> spaces. This is literal substitution,
+	/// not alignment to tab stops, which is what the servers this mirrors do: four spaces per tab
+	/// turns <c>a\tb</c> into <c>a    b</c>, not into a tab stop at column four.
+	/// </summary>
+	/// <remarks>A <paramref name="tabWidth"/> of zero or less leaves the text alone.</remarks>
+	public MarkupText ExpandTabs(int tabWidth) =>
+		tabWidth <= 0 || !Text.Contains('\t') ? this : ReplaceAll("\t", Plain(new string(' ', tabWidth)));
+
+	/// <summary>
+	/// The widest prefix or suffix of this text that fits in <paramref name="cells"/> display
+	/// cells, cut on a grapheme cluster boundary.
+	/// </summary>
+	/// <remarks>
+	/// Text already within the budget is returned unchanged. Because the cut lands on a cluster
+	/// boundary the result may be narrower than <paramref name="cells"/>, and is empty when the
+	/// first cluster alone is wider than the budget.
+	/// </remarks>
+	public MarkupText TruncateToWidth(int cells, CutFrom from)
+	{
+		if (cells <= 0 || Length == 0) return Empty;
+		if (DisplayWidth <= cells) return this;
+		return from == CutFrom.End
+			? Substring(0, Cells.IndexAtWidth(Text, cells))
+			: Substring(Cells.IndexFromWidthEnd(Text, cells));
 	}
 
 	/// <summary>Splits on the plain text of <paramref name="delimiter"/>; its markup is ignored.</summary>
