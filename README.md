@@ -22,7 +22,8 @@ text.Render(MarkupFormat.Plain);  // Hello, world
 
 Slicing, padding, wrapping, trimming and the rest of the string operations carry the markup with
 them, and measure in **display cells** — wide CJK, combining marks and emoji sequences count
-correctly, and no operation ever cuts a grapheme cluster in half.
+correctly, and no operation ever cuts a grapheme cluster in half. On top of them sits a column
+layout engine: wrap, justify, fill, and assemble columns into aligned rows.
 
 ## Install
 
@@ -68,6 +69,7 @@ Console.WriteLine(prompt.Render(MarkupFormat.Ansi));
 |---|---|
 | [Getting started](docs/getting-started.md) | Install, wire up the registry, build and render your first styled text. |
 | [Text operations](docs/text-operations.md) | Slicing, padding, alignment, splitting, splicing — and the grapheme and display-width rules they obey. |
+| [Layout](docs/layout.md) | Wrapping, justification, fills as patterns, and assembling columns into rows. |
 | [Formats and rendering](docs/formats.md) | The six built-in formats, what each emits, framers, custom formats. |
 | [Custom markup kinds](docs/custom-markup.md) | Write your own `IMarkup`, emitters and codec; compose with the kinds already registered. |
 | [Serialization](docs/serialization.md) | The JSON wire format, forward compatibility, `UnknownMarkup`. |

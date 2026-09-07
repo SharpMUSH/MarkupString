@@ -8,6 +8,20 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+
+- A column layout engine in `MarkupString.Layout`. `ColumnFormat` describes a column — how its
+  text is shaped into lines, how those lines are drawn, and how it behaves among its neighbours
+  — and is composed with `with`. `MarkupText.FormatColumn` draws one; `TextLayout.Rows` and
+  `TextLayout.Render` assemble several into aligned rows.
+- `MarkupText.WrapLines`, for callers who only want lines, plus `MarkupText.Shape`,
+  `MarkupText.ExpandTabs`, `MarkupText.TruncateToWidth` and `DisplayWidth.IndexFromWidthEnd`
+  underneath it.
+- Between them these cover the union of PennMUSH `align()` and RhostMUSH `printf()`. Where the
+  two servers disagree — the space a word break lands on, whether a separator survives onto
+  continuation rows, whether an exhausted column merges or shifts — both behaviours are
+  reachable and neither is a default. See [the layout guide](docs/layout.md).
+
 ### Changed
 
 - **Breaking:** a multi-character fill given to `Pad` or `Center` is now a pattern indexed by
