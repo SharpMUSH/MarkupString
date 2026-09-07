@@ -67,6 +67,58 @@ public sealed partial class MarkupText
 	}
 
 	/// <summary>
+	/// Breaks this text into lines of at most <paramref name="width"/> display cells, at the last
+	/// space that fits.
+	/// </summary>
+	public MarkupText[] WrapLines(int width) => WrapLines(width, WrapMode.Word);
+
+	/// <summary>
+	/// Breaks this text into lines of at most <paramref name="width"/> display cells.
+	/// </summary>
+	/// <remarks>
+	/// Empty text yields no lines, as <see cref="Split(string)"/> does; a
+	/// <paramref name="width"/> of zero or less yields this text unbroken. For anything beyond
+	/// the width and the mode — an indent, a line budget, the RhostMUSH rule for the space a
+	/// break lands on — build a <see cref="ColumnFormat"/> and call <see cref="Shape"/>.
+	/// </remarks>
+	public MarkupText[] WrapLines(int width, WrapMode mode)
+	{
+		if (Length == 0) return [];
+		if (width <= 0) return [this];
+
+		var shaped = Shape(new ColumnFormat { Width = width, Wrap = mode });
+		var lines = new MarkupText[shaped.Length];
+		for (var i = 0; i < shaped.Length; i++) lines[i] = shaped[i].Text;
+		return lines;
+	}
+
+	/// <summary>
+	/// Shapes this text into the lines of a column: tabs expanded, cut to the cell budget, then
+	/// wrapped with the indent applied and stopped at the line budget.
+	/// </summary>
+	/// <remarks>
+	/// Always yields at least one line, empty text included, because a column occupies a row
+	/// whether or not it has anything to say.
+	/// </remarks>
+	public ImmutableArray<TextLine> Shape(ColumnFormat format)
+	{
+		ArgumentNullException.ThrowIfNull(format);
+
+		var source = ExpandTabs(format.TabWidth);
+		if (format.MaxCells > 0) source = source.TruncateToWidth(format.MaxCells, CutFrom.End);
+
+		var spans = LineWrapper.Break(source.Text, format);
+		var lines = ImmutableArray.CreateBuilder<TextLine>(spans.Count);
+		foreach (var span in spans)
+			lines.Add(new TextLine(
+				source.Substring(span.Start, span.End - span.Start),
+				span.Indent,
+				span.Width,
+				span.EndsParagraph));
+		return lines.ToImmutable();
+	}
+
+	/// <summary>
 	/// Replaces every tab with <paramref name="tabWidth"/> spaces. This is literal substitution,
 	/// not alignment to tab stops, which is what the servers this mirrors do: four spaces per tab
 	/// turns <c>a\tb</c> into <c>a    b</c>, not into a tab stop at column four.
