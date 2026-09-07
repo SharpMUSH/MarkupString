@@ -20,6 +20,16 @@ internal static class ColumnRenderer
 		return rendered;
 	}
 
+	/// <summary>
+	/// The column drawn with nothing in it, for a row where it has run out of lines. Penn's
+	/// filler fills an exhausted column, so this is the same drawing a blank line gets.
+	/// </summary>
+	internal static MarkupText Blank(ColumnFormat format)
+	{
+		var body = Blank(new TextLine(MarkupText.Empty, 0, Math.Max(0, format.Width), true), format);
+		return format.Markup is null ? body : MarkupText.Wrap(format.Markup, body);
+	}
+
 	private static MarkupText RenderLine(TextLine line, ColumnFormat format)
 	{
 		var available = Math.Max(0, line.Width - line.Start);
