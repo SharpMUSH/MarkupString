@@ -8,6 +8,22 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+
+- **`TextEncoding.Html` no longer encodes `"` and `'`.** It now writes entities for `<`, `>` and
+  `&` only — the characters that are actually markup in HTML *text*. A quote and an apostrophe are
+  markup only inside an attribute value, and this encoding is never applied to one: `HtmlTagEmitter`
+  writes the body between `>` and `</`, and the layers that emit attributes (`AnsiHtmlEmitter`'s
+  `xch_cmd`/`href`/`title`, and whatever a caller passes as `HtmlMarkup.Attributes`) encode their
+  own and are untouched by this. So the extra two entities protected nothing, and cost something:
+  over a MUD socket they inflate every apostrophe in every line of dialogue fivefold, and they leave
+  Pueblo and MXP output depending on the two entities a client is least likely to have implemented.
+
+  This changes rendered output for `Html`, `Pueblo` and `Mxp` — a consumer with snapshot tests over
+  text containing quotes or apostrophes will see them move. It is not a change in what is safe to
+  render.
+
+
 ## 1.1.0 — 2026-09-07
 
 ### Added
