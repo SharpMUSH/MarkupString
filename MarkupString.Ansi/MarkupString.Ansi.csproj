@@ -9,9 +9,9 @@
     <NoWarn>CS1591</NoWarn>
     <!-- Every build is diffed against the last release, so a removed or re-signatured public member
          fails here rather than in a consumer's restore. Raise this to the newest published version
-         each time one goes out. -->
+         each time one goes out; drop it for a release that removes public API on purpose, and put
+         it back straight after. -->
     <EnablePackageValidation>true</EnablePackageValidation>
-    <PackageValidationBaselineVersion>1.0.0</PackageValidationBaselineVersion>
     <Description>Terminal styling for MarkupString: colours (16, 256 and truecolor), text attributes and links, an ansi() code parser, and emitters that fold a run's layers into one SGR sequence, HTML span, Pueblo/MXP tag or BBCode tag.</Description>
   </PropertyGroup>
 

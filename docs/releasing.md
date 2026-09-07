@@ -33,9 +33,14 @@ build if the two ever disagree.
    The tag triggers `.github/workflows/release.yml`. `workflow_dispatch` with the tag name as input
    does the same thing by hand.
 
-4. After the **first** ever release, set `PackageValidationBaselineVersion` to it in each of the
-   three package files. Package validation then diffs every later build against the published
-   baseline and fails on a break.
+4. After the release lands on nuget.org, set `PackageValidationBaselineVersion` to it in each of
+   the three package files. Package validation then diffs every later build against that published
+   surface and fails on a break — including one you did not mean to make.
+
+   A release that *does* remove or re-signature public API is the exception: drop the property for
+   that build, release, then set it to the new version. `PublicAPI.Unshipped.txt` still records each
+   removal as a `*REMOVED*` line, so the removal is reviewed rather than merely permitted — and
+   unlist the version being broken away from, so nobody resolves to a surface that no longer holds.
 
 ## What the release workflow does
 
@@ -81,4 +86,4 @@ repository was set up; the first successful push claims them.
 - [ ] `PublicAPI.Unshipped.txt` promoted to `PublicAPI.Shipped.txt` in all three packages
 - [ ] Trusted publishing policy exists on nuget.org for `SharpMUSH/MarkupString` (first release only)
 - [ ] Tag pushed, `Release` workflow green
-- [ ] `PackageValidationBaselineVersion` set (after the first release only)
+- [ ] `PackageValidationBaselineVersion` raised to the version just published

@@ -1,5 +1,4 @@
 #nullable enable
-MarkupString.Html.HtmlCss
 MarkupString.Html.HtmlMarkup
 MarkupString.Html.HtmlMarkup.<Clone>$() -> MarkupString.Html.HtmlMarkup!
 MarkupString.Html.HtmlMarkup.Attributes.get -> string?
@@ -29,4 +28,3 @@ static MarkupString.Html.HtmlMarkup.Create(string! tagName, string? attributes =
 static MarkupString.Html.HtmlMarkup.operator !=(MarkupString.Html.HtmlMarkup? left, MarkupString.Html.HtmlMarkup? right) -> bool
 static MarkupString.Html.HtmlMarkup.operator ==(MarkupString.Html.HtmlMarkup? left, MarkupString.Html.HtmlMarkup? right) -> bool
 static MarkupString.Html.HtmlRegistration.WithHtml(this MarkupString.MarkupRegistry! registry) -> MarkupString.MarkupRegistry!
-static readonly MarkupString.Html.HtmlCss.Fixed -> string!

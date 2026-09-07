@@ -12,12 +12,15 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `AnsiCss.Fixed` in `MarkupString.Ansi` — the stylesheet for the `ms-*` classes. Every one of
   those classes is written by this package's HTML emitter, so a consumer rendering HTML with
-  `MarkupString` + `MarkupString.Ansi` alone can now reach the rules; previously they existed only
-  in `MarkupString.Html`, a package such a consumer has no reason to take.
+  `MarkupString` + `MarkupString.Ansi` alone can now reach the rules; in 1.0.0 they existed only in
+  `MarkupString.Html`, a package such a consumer has no reason to take.
 
-### Deprecated
+### Removed
 
-- `HtmlCss.Fixed` in `MarkupString.Html`. It returns `AnsiCss.Fixed` unchanged; move to that.
+- **Breaking:** `HtmlCss` in `MarkupString.Html`. Use `AnsiCss.Fixed`; the rules are identical.
+  Nothing else in that package writes an `ms-*` class, so the type had no business being there.
+  A removal in a minor is a semver break; 1.0.0 is unlisted, having been published the same day
+  and consumed by nothing, so there is no one to break.
 
 ## 1.0.0 — 2026-09-07
 
