@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using System.Text;
+using MarkupString.Layout;
 
 // The DisplayWidth instance property below hides the type of the same name, so operations
 // reach the measuring helpers through this alias.
@@ -65,6 +66,96 @@ public sealed partial class MarkupText
 		return new MarkupText(Text[from..to], runs.ToImmutable());
 	}
 
+	/// <summary>
+	/// Breaks this text into lines of at most <paramref name="width"/> display cells, at the last
+	/// space that fits.
+	/// </summary>
+	public MarkupText[] WrapLines(int width) => WrapLines(width, WrapMode.Word);
+
+	/// <summary>
+	/// Breaks this text into lines of at most <paramref name="width"/> display cells.
+	/// </summary>
+	/// <remarks>
+	/// Empty text yields no lines, as <see cref="Split(string)"/> does; a
+	/// <paramref name="width"/> of zero or less yields this text unbroken. For anything beyond
+	/// the width and the mode — an indent, a line budget, the RhostMUSH rule for the space a
+	/// break lands on — build a <see cref="ColumnFormat"/> and call <see cref="Shape"/>.
+	/// </remarks>
+	public MarkupText[] WrapLines(int width, WrapMode mode)
+	{
+		if (Length == 0) return [];
+		if (width <= 0) return [this];
+
+		var shaped = Shape(new ColumnFormat { Width = width, Wrap = mode });
+		var lines = new MarkupText[shaped.Length];
+		for (var i = 0; i < shaped.Length; i++) lines[i] = shaped[i].Text;
+		return lines;
+	}
+
+	/// <summary>
+	/// Shapes this text and draws it as a column: every line exactly
+	/// <see cref="ColumnFormat.Width"/> display cells wide, filled and aligned.
+	/// </summary>
+	/// <remarks>
+	/// A line runs wider than the column only under <see cref="TruncationType.Overflow"/>, or
+	/// where a single grapheme cluster is wider than the column and had to go somewhere.
+	/// </remarks>
+	public MarkupText[] FormatColumn(ColumnFormat format) =>
+		ColumnRenderer.Render(Shape(format), format);
+
+	/// <summary>
+	/// Shapes this text into the lines of a column: tabs expanded, cut to the cell budget, then
+	/// wrapped with the indent applied and stopped at the line budget.
+	/// </summary>
+	/// <remarks>
+	/// Always yields at least one line, empty text included, because a column occupies a row
+	/// whether or not it has anything to say.
+	/// </remarks>
+	public ImmutableArray<TextLine> Shape(ColumnFormat format)
+	{
+		ArgumentNullException.ThrowIfNull(format);
+
+		var source = ExpandTabs(format.TabWidth);
+		if (format.MaxCells > 0) source = source.TruncateToWidth(format.MaxCells, CutFrom.End);
+
+		var spans = LineWrapper.Break(source.Text, format);
+		var lines = ImmutableArray.CreateBuilder<TextLine>(spans.Count);
+		foreach (var span in spans)
+			lines.Add(new TextLine(
+				source.Substring(span.Start, span.End - span.Start),
+				span.Indent,
+				span.Width,
+				span.EndsParagraph));
+		return lines.ToImmutable();
+	}
+
+	/// <summary>
+	/// Replaces every tab with <paramref name="tabWidth"/> spaces. This is literal substitution,
+	/// not alignment to tab stops, which is what the servers this mirrors do: four spaces per tab
+	/// turns <c>a\tb</c> into <c>a    b</c>, not into a tab stop at column four.
+	/// </summary>
+	/// <remarks>A <paramref name="tabWidth"/> of zero or less leaves the text alone.</remarks>
+	public MarkupText ExpandTabs(int tabWidth) =>
+		tabWidth <= 0 || !Text.Contains('\t') ? this : ReplaceAll("\t", Plain(new string(' ', tabWidth)));
+
+	/// <summary>
+	/// The widest prefix or suffix of this text that fits in <paramref name="cells"/> display
+	/// cells, cut on a grapheme cluster boundary.
+	/// </summary>
+	/// <remarks>
+	/// Text already within the budget is returned unchanged. Because the cut lands on a cluster
+	/// boundary the result may be narrower than <paramref name="cells"/>, and is empty when the
+	/// first cluster alone is wider than the budget.
+	/// </remarks>
+	public MarkupText TruncateToWidth(int cells, CutFrom from)
+	{
+		if (cells <= 0 || Length == 0) return Empty;
+		if (DisplayWidth <= cells) return this;
+		return from == CutFrom.End
+			? Substring(0, Cells.IndexAtWidth(Text, cells))
+			: Substring(Cells.IndexFromWidthEnd(Text, cells));
+	}
+
 	/// <summary>Splits on the plain text of <paramref name="delimiter"/>; its markup is ignored.</summary>
 	public MarkupText[] Split(MarkupText delimiter) => Split(delimiter.Text);
 
@@ -127,28 +218,22 @@ public sealed partial class MarkupText
 	/// <summary>
 	/// Brings the text to <paramref name="width"/> display cells by adding <paramref name="fill"/>.
 	/// Text already at or beyond the width is either cut on a cluster boundary
-	/// (<see cref="TruncationType.Truncate"/>, then filled if a wide character left a cell short)
-	/// or returned unchanged (<see cref="TruncationType.Overflow"/>).
+	/// (<see cref="TruncationType.Truncate"/>) or returned unchanged
+	/// (<see cref="TruncationType.Overflow"/>).
 	/// </summary>
 	/// <remarks>
-	/// The result is exactly <paramref name="width"/> display cells wide, with two exceptions:
-	/// <see cref="TruncationType.Overflow"/> keeps text that is already wider, and
-	/// <see cref="PadType.Full"/> has nowhere to put the cells when the text has no word gap to
-	/// widen. Cells that <paramref name="fill"/> cannot express, such as the single cell left over
-	/// by a two-cell fill, are taken by spaces, so the width holds whatever the fill is.
+	/// The result is exactly <paramref name="width"/> display cells wide unless
+	/// <see cref="TruncationType.Overflow"/> keeps text that is already wider. A multi-cell
+	/// <paramref name="fill"/> is a pattern indexed by position in the result rather than
+	/// something restarted where the text stops, so it reads as one unbroken run behind the
+	/// text; <see cref="Layout.FillPhase.Restart"/> on a <see cref="ColumnFormat"/> restores the
+	/// older behaviour. Cells the fill cannot express, such as the single cell left over by a
+	/// two-cell fill, are taken by spaces.
 	/// </remarks>
 	public MarkupText Pad(MarkupText fill, int width, PadType type, TruncationType truncation)
 	{
 		ArgumentNullException.ThrowIfNull(fill);
-		if (type == PadType.Full) return PadFull(fill, width, truncation);
-
-		var cells = DisplayWidth;
-		if (cells < width) return PadTo(this, fill, fill, width - cells, type);
-		if (truncation == TruncationType.Overflow) return this;
-
-		var cut = Substring(0, Cells.IndexAtWidth(Text, width));
-		var deficit = width - cut.DisplayWidth;
-		return deficit <= 0 ? cut : PadTo(cut, fill, fill, deficit, type);
+		return AsColumn(fill, null, width, Aligned(type), truncation);
 	}
 
 	/// <summary>
@@ -164,15 +249,34 @@ public sealed partial class MarkupText
 	{
 		ArgumentNullException.ThrowIfNull(fillLeft);
 		ArgumentNullException.ThrowIfNull(fillRight);
-
-		var cells = DisplayWidth;
-		if (cells < width) return PadTo(this, fillLeft, fillRight, width - cells, PadType.Center);
-		if (truncation == TruncationType.Overflow) return this;
-
-		var cut = Substring(0, Cells.IndexAtWidth(Text, width));
-		var deficit = width - cut.DisplayWidth;
-		return deficit <= 0 ? cut : PadTo(cut, fillLeft, fillRight, deficit, PadType.Center);
+		return AsColumn(fillLeft, fillRight, width, Alignment.Center, truncation);
 	}
+
+	/// <summary>Draws this text as a single-line column of <paramref name="width"/> cells.</summary>
+	private MarkupText AsColumn(
+		MarkupText fill, MarkupText? fillRight, int width, Alignment alignment, TruncationType truncation) =>
+		FormatColumn(new ColumnFormat
+		{
+			Width = width,
+			Alignment = alignment,
+			Fill = fill,
+			FillRight = fillRight,
+			Truncation = truncation,
+		})[0];
+
+	/// <summary>
+	/// Where the fill goes, expressed as where the text goes. <see cref="PadType"/> names the
+	/// side the fill lands on; <see cref="Alignment"/> names the side the text lands on, so the
+	/// two are mirrored.
+	/// </summary>
+	private static Alignment Aligned(PadType type) => type switch
+	{
+		PadType.Left => Alignment.Right,
+		PadType.Right => Alignment.Left,
+		PadType.Center => Alignment.Center,
+		PadType.Full => Alignment.Full,
+		_ => throw new ArgumentOutOfRangeException(nameof(type), type, "Unsupported pad type."),
+	};
 
 	/// <summary>This text repeated <paramref name="count"/> times.</summary>
 	public MarkupText Repeat(int count)
@@ -355,62 +459,6 @@ public sealed partial class MarkupText
 		if (tail.Length == 0) return this;
 		if (Runs.Length == 0 || Runs[^1].End != Length) return Concat(this, tail);
 		return Concat(this, Wrap(Runs[^1].Markups.Outermost, tail));
-	}
-
-	/// <summary>Distributes <paramref name="cells"/> of fill around <paramref name="body"/>.</summary>
-	private static MarkupText PadTo(MarkupText body, MarkupText left, MarkupText right, int cells, PadType type) =>
-		type switch
-		{
-			PadType.Left => Concat(BuildFill(left, cells), body),
-			PadType.Right => Concat(body, BuildFill(right, cells)),
-			PadType.Center => Concat([BuildFill(left, cells / 2), body, BuildFill(right, cells - cells / 2)]),
-			_ => throw new ArgumentOutOfRangeException(nameof(type), type, "Unsupported pad type."),
-		};
-
-	/// <summary>
-	/// <paramref name="fill"/> repeated and cut to exactly <paramref name="cells"/> display cells.
-	/// The fill's own markup survives; cells the fill cannot express, because its last cluster is
-	/// wider than what is left to fill (or because it has no width at all), take spaces instead.
-	/// </summary>
-	private static MarkupText BuildFill(MarkupText fill, int cells)
-	{
-		if (cells <= 0) return Empty;
-		var unit = fill.DisplayWidth;
-		if (unit <= 0) return Space.Repeat(cells);
-		var repeated = fill.Repeat(cells / unit + 1);
-		var built = repeated.Substring(0, Cells.IndexAtWidth(repeated.Text, cells));
-		var residue = cells - built.DisplayWidth;
-		return residue <= 0 ? built : Concat(built, Space.Repeat(residue));
-	}
-
-	/// <summary>Widens the gaps between space-separated words instead of appending fill.</summary>
-	private MarkupText PadFull(MarkupText fill, int width, TruncationType truncation)
-	{
-		var cells = DisplayWidth;
-		if (cells >= width)
-		{
-			if (truncation == TruncationType.Overflow) return this;
-			var cut = Substring(0, Cells.IndexAtWidth(Text, width));
-			var deficit = width - cut.DisplayWidth;
-			return deficit <= 0 ? cut : PadTo(cut, fill, fill, deficit, PadType.Right);
-		}
-
-		var words = Split(" ");
-		var fences = words.Length - 1;
-		if (fences <= 0) return this;
-
-		var totalSpaces = fences + (width - cells);
-		var thin = Space.Repeat(totalSpaces / fences);
-		var thick = Space.Repeat(totalSpaces / fences + 1);
-		var thickCount = totalSpaces % fences;
-
-		var parts = new List<MarkupText>(words.Length * 2 - 1);
-		for (var i = 0; i < words.Length; i++)
-		{
-			if (i > 0) parts.Add(i <= thickCount ? thick : thin);
-			parts.Add(words[i]);
-		}
-		return Concat(CollectionsMarshal.AsSpan(parts));
 	}
 
 	/// <summary>The markup of the run that strictly contains <paramref name="index"/>, if any.</summary>

@@ -23,6 +23,32 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   text containing quotes or apostrophes will see them move. It is not a change in what is safe to
   render.
 
+### Added
+
+- A column layout engine in `MarkupString.Layout`. `ColumnFormat` describes a column — how its
+  text is shaped into lines, how those lines are drawn, and how it behaves among its neighbours
+  — and is composed with `with`. `MarkupText.FormatColumn` draws one; `TextLayout.Rows` and
+  `TextLayout.Render` assemble several into aligned rows.
+- `MarkupText.WrapLines`, for callers who only want lines, plus `MarkupText.Shape`,
+  `MarkupText.ExpandTabs`, `MarkupText.TruncateToWidth` and `DisplayWidth.IndexFromWidthEnd`
+  underneath it.
+- Between them these cover the union of PennMUSH `align()` and RhostMUSH `printf()`. Where the
+  two servers disagree — the space a word break lands on, whether a separator survives onto
+  continuation rows, whether an exhausted column merges or shifts — both behaviours are
+  reachable and neither is a default. See [the layout guide](docs/layout.md).
+
+### Changed
+
+- **Breaking:** a multi-character fill given to `Pad` or `Center` is now a pattern indexed by
+  position in the result, rather than one restarted where the text stops. Left-padding
+  `ten char filler` to 40 with `0123456789` now reads `ten char filler5678901234...` — the
+  pattern continues behind the text instead of beginning again — which is what the servers this
+  mirrors emit, and what makes a filler read as one unbroken run. Single-character fills, which
+  is nearly every use, are unaffected. `ColumnFormat.FillPhase` set to `Restart` reproduces the
+  old behaviour exactly.
+- **Breaking:** `Pad` with `PadType.Full` on text with no word gap to widen now fills out to the
+  requested width instead of returning the text untouched. A padding operation that hands back
+  something narrower than the width it was given is a trap for a caller laying out columns.
 
 ## 1.1.0 — 2026-09-07
 
