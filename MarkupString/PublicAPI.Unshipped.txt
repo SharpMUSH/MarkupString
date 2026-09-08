@@ -177,3 +177,14 @@ static MarkupString.Layout.TextLine.operator ==(MarkupString.Layout.TextLine lef
 virtual MarkupString.Layout.LayoutCell.EqualityContract.get -> System.Type!
 virtual MarkupString.Layout.LayoutCell.Equals(MarkupString.Layout.LayoutCell? other) -> bool
 virtual MarkupString.Layout.LayoutCell.PrintMembers(System.Text.StringBuilder! builder) -> bool
+MarkupString.Graphemes.Enumerator
+MarkupString.Graphemes.Enumerator.Current.get -> System.Range
+MarkupString.Graphemes.Enumerator.Enumerator() -> void
+MarkupString.Graphemes.Enumerator.GetEnumerator() -> MarkupString.Graphemes.Enumerator
+MarkupString.Graphemes.Enumerator.MoveNext() -> bool
+MarkupString.MarkupText.EnumerateGraphemes() -> System.Collections.Generic.IEnumerable<MarkupString.MarkupText!>!
+MarkupString.MarkupText.GraphemeCount.get -> int
+MarkupString.MarkupText.SubstringGraphemes(int start) -> MarkupString.MarkupText!
+MarkupString.MarkupText.SubstringGraphemes(int start, int count) -> MarkupString.MarkupText!
+static MarkupString.Graphemes.Count(System.ReadOnlySpan<char> text) -> int
+static MarkupString.Graphemes.Enumerate(System.ReadOnlySpan<char> text) -> MarkupString.Graphemes.Enumerator

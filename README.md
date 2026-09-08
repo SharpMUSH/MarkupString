@@ -131,3 +131,37 @@ changes — the formatter needs two passes to converge).
 ## Licence
 
 Apache-2.0. Extracted from and used by [SharpMUSH](https://github.com/SharpMUSH/SharpMUSH).
+
+### Text measurement units
+
+`MarkupText.Length`, run offsets, `Substring`, and search results use UTF-16 code units.
+A Unicode scalar is one code point (one or two UTF-16 units); use .NET `EnumerateRunes()`
+on `Text` when scalar iteration is intended. `GraphemeCount` counts extended grapheme
+clusters, while `DisplayWidth` measures terminal columns. For `界e\u0301😀` these values
+are respectively 5 UTF-16 units, 4 scalars, 3 clusters, and 5 columns.
+
+```csharp
+var clusters = text.EnumerateGraphemes(); // lazy IEnumerable<MarkupText>
+var second = text.SubstringGraphemes(1, 1);
+var tail = text.SubstringGraphemes(1);
+foreach (var range in Graphemes.Enumerate(text.Text))
+{
+    // range contains UTF-16 offsets, suitable for indexing the original text
+}
+```
+
+Grapheme indexes are zero-based. Negative starts clamp to zero, nonpositive counts
+return empty, and ranges past the end clamp to the available clusters. Extraction
+preserves every ANSI, HTML, and custom markup layer, even when a run boundary occurs
+inside a cluster. It never renders into a particular format. Enumeration keeps constant
+traversal storage and allocates only the yielded cluster text and clipped runs; the core
+`Graphemes.Enumerate` range enumerator and `Graphemes.Count` allocate no boundary array.
+
+Segmentation follows the running .NET `StringInfo` Unicode rules. Text is never Unicode
+normalized: composed and decomposed spellings retain their original UTF-16 content.
+Malformed UTF-16 is retained unchanged; segmentation follows `StringInfo` behavior for
+unpaired surrogates. Scalar enumeration through .NET `EnumerateRunes()` instead reports
+replacement runes for malformed sequences. MarkupString does not repair or reject them.
+Existing UTF-16 slicing and display-width policies remain unchanged. Snapping walks back
+to a proven boundary with no maximum cluster length, including long combining, ZWJ,
+and regional-indicator sequences.

@@ -25,6 +25,10 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- Explicit grapheme counting, lazy markup-preserving enumeration, and grapheme-indexed
+  extraction on `MarkupText`; allocation-free cluster ranges and counting on `Graphemes`.
+  Documented UTF-16, scalar, cluster, column, normalization, and malformed-input contracts.
+
 - A column layout engine in `MarkupString.Layout`. `ColumnFormat` describes a column — how its
   text is shaped into lines, how those lines are drawn, and how it behaves among its neighbours
   — and is composed with `with`. `MarkupText.FormatColumn` draws one; `TextLayout.Rows` and

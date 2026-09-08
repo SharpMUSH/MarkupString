@@ -15,11 +15,34 @@ public static class Graphemes
 {
 	private const char ZeroWidthJoiner = '\u200D';
 
-	/// <summary>
-	/// How far back the cluster walk starts from a cut. Clusters longer than this (very deep
-	/// emoji ZWJ sequences) may snap to an interior boundary rather than the cluster start.
-	/// </summary>
-	private const int ScanBack = 64;
+	/// <summary>Counts extended grapheme clusters using the runtime Unicode segmentation rules.</summary>
+	public static int Count(ReadOnlySpan<char> text)
+	{
+		var count = 0;
+		foreach (var range in Enumerate(text)) count++;
+		return count;
+	}
+
+	/// <summary>Enumerates cluster ranges in UTF-16 code units without allocating a boundary array.</summary>
+	public static Enumerator Enumerate(ReadOnlySpan<char> text) => new(text);
+
+	/// <summary>A forward-only, allocation-free enumerator of UTF-16 cluster ranges.</summary>
+	public ref struct Enumerator
+	{
+		private readonly ReadOnlySpan<char> _text;
+		private int _position;
+		internal Enumerator(ReadOnlySpan<char> text) { _text = text; _position = 0; Current = default; }
+		public Range Current { get; private set; }
+		public readonly Enumerator GetEnumerator() => this;
+		public bool MoveNext()
+		{
+			if (_position >= _text.Length) return false;
+			var start = _position;
+			_position += StringInfo.GetNextTextElementLength(_text[_position..]);
+			Current = start.._position;
+			return true;
+		}
+	}
 
 	/// <summary>Returns the largest cluster boundary at or before <paramref name="index"/>.</summary>
 	public static int SnapStart(ReadOnlySpan<char> text, int index)
@@ -50,7 +73,8 @@ public static class Graphemes
 
 	private static int BoundaryAtOrBefore(ReadOnlySpan<char> text, int index)
 	{
-		var scan = Math.Max(0, index - ScanBack);
+		// Walk back to a proven boundary, however long the cluster or RI sequence is.
+		var scan = index;
 		while (scan > 0 && MayBeInsideCluster(text, scan)) scan--;
 
 		var position = scan;

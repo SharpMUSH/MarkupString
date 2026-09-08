@@ -59,6 +59,12 @@ public sealed partial class MarkupText
 		// tail of "take the rest" calls like x.Substring(n, x.Length - n).
 		var to = length >= Length - clampedStart ? Length : Graphemes.SnapStart(Text, from + length);
 		if (to <= from) return Empty;
+		return ExtractRange(from, to);
+	}
+
+	// Call only with known cluster boundaries; avoids re-scanning long clusters in enumeration.
+	private MarkupText ExtractRange(int from, int to)
+	{
 		if (from == 0 && to == Length) return this;
 
 		var runs = ImmutableArray.CreateBuilder<Run>();
