@@ -9,6 +9,7 @@ public class GraphemeContractTests
 	private static IEnumerable<string> Samples()
 	{
 		yield return "";
+		yield return string.Concat(Enumerable.Repeat("😀👩🀄", 100));
 		yield return "a界e\u0301😀👍🏽👩‍👩‍👧‍👦🇺🇸\r\n";
 		yield return "x" + "e" + new string('\u0301', 1024) + "tail";
 		yield return "x" + string.Concat(Enumerable.Repeat("👩‍", 256)) + "👧tail";

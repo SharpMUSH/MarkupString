@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 namespace MarkupString;
 
 /// <summary>
@@ -93,7 +94,8 @@ public static class Graphemes
 	/// only means the cluster walk has to decide. Never under-reports, because every character
 	/// that can take part in a UAX #29 no-break rule is caught here: nothing below U+0300 joins
 	/// anything except CR LF (GB3); surrogates carry every non-BMP participant (emoji modifiers,
-	/// regional indicators, the non-BMP prepend characters); ZWJ covers GB11; the Hangul ranges
+	/// regional indicators, the non-BMP prepend characters), with a safe exception for adjacent
+	/// complete non-RI symbols; ZWJ covers GB11; the Hangul ranges
 	/// cover GB6-GB8; and marks, format characters and the handful of
 	/// <see cref="IsExtendingChar"/> exceptions cover GB9, GB9a, GB9b and GB9c, on either side of
 	/// the index.
@@ -103,11 +105,26 @@ public static class Graphemes
 		var current = text[index];
 		var previous = text[index - 1];
 		if (current < '\u0300' && previous < '\u0300') return previous == '\r' && current == '\n';
-		if (char.IsSurrogate(current) || char.IsSurrogate(previous)) return true;
+		if (char.IsSurrogate(current) || char.IsSurrogate(previous))
+		{
+			// Two complete supplementary symbols (for example adjacent emoji) have a break,
+			// except regional indicators whose pairing depends on the preceding RI count.
+			// Keep every other category conservative: modifiers, marks and prepend scalars
+			// must still reach the contextual runtime segmenter.
+			if (index >= 2 && index + 1 < text.Length
+				&& Rune.TryCreate(text[index - 2], previous, out var left)
+				&& Rune.TryCreate(current, text[index + 1], out var right)
+				&& IsIndependentSymbol(left) && IsIndependentSymbol(right)) return false;
+			return true;
+		}
 		if (current == ZeroWidthJoiner || previous == ZeroWidthJoiner) return true;
 		if (IsHangul(current) || IsHangul(previous)) return true;
 		return IsExtendingChar(current) || IsExtendingChar(previous);
 	}
+
+	private static bool IsIndependentSymbol(Rune rune) =>
+		Rune.GetUnicodeCategory(rune) == UnicodeCategory.OtherSymbol
+		&& rune.Value is not (>= 0x1F1E6 and <= 0x1F1FF);
 
 	/// <summary>
 	/// Hangul jamo (conjoining and extended) and precomposed Hangul syllables: the characters

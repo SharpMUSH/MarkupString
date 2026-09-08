@@ -128,10 +128,6 @@ The build fails with `FORMAT001` if C# no longer matches `.editorconfig`; the er
 the `dotnet format whitespace --folder <dir>` command that fixes it (run it until it reports no
 changes — the formatter needs two passes to converge).
 
-## Licence
-
-Apache-2.0. Extracted from and used by [SharpMUSH](https://github.com/SharpMUSH/SharpMUSH).
-
 ### Text measurement units
 
 `MarkupText.Length`, run offsets, `Substring`, and search results use UTF-16 code units.
@@ -154,7 +150,8 @@ Grapheme indexes are zero-based. Negative starts clamp to zero, nonpositive coun
 return empty, and ranges past the end clamp to the available clusters. Extraction
 preserves every ANSI, HTML, and custom markup layer, even when a run boundary occurs
 inside a cluster. It never renders into a particular format. Enumeration keeps constant
-traversal storage and allocates only the yielded cluster text and clipped runs; the core
+traversal storage, a compiler-generated iterator object, and the yielded cluster text
+and clipped runs; the core
 `Graphemes.Enumerate` range enumerator and `Graphemes.Count` allocate no boundary array.
 
 Segmentation follows the running .NET `StringInfo` Unicode rules. Text is never Unicode
@@ -164,4 +161,12 @@ unpaired surrogates. Scalar enumeration through .NET `EnumerateRunes()` instead 
 replacement runes for malformed sequences. MarkupString does not repair or reject them.
 Existing UTF-16 slicing and display-width policies remain unchanged. Snapping walks back
 to a proven boundary with no maximum cluster length, including long combining, ZWJ,
-and regional-indicator sequences.
+and regional-indicator sequences. Adjacent supplementary symbols use a constant-time
+boundary check. Regional-indicator pairing requires preceding context, so repeated random
+UTF-16 snapping within an uninterrupted flag sequence can rescan that sequence; use forward
+grapheme enumeration for linear segmentation when traversing all clusters.
+
+## Licence
+
+Apache-2.0. Extracted from and used by [SharpMUSH](https://github.com/SharpMUSH/SharpMUSH).
+
