@@ -169,4 +169,3 @@ grapheme enumeration for linear segmentation when traversing all clusters.
 ## Licence
 
 Apache-2.0. Extracted from and used by [SharpMUSH](https://github.com/SharpMUSH/SharpMUSH).
-
