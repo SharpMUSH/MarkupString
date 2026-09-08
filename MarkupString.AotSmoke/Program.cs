@@ -88,6 +88,21 @@ Expect(rendered["pueblo"], "<A XCH_CMD=\"look\"", "pueblo");
 Expect(rendered["mxp"], "<SEND HREF=\"look\"", "mxp");
 Expect(rendered["bbcode"], "[color=#ff5555]", "bbcode");
 
+var graphemeSource = MarkupText.Wrap(HtmlMarkup.Create("b"),
+	MarkupText.Wrap(AnsiMarkup.Create(underlined: true), "界e\u0301😀"));
+var extracted = graphemeSource.EnumerateGraphemes().ToArray();
+var reconstructed = MarkupText.Concat(extracted.AsSpan());
+if (graphemeSource.GraphemeCount != 3 || Graphemes.Count(graphemeSource.Text) != 3
+	|| graphemeSource.SubstringGraphemes(1).Text != "e\u0301😀")
+	failures.Add("grapheme counting or extraction failed");
+foreach (var format in formats)
+	if (reconstructed.Render(format) != graphemeSource.Render(format))
+		failures.Add($"grapheme reconstruction changed {format.Name}");
+var longCluster = "e" + new string('\u0301', 1024);
+if (Graphemes.SnapStart(longCluster, 1000) != 0
+	|| Graphemes.SnapEnd(longCluster, 1000) != longCluster.Length)
+	failures.Add("long cluster snapping failed");
+
 if (failures.Count > 0)
 {
 	Console.Error.WriteLine("AOT smoke test failed:");

@@ -8,6 +8,23 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## 2.1.0 — 2026-09-08
+
+### Added
+
+- `MarkupText.GraphemeCount`, lazy `EnumerateGraphemes()`, and `SubstringGraphemes(start[, count])`
+  preserve all markup layers while counting and extracting whole extended grapheme clusters.
+- Allocation-free `Graphemes.Count` and `Graphemes.Enumerate` expose cluster counts and UTF-16 ranges.
+- Explicit UTF-16, scalar, grapheme, column, normalization, and malformed-input contracts,
+  with long-cluster, mixed-markup reconstruction, allocation, and native-AOT coverage.
+
+### Changed
+
+- Snapping uses proven boundaries without a fixed lookback and avoids prefix rescans between
+  adjacent complete supplementary symbols. Context-sensitive flag pairing remains correct.
+
+## 2.0.0 — 2026-09-07
+
 ### Changed
 
 - **`TextEncoding.Html` no longer encodes `"` and `'`.** It now writes entities for `<`, `>` and

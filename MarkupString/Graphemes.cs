@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 namespace MarkupString;
 
 /// <summary>
@@ -15,11 +16,34 @@ public static class Graphemes
 {
 	private const char ZeroWidthJoiner = '\u200D';
 
-	/// <summary>
-	/// How far back the cluster walk starts from a cut. Clusters longer than this (very deep
-	/// emoji ZWJ sequences) may snap to an interior boundary rather than the cluster start.
-	/// </summary>
-	private const int ScanBack = 64;
+	/// <summary>Counts extended grapheme clusters using the runtime Unicode segmentation rules.</summary>
+	public static int Count(ReadOnlySpan<char> text)
+	{
+		var count = 0;
+		foreach (var range in Enumerate(text)) count++;
+		return count;
+	}
+
+	/// <summary>Enumerates cluster ranges in UTF-16 code units without allocating a boundary array.</summary>
+	public static Enumerator Enumerate(ReadOnlySpan<char> text) => new(text);
+
+	/// <summary>A forward-only, allocation-free enumerator of UTF-16 cluster ranges.</summary>
+	public ref struct Enumerator
+	{
+		private readonly ReadOnlySpan<char> _text;
+		private int _position;
+		internal Enumerator(ReadOnlySpan<char> text) { _text = text; _position = 0; Current = default; }
+		public Range Current { get; private set; }
+		public readonly Enumerator GetEnumerator() => this;
+		public bool MoveNext()
+		{
+			if (_position >= _text.Length) return false;
+			var start = _position;
+			_position += StringInfo.GetNextTextElementLength(_text[_position..]);
+			Current = start.._position;
+			return true;
+		}
+	}
 
 	/// <summary>Returns the largest cluster boundary at or before <paramref name="index"/>.</summary>
 	public static int SnapStart(ReadOnlySpan<char> text, int index)
@@ -50,7 +74,8 @@ public static class Graphemes
 
 	private static int BoundaryAtOrBefore(ReadOnlySpan<char> text, int index)
 	{
-		var scan = Math.Max(0, index - ScanBack);
+		// Walk back to a proven boundary, however long the cluster or RI sequence is.
+		var scan = index;
 		while (scan > 0 && MayBeInsideCluster(text, scan)) scan--;
 
 		var position = scan;
@@ -69,7 +94,8 @@ public static class Graphemes
 	/// only means the cluster walk has to decide. Never under-reports, because every character
 	/// that can take part in a UAX #29 no-break rule is caught here: nothing below U+0300 joins
 	/// anything except CR LF (GB3); surrogates carry every non-BMP participant (emoji modifiers,
-	/// regional indicators, the non-BMP prepend characters); ZWJ covers GB11; the Hangul ranges
+	/// regional indicators, the non-BMP prepend characters), with a safe exception for adjacent
+	/// complete non-RI symbols; ZWJ covers GB11; the Hangul ranges
 	/// cover GB6-GB8; and marks, format characters and the handful of
 	/// <see cref="IsExtendingChar"/> exceptions cover GB9, GB9a, GB9b and GB9c, on either side of
 	/// the index.
@@ -79,11 +105,26 @@ public static class Graphemes
 		var current = text[index];
 		var previous = text[index - 1];
 		if (current < '\u0300' && previous < '\u0300') return previous == '\r' && current == '\n';
-		if (char.IsSurrogate(current) || char.IsSurrogate(previous)) return true;
+		if (char.IsSurrogate(current) || char.IsSurrogate(previous))
+		{
+			// Two complete supplementary symbols (for example adjacent emoji) have a break,
+			// except regional indicators whose pairing depends on the preceding RI count.
+			// Keep every other category conservative: modifiers, marks and prepend scalars
+			// must still reach the contextual runtime segmenter.
+			if (index >= 2 && index + 1 < text.Length
+				&& Rune.TryCreate(text[index - 2], previous, out var left)
+				&& Rune.TryCreate(current, text[index + 1], out var right)
+				&& IsIndependentSymbol(left) && IsIndependentSymbol(right)) return false;
+			return true;
+		}
 		if (current == ZeroWidthJoiner || previous == ZeroWidthJoiner) return true;
 		if (IsHangul(current) || IsHangul(previous)) return true;
 		return IsExtendingChar(current) || IsExtendingChar(previous);
 	}
+
+	private static bool IsIndependentSymbol(Rune rune) =>
+		Rune.GetUnicodeCategory(rune) == UnicodeCategory.OtherSymbol
+		&& rune.Value is not (>= 0x1F1E6 and <= 0x1F1FF);
 
 	/// <summary>
 	/// Hangul jamo (conjoining and extended) and precomposed Hangul syllables: the characters
