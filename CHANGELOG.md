@@ -8,6 +8,37 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+
+- **Checked `HtmlMarkup` construction.** `HtmlMarkup.Tag(name, params attributes)` validates the
+  tag and attribute names and writes each value encoded, so nothing in a value can end the attribute
+  or the tag. `HtmlMarkup.IsValidTagName`, `IsValidAttributeName` and `TryParseAttributes` (which
+  reads a raw attribute string with its values decoded, as a client reads them) are public.
+- **`HtmlTagPolicy`**, for tags from somewhere untrusted: which tags and attributes are allowed,
+  which attributes carry an address (checked with `UrlSafety`, and refused if they hold whitespace
+  or a control character a browser would strip), and whether one bad attribute drops just itself or
+  all of them. `TryCreate` builds a checked tag from a name and a raw attribute string; `Apply` holds
+  an existing one to the policy. `BrowserSafe` and `WellFormed` are provided, and a policy is a
+  record, so `with` narrows one.
+- **`WithHtml(HtmlTagPolicy)`** and `HtmlTagEmitter(format, policy)`: every tag rendered in `Html` is
+  held to the policy as it is written, including markup that arrived deserialised or was built with
+  the unchecked `HtmlMarkup.Create`. A refused tag leaves its body in place. Pueblo and MXP output is
+  unchanged.
+- **`ILineFramer`**, registered with `MarkupRegistry.With(ILineFramer)` and found with
+  `FindLineFramer`: a prefix written at the start of every line that has content, in a slot of its
+  own beside `IFormatFramer`.
+- **`MxpSecureLineFramer`** and `WithMxpSecureLines()` in `MarkupString.Ansi`: open every line of
+  `Mxp` output in secure mode (`ESC[1z`), which an MXP client needs before it reads the tags on a
+  line. Opt-in, for the registry that renders for a connection.
+
+### Documentation
+
+- The guides no longer show `HtmlMarkup.Create("send", ...)` as a portable link. `<send>` is MXP's
+  command link; a Pueblo client prints it as text. The formats guide now has a Pueblo-and-MXP table,
+  and every example builds a link with `AnsiMarkup`'s `LinkKind.Command`, which each format writes
+  in its own dialect.
+- The formats guide said `TextEncoding.Html` escapes `"`; it has not since 2.1.0.
+
 ## 2.1.0 — 2026-09-08
 
 ### Added

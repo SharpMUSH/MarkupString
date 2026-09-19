@@ -1,1 +1,6 @@
 #nullable enable
+MarkupString.ILineFramer
+MarkupString.ILineFramer.Format.get -> MarkupString.MarkupFormat!
+MarkupString.ILineFramer.WriteLineStart(System.Buffers.IBufferWriter<char>! output) -> void
+MarkupString.MarkupRegistry.FindLineFramer(MarkupString.MarkupFormat! format) -> MarkupString.ILineFramer?
+MarkupString.MarkupRegistry.With(MarkupString.ILineFramer! framer) -> MarkupString.MarkupRegistry!

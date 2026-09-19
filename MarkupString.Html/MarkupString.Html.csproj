@@ -13,7 +13,7 @@
          it back straight after. -->
     <EnablePackageValidation>true</EnablePackageValidation>
     <PackageValidationBaselineVersion>2.1.0</PackageValidationBaselineVersion>
-    <Description>Raw HTML tag markup for MarkupString — an MXP &lt;send&gt;, an anchor, a span — rendered as itself in the HTML, Pueblo and MXP formats, folded into terminal styling elsewhere, with the stylesheet for the ms-* classes the emitters write.</Description>
+    <Description>Raw HTML tag markup for MarkupString — an anchor, a pre, a span — rendered as itself in the HTML, Pueblo and MXP formats and folded into terminal styling elsewhere, with checked construction, tag policies for untrusted input, and the stylesheet for the ms-* classes the emitters write.</Description>
   </PropertyGroup>
 
   <ItemGroup>

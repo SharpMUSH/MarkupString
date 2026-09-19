@@ -94,6 +94,35 @@ public static class MarkupTextRenderer
 		ArgumentNullException.ThrowIfNull(registry);
 		ArgumentNullException.ThrowIfNull(output);
 
+		if (registry.FindLineFramer(format) is not { } lineFramer)
+		{
+			RenderUnframedLines(text, format, registry, output);
+			return;
+		}
+
+		// A line is only known once it has been written — an emitter can put a newline anywhere — so
+		// the whole text is rendered first and the prefixes go in on the way out.
+		using var rendered = new PooledCharWriter(text.Text.Length * 2);
+		RenderUnframedLines(text, format, registry, rendered);
+		WriteFramedLines(rendered.WrittenSpan, lineFramer, output);
+	}
+
+	private static void WriteFramedLines(ReadOnlySpan<char> rendered, ILineFramer framer, IBufferWriter<char> output)
+	{
+		while (true)
+		{
+			var newline = rendered.IndexOf('\n');
+			var line = newline < 0 ? rendered : rendered[..newline];
+			if (line.Length > 0 && line is not "\r") framer.WriteLineStart(output);
+			output.Write(line);
+			if (newline < 0) return;
+			output.Write("\n");
+			rendered = rendered[(newline + 1)..];
+		}
+	}
+
+	private static void RenderUnframedLines(MarkupText text, MarkupFormat format, MarkupRegistry registry, IBufferWriter<char> output)
+	{
 		var framer = registry.FindFramer(format);
 		framer?.WritePreamble(output);
 

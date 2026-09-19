@@ -25,4 +25,16 @@ public static class AnsiRegistration
 			.With(new AnsiBBCodeEmitter())
 			.With(new AnsiMarkupCodec());
 	}
+
+	/// <summary>
+	/// Returns a registry that opens every line of <see cref="MarkupFormat.Mxp"/> output in MXP secure
+	/// mode, which an MXP client needs before it reads the tags on that line. Apply it to the registry
+	/// that renders for an MXP connection, not to <see cref="MarkupRegistry.Default"/> — see
+	/// <see cref="MxpSecureLineFramer"/>.
+	/// </summary>
+	public static MarkupRegistry WithMxpSecureLines(this MarkupRegistry registry)
+	{
+		ArgumentNullException.ThrowIfNull(registry);
+		return registry.With(MxpSecureLineFramer.Instance);
+	}
 }

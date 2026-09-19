@@ -1,1 +1,7 @@
 #nullable enable
+const MarkupString.Ansi.MxpSecureLineFramer.SecureLine = "\u001b[1z" -> string!
+MarkupString.Ansi.MxpSecureLineFramer
+MarkupString.Ansi.MxpSecureLineFramer.Format.get -> MarkupString.MarkupFormat!
+MarkupString.Ansi.MxpSecureLineFramer.WriteLineStart(System.Buffers.IBufferWriter<char>! output) -> void
+static MarkupString.Ansi.AnsiRegistration.WithMxpSecureLines(this MarkupString.MarkupRegistry! registry) -> MarkupString.MarkupRegistry!
+static readonly MarkupString.Ansi.MxpSecureLineFramer.Instance -> MarkupString.Ansi.MxpSecureLineFramer!

@@ -20,23 +20,44 @@ decision about an audience, and it is made where that audience is known.
 | `Ansi` | verbatim | SGR sequences, written as diffs between runs | folds `b`/`i`/`u`/`s` into styling |
 | `Html` | HTML-escaped | `<span>` with `ms-*` classes and inline colour | the tag itself |
 | `Pueblo` | HTML-escaped | SGR sequences (Pueblo reads ANSI), plus `<A XCH_CMD>` / `<A HREF>` for a link | the tag itself |
-| `Mxp` | HTML-escaped | SGR sequences, plus `<send>` / `<a href>` for a link | the tag itself |
+| `Mxp` | HTML-escaped | SGR sequences, plus `<SEND HREF>` / `<A HREF>` for a link | the tag itself |
 | `BBCode` | control characters stripped | `[color]`, `[b]`, `[i]`, `[u]`, `[s]` | nothing — the body passes through |
 
 ```csharp
 var link = MarkupText.Wrap(
-  HtmlMarkup.Create("send", "href=\"north\""),
-  MarkupText.Wrap(AnsiCodeParser.Parse("hr"), "world"));
+  AnsiMarkup.Create(linkUrl: "north", linkKind: LinkKind.Command, linkText: "Go north"),
+  MarkupText.Wrap(AnsiCodeParser.Parse("hr"), "north"));
 
-link.Render(MarkupFormat.Html);    // <send href="north"><span style="color: #ff5555">world</span></send>
-link.Render(MarkupFormat.Ansi);    // \e[1;31mworld\e[0m
-link.Render(MarkupFormat.Mxp);     // <send href="north">\e[1;31mworld\e[0m</send>
-link.Render(MarkupFormat.BBCode);  // [color=#ff5555]world[/color]
-link.Render(MarkupFormat.Plain);   // world
+link.Render(MarkupFormat.Html);    // <span style="color: #ff5555"><a class="ms-cmd-link" role="button" tabindex="0" xch_cmd="north" title="Go north">north</a></span>
+link.Render(MarkupFormat.Pueblo);  // \e[1;31m<A XCH_CMD="north" XCH_HINT="Go north">north</A>\e[0m
+link.Render(MarkupFormat.Mxp);     // \e[1;31m<SEND HREF="north" HINT="Go north">north</SEND>\e[0m
+link.Render(MarkupFormat.Ansi);    // \e[1;31mnorth\e[0m
+link.Render(MarkupFormat.BBCode);  // [color=#ff5555]north[/color]
+link.Render(MarkupFormat.Plain);   // north
 ```
 
 A format nothing knows how to write is not an error: the layer is skipped and its body still comes
 out. Text never disappears because a kind had no emitter.
+
+## Pueblo and MXP
+
+Pueblo and MXP are two different dialects, not one extending the other. Most formatting tags are
+spelled alike, but links are not, and each client prints the other's tags as text:
+
+| | Pueblo | MXP | Html (the portal's terminal) |
+|---|---|---|---|
+| Command link | `<A XCH_CMD="cmd" XCH_HINT="hint">` | `<SEND HREF="cmd" HINT="hint">` | `<a class="ms-cmd-link" xch_cmd="cmd" title="hint">` |
+| URL link | `<A HREF="url">` | `<A HREF="url">` | `<a href="url">` |
+| Tag read on | any line | a line opened in secure mode (`ESC[1z`) | — |
+
+So:
+
+- Build a link with `AnsiMarkup.Create(linkUrl: ..., linkKind: ...)`, never with an `HtmlMarkup`
+  that spells one dialect's tag. The Ansi package writes the link each format's own way.
+- Keep `HtmlMarkup` for tags the formats spell alike — `b`, `i`, `pre`, `font`, `a href`. It is
+  written unchanged in `Html`, `Pueblo` and `Mxp`.
+- Render MXP for a live connection through a registry with `WithMxpSecureLines()`, so every line
+  opens in secure mode. See [Line framers](#line-framers).
 
 ## Colour fidelity
 
@@ -58,8 +79,8 @@ in a non-default state.
 ## Text encoding
 
 Each format carries a `TextEncoding` that says what happens to the *body* text, independent of any
-markup: `None` (verbatim), `StripControls`, or `Html` (strip controls and escape `&`, `<`, `>`
-and `"`). It is why `MarkupFormat.Custom` takes one — a format you declare has to answer the same
+markup: `None` (verbatim), `StripControls`, or `Html` (strip controls and escape `&`, `<` and
+`>`). It is why `MarkupFormat.Custom` takes one — a format you declare has to answer the same
 question.
 
 ## Framers
@@ -80,6 +101,31 @@ var registry = MarkupRegistry.Empty.WithAnsi().WithHtml().With(new PreFramer());
 ```
 
 One framer per format; the last one registered wins.
+
+## Line framers
+
+An `ILineFramer` writes a prefix at the start of every line that has content — a line holding
+nothing, or only the `\r` of a `\r\n`, gets none. It has its own slot, so it sits alongside a
+document framer for the same format rather than replacing it.
+
+The one shipped is `MxpSecureLineFramer` in `MarkupString.Ansi`, which opens each line of `Mxp`
+output in secure mode (`ESC[1z`) — without it an MXP client prints the tags. It is opt-in, because
+the prefix belongs to output bound for a connection:
+
+```csharp
+var wire = MarkupRegistry.Default.WithMxpSecureLines();   // at the connection boundary
+text.Render(MarkupFormat.Mxp, wire);                      // \e[1z<SEND HREF="north">north</SEND>
+text.Render(MarkupFormat.Mxp);                            // <SEND HREF="north">north</SEND>
+```
+
+## Untrusted tags in HTML
+
+`HtmlMarkup.Create` writes its tag name and attribute string as given. When the `Html` output goes to
+a browser, register the emitter with a policy — `WithHtml(HtmlTagPolicy.BrowserSafe)` — and every tag
+rendered in `Html` is held to it as it is written: a refused tag leaves its body unwrapped, a refused
+attribute is dropped, and the rest are re-encoded. `Pueblo` and `Mxp` are left as given; they go to
+MUD clients, and a command link is exactly what a browser policy refuses. See the
+[MarkupString.Html README](../MarkupString.Html/README.md#untrusted-tags).
 
 ## Declaring a format of your own
 

@@ -12,6 +12,7 @@ public sealed class MarkupRegistry
 	private readonly FrozenDictionary<(Type MarkupType, MarkupFormat Format), IMarkupEmitter> _emitters;
 	private readonly FrozenDictionary<MarkupFormat, IMarkupSetEmitter> _setEmitters;
 	private readonly FrozenDictionary<MarkupFormat, IFormatFramer> _framers;
+	private readonly FrozenDictionary<MarkupFormat, ILineFramer> _lineFramers;
 	private readonly FrozenDictionary<string, IMarkupCodec> _codecsByKind;
 	private readonly FrozenDictionary<Type, IMarkupCodec> _codecsByType;
 
@@ -19,12 +20,14 @@ public sealed class MarkupRegistry
 		FrozenDictionary<(Type, MarkupFormat), IMarkupEmitter> emitters,
 		FrozenDictionary<MarkupFormat, IMarkupSetEmitter> setEmitters,
 		FrozenDictionary<MarkupFormat, IFormatFramer> framers,
+		FrozenDictionary<MarkupFormat, ILineFramer> lineFramers,
 		FrozenDictionary<string, IMarkupCodec> codecsByKind,
 		FrozenDictionary<Type, IMarkupCodec> codecsByType)
 	{
 		_emitters = emitters;
 		_setEmitters = setEmitters;
 		_framers = framers;
+		_lineFramers = lineFramers;
 		_codecsByKind = codecsByKind;
 		_codecsByType = codecsByType;
 	}
@@ -34,6 +37,7 @@ public sealed class MarkupRegistry
 		FrozenDictionary<(Type, MarkupFormat), IMarkupEmitter>.Empty,
 		FrozenDictionary<MarkupFormat, IMarkupSetEmitter>.Empty,
 		FrozenDictionary<MarkupFormat, IFormatFramer>.Empty,
+		FrozenDictionary<MarkupFormat, ILineFramer>.Empty,
 		FrozenDictionary<string, IMarkupCodec>.Empty,
 		FrozenDictionary<Type, IMarkupCodec>.Empty);
 
@@ -86,7 +90,7 @@ public sealed class MarkupRegistry
 		var emitters = new Dictionary<(Type, MarkupFormat), IMarkupEmitter>(_emitters.Count + 1);
 		foreach (var pair in _emitters) emitters[pair.Key] = pair.Value;
 		emitters[(emitter.MarkupType, emitter.Format)] = emitter;
-		return new MarkupRegistry(emitters.ToFrozenDictionary(), _setEmitters, _framers, _codecsByKind, _codecsByType);
+		return new MarkupRegistry(emitters.ToFrozenDictionary(), _setEmitters, _framers, _lineFramers, _codecsByKind, _codecsByType);
 	}
 
 	/// <summary>Returns a registry with <paramref name="emitter"/> added, replacing any set emitter for the same format.</summary>
@@ -96,7 +100,7 @@ public sealed class MarkupRegistry
 		var setEmitters = new Dictionary<MarkupFormat, IMarkupSetEmitter>(_setEmitters.Count + 1);
 		foreach (var pair in _setEmitters) setEmitters[pair.Key] = pair.Value;
 		setEmitters[emitter.Format] = emitter;
-		return new MarkupRegistry(_emitters, setEmitters.ToFrozenDictionary(), _framers, _codecsByKind, _codecsByType);
+		return new MarkupRegistry(_emitters, setEmitters.ToFrozenDictionary(), _framers, _lineFramers, _codecsByKind, _codecsByType);
 	}
 
 	/// <summary>Returns a registry with <paramref name="framer"/> added, replacing any framer for the same format.</summary>
@@ -106,7 +110,17 @@ public sealed class MarkupRegistry
 		var framers = new Dictionary<MarkupFormat, IFormatFramer>(_framers.Count + 1);
 		foreach (var pair in _framers) framers[pair.Key] = pair.Value;
 		framers[framer.Format] = framer;
-		return new MarkupRegistry(_emitters, _setEmitters, framers.ToFrozenDictionary(), _codecsByKind, _codecsByType);
+		return new MarkupRegistry(_emitters, _setEmitters, framers.ToFrozenDictionary(), _lineFramers, _codecsByKind, _codecsByType);
+	}
+
+	/// <summary>Returns a registry with <paramref name="framer"/> added, replacing any line framer for the same format.</summary>
+	public MarkupRegistry With(ILineFramer framer)
+	{
+		ArgumentNullException.ThrowIfNull(framer);
+		var lineFramers = new Dictionary<MarkupFormat, ILineFramer>(_lineFramers.Count + 1);
+		foreach (var pair in _lineFramers) lineFramers[pair.Key] = pair.Value;
+		lineFramers[framer.Format] = framer;
+		return new MarkupRegistry(_emitters, _setEmitters, _framers, lineFramers.ToFrozenDictionary(), _codecsByKind, _codecsByType);
 	}
 
 	/// <summary>
@@ -127,7 +141,7 @@ public sealed class MarkupRegistry
 		foreach (var pair in _codecsByType)
 			if (!string.Equals(pair.Value.Kind, codec.Kind, StringComparison.Ordinal)) byType[pair.Key] = pair.Value;
 		byType[codec.MarkupType] = codec;
-		return new MarkupRegistry(_emitters, _setEmitters, _framers, byKind.ToFrozenDictionary(StringComparer.Ordinal), byType.ToFrozenDictionary());
+		return new MarkupRegistry(_emitters, _setEmitters, _framers, _lineFramers, byKind.ToFrozenDictionary(StringComparer.Ordinal), byType.ToFrozenDictionary());
 	}
 
 	/// <summary>The emitter for <paramref name="markupType"/> in <paramref name="format"/>, or <see langword="null"/>.</summary>
@@ -141,6 +155,10 @@ public sealed class MarkupRegistry
 	/// <summary>The framer for <paramref name="format"/>, or <see langword="null"/>.</summary>
 	public IFormatFramer? FindFramer(MarkupFormat format) =>
 		_framers.TryGetValue(format, out var framer) ? framer : null;
+
+	/// <summary>The line framer for <paramref name="format"/>, or <see langword="null"/>.</summary>
+	public ILineFramer? FindLineFramer(MarkupFormat format) =>
+		_lineFramers.TryGetValue(format, out var framer) ? framer : null;
 
 	/// <summary>The codec for a wire kind, or <see langword="null"/>.</summary>
 	public IMarkupCodec? FindCodec(string kind) =>
