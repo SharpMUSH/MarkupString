@@ -15,15 +15,16 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   or the tag. `HtmlMarkup.IsValidTagName`, `IsValidAttributeName` and `TryParseAttributes` (which
   reads a raw attribute string with its values decoded, as a client reads them) are public.
 - **`HtmlTagPolicy`**, for tags from somewhere untrusted: which tags and attributes are allowed,
-  which attributes carry an address (checked with `UrlSafety`, and refused if they hold whitespace
-  or a control character a browser would strip), and whether one bad attribute drops just itself or
-  all of them. `TryCreate` builds a checked tag from a name and a raw attribute string; `Apply` holds
-  an existing one to the policy. `BrowserSafe` and `WellFormed` are provided, and a policy is a
-  record, so `with` narrows one.
+  which attributes are checked as addresses (against `UrlSafety`), and whether one bad attribute
+  drops just itself or all of them. `TryCreate` builds a checked tag from a name and a raw attribute
+  string; `Apply` holds an existing one to the policy. It is machinery, not a posture: `WellFormed`
+  allows any well-formed tag, address checking is off until you name the attributes (with your own
+  list or the published `AddressAttributes`), and a policy is a record, so `with` narrows one to
+  whatever your application considers safe.
 - **`WithHtml(HtmlTagPolicy)`** and `HtmlTagEmitter(format, policy)`: every tag rendered in `Html` is
   held to the policy as it is written, including markup that arrived deserialised or was built with
   the unchecked `HtmlMarkup.Create`. A refused tag leaves its body in place. Pueblo and MXP output is
-  unchanged.
+  unchanged unless you register a policy for them too.
 - **`ILineFramer`**, registered with `MarkupRegistry.With(ILineFramer)` and found with
   `FindLineFramer`: a prefix written at the start of every line that has content, in a slot of its
   own beside `IFormatFramer`.

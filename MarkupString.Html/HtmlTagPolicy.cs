@@ -24,8 +24,11 @@ public enum HtmlAttributeViolation
 /// too.
 /// </summary>
 /// <remarks>
-/// Every attribute that survives is re-written <c>name="value"</c> with its value encoded, whatever
-/// the policy, so nothing in a value can end the attribute or the tag.
+/// <para>Every attribute that survives is re-written <c>name="value"</c> with its value encoded,
+/// whatever the policy, so nothing in a value can end the attribute or the tag.</para>
+/// <para>This library ships no security posture: <see cref="WellFormed"/> allows any well-formed tag,
+/// and the sets are yours to narrow to what the medium you render into can be trusted with. What is
+/// safe in your application is your decision.</para>
 /// </remarks>
 public sealed record HtmlTagPolicy
 {
@@ -42,47 +45,31 @@ public sealed record HtmlTagPolicy
 	public IReadOnlySet<string>? AllowedAttributes { get; init => field = IgnoringCase(value); }
 
 	/// <summary>
-	/// The attributes whose value is an address a client may navigate to or load. Their value must be
-	/// one <see cref="UrlSafety.IsSafeNavigableUrl"/> accepts, with no whitespace or control character
-	/// in it — a browser drops those before reading the scheme, so <c>java&#9;script:</c> would
-	/// otherwise pass as a relative address.
+	/// The attributes whose value this policy checks as an address: each must be one
+	/// <see cref="UrlSafety.IsSafeNavigableUrl"/> accepts, with no whitespace or control character in it.
+	/// Empty by default — which addresses a client of yours may be sent to is your decision, not this
+	/// library's. <see cref="AddressAttributes"/> is the list of attributes HTML gives an address to,
+	/// if you want to check them all.
 	/// </summary>
-	public IReadOnlySet<string> UrlAttributes { get; init => field = IgnoringCase(value) ?? throw new ArgumentNullException(nameof(value)); } = DefaultUrlAttributes;
+	public IReadOnlySet<string> UrlAttributes { get; init => field = IgnoringCase(value) ?? throw new ArgumentNullException(nameof(value)); } = FrozenSet<string>.Empty;
 
 	/// <summary>What happens to the attributes when one is not allowed.</summary>
 	public HtmlAttributeViolation OnViolation { get; init; } = HtmlAttributeViolation.DropAttribute;
 
-	/// <summary>The attributes that carry an address in HTML.</summary>
-	public static IReadOnlySet<string> DefaultUrlAttributes { get; } = FrozenSet.Create(StringComparer.OrdinalIgnoreCase,
+	/// <summary>
+	/// The attributes HTML gives an address to, offered for <see cref="UrlAttributes"/>. Nothing applies
+	/// it for you.
+	/// </summary>
+	public static IReadOnlySet<string> AddressAttributes { get; } = FrozenSet.Create(StringComparer.OrdinalIgnoreCase,
 		"action", "background", "cite", "codebase", "data", "dynsrc", "formaction", "href", "longdesc", "lowsrc",
 		"poster", "src", "usemap", "xlink:href");
 
 	/// <summary>
-	/// Any tag and any attribute, so long as they are well formed; addresses are not checked. What it
-	/// adds over <see cref="HtmlMarkup.Create"/> is that the name cannot smuggle anything in and every
-	/// value is encoded.
+	/// Any tag and any attribute, so long as they are well formed. What it adds over
+	/// <see cref="HtmlMarkup.Create"/> is that the name cannot smuggle anything in and every value is
+	/// encoded. It is the starting point for a policy of your own: narrow it with <c>with</c>.
 	/// </summary>
-	public static HtmlTagPolicy WellFormed { get; } = new() { UrlAttributes = FrozenSet<string>.Empty };
-
-	/// <summary>
-	/// Formatting that a web browser renders and cannot be made to run: text-level and block tags,
-	/// tables, lists, anchors and images; presentational attributes; and addresses with a safe scheme.
-	/// No <c>script</c>, <c>style</c>, <c>iframe</c>, form control or document-level tag, no <c>on*</c>
-	/// handler, no <c>style</c> attribute, and no <c>javascript:</c> or <c>data:</c> address.
-	/// </summary>
-	public static HtmlTagPolicy BrowserSafe { get; } = new()
-	{
-		AllowedTags = FrozenSet.Create(StringComparer.OrdinalIgnoreCase,
-			"a", "abbr", "acronym", "address", "b", "bdi", "bdo", "big", "blockquote", "br", "caption", "center",
-			"cite", "code", "col", "colgroup", "dd", "del", "dfn", "dir", "div", "dl", "dt", "em", "font", "h1", "h2",
-			"h3", "h4", "h5", "h6", "hr", "i", "img", "ins", "kbd", "li", "mark", "menu", "ol", "p", "pre", "q", "s",
-			"samp", "small", "span", "strike", "strong", "sub", "sup", "table", "tbody", "td", "tfoot", "th", "thead",
-			"time", "tr", "tt", "u", "ul", "var", "wbr"),
-		AllowedAttributes = FrozenSet.Create(StringComparer.OrdinalIgnoreCase,
-			"align", "alt", "bgcolor", "border", "cellpadding", "cellspacing", "class", "color", "cols", "colspan",
-			"datetime", "dir", "face", "height", "href", "lang", "rows", "rowspan", "size", "span", "src", "start",
-			"title", "type", "valign", "value", "width"),
-	};
+	public static HtmlTagPolicy WellFormed { get; } = new();
 
 	/// <summary>
 	/// Builds the checked tag for <paramref name="tagName"/> and <paramref name="attributes"/>: false

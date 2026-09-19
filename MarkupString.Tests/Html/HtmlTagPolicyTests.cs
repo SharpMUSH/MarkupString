@@ -80,16 +80,27 @@ public class HtmlTagPolicyTests
 		await Assert.That(HtmlMarkup.TryParseAttributes(attributes, out _)).IsFalse();
 	}
 
-	// ── BrowserSafe ─────────────────────────────────────────────────────────────
+	// ── A policy of the consumer's own ──────────────────────────────────────────
+
+	/// <summary>
+	/// The policy a consumer rendering into a browser would write. The library ships no such posture;
+	/// this is the worked example from the README, held to what it claims.
+	/// </summary>
+	private static readonly HtmlTagPolicy Restrictive = HtmlTagPolicy.WellFormed with
+	{
+		AllowedTags = new HashSet<string> { "a", "b", "i", "u", "font", "pre", "span", "img" },
+		AllowedAttributes = new HashSet<string> { "href", "src", "alt", "title", "color", "face", "size", "class" },
+		UrlAttributes = HtmlTagPolicy.AddressAttributes,
+	};
 
 	[Test]
 	[Arguments("script")]
 	[Arguments("iframe")]
 	[Arguments("style")]
 	[Arguments("form")]
-	public async Task BrowserSafe_RefusesATagABrowserWouldRun(string tag)
+	public async Task APolicy_RefusesATagOffItsList(string tag)
 	{
-		await Assert.That(HtmlTagPolicy.BrowserSafe.TryCreate(tag, null, out _)).IsFalse();
+		await Assert.That(Restrictive.TryCreate(tag, null, out _)).IsFalse();
 	}
 
 	[Test]
@@ -100,16 +111,16 @@ public class HtmlTagPolicyTests
 	[Arguments("onclick=\"alert(1)\"")]
 	[Arguments("style=\"position:fixed\"")]
 	[Arguments("xch_cmd=\"@destroy me\"")]
-	public async Task BrowserSafe_DropsAnAttributeABrowserWouldRun(string attributes)
+	public async Task APolicy_DropsAnAttributeOffItsList(string attributes)
 	{
-		await Assert.That(HtmlTagPolicy.BrowserSafe.TryCreate("a", attributes, out var markup)).IsTrue();
+		await Assert.That(Restrictive.TryCreate("a", attributes, out var markup)).IsTrue();
 		await Assert.That(markup!.Attributes).IsNull();
 	}
 
 	[Test]
-	public async Task BrowserSafe_KeepsTheRest_ReEncoded()
+	public async Task APolicy_KeepsTheRest_ReEncoded()
 	{
-		await Assert.That(HtmlTagPolicy.BrowserSafe.TryCreate("a", "href='https://example.test/?a=1&amp;b=2' onclick=x title=Go", out var markup)).IsTrue();
+		await Assert.That(Restrictive.TryCreate("a", "href='https://example.test/?a=1&amp;b=2' onclick=x title=Go", out var markup)).IsTrue();
 		await Assert.That(markup!.Attributes).IsEqualTo("href=\"https://example.test/?a=1&amp;b=2\" title=\"Go\"")
 			.Because("DropAttribute removes only the one that failed, and &amp; survives the decode and re-encode");
 	}
@@ -117,7 +128,7 @@ public class HtmlTagPolicyTests
 	[Test]
 	public async Task DropAllAttributes_KeepsNoneWhenOneFails()
 	{
-		var policy = HtmlTagPolicy.BrowserSafe with { OnViolation = HtmlAttributeViolation.DropAllAttributes };
+		var policy = Restrictive with { OnViolation = HtmlAttributeViolation.DropAllAttributes };
 
 		await Assert.That(policy.TryCreate("a", "href=\"https://example.test/\" onclick=x", out var markup)).IsTrue();
 		await Assert.That(markup!.Attributes).IsNull();
@@ -156,7 +167,7 @@ public class HtmlTagPolicyTests
 	[Test]
 	public async Task AnEmitterWithAPolicy_HoldsUncheckedMarkupToIt()
 	{
-		var registry = MarkupRegistry.Empty.WithAnsi().WithHtml(HtmlTagPolicy.BrowserSafe);
+		var registry = MarkupRegistry.Empty.WithAnsi().WithHtml(Restrictive);
 		var unchecked_ = MarkupText.Concat(
 			MarkupText.Wrap(HtmlMarkup.Create("a", "href=\"javascript:alert(1)\" title=\"t\""), "link"),
 			MarkupText.Wrap(HtmlMarkup.Create("script"), "alert(1)"));
@@ -169,7 +180,7 @@ public class HtmlTagPolicyTests
 	[Test]
 	public async Task WithHtmlPolicy_LeavesPuebloAndMxpAsGiven()
 	{
-		var registry = MarkupRegistry.Empty.WithAnsi().WithHtml(HtmlTagPolicy.BrowserSafe);
+		var registry = MarkupRegistry.Empty.WithAnsi().WithHtml(Restrictive);
 		var link = MarkupText.Wrap(HtmlMarkup.Create("a", "xch_cmd=\"look\""), "look");
 
 		await Assert.That(link.Render(MarkupFormat.Pueblo, registry)).IsEqualTo("<a xch_cmd=\"look\">look</a>");

@@ -49,11 +49,26 @@ yourself:
 
 - `HtmlMarkup.Tag(name, params attributes)` checks the name and encodes every value.
 - `HtmlTagPolicy.TryCreate(name, rawAttributes, out markup)` reads a raw attribute string and keeps
-  only what the policy allows, re-encoded. `HtmlTagPolicy.BrowserSafe` allows formatting a browser
-  cannot be made to run; `HtmlTagPolicy.WellFormed` allows anything well formed. A policy is a
-  record — narrow one with `with { AllowedTags = ... }`.
-- `WithHtml(HtmlTagPolicy.BrowserSafe)` holds every tag rendered in the `Html` format to the policy
-  as it is written, so markup that arrived deserialised or built with `Create` is held to it too.
+  only what the policy allows, re-encoded.
+- `WithHtml(policy)` holds every tag rendered in the `Html` format to that policy as it is written, so
+  markup that arrived deserialised or built with `Create` is held to it too.
+
+**The library ships no security posture.** `HtmlTagPolicy.WellFormed` allows any well-formed tag; what
+is safe in your application is your decision, and a policy is a record you narrow with `with`:
+
+```csharp
+var policy = HtmlTagPolicy.WellFormed with
+{
+  AllowedTags = new HashSet<string> { "a", "b", "i", "u", "font", "pre", "span", "img" },
+  AllowedAttributes = new HashSet<string> { "href", "src", "alt", "title", "color", "face", "size" },
+  // Checked as addresses. HtmlTagPolicy.AddressAttributes is the list HTML gives an address to;
+  // nothing applies it for you.
+  UrlAttributes = HtmlTagPolicy.AddressAttributes,
+  OnViolation = HtmlAttributeViolation.DropAllAttributes,
+};
+
+MarkupRegistry.Default = MarkupRegistry.Empty.WithAnsi().WithHtml(policy);
+```
 
 ## Styling
 

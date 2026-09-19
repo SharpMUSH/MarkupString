@@ -40,8 +40,7 @@ static MarkupString.Html.HtmlMarkup.IsValidTagName(System.ReadOnlySpan<char> nam
 static MarkupString.Html.HtmlMarkup.Tag(string! tagName, params System.ReadOnlySpan<MarkupString.Html.HtmlAttribute> attributes) -> MarkupString.Html.HtmlMarkup!
 static MarkupString.Html.HtmlMarkup.TryParseAttributes(string? attributes, out System.Collections.Generic.IReadOnlyList<MarkupString.Html.HtmlAttribute>! parsed) -> bool
 static MarkupString.Html.HtmlRegistration.WithHtml(this MarkupString.MarkupRegistry! registry, MarkupString.Html.HtmlTagPolicy! htmlPolicy) -> MarkupString.MarkupRegistry!
-static MarkupString.Html.HtmlTagPolicy.BrowserSafe.get -> MarkupString.Html.HtmlTagPolicy!
-static MarkupString.Html.HtmlTagPolicy.DefaultUrlAttributes.get -> System.Collections.Generic.IReadOnlySet<string!>!
+static MarkupString.Html.HtmlTagPolicy.AddressAttributes.get -> System.Collections.Generic.IReadOnlySet<string!>!
 static MarkupString.Html.HtmlTagPolicy.operator !=(MarkupString.Html.HtmlTagPolicy? left, MarkupString.Html.HtmlTagPolicy? right) -> bool
 static MarkupString.Html.HtmlTagPolicy.operator ==(MarkupString.Html.HtmlTagPolicy? left, MarkupString.Html.HtmlTagPolicy? right) -> bool
 static MarkupString.Html.HtmlTagPolicy.WellFormed.get -> MarkupString.Html.HtmlTagPolicy!

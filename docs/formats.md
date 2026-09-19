@@ -121,11 +121,14 @@ text.Render(MarkupFormat.Mxp);                            // <SEND HREF="north">
 
 ## Untrusted tags in HTML
 
-`HtmlMarkup.Create` writes its tag name and attribute string as given. When the `Html` output goes to
-a browser, register the emitter with a policy — `WithHtml(HtmlTagPolicy.BrowserSafe)` — and every tag
-rendered in `Html` is held to it as it is written: a refused tag leaves its body unwrapped, a refused
-attribute is dropped, and the rest are re-encoded. `Pueblo` and `Mxp` are left as given; they go to
-MUD clients, and a command link is exactly what a browser policy refuses. See the
+`HtmlMarkup.Create` writes its tag name and attribute string as given. `HtmlTagPolicy` is the machinery
+for holding one to a list of allowed tags and attributes, with any address-bearing attribute checked
+against `UrlSafety`; `WithHtml(policy)` applies it to every tag rendered in `Html` as it is written, so
+a refused tag leaves its body unwrapped and a refused attribute is dropped.
+
+The library ships no posture of its own — `HtmlTagPolicy.WellFormed` allows any well-formed tag, and
+what is safe in your application is yours to declare. `Pueblo` and `Mxp` are unaffected unless you
+register a policy for them too. See the
 [MarkupString.Html README](../MarkupString.Html/README.md#untrusted-tags).
 
 ## Declaring a format of your own

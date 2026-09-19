@@ -24,10 +24,10 @@ public static class HtmlRegistration
 
 	/// <summary>
 	/// As <see cref="WithHtml(MarkupRegistry)"/>, but every tag rendered in <see cref="MarkupFormat.Html"/>
-	/// is held to <paramref name="htmlPolicy"/> — <see cref="HtmlTagPolicy.BrowserSafe"/> for output a
-	/// web browser renders. Pueblo and MXP output still carry tags as given: they go to MUD clients, not
-	/// to a browser, and some of what they need (a command link) is exactly what a browser policy
-	/// refuses. To hold those to a policy too, add <c>new HtmlTagEmitter(format, policy)</c> after this.
+	/// is held to <paramref name="htmlPolicy"/> — the tags and attributes your application is willing to
+	/// put in front of a browser. Pueblo and MXP output still carries tags as given: they go to MUD
+	/// clients, and some of what they need (a command link) is what a browser policy typically refuses.
+	/// To hold those to a policy too, add <c>new HtmlTagEmitter(format, policy)</c> after this.
 	/// </summary>
 	public static MarkupRegistry WithHtml(this MarkupRegistry registry, HtmlTagPolicy htmlPolicy)
 	{
