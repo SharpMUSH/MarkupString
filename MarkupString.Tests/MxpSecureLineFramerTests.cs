@@ -41,6 +41,23 @@ public class MxpSecureLineFramerTests
 		await Assert.That(Link.Render(MarkupFormat.Ansi, Wire)).DoesNotContain(Secure);
 	}
 
+	private sealed class PreFramer : IFormatFramer
+	{
+		public MarkupFormat Format => MarkupFormat.Mxp;
+		public void WritePreamble(System.Buffers.IBufferWriter<char> output) => output.Write("<PRE>");
+		public void WriteEpilogue(bool anyRunEmitted, System.Buffers.IBufferWriter<char> output) => output.Write("\n</PRE>");
+	}
+
+	[Test]
+	public async Task ADocumentFramer_WrapsTheLineFraming()
+	{
+		var registry = Wire.With(new PreFramer());
+
+		await Assert.That(MarkupText.Plain("a\nb").Render(MarkupFormat.Mxp, registry))
+			.IsEqualTo($"<PRE>{Secure}a\n{Secure}b\n</PRE>")
+			.Because("the preamble comes before the first line's prefix, and the epilogue is not a line of the text");
+	}
+
 	[Test]
 	public async Task TheRegistry_FindsTheLineFramer_AndAReplacementWins()
 	{
