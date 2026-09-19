@@ -94,9 +94,45 @@ public static class MarkupTextRenderer
 		ArgumentNullException.ThrowIfNull(registry);
 		ArgumentNullException.ThrowIfNull(output);
 
+		// The document framer wraps the whole text, line framing included: its preamble comes before
+		// the first line's prefix, and its epilogue after the last line.
 		var framer = registry.FindFramer(format);
 		framer?.WritePreamble(output);
 
+		bool anyRunEmitted;
+		if (registry.FindLineFramer(format) is { } lineFramer)
+		{
+			// A line is only known once it has been written — an emitter can put a newline anywhere —
+			// so the body is rendered first and the prefixes go in on the way out.
+			using var rendered = new PooledCharWriter(text.Text.Length * 2);
+			anyRunEmitted = RenderBody(text, format, registry, rendered);
+			WriteFramedLines(rendered.WrittenSpan, lineFramer, output);
+		}
+		else
+		{
+			anyRunEmitted = RenderBody(text, format, registry, output);
+		}
+
+		framer?.WriteEpilogue(anyRunEmitted, output);
+	}
+
+	private static void WriteFramedLines(ReadOnlySpan<char> rendered, ILineFramer framer, IBufferWriter<char> output)
+	{
+		while (true)
+		{
+			var newline = rendered.IndexOf('\n');
+			var line = newline < 0 ? rendered : rendered[..newline];
+			if (line.Length > 0 && line is not "\r") framer.WriteLineStart(output);
+			output.Write(line);
+			if (newline < 0) return;
+			output.Write("\n");
+			rendered = rendered[(newline + 1)..];
+		}
+	}
+
+	/// <summary>Writes the text and its runs, and returns whether any emitter wrote for a run.</summary>
+	private static bool RenderBody(MarkupText text, MarkupFormat format, MarkupRegistry registry, IBufferWriter<char> output)
+	{
 		var content = text.Text.AsSpan();
 		var runs = text.Runs;
 		var position = 0;
@@ -119,7 +155,7 @@ public static class MarkupTextRenderer
 		}
 		if (position < content.Length) EncodeText(content[position..], format.Encoding, output);
 
-		framer?.WriteEpilogue(anyRunEmitted, output);
+		return anyRunEmitted;
 	}
 
 	/// <summary>Renders one run to <paramref name="output"/>. Returns whether an emitter actually wrote — a set

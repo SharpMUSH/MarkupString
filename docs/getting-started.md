@@ -10,8 +10,8 @@ dotnet add package MarkupString.Html
 
 `MarkupString` alone gives you the text type and every operation on it, but it renders nothing:
 emitters live in the kind packages. Take `MarkupString.Ansi` for terminal styling (which also
-covers HTML, Pueblo, MXP and BBCode output of that styling), and `MarkupString.Html` if you also
-need raw tags such as an MXP `<send>`.
+covers HTML, Pueblo, MXP and BBCode output of that styling, and links), and `MarkupString.Html` if
+you also need raw tags such as `<pre>` or a `<span class>`.
 
 Requires .NET 10 or later.
 
@@ -57,8 +57,9 @@ var alert = MarkupText.Wrap(
   AnsiMarkup.Create(foreground: new AnsiColor.Rgb(255, 85, 85), bold: true),
   "alert");
 
-// Layers nest: the inner keeps its own styling, the outer wraps around it.
-var link = MarkupText.Wrap(HtmlMarkup.Create("send", "href=\"north\""), world);
+// Layers nest: the inner keeps its own styling, the outer wraps around it. A command link is
+// written in each client's own dialect — see "Pueblo and MXP" in the formats guide.
+var link = MarkupText.Wrap(AnsiMarkup.Create(linkUrl: "north", linkKind: LinkKind.Command), world);
 
 var line = MarkupText.Concat([hello, world, MarkupText.Plain("!")]);
 var list = MarkupText.Join(MarkupText.Plain(", "), [hello, world]);

@@ -36,8 +36,8 @@ dotnet add package MarkupString.Html
 | Package | What it gives you |
 |---|---|
 | [`MarkupString`](https://www.nuget.org/packages/MarkupString) | The `MarkupText` type, runs, formats, the registry, the emitter/codec contracts, the JSON serializer, grapheme and display-width helpers. No rendering opinions. |
-| [`MarkupString.Ansi`](https://www.nuget.org/packages/MarkupString.Ansi) | Terminal styling: colours (16 / xterm-256 / truecolor), attributes, links; an `ansi()` code parser and an escape-sequence parser; emitters for ANSI, HTML, Pueblo, MXP and BBCode. |
-| [`MarkupString.Html`](https://www.nuget.org/packages/MarkupString.Html) | Raw HTML/MXP tag markup — an MXP `<send>`, an anchor, a `<span class>` — plus the stylesheet for the classes the emitters write. |
+| [`MarkupString.Ansi`](https://www.nuget.org/packages/MarkupString.Ansi) | Terminal styling: colours (16 / xterm-256 / truecolor), attributes, links; an `ansi()` code parser and an escape-sequence parser; emitters for ANSI, HTML, Pueblo, MXP and BBCode; and `AnsiCss`, the stylesheet for the `ms-*` classes the HTML emitters write. |
+| [`MarkupString.Html`](https://www.nuget.org/packages/MarkupString.Html) | Raw HTML tag markup — an anchor, a `<pre>`, a `<span class>` — with checked construction and tag policies for untrusted input. |
 
 The core package renders nothing on its own: emitters live in the kind packages, so a consumer
 that only needs one of them pays for one of them, and a kind of your own is a first-class peer
@@ -53,8 +53,10 @@ using MarkupString.Html;
 // Once, at startup. Set-once: a second, different registry throws.
 MarkupRegistry.Default = MarkupRegistry.Empty.WithAnsi().WithHtml();
 
+// A command link: each format writes it in its own dialect — <A XCH_CMD> for Pueblo,
+// <SEND HREF> for MXP, a clickable anchor for HTML — and a terminal shows the text.
 var prompt = MarkupText.Wrap(
-  HtmlMarkup.Create("send", "href=\"north\""),
+  AnsiMarkup.Create(linkUrl: "north", linkKind: LinkKind.Command),
   MarkupText.Wrap(AnsiCodeParser.Parse("hc"), "Go north"));
 
 Console.WriteLine(prompt.Render(MarkupFormat.Ansi));
@@ -83,7 +85,7 @@ TextLayout.Rows(
 | [Getting started](docs/getting-started.md) | Install, wire up the registry, build and render your first styled text. |
 | [Text operations](docs/text-operations.md) | Slicing, padding, alignment, splitting, splicing — and the grapheme and display-width rules they obey. |
 | [Layout](docs/layout.md) | Wrapping, justification, fills as patterns, and assembling columns into rows. |
-| [Formats and rendering](docs/formats.md) | The six built-in formats, what each emits, framers, custom formats. |
+| [Formats and rendering](docs/formats.md) | The six built-in formats, what each emits, how Pueblo and MXP differ, framers and line framers, untrusted tags, custom formats. |
 | [Custom markup kinds](docs/custom-markup.md) | Write your own `IMarkup`, emitters and codec; compose with the kinds already registered. |
 | [Serialization](docs/serialization.md) | The JSON wire format, forward compatibility, `UnknownMarkup`. |
 | [Releasing](docs/releasing.md) | How a version is cut and published (maintainers). |

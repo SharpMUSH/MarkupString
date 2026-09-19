@@ -1,1 +1,46 @@
 #nullable enable
+MarkupString.Html.HtmlAttribute
+MarkupString.Html.HtmlAttribute.Deconstruct(out string! Name, out string! Value) -> void
+MarkupString.Html.HtmlAttribute.Equals(MarkupString.Html.HtmlAttribute other) -> bool
+MarkupString.Html.HtmlAttribute.HtmlAttribute(string! Name, string! Value) -> void
+MarkupString.Html.HtmlAttribute.HtmlAttribute() -> void
+MarkupString.Html.HtmlAttribute.Name.get -> string!
+MarkupString.Html.HtmlAttribute.Name.init -> void
+MarkupString.Html.HtmlAttribute.Value.get -> string!
+MarkupString.Html.HtmlAttribute.Value.init -> void
+MarkupString.Html.HtmlAttributeViolation
+MarkupString.Html.HtmlAttributeViolation.DropAllAttributes = 1 -> MarkupString.Html.HtmlAttributeViolation
+MarkupString.Html.HtmlAttributeViolation.DropAttribute = 0 -> MarkupString.Html.HtmlAttributeViolation
+MarkupString.Html.HtmlTagEmitter.HtmlTagEmitter(MarkupString.MarkupFormat! format, MarkupString.Html.HtmlTagPolicy? policy) -> void
+MarkupString.Html.HtmlTagEmitter.Policy.get -> MarkupString.Html.HtmlTagPolicy?
+MarkupString.Html.HtmlTagPolicy
+MarkupString.Html.HtmlTagPolicy.AllowedAttributes.get -> System.Collections.Generic.IReadOnlySet<string!>?
+MarkupString.Html.HtmlTagPolicy.AllowedAttributes.init -> void
+MarkupString.Html.HtmlTagPolicy.AllowedTags.get -> System.Collections.Generic.IReadOnlySet<string!>?
+MarkupString.Html.HtmlTagPolicy.AllowedTags.init -> void
+MarkupString.Html.HtmlTagPolicy.Apply(MarkupString.Html.HtmlMarkup! markup) -> MarkupString.Html.HtmlMarkup?
+MarkupString.Html.HtmlTagPolicy.<Clone>$() -> MarkupString.Html.HtmlTagPolicy!
+MarkupString.Html.HtmlTagPolicy.Equals(MarkupString.Html.HtmlTagPolicy? other) -> bool
+MarkupString.Html.HtmlTagPolicy.HtmlTagPolicy() -> void
+MarkupString.Html.HtmlTagPolicy.OnViolation.get -> MarkupString.Html.HtmlAttributeViolation
+MarkupString.Html.HtmlTagPolicy.OnViolation.init -> void
+MarkupString.Html.HtmlTagPolicy.TryCreate(string! tagName, string? attributes, out MarkupString.Html.HtmlMarkup? markup) -> bool
+MarkupString.Html.HtmlTagPolicy.UrlAttributes.get -> System.Collections.Generic.IReadOnlySet<string!>!
+MarkupString.Html.HtmlTagPolicy.UrlAttributes.init -> void
+~override MarkupString.Html.HtmlAttribute.Equals(object obj) -> bool
+override MarkupString.Html.HtmlAttribute.GetHashCode() -> int
+override MarkupString.Html.HtmlAttribute.ToString() -> string!
+override MarkupString.Html.HtmlTagPolicy.Equals(object? obj) -> bool
+override MarkupString.Html.HtmlTagPolicy.GetHashCode() -> int
+override MarkupString.Html.HtmlTagPolicy.ToString() -> string!
+static MarkupString.Html.HtmlAttribute.operator !=(MarkupString.Html.HtmlAttribute left, MarkupString.Html.HtmlAttribute right) -> bool
+static MarkupString.Html.HtmlAttribute.operator ==(MarkupString.Html.HtmlAttribute left, MarkupString.Html.HtmlAttribute right) -> bool
+static MarkupString.Html.HtmlMarkup.IsValidAttributeName(System.ReadOnlySpan<char> name) -> bool
+static MarkupString.Html.HtmlMarkup.IsValidTagName(System.ReadOnlySpan<char> name) -> bool
+static MarkupString.Html.HtmlMarkup.Tag(string! tagName, params System.ReadOnlySpan<MarkupString.Html.HtmlAttribute> attributes) -> MarkupString.Html.HtmlMarkup!
+static MarkupString.Html.HtmlMarkup.TryParseAttributes(string? attributes, out System.Collections.Generic.IReadOnlyList<MarkupString.Html.HtmlAttribute>! parsed) -> bool
+static MarkupString.Html.HtmlRegistration.WithHtml(this MarkupString.MarkupRegistry! registry, MarkupString.Html.HtmlTagPolicy! htmlPolicy) -> MarkupString.MarkupRegistry!
+static MarkupString.Html.HtmlTagPolicy.AddressAttributes.get -> System.Collections.Generic.IReadOnlySet<string!>!
+static MarkupString.Html.HtmlTagPolicy.operator !=(MarkupString.Html.HtmlTagPolicy? left, MarkupString.Html.HtmlTagPolicy? right) -> bool
+static MarkupString.Html.HtmlTagPolicy.operator ==(MarkupString.Html.HtmlTagPolicy? left, MarkupString.Html.HtmlTagPolicy? right) -> bool
+static MarkupString.Html.HtmlTagPolicy.WellFormed.get -> MarkupString.Html.HtmlTagPolicy!

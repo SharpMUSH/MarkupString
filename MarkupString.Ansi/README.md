@@ -40,6 +40,16 @@ var back = MarkupTextSerializer.Deserialize(json);
 `WithAnsi()` registers emitters for `Ansi`, `Html`, `Pueblo`, `Mxp` and `BBCode`. `Plain` needs
 none: the body passes through.
 
+A command link (`linkKind: LinkKind.Command`) is written in each client's own dialect: `<A XCH_CMD>`
+for Pueblo, `<SEND HREF>` for MXP, an `ms-cmd-link` anchor carrying `xch_cmd` for HTML, and the bare
+text for a terminal. Pueblo and MXP are different dialects, and each client prints the other's
+tags as text.
+
+An MXP client reads tags only on a line opened in secure mode. The core package's
+`MarkupRegistry.WithMxpSecureLines()` opens every line of `Mxp` output with `ESC[1z`. Use it on the
+registry that renders for an MXP connection, and leave it off the one used for tests, logs and
+previews.
+
 ## Styling the HTML output
 
 The HTML-family emitters write `ms-*` classes for the attributes with a fixed rendering (bold,
