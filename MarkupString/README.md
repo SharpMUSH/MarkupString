@@ -47,6 +47,7 @@ one of your own; a registry keyed by it renders through your emitters like any b
 - `IMarkupEmitter` / `IMarkupSetEmitter` — how a layer, or a whole run's stack of layers, is
   written in one format.
 - `IFormatFramer` — a prologue and epilogue around a rendered document.
+- `ILineFramer` — a prefix at the start of every line with content; `WithMxpSecureLines()` installs MXP's.
 - `IMarkupCodec` — the JSON shape of a layer. A layer with no codec at read time survives as
   `UnknownMarkup` and is written back verbatim, so an old reader does not destroy new markup.
 
@@ -65,7 +66,7 @@ and let the ANSI set emitters run — rather than registering a competing set em
 silently drop every other kind's contribution to that format.
 
 Per-layer `IMarkupEmitter`s are keyed by `(markup type, format)`, so unrelated kinds never collide
-there; only the set emitter and the framer are one-per-format.
+there; only the set emitter, the framer and the line framer are one-per-format.
 
 ## AOT and trimming
 

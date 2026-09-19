@@ -1,5 +1,5 @@
 using MarkupString.Ansi;
-namespace MarkupString.Tests.Ansi;
+namespace MarkupString.Tests;
 
 /// <summary>
 /// <see cref="ILineFramer"/> through <see cref="MxpSecureLineFramer"/>: an MXP client reads tags only

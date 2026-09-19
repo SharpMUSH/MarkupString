@@ -108,9 +108,10 @@ An `ILineFramer` writes a prefix at the start of every line that has content —
 nothing, or only the `\r` of a `\r\n`, gets none. It has its own slot, so it sits alongside a
 document framer for the same format rather than replacing it.
 
-The one shipped is `MxpSecureLineFramer` in `MarkupString.Ansi`, which opens each line of `Mxp`
-output in secure mode (`ESC[1z`) — without it an MXP client prints the tags. It is opt-in, because
-the prefix belongs to output bound for a connection:
+The one shipped is `MxpSecureLineFramer`, which opens each line of `Mxp` output in secure mode
+(`ESC[1z`) — without it an MXP client prints the tags, whichever package wrote them. It is opt-in,
+because the prefix belongs to output bound for a connection. Negotiating MXP and starting MXP mode
+are the telnet layer's job; this only frames the text sent once they are done:
 
 ```csharp
 var wire = MarkupRegistry.Default.WithMxpSecureLines();   // at the connection boundary

@@ -45,9 +45,10 @@ for Pueblo, `<SEND HREF>` for MXP, an `ms-cmd-link` anchor carrying `xch_cmd` fo
 text for a terminal. Pueblo and MXP are different dialects, and each client prints the other's
 tags as text.
 
-An MXP client reads tags only on a line opened in secure mode. `WithMxpSecureLines()` adds
-`MxpSecureLineFramer`, which opens every line of `Mxp` output with `ESC[1z`. Use it on the registry
-that renders for an MXP connection, and leave it off the one used for tests, logs and previews.
+An MXP client reads tags only on a line opened in secure mode. The core package's
+`MarkupRegistry.WithMxpSecureLines()` opens every line of `Mxp` output with `ESC[1z`. Use it on the
+registry that renders for an MXP connection, and leave it off the one used for tests, logs and
+previews.
 
 ## Styling the HTML output
 

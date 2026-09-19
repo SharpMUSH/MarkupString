@@ -29,11 +29,17 @@ public enum HtmlAttributeViolation
 /// </remarks>
 public sealed record HtmlTagPolicy
 {
-	/// <summary>The tags allowed, ignoring case; <see langword="null"/> allows any valid tag name.</summary>
-	public IReadOnlySet<string>? AllowedTags { get; init; }
+	/// <summary>
+	/// The tags allowed, ignoring case whatever comparer the given set had; <see langword="null"/>
+	/// allows any valid tag name.
+	/// </summary>
+	public IReadOnlySet<string>? AllowedTags { get; init => field = IgnoringCase(value); }
 
-	/// <summary>The attributes allowed, ignoring case; <see langword="null"/> allows any valid attribute name.</summary>
-	public IReadOnlySet<string>? AllowedAttributes { get; init; }
+	/// <summary>
+	/// The attributes allowed, ignoring case whatever comparer the given set had;
+	/// <see langword="null"/> allows any valid attribute name.
+	/// </summary>
+	public IReadOnlySet<string>? AllowedAttributes { get; init => field = IgnoringCase(value); }
 
 	/// <summary>
 	/// The attributes whose value is an address a client may navigate to or load. Their value must be
@@ -41,7 +47,7 @@ public sealed record HtmlTagPolicy
 	/// in it — a browser drops those before reading the scheme, so <c>java&#9;script:</c> would
 	/// otherwise pass as a relative address.
 	/// </summary>
-	public IReadOnlySet<string> UrlAttributes { get; init; } = DefaultUrlAttributes;
+	public IReadOnlySet<string> UrlAttributes { get; init => field = IgnoringCase(value) ?? throw new ArgumentNullException(nameof(value)); } = DefaultUrlAttributes;
 
 	/// <summary>What happens to the attributes when one is not allowed.</summary>
 	public HtmlAttributeViolation OnViolation { get; init; } = HtmlAttributeViolation.DropAttribute;
@@ -114,6 +120,13 @@ public sealed record HtmlTagPolicy
 	private bool Allows(HtmlAttribute attribute) =>
 		(AllowedAttributes is null || AllowedAttributes.Contains(attribute.Name))
 		&& (!UrlAttributes.Contains(attribute.Name) || IsSafeAddress(attribute.Value));
+
+	private static FrozenSet<string>? IgnoringCase(IReadOnlySet<string>? set) => set switch
+	{
+		null => null,
+		FrozenSet<string> frozen when frozen.Comparer == StringComparer.OrdinalIgnoreCase => frozen,
+		_ => set.ToFrozenSet(StringComparer.OrdinalIgnoreCase),
+	};
 
 	private static bool IsSafeAddress(string value) =>
 		!value.Any(c => char.IsControl(c) || char.IsWhiteSpace(c)) && UrlSafety.IsSafeNavigableUrl(value);

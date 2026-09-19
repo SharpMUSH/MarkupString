@@ -27,7 +27,7 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **`ILineFramer`**, registered with `MarkupRegistry.With(ILineFramer)` and found with
   `FindLineFramer`: a prefix written at the start of every line that has content, in a slot of its
   own beside `IFormatFramer`.
-- **`MxpSecureLineFramer`** and `WithMxpSecureLines()` in `MarkupString.Ansi`: open every line of
+- **`MxpSecureLineFramer`** and `MarkupRegistry.WithMxpSecureLines()`: open every line of
   `Mxp` output in secure mode (`ESC[1z`), which an MXP client needs before it reads the tags on a
   line. Opt-in, for the registry that renders for a connection.
 

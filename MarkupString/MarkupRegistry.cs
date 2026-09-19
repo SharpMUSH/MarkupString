@@ -156,6 +156,14 @@ public sealed class MarkupRegistry
 	public IFormatFramer? FindFramer(MarkupFormat format) =>
 		_framers.TryGetValue(format, out var framer) ? framer : null;
 
+	/// <summary>
+	/// Returns a registry that opens every line of <see cref="MarkupFormat.Mxp"/> output in MXP secure
+	/// mode, which an MXP client needs before it reads the tags on that line. Apply it to the registry
+	/// that renders for an MXP connection, not to <see cref="Default"/> — see
+	/// <see cref="MxpSecureLineFramer"/>.
+	/// </summary>
+	public MarkupRegistry WithMxpSecureLines() => With(MxpSecureLineFramer.Instance);
+
 	/// <summary>The line framer for <paramref name="format"/>, or <see langword="null"/>.</summary>
 	public ILineFramer? FindLineFramer(MarkupFormat format) =>
 		_lineFramers.TryGetValue(format, out var framer) ? framer : null;

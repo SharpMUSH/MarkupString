@@ -1,16 +1,19 @@
 using System.Buffers;
-namespace MarkupString.Ansi;
+namespace MarkupString;
 
 /// <summary>
 /// Opens every line of <see cref="MarkupFormat.Mxp"/> output in MXP secure mode (<c>ESC[1z</c>). An MXP
 /// client reads tags only on a line in secure mode, and the mode ends at the newline, so without this
-/// on each line the <c>&lt;SEND&gt;</c> and <c>&lt;A&gt;</c> this package writes reach the player as
-/// text. Install it with <see cref="AnsiRegistration.WithMxpSecureLines"/>.
+/// on each line every tag in the output — a link, a <c>&lt;B&gt;</c> — reaches the player as text.
+/// Install it with <see cref="MarkupRegistry.WithMxpSecureLines"/>.
 /// </summary>
 /// <remarks>
-/// Not part of <see cref="AnsiRegistration.WithAnsi"/>: the prefix belongs to output bound for an MXP
-/// session, and a render of the same text for a test, a log or a preview wants the tags alone. Use a
-/// registry with this framer at the connection boundary and the plain one everywhere else.
+/// <para>It belongs to the format rather than to any kind of markup: whichever package wrote the tags,
+/// the line has to be opened for them.</para>
+/// <para>Opt-in: the prefix belongs to output bound for an MXP session, and a render of the same text
+/// for a test, a log or a preview wants the tags alone. Use a registry with this framer at the
+/// connection boundary and the plain one everywhere else. Negotiating MXP and starting MXP mode on the
+/// connection are the telnet layer's; this only frames the text sent once it has.</para>
 /// </remarks>
 public sealed class MxpSecureLineFramer : ILineFramer
 {

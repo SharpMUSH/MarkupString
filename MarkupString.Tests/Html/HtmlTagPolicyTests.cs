@@ -138,6 +138,19 @@ public class HtmlTagPolicyTests
 		await Assert.That(HtmlTagPolicy.WellFormed.TryCreate("send x=y", null, out _)).IsFalse();
 	}
 
+	[Test]
+	public async Task APolicyIgnoresCase_WhateverSetItWasGiven()
+	{
+		var policy = HtmlTagPolicy.WellFormed with
+		{
+			AllowedTags = new HashSet<string> { "font" },
+			AllowedAttributes = new HashSet<string> { "color" },
+		};
+
+		await Assert.That(policy.TryCreate("FONT", "COLOR=red", out var markup)).IsTrue();
+		await Assert.That(markup!.Attributes).IsEqualTo("COLOR=\"red\"");
+	}
+
 	// ── The emitter holds deserialised or unchecked markup to it too ────────────
 
 	[Test]
