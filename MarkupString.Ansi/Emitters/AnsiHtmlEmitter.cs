@@ -123,13 +123,13 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 		if (style.LinkKind == LinkKind.Command)
 		{
 			output.Write("<a class=\"ms-cmd-link\" role=\"button\" tabindex=\"0\" xch_cmd=\"");
-			output.Write(WebUtility.HtmlEncode(url));
+			output.Write(AnsiEmitterSupport.EncodeAttribute(url));
 			output.Write("\"");
 		}
 		else if (UrlSafety.IsSafeNavigableUrl(url))
 		{
 			output.Write("<a href=\"");
-			output.Write(WebUtility.HtmlEncode(url));
+			output.Write(AnsiEmitterSupport.EncodeAttribute(url));
 			output.Write("\" target=\"_blank\" rel=\"noopener noreferrer\"");
 		}
 		else
@@ -141,7 +141,7 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 		if (style.LinkText is { Length: > 0 } hint)
 		{
 			output.Write(" title=\"");
-			output.Write(WebUtility.HtmlEncode(hint));
+			output.Write(AnsiEmitterSupport.EncodeAttribute(hint));
 			output.Write("\"");
 		}
 

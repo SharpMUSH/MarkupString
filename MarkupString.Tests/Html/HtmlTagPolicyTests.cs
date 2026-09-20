@@ -24,6 +24,30 @@ public class HtmlTagPolicyTests
 		await Assert.That(Html(markup)).IsEqualTo("<font color=\"red&quot;&gt;&lt;script&gt;&amp;\">x</font>");
 	}
 
+	/// <summary>
+	/// A value cannot end the line the tag is on. Entities decode to what a client reads, and a
+	/// <c>&amp;#10;</c> or <c>&amp;#27;</c> in an attribute would otherwise put a raw newline or ESC inside
+	/// the tag — splitting the line under MXP's secure-line framing, and writing an escape sequence a
+	/// terminal obeys.
+	/// </summary>
+	[Test]
+	public async Task AValueCannotCarryAControlCharacter()
+	{
+		await Assert.That(HtmlTagPolicy.WellFormed.TryCreate("a", "title=\"x&#10;&#13;&#27;[31my\"", out var parsed)).IsTrue();
+		await Assert.That(parsed!.Attributes).IsEqualTo("title=\"x[31my\"");
+
+		var built = HtmlMarkup.Tag("a", new HtmlAttribute("title", "x\n\u001b[31my"));
+		await Assert.That(built.Attributes).IsEqualTo("title=\"x[31my\"");
+		await Assert.That(Html(built, "body")).DoesNotContain("\n");
+	}
+
+	[Test]
+	public async Task AnAttributeNameIsCheckedWhereverOneIsBuilt()
+	{
+		await Assert.That(() => new HtmlAttribute("href=x onclick", "1")).Throws<ArgumentException>()
+			.Because("ToString() is public, and that name would write a second attribute out of one");
+	}
+
 	[Test]
 	public async Task Tag_LeavesAccentedTextAlone()
 	{

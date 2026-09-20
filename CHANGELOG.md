@@ -8,6 +8,19 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+
+- **An attribute value can no longer carry a control character.** `HtmlAttribute` encoded `&`, `"`,
+  `<` and `>` and passed everything else through, while `HtmlMarkup.TryParseAttributes` decodes
+  entities — so a value written as `x&#10;&#27;[31my` became a raw newline and a live ESC inside the
+  tag. Under MXP's secure-line framing the newline split the line mid-tag and the rest reached the
+  player as text; on a terminal the ESC was obeyed. Controls are now dropped, as
+  `MarkupTextRenderer` already dropped them from body text. The same applies to a link's own
+  attributes, and to an OSC 8 target, where a BEL ended the sequence early.
+- **`HtmlAttribute` checks its name.** `ToString()` is public, so a name holding a space or a quote
+  wrote a second attribute out of one. It now throws `ArgumentException`, as `HtmlMarkup.Tag`
+  already did.
+
 ### Added
 
 - **Checked `HtmlMarkup` construction.** `HtmlMarkup.Tag(name, params attributes)` validates the

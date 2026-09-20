@@ -375,6 +375,30 @@ public class AnsiRenderTests
 		await Assert.That(Render(text, MarkupFormat.Plain)).IsEqualTo("ab");
 	}
 
+	/// <summary>
+	/// A link's own attributes cannot end the line the tag is on. Under MXP's secure-line framing a
+	/// newline in a hint would leave the rest of the tag on a line that is no longer in secure mode, and
+	/// the player reads it as text; a BEL or ESC in a URL would end an OSC 8 sequence early.
+	/// </summary>
+	[Test]
+	public async Task ALinksAttributesCannotCarryAControlCharacter()
+	{
+		var link = MarkupText.Wrap(
+			AnsiMarkup.Create(linkUrl: "look", linkKind: LinkKind.Command, linkText: "a\nb"), "click");
+
+		await Assert.That(Render(link, MarkupFormat.Mxp)).IsEqualTo("<SEND HREF=\"look\" HINT=\"ab\">click</SEND>");
+		await Assert.That(Render(link, MarkupFormat.Pueblo)).IsEqualTo("<A XCH_CMD=\"look\" XCH_HINT=\"ab\">click</A>");
+		await Assert.That(Render(link, MarkupFormat.Html)).Contains("title=\"ab\"");
+
+		var url = MarkupText.Wrap(AnsiMarkup.Create(linkUrl: "https://example.com/\a\u001b[2J"), "click");
+		var rendered = Render(url, MarkupFormat.Ansi);
+
+		await Assert.That(rendered).DoesNotContain("\a\u001b")
+			.Because("a BEL in the target would end the OSC 8 sequence and leave an ESC on the terminal");
+		await Assert.That(rendered).Contains($"{Esc}]8;;https://example.com/[2J\a")
+			.Because("the control characters are dropped; what was between them is inert text");
+	}
+
 	// ── Safety ───────────────────────────────────────────────────────────────────
 
 	[Test]

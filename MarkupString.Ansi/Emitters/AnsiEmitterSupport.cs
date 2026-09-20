@@ -102,6 +102,26 @@ internal static class AnsiEmitterSupport
 	/// only navigate, so a command link — and any URL with a scheme
 	/// <see cref="UrlSafety.IsSafeNavigableUrl"/> rejects — is written as plain text.
 	/// </summary>
+	/// <summary>
+	/// A link's URL, hint or text as it is written into an attribute or an escape sequence: HTML-encoded,
+	/// with control characters dropped. A newline would end the line the tag is on — under MXP's
+	/// secure-line framing, the rest of the tag then reaches the player as text — and a BEL or ESC would
+	/// end an OSC 8 sequence early and put the remainder on the terminal as escapes.
+	/// </summary>
+	internal static string EncodeAttribute(string value)
+	{
+		var encoded = WebUtility.HtmlEncode(value);
+		return encoded.AsSpan().ContainsAnyInRange('\u0000', '\u001f') || encoded.Contains('\u007f')
+			? new string([.. encoded.Where(c => !char.IsControl(c))])
+			: encoded;
+	}
+
+	/// <summary>An OSC 8 target, which is not HTML: only the control characters that would end the sequence go.</summary>
+	internal static string EncodeOsc8(string url) =>
+		url.AsSpan().ContainsAnyInRange('\u0000', '\u001f') || url.Contains('\u007f')
+			? new string([.. url.Where(c => !char.IsControl(c))])
+			: url;
+
 	internal static void WriteHyperlinked(in AnsiStyle style, ReadOnlySpan<char> body, IBufferWriter<char> output)
 	{
 		if (style.LinkKind != LinkKind.Url
@@ -113,7 +133,7 @@ internal static class AnsiEmitterSupport
 		}
 
 		output.Write(Osc8);
-		output.Write(url);
+		output.Write(EncodeOsc8(url));
 		output.Write(Bel);
 		output.Write(body);
 		output.Write(Osc8);
@@ -171,12 +191,12 @@ internal static class AnsiEmitterSupport
 				: ("<A XCH_CMD=\"", " XCH_HINT=\"", "</A>");
 
 			output.Write(open);
-			output.Write(WebUtility.HtmlEncode(url));
+			output.Write(EncodeAttribute(url));
 			output.Write("\"");
 			if (style.LinkText is { Length: > 0 } text)
 			{
 				output.Write(hint);
-				output.Write(WebUtility.HtmlEncode(text));
+				output.Write(EncodeAttribute(text));
 				output.Write("\"");
 			}
 			output.Write(">");
@@ -192,7 +212,7 @@ internal static class AnsiEmitterSupport
 		}
 
 		output.Write("<A HREF=\"");
-		output.Write(WebUtility.HtmlEncode(url));
+		output.Write(EncodeAttribute(url));
 		output.Write("\">");
 		output.Write(body);
 		output.Write("</A>");
