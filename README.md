@@ -43,6 +43,11 @@ dotnet add package MarkupString.Pueblo
 | [`MarkupString.Mxp`](https://www.nuget.org/packages/MarkupString.Mxp) | MXP's own elements — sounds, images, gauges, status text, frames — as MXP tags, as the nearest HTML, and as nothing for a client with neither. |
 | [`MarkupString.Pueblo`](https://www.nuget.org/packages/MarkupString.Pueblo) | Pueblo's own extensions — its panes, page control, sounds and mode switches — the `xch_` vocabulary nothing else reads. |
 
+The last three are the **tag dialects**: they write markup as tags in the stream, where
+`MarkupString.Ansi` writes escape sequences. Each says what it renders, because the dialects are not
+interchangeable — Pueblo's command link is `<A XCH_CMD>` and MXP's is `<SEND HREF>`, and each client
+shows the other's as text. Take the ones your audience speaks.
+
 The core package renders nothing on its own: emitters live in the kind packages, so a consumer
 that only needs one of them pays for one of them, and a kind of your own is a first-class peer
 rather than a fork.

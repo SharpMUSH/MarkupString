@@ -8,6 +8,11 @@ nothing else does.
 dotnet add package MarkupString.Pueblo
 ```
 
+It is one of MarkupString's three **tag dialects**, beside
+[`MarkupString.Html`](https://www.nuget.org/packages/MarkupString.Html) (plain HTML, for browsers) and
+[`MarkupString.Mxp`](https://www.nuget.org/packages/MarkupString.Mxp) (MXP's own elements). Each writes
+its own tags; none of them reads another's.
+
 ## What belongs here, and what does not
 
 Pueblo renders an HTML subset, so **plain HTML is not here**: `<b>`, `<pre>`, `<font>` and the rest are

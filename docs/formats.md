@@ -12,6 +12,11 @@ text.RenderTo(MarkupFormat.Ansi, bufferWriter);  // straight into a buffer, no s
 `ToString()` is always the plain text. There is no `ToAnsi()` or `ToHtml()`: rendering is a
 decision about an audience, and it is made where that audience is known.
 
+Three of the kind packages — `MarkupString.Html`, `MarkupString.Mxp` and `MarkupString.Pueblo` — are the
+**tag dialects**: they write markup as tags in the stream, where `MarkupString.Ansi` writes escape
+sequences. They are not interchangeable, which is why each has its own package and its own section
+below.
+
 ## The six built-in formats
 
 | Format | Text encoding | What `MarkupString.Ansi` writes | What `MarkupString.Html` writes |

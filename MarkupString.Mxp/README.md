@@ -23,6 +23,11 @@ An element that wraps nothing is a point in the text, carried the way a bell is;
 (`FRAME`, `VAR`) marks the text it applies to. A format with no MXP writes **nothing at all**, carrier
 included, so the same text is safe to send to every client.
 
+It is one of MarkupString's three **tag dialects**, beside
+[`MarkupString.Html`](https://www.nuget.org/packages/MarkupString.Html) (plain HTML, for browsers) and
+[`MarkupString.Pueblo`](https://www.nuget.org/packages/MarkupString.Pueblo) (Pueblo's `xch_`
+vocabulary). Each writes its own tags; none of them reads another's.
+
 ## What each format gets
 
 | | MXP | HTML | everything else |

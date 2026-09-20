@@ -18,6 +18,12 @@ its body untouched.
 dotnet add package MarkupString.Html
 ```
 
+It is one of MarkupString's three **tag dialects**, beside
+[`MarkupString.Mxp`](https://www.nuget.org/packages/MarkupString.Mxp) and
+[`MarkupString.Pueblo`](https://www.nuget.org/packages/MarkupString.Pueblo), which carry those two
+clients' own vocabularies. This one is HTML: what a browser reads, and what Pueblo reads as its own
+subset.
+
 ## Usage
 
 ```csharp
