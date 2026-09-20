@@ -10,16 +10,27 @@ public static class MxpRegistration
 	/// as text nor the zero-width space it rode on.
 	/// </summary>
 	/// <remarks>
+	/// A registry is cheap to build, so one per connection — carrying that client's answers — costs a
+	/// dictionary copy, and one built without <paramref name="supports"/> serves every client that was
+	/// never asked.
 	/// To keep MXP's elements out of the browser entirely, add
 	/// <c>new MxpSilentEmitter(MarkupFormat.Html)</c> after this; the last emitter registered for a format
 	/// wins.
 	/// </remarks>
-	public static MarkupRegistry WithMxp(this MarkupRegistry registry)
+	/// <param name="registry">The registry to add to.</param>
+	/// <param name="supports">
+	/// Which elements this connection's client said it can render, from MXP's <c>&lt;SUPPORT&gt;</c>
+	/// exchange. Null writes every element, which is the right answer for a client that was never asked.
+	/// An element it refuses is written as a format without MXP writes it: nothing for one that stands
+	/// alone, and the content alone for one that wraps — so a <c>FRAME</c> a client cannot open does not
+	/// take the text that followed it.
+	/// </param>
+	public static MarkupRegistry WithMxp(this MarkupRegistry registry, Func<MxpElement, bool>? supports = null)
 	{
 		ArgumentNullException.ThrowIfNull(registry);
 
 		return registry
-			.With(MxpElementEmitter.Instance)
+			.With(supports is null ? MxpElementEmitter.Instance : new MxpElementEmitter(supports))
 			.With(MxpHtmlEmitter.Instance)
 			.With(new MxpSilentEmitter(MarkupFormat.Ansi))
 			.With(new MxpSilentEmitter(MarkupFormat.Pueblo))

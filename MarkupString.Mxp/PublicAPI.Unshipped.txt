@@ -78,6 +78,7 @@ static MarkupString.Mxp.MxpElement.Standalone(string! name, params System.ReadOn
 static MarkupString.Mxp.MxpElements.User() -> MarkupString.MarkupText!
 static MarkupString.Mxp.MxpElements.Var(MarkupString.MarkupText! value, string! name, string? description = null, bool isPrivate = false, bool publish = false, bool delete = false) -> MarkupString.MarkupText!
 static MarkupString.Mxp.MxpElement.Wrapping(string! name, MarkupString.MarkupText! content, params System.ReadOnlySpan<MarkupString.Mxp.MxpArgument> arguments) -> MarkupString.MarkupText!
-static MarkupString.Mxp.MxpRegistration.WithMxp(this MarkupString.MarkupRegistry! registry) -> MarkupString.MarkupRegistry!
+static MarkupString.Mxp.MxpRegistration.WithMxp(this MarkupString.MarkupRegistry! registry, System.Func<MarkupString.Mxp.MxpElement!, bool>? supports = null) -> MarkupString.MarkupRegistry!
+MarkupString.Mxp.MxpElementEmitter.MxpElementEmitter(System.Func<MarkupString.Mxp.MxpElement!, bool>? supports) -> void
 static readonly MarkupString.Mxp.MxpElementEmitter.Instance -> MarkupString.Mxp.MxpElementEmitter!
 static readonly MarkupString.Mxp.MxpHtmlEmitter.Instance -> MarkupString.Mxp.MxpHtmlEmitter!

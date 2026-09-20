@@ -125,8 +125,10 @@ text it applies to. **A format with no MXP writes nothing at all**, including th
 standalone element rides on, so one piece of text is safe to send to every client — a terminal is sent
 neither the tag nor the character it rode on.
 
-Whether a given client can render an element is a different question, answered by MXP's `<SUPPORT>`
-exchange at the telnet layer; what to do about the answer is the application's.
+`WithMxp(element => ...)` holds what is written to what the client said it can render, from MXP's
+`<SUPPORT>` exchange at the telnet layer. A refused element is written as a format without MXP writes it
+— nothing, or the content alone for one that wraps, so a `FRAME` a client cannot open does not take the
+text inside it with it. With no predicate every element is written: never asked is not refused.
 
 ## Line framers
 

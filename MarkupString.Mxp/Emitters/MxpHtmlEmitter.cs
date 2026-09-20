@@ -6,7 +6,8 @@ namespace MarkupString.Mxp;
 /// <summary>
 /// Writes an <see cref="MxpElement"/> as the nearest thing a browser has, for the handful that have one:
 /// an image, a sound, a gauge, status text and a frame. Everything else writes nothing, as it does for a
-/// terminal.
+/// terminal. An <c>&lt;audio&gt;</c> element is standard HTML, not a Pueblo tag; it is written without
+/// <c>autoplay</c>, because a browser refuses that until the person has interacted with the page.
 /// </summary>
 /// <remarks>
 /// <para>Each carries its MXP name in a <c>data-mxp</c> attribute and an <c>ms-mxp-*</c> class, so a page
@@ -84,7 +85,11 @@ public sealed class MxpHtmlEmitter : IMarkupEmitter
 		output.Write(element.Name.ToUpperInvariant());
 		output.Write("\" src=\"");
 		output.Write(WebUtility.HtmlEncode(source));
-		output.Write("\" autoplay></audio>");
+
+		// No autoplay: a browser refuses audible autoplay until the person has interacted with the page,
+		// so it would play nothing and say nothing about why. Whether this sounds, and when, is the page's
+		// to decide from the data-mxp attribute — as it is for a bell.
+		output.Write("\" preload=\"none\"></audio>");
 	}
 
 	private static void WriteGauge(MxpElement element, IBufferWriter<char> output)

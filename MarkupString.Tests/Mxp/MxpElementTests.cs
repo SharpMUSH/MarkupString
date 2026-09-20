@@ -108,7 +108,8 @@ public class MxpElementTests
 		await Assert.That(Render(MxpElements.Image("map.png", url: "https://example.test/map.png"), MarkupFormat.Html))
 			.IsEqualTo("<img class=\"ms-mxp-image\" data-mxp=\"IMAGE\" src=\"https://example.test/map.png\" alt=\"map.png\">");
 		await Assert.That(Render(MxpElements.Sound("door.wav", url: "https://example.test/door.wav"), MarkupFormat.Html))
-			.IsEqualTo("<audio class=\"ms-mxp-sound\" data-mxp=\"SOUND\" src=\"https://example.test/door.wav\" autoplay></audio>");
+			.IsEqualTo("<audio class=\"ms-mxp-sound\" data-mxp=\"SOUND\" src=\"https://example.test/door.wav\" preload=\"none\"></audio>")
+			.Because("<audio> is standard HTML, but autoplay is refused until the person has interacted with the page, so whether it sounds is the page's call");
 		await Assert.That(Render(MxpElements.Gauge("hp", "maxhp", "Hit Points"), MarkupFormat.Html))
 			.IsEqualTo("<span class=\"ms-mxp-gauge\" data-mxp=\"GAUGE\" data-entity=\"hp\" data-max=\"maxhp\">Hit Points</span>");
 		await Assert.That(Render(MxpElements.Frame(MarkupText.Plain("x"), "map"), MarkupFormat.Html))
@@ -144,6 +145,47 @@ public class MxpElementTests
 			MxpElements.Image("map.png", url: "https://example.test/map.png"), MarkupText.Plain("a map"));
 
 		await Assert.That(line.Render(MarkupFormat.Html, registry)).IsEqualTo("a map");
+	}
+
+	// ── What the client said it can render ──────────────────────────────────────
+
+	/// <summary>
+	/// MXP asks with <c>&lt;SUPPORT&gt;</c> for a reason: a client that answered <c>-image</c> should not be
+	/// sent one. The set of answers belongs to a connection, so the predicate is the consumer's; refusing
+	/// an element writes it the way a format without MXP writes it.
+	/// </summary>
+	[Test]
+	public async Task AnElementTheClientRefusedIsNotWritten()
+	{
+		var registry = MarkupRegistry.Empty.WithAnsi().WithHtml()
+			.WithMxp(element => !element.Name.Equals("IMAGE", StringComparison.OrdinalIgnoreCase));
+
+		var line = MarkupText.Concat(MxpElements.Image("map.png"), MarkupText.Plain("A map hangs here."));
+
+		await Assert.That(line.Render(MarkupFormat.Mxp, registry)).IsEqualTo("A map hangs here.");
+		await Assert.That(MxpElements.Sound("door.wav").Render(MarkupFormat.Mxp, registry)).IsEqualTo("<SOUND door.wav>")
+			.Because("only the refused element is held back");
+	}
+
+	/// <summary>
+	/// The half that matters most: a frame a client cannot open would otherwise take the text inside it
+	/// somewhere the player never sees.
+	/// </summary>
+	[Test]
+	public async Task ARefusedWrappingElementKeepsItsContent()
+	{
+		var registry = MarkupRegistry.Empty.WithAnsi().WithHtml().WithMxp(_ => false);
+
+		var frame = MxpElements.Frame(MarkupText.Plain("The map is here."), "map");
+
+		await Assert.That(frame.Render(MarkupFormat.Mxp, registry)).IsEqualTo("The map is here.");
+	}
+
+	[Test]
+	public async Task WithNoAnswersEveryElementIsWritten()
+	{
+		await Assert.That(Render(MxpElements.Image("map.png"), MarkupFormat.Mxp)).IsEqualTo("<IMAGE map.png>")
+			.Because("a client that was never asked is not a client that refused");
 	}
 
 	// ── The rest ────────────────────────────────────────────────────────────────

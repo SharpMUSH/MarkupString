@@ -28,7 +28,7 @@ included, so the same text is safe to send to every client.
 | | MXP | HTML | everything else |
 |---|---|---|---|
 | `IMAGE` | the tag | `<img>`, when the element carries a URL | nothing |
-| `SOUND`, `MUSIC` | the tag | `<audio autoplay>`, when it carries a URL | nothing |
+| `SOUND`, `MUSIC` | the tag | `<audio>`, when it carries a URL | nothing |
 | `GAUGE`, `STAT` | the tag | a `data-entity` span for the page to draw | nothing |
 | `FRAME`, `VAR` | the tag around its content | a span around its content | the content |
 | `EXPIRE`, `USER`, `PASSWORD`, `NOBR`, `SBR`, `RELOCATE` | the tag | nothing | nothing |
@@ -37,11 +37,26 @@ Every HTML element carries its MXP name in `data-mxp` and an `ms-mxp-*` class, s
 or take one over. To keep MXP out of the browser entirely, add `new MxpSilentEmitter(MarkupFormat.Html)`
 after `WithMxp()`.
 
+## What the client said it can render
+
+MXP asks with `<SUPPORT>` for a reason, and `WithMxp` takes the answer:
+
+```csharp
+// report is what the client replied, from the telnet layer's <SUPPORT> exchange
+var wire = MarkupRegistry.Default.WithMxp(element => !report.Refuses(element.Name));
+```
+
+An element the predicate refuses is written the way a format without MXP writes it: nothing for one
+that stands alone, and **the content alone** for one that wraps — so a `FRAME` a client cannot open does
+not take the text inside it somewhere the player never sees. With no predicate every element is written,
+which is the right answer for a client that was never asked: never asked is not the same as refused.
+
 ## What this package does not decide
 
-Whether a client can render an element is answered by MXP's `<SUPPORT>` exchange, which belongs to the
-telnet layer ([TelnetNegotiationCore](https://github.com/HarryCordewener/TelnetNegotiationCore)), and what
-to do about the answer is the application's. This package renders what it is given.
+Which client you are talking to, and what it answered, belong to the connection — the `<SUPPORT>`
+exchange itself lives in the telnet layer
+([TelnetNegotiationCore](https://github.com/HarryCordewener/TelnetNegotiationCore)). This package renders
+what it is given, and holds it to the answer you hand it.
 
 ## Licence
 

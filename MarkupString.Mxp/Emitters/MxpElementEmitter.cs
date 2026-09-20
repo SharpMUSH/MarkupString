@@ -12,11 +12,26 @@ namespace MarkupString.Mxp;
 /// </remarks>
 public sealed class MxpElementEmitter : IMarkupEmitter
 {
-	/// <summary>The one instance; the emitter carries no state.</summary>
-	public static readonly MxpElementEmitter Instance = new();
+	private readonly Func<MxpElement, bool>? _supports;
 
-	private MxpElementEmitter()
+	/// <summary>An emitter that writes every element, for a connection whose client was never asked.</summary>
+	public static readonly MxpElementEmitter Instance = new(null);
+
+	/// <summary>
+	/// An emitter that writes only the elements <paramref name="supports"/> accepts. MXP's
+	/// <c>&lt;SUPPORT&gt;</c> exchange is what answers that question, and the answer belongs to a
+	/// connection rather than to a registry, so the predicate is the consumer's — usually a lookup into
+	/// what one client replied.
+	/// </summary>
+	/// <remarks>
+	/// An element the predicate refuses is written the way a format without MXP writes it: nothing for one
+	/// that stands alone, and the content alone for one that wraps. That second half is the point of
+	/// asking — a <c>FRAME</c> a client cannot open would otherwise take the text that followed it with
+	/// it.
+	/// </remarks>
+	public MxpElementEmitter(Func<MxpElement, bool>? supports)
 	{
+		_supports = supports;
 	}
 
 	/// <inheritdoc/>
@@ -32,6 +47,12 @@ public sealed class MxpElementEmitter : IMarkupEmitter
 		ArgumentNullException.ThrowIfNull(output);
 
 		var element = (MxpElement)markup;
+		if (_supports is not null && !_supports(element))
+		{
+			if (element.WrapsContent) output.Write(body);
+			return;
+		}
+
 		output.Write(element.ToString());
 
 		if (!element.WrapsContent) return;

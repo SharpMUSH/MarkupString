@@ -19,8 +19,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   - An address is written for a browser only when the element carries an absolute `http`/`https` URL of
     its own: MXP's `FName` names a file in the game's sound or image directory, which a browser cannot
     resolve.
-  - `WithMxp()` installs it; `new MxpSilentEmitter(MarkupFormat.Html)` after it keeps MXP out of the
-    browser entirely.
+  - `WithMxp(element => ...)` holds what is written to what the client answered in MXP's `<SUPPORT>`
+    exchange; a refused element writes nothing, or its content alone when it wraps, so a `FRAME` a client
+    cannot open does not take the text inside it. With no predicate every element is written — never
+    asked is not refused. `new MxpSilentEmitter(MarkupFormat.Html)` after it keeps MXP out of the browser
+    entirely.
 
 ### Added
 
