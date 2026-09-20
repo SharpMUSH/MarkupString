@@ -23,6 +23,13 @@ public static class AnsiRegistration
 			.With(new AnsiPuebloEmitter())
 			.With(new AnsiMxpEmitter())
 			.With(new AnsiBBCodeEmitter())
-			.With(new AnsiMarkupCodec());
+			.With(new AnsiMarkupCodec())
+			// A bell is not ANSI styling, but it is the same audience: a client that reads a control
+			// character, or an HTML page that reads an element. BBCode and Plain have neither, and drop
+			// the character with every other control.
+			.With(new BellEmitter(MarkupFormat.Ansi))
+			.With(new BellEmitter(MarkupFormat.Pueblo))
+			.With(new BellEmitter(MarkupFormat.Mxp))
+			.With(new BellEmitter(MarkupFormat.Html));
 	}
 }

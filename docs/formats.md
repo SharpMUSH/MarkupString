@@ -39,6 +39,24 @@ link.Render(MarkupFormat.Plain);   // north
 A format nothing knows how to write is not an error: the layer is skipped and its body still comes
 out. Text never disappears because a kind had no emitter.
 
+## A bell
+
+`MarkupText.Bell()` is a point in the text rather than a property of any of it: the client is asked to
+get someone's attention where it sits.
+
+```csharp
+var line = MarkupText.Concat(MarkupText.Plain("Someone pages you"), MarkupText.Bell());
+
+line.Render(MarkupFormat.Ansi);    // Someone pages you\a
+line.Render(MarkupFormat.Html);    // Someone pages you<span class="ms-bell" role="alert"></span>
+line.Render(MarkupFormat.Plain);   // Someone pages you
+```
+
+It rides on the one U+0007 it marks, which measures zero display cells, so slicing, padding and
+concatenation carry it without shifting a column. The text encodings drop control characters, so this
+is the only way one reaches rendered output; what the HTML element means — a sound, a flash, a title
+change, nothing — is the page's to decide.
+
 ## Pueblo and MXP
 
 Pueblo and MXP are two different dialects, not one extending the other. Most formatting tags are

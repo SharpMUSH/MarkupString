@@ -36,6 +36,12 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 		_ => new MarkupText(text, ImmutableArray<Run>.Empty),
 	};
 
+	/// <summary>
+	/// A bell: a point in the text asking the client to get someone's attention, measuring zero display
+	/// cells. See <see cref="BellMarkup"/>.
+	/// </summary>
+	public static MarkupText Bell() => Wrap(BellMarkup.Instance, BellMarkup.Character);
+
 	public static MarkupText Wrap(IMarkup markup, string text) => Wrap(MarkupSet.Of(markup), text);
 
 	public static MarkupText Wrap(MarkupSet markups, string text) =>
