@@ -31,6 +31,7 @@ layout engine: wrap, justify, fill, and assemble columns into aligned rows.
 dotnet add package MarkupString
 dotnet add package MarkupString.Ansi
 dotnet add package MarkupString.Html
+dotnet add package MarkupString.Mxp
 ```
 
 | Package | What it gives you |
@@ -38,6 +39,7 @@ dotnet add package MarkupString.Html
 | [`MarkupString`](https://www.nuget.org/packages/MarkupString) | The `MarkupText` type, runs, formats, the registry, the emitter/codec contracts, the JSON serializer, grapheme and display-width helpers. No rendering opinions. |
 | [`MarkupString.Ansi`](https://www.nuget.org/packages/MarkupString.Ansi) | Terminal styling: colours (16 / xterm-256 / truecolor), attributes, links; an `ansi()` code parser and an escape-sequence parser; emitters for ANSI, HTML, Pueblo, MXP and BBCode; and `AnsiCss`, the stylesheet for the `ms-*` classes the HTML emitters write. |
 | [`MarkupString.Html`](https://www.nuget.org/packages/MarkupString.Html) | Raw HTML tag markup — an anchor, a `<pre>`, a `<span class>` — with checked construction and tag policies for untrusted input. |
+| [`MarkupString.Mxp`](https://www.nuget.org/packages/MarkupString.Mxp) | MXP's own elements — sounds, images, gauges, status text, frames — as MXP tags, as the nearest HTML, and as nothing for a client with neither. |
 
 The core package renders nothing on its own: emitters live in the kind packages, so a consumer
 that only needs one of them pays for one of them, and a kind of your own is a first-class peer

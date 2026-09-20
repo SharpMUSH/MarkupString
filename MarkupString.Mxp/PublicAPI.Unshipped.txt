@@ -1,0 +1,83 @@
+#nullable enable
+const MarkupString.Mxp.MxpElement.Carrier = "​" -> string!
+MarkupString.Mxp.MxpAlign
+MarkupString.Mxp.MxpAlign.Bottom = 5 -> MarkupString.Mxp.MxpAlign
+MarkupString.Mxp.MxpAlign.Default = 0 -> MarkupString.Mxp.MxpAlign
+MarkupString.Mxp.MxpAlign.Left = 1 -> MarkupString.Mxp.MxpAlign
+MarkupString.Mxp.MxpAlign.Middle = 4 -> MarkupString.Mxp.MxpAlign
+MarkupString.Mxp.MxpAlign.Right = 2 -> MarkupString.Mxp.MxpAlign
+MarkupString.Mxp.MxpAlign.Top = 3 -> MarkupString.Mxp.MxpAlign
+MarkupString.Mxp.MxpArgument
+MarkupString.Mxp.MxpArgument.Deconstruct(out string? Name, out string! Value) -> void
+MarkupString.Mxp.MxpArgument.Equals(MarkupString.Mxp.MxpArgument other) -> bool
+MarkupString.Mxp.MxpArgument.MxpArgument(string? Name, string! Value) -> void
+MarkupString.Mxp.MxpArgument.MxpArgument() -> void
+MarkupString.Mxp.MxpArgument.Name.get -> string?
+MarkupString.Mxp.MxpArgument.Name.init -> void
+MarkupString.Mxp.MxpArgument.Value.get -> string!
+MarkupString.Mxp.MxpArgument.Value.init -> void
+MarkupString.Mxp.MxpElement
+MarkupString.Mxp.MxpElement.Arguments.get -> System.Collections.Immutable.ImmutableArray<MarkupString.Mxp.MxpArgument>
+MarkupString.Mxp.MxpElement.Arguments.init -> void
+MarkupString.Mxp.MxpElement.<Clone>$() -> MarkupString.Mxp.MxpElement!
+MarkupString.Mxp.MxpElementCodec
+MarkupString.Mxp.MxpElementCodec.Kind.get -> string!
+MarkupString.Mxp.MxpElementCodec.MarkupType.get -> System.Type!
+MarkupString.Mxp.MxpElementCodec.MxpElementCodec() -> void
+MarkupString.Mxp.MxpElementCodec.Read(System.Text.Json.JsonElement element) -> MarkupString.IMarkup!
+MarkupString.Mxp.MxpElementCodec.Write(System.Text.Json.Utf8JsonWriter! writer, MarkupString.IMarkup! markup) -> void
+MarkupString.Mxp.MxpElement.Deconstruct(out string! Name, out System.Collections.Immutable.ImmutableArray<MarkupString.Mxp.MxpArgument> Arguments, out bool WrapsContent) -> void
+MarkupString.Mxp.MxpElementEmitter
+MarkupString.Mxp.MxpElementEmitter.Emit(MarkupString.IMarkup! markup, System.ReadOnlySpan<char> body, in MarkupString.EmitContext context, System.Buffers.IBufferWriter<char>! output) -> void
+MarkupString.Mxp.MxpElementEmitter.Format.get -> MarkupString.MarkupFormat!
+MarkupString.Mxp.MxpElementEmitter.MarkupType.get -> System.Type!
+MarkupString.Mxp.MxpElement.Equals(MarkupString.Mxp.MxpElement? other) -> bool
+MarkupString.Mxp.MxpElement.MxpElement(string! Name, System.Collections.Immutable.ImmutableArray<MarkupString.Mxp.MxpArgument> Arguments, bool WrapsContent) -> void
+MarkupString.Mxp.MxpElement.Name.get -> string!
+MarkupString.Mxp.MxpElement.Name.init -> void
+MarkupString.Mxp.MxpElements
+MarkupString.Mxp.MxpElement.WrapsContent.get -> bool
+MarkupString.Mxp.MxpElement.WrapsContent.init -> void
+MarkupString.Mxp.MxpFrameAction
+MarkupString.Mxp.MxpFrameAction.Close = 1 -> MarkupString.Mxp.MxpFrameAction
+MarkupString.Mxp.MxpFrameAction.Open = 0 -> MarkupString.Mxp.MxpFrameAction
+MarkupString.Mxp.MxpFrameAction.Redirect = 2 -> MarkupString.Mxp.MxpFrameAction
+MarkupString.Mxp.MxpHtmlEmitter
+MarkupString.Mxp.MxpHtmlEmitter.Emit(MarkupString.IMarkup! markup, System.ReadOnlySpan<char> body, in MarkupString.EmitContext context, System.Buffers.IBufferWriter<char>! output) -> void
+MarkupString.Mxp.MxpHtmlEmitter.Format.get -> MarkupString.MarkupFormat!
+MarkupString.Mxp.MxpHtmlEmitter.MarkupType.get -> System.Type!
+MarkupString.Mxp.MxpRegistration
+MarkupString.Mxp.MxpSilentEmitter
+MarkupString.Mxp.MxpSilentEmitter.Emit(MarkupString.IMarkup! markup, System.ReadOnlySpan<char> body, in MarkupString.EmitContext context, System.Buffers.IBufferWriter<char>! output) -> void
+MarkupString.Mxp.MxpSilentEmitter.Format.get -> MarkupString.MarkupFormat!
+MarkupString.Mxp.MxpSilentEmitter.MarkupType.get -> System.Type!
+MarkupString.Mxp.MxpSilentEmitter.MxpSilentEmitter(MarkupString.MarkupFormat! format) -> void
+~override MarkupString.Mxp.MxpArgument.Equals(object obj) -> bool
+override MarkupString.Mxp.MxpArgument.GetHashCode() -> int
+override MarkupString.Mxp.MxpArgument.ToString() -> string!
+override MarkupString.Mxp.MxpElement.Equals(object? obj) -> bool
+override MarkupString.Mxp.MxpElement.GetHashCode() -> int
+override MarkupString.Mxp.MxpElement.ToString() -> string!
+static MarkupString.Mxp.MxpArgument.operator !=(MarkupString.Mxp.MxpArgument left, MarkupString.Mxp.MxpArgument right) -> bool
+static MarkupString.Mxp.MxpArgument.operator ==(MarkupString.Mxp.MxpArgument left, MarkupString.Mxp.MxpArgument right) -> bool
+static MarkupString.Mxp.MxpElement.IsValidName(string! name) -> bool
+static MarkupString.Mxp.MxpElement.operator !=(MarkupString.Mxp.MxpElement? left, MarkupString.Mxp.MxpElement? right) -> bool
+static MarkupString.Mxp.MxpElement.operator ==(MarkupString.Mxp.MxpElement? left, MarkupString.Mxp.MxpElement? right) -> bool
+static MarkupString.Mxp.MxpElements.Expire(string? name = null) -> MarkupString.MarkupText!
+static MarkupString.Mxp.MxpElements.Frame(MarkupString.MarkupText! content, string! name, MarkupString.Mxp.MxpFrameAction action = MarkupString.Mxp.MxpFrameAction.Open, string? title = null, bool isInternal = false, MarkupString.Mxp.MxpAlign align = MarkupString.Mxp.MxpAlign.Default, string? left = null, string? top = null, string? width = null, string? height = null, bool? scrolling = null, bool floating = false) -> MarkupString.MarkupText!
+static MarkupString.Mxp.MxpElements.Gauge(string! entity, string? max = null, string? caption = null, string? colour = null) -> MarkupString.MarkupText!
+static MarkupString.Mxp.MxpElements.Image(string! file, string? url = null, string? type = null, string? height = null, string? width = null, string? horizontalSpace = null, string? verticalSpace = null, MarkupString.Mxp.MxpAlign align = MarkupString.Mxp.MxpAlign.Default, bool isMap = false) -> MarkupString.MarkupText!
+static MarkupString.Mxp.MxpElements.Music(string! file, int? volume = null, int? loops = null, bool? continues = null, string? type = null, string? url = null) -> MarkupString.MarkupText!
+static MarkupString.Mxp.MxpElements.NoBreak() -> MarkupString.MarkupText!
+static MarkupString.Mxp.MxpElements.Password() -> MarkupString.MarkupText!
+static MarkupString.Mxp.MxpElements.Relocate(string! host, int port, bool quiet = false) -> MarkupString.MarkupText!
+static MarkupString.Mxp.MxpElements.SoftBreak() -> MarkupString.MarkupText!
+static MarkupString.Mxp.MxpElements.Sound(string! file, int? volume = null, int? loops = null, int? priority = null, string? type = null, string? url = null) -> MarkupString.MarkupText!
+static MarkupString.Mxp.MxpElements.Stat(string! entity, string? max = null, string? caption = null) -> MarkupString.MarkupText!
+static MarkupString.Mxp.MxpElement.Standalone(string! name, params System.ReadOnlySpan<MarkupString.Mxp.MxpArgument> arguments) -> MarkupString.MarkupText!
+static MarkupString.Mxp.MxpElements.User() -> MarkupString.MarkupText!
+static MarkupString.Mxp.MxpElements.Var(MarkupString.MarkupText! value, string! name, string? description = null, bool isPrivate = false, bool publish = false, bool delete = false) -> MarkupString.MarkupText!
+static MarkupString.Mxp.MxpElement.Wrapping(string! name, MarkupString.MarkupText! content, params System.ReadOnlySpan<MarkupString.Mxp.MxpArgument> arguments) -> MarkupString.MarkupText!
+static MarkupString.Mxp.MxpRegistration.WithMxp(this MarkupString.MarkupRegistry! registry) -> MarkupString.MarkupRegistry!
+static readonly MarkupString.Mxp.MxpElementEmitter.Instance -> MarkupString.Mxp.MxpElementEmitter!
+static readonly MarkupString.Mxp.MxpHtmlEmitter.Instance -> MarkupString.Mxp.MxpHtmlEmitter!

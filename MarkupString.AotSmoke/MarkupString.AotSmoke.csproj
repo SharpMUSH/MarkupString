@@ -18,11 +18,13 @@
     <TrimmerRootAssembly Include="MarkupString" />
     <TrimmerRootAssembly Include="MarkupString.Ansi" />
     <TrimmerRootAssembly Include="MarkupString.Html" />
+    <TrimmerRootAssembly Include="MarkupString.Mxp" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\MarkupString\MarkupString.csproj" />
     <ProjectReference Include="..\MarkupString.Ansi\MarkupString.Ansi.csproj" />
     <ProjectReference Include="..\MarkupString.Html\MarkupString.Html.csproj" />
+    <ProjectReference Include="..\MarkupString.Mxp\MarkupString.Mxp.csproj" />
   </ItemGroup>
 </Project>

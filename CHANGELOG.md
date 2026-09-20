@@ -10,6 +10,20 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **`MarkupString.Mxp`, a new package: MXP's own elements.** `MxpElements` builds what the
+  specification defines — `SOUND`, `MUSIC`, `IMAGE`, `GAUGE`, `STAT`, `FRAME`, `VAR`, `EXPIRE`,
+  `RELOCATE`, `USER`, `PASSWORD`, `NOBR`, `SBR` — and `MxpElement` writes one it does not. They render
+  as MXP tags for `Mxp`, as the nearest thing a browser has for `Html` (an `<img>`, an `<audio>`, a
+  `data-entity` span a page can draw), and as **nothing at all** for every other format, the zero-width
+  carrier a standalone element rides on included, so the same text is safe to send to every client.
+  - An address is written for a browser only when the element carries an absolute `http`/`https` URL of
+    its own: MXP's `FName` names a file in the game's sound or image directory, which a browser cannot
+    resolve.
+  - `WithMxp()` installs it; `new MxpSilentEmitter(MarkupFormat.Html)` after it keeps MXP out of the
+    browser entirely.
+
+### Added
+
 - **Checked `HtmlMarkup` construction.** `HtmlMarkup.Tag(name, params attributes)` validates the
   tag and attribute names and writes each value encoded, so nothing in a value can end the attribute
   or the tag. `HtmlMarkup.IsValidTagName`, `IsValidAttributeName` and `TryParseAttributes` (which

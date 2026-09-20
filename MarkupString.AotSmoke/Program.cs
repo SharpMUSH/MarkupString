@@ -2,13 +2,14 @@ using System.Buffers;
 using MarkupString;
 using MarkupString.Ansi;
 using MarkupString.Html;
+using MarkupString.Mxp;
 
 // Native-AOT smoke test. It is published with PublishAot and run in CI: the publish must produce no
 // IL2xxx/IL3xxx warning, and the binary must exit 0. What it exercises is the whole pipeline that a
 // consumer touches — registry composition, nested markup, every built-in format, and the JSON
 // round trip — because those are where reflection or dynamic code would have crept in.
 
-MarkupRegistry.Default = MarkupRegistry.Empty.WithAnsi().WithHtml();
+MarkupRegistry.Default = MarkupRegistry.Empty.WithAnsi().WithHtml().WithMxp();
 
 // Bold red on its own, so the plain SGR sequence appears un-merged with anything else.
 var red = MarkupText.Wrap(AnsiCodeParser.Parse("hr"), "red");
@@ -35,7 +36,11 @@ var command = MarkupText.Wrap(
 	AnsiMarkup.Create(linkUrl: "look", linkKind: LinkKind.Command),
 	"look");
 
-var text = MarkupText.Concat([red, wide, nested, MarkupText.Space, link, MarkupText.Space, command]);
+// One of MXP's own elements: a tag in MXP, an element in HTML, and nothing anywhere else — the
+// carrier included, which is the part a trimmed build could get wrong.
+var sound = MxpElements.Sound("door.wav", volume: 80, url: "https://example.test/sounds/");
+
+var text = MarkupText.Concat([red, wide, nested, MarkupText.Space, link, MarkupText.Space, command, sound]);
 
 MarkupFormat[] formats =
 [

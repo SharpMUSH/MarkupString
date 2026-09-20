@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>MarkupString.Mxp</AssemblyName>
+    <RootNamespace>MarkupString.Mxp</RootNamespace>
+    <PackageId>MarkupString.Mxp</PackageId>
+    <Title>MarkupString.Mxp</Title>
+    <IsAotCompatible>true</IsAotCompatible>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>CS1591</NoWarn>
+    <Description>MXP's own elements for MarkupString — sounds, images, gauges, status text, frames and the rest — written as MXP tags for a client that negotiated them, as the nearest HTML for a browser, and as nothing at all for a client that has neither.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="8.0.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="5.6.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MarkupString\MarkupString.csproj" />
+  </ItemGroup>
+</Project>

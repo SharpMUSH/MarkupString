@@ -102,6 +102,32 @@ var registry = MarkupRegistry.Empty.WithAnsi().WithHtml().With(new PreFramer());
 
 One framer per format; the last one registered wins.
 
+## MXP's own elements
+
+`MarkupString.Mxp` carries the elements MXP defines beyond styling and links — `SOUND`, `MUSIC`,
+`IMAGE`, `GAUGE`, `STAT`, `FRAME`, `VAR`, `EXPIRE`, `RELOCATE`, `USER`, `PASSWORD`, `NOBR`, `SBR` — and
+anything else through `MxpElement` itself.
+
+```csharp
+MarkupRegistry.Default = MarkupRegistry.Empty.WithAnsi().WithHtml().WithMxp();
+
+var line = MarkupText.Concat(
+  MxpElements.Sound("door.wav", volume: 80, url: "https://example.test/sounds/"),
+  MarkupText.Plain("The door creaks open."));
+
+line.Render(MarkupFormat.Mxp);   // <SOUND door.wav V=80 U=...>The door creaks open.
+line.Render(MarkupFormat.Html);  // <audio ... autoplay></audio>The door creaks open.
+line.Render(MarkupFormat.Ansi);  // The door creaks open.
+```
+
+An element that wraps nothing is a point in the text; one that wraps content (`FRAME`, `VAR`) marks the
+text it applies to. **A format with no MXP writes nothing at all**, including the zero-width carrier a
+standalone element rides on, so one piece of text is safe to send to every client — a terminal is sent
+neither the tag nor the character it rode on.
+
+Whether a given client can render an element is a different question, answered by MXP's `<SUPPORT>`
+exchange at the telnet layer; what to do about the answer is the application's.
+
 ## Line framers
 
 An `ILineFramer` writes a prefix at the start of every line that has content — a line holding
