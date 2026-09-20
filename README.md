@@ -32,6 +32,7 @@ dotnet add package MarkupString
 dotnet add package MarkupString.Ansi
 dotnet add package MarkupString.Html
 dotnet add package MarkupString.Mxp
+dotnet add package MarkupString.Pueblo
 ```
 
 | Package | What it gives you |
@@ -40,6 +41,7 @@ dotnet add package MarkupString.Mxp
 | [`MarkupString.Ansi`](https://www.nuget.org/packages/MarkupString.Ansi) | Terminal styling: colours (16 / xterm-256 / truecolor), attributes, links; an `ansi()` code parser and an escape-sequence parser; emitters for ANSI, HTML, Pueblo, MXP and BBCode; and `AnsiCss`, the stylesheet for the `ms-*` classes the HTML emitters write. |
 | [`MarkupString.Html`](https://www.nuget.org/packages/MarkupString.Html) | Raw HTML tag markup — an anchor, a `<pre>`, a `<span class>` — with checked construction and tag policies for untrusted input. |
 | [`MarkupString.Mxp`](https://www.nuget.org/packages/MarkupString.Mxp) | MXP's own elements — sounds, images, gauges, status text, frames — as MXP tags, as the nearest HTML, and as nothing for a client with neither. |
+| [`MarkupString.Pueblo`](https://www.nuget.org/packages/MarkupString.Pueblo) | Pueblo's own extensions — its panes, page control, sounds and mode switches — the `xch_` vocabulary nothing else reads. |
 
 The core package renders nothing on its own: emitters live in the kind packages, so a consumer
 that only needs one of them pays for one of them, and a kind of your own is a first-class peer

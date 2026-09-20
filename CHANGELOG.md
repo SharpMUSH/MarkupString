@@ -10,6 +10,16 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **`MarkupString.Pueblo`, a new package: Pueblo's own extensions.** `PuebloElements` builds the
+  `xch_` vocabulary a Pueblo client reads — `xch_pane`, `xch_page`, `xch_prefetch`, `xch_mudtext`, the
+  `xch_sound`/`xch_alert`/`xch_speech` family, the `xch_mode` switches, and an `<img>` carrying
+  `xch_cmd`, `xch_hint` or `xch_graph` — from the client's own tag and attribute tables. They render as
+  Pueblo tags for `Pueblo`, as an image or a span for `Html` where one fits, and as nothing at all
+  everywhere else, carrier included.
+  - Plain HTML stays `HtmlMarkup`'s (Pueblo reads an HTML subset), and styling and links stay
+    `AnsiMarkup`'s, which already writes each dialect's own form. Only what is Pueblo's alone is here,
+    so nothing about the existing kinds changes.
+
 - **`MarkupString.Mxp`, a new package: MXP's own elements.** `MxpElements` builds what the
   specification defines — `SOUND`, `MUSIC`, `IMAGE`, `GAUGE`, `STAT`, `FRAME`, `VAR`, `EXPIRE`,
   `RELOCATE`, `USER`, `PASSWORD`, `NOBR`, `SBR` — and `MxpElement` writes one it does not. They render
@@ -26,6 +36,16 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     entirely.
 
 ### Added
+
+- **`MarkupString.Pueblo`, a new package: Pueblo's own extensions.** `PuebloElements` builds the
+  `xch_` vocabulary a Pueblo client reads — `xch_pane`, `xch_page`, `xch_prefetch`, `xch_mudtext`, the
+  `xch_sound`/`xch_alert`/`xch_speech` family, the `xch_mode` switches, and an `<img>` carrying
+  `xch_cmd`, `xch_hint` or `xch_graph` — from the client's own tag and attribute tables. They render as
+  Pueblo tags for `Pueblo`, as an image or a span for `Html` where one fits, and as nothing at all
+  everywhere else, carrier included.
+  - Plain HTML stays `HtmlMarkup`'s (Pueblo reads an HTML subset), and styling and links stay
+    `AnsiMarkup`'s, which already writes each dialect's own form. Only what is Pueblo's alone is here,
+    so nothing about the existing kinds changes.
 
 - **Checked `HtmlMarkup` construction.** `HtmlMarkup.Tag(name, params attributes)` validates the
   tag and attribute names and writes each value encoded, so nothing in a value can end the attribute
@@ -61,6 +81,16 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **`MarkupString.Pueblo`, a new package: Pueblo's own extensions.** `PuebloElements` builds the
+  `xch_` vocabulary a Pueblo client reads — `xch_pane`, `xch_page`, `xch_prefetch`, `xch_mudtext`, the
+  `xch_sound`/`xch_alert`/`xch_speech` family, the `xch_mode` switches, and an `<img>` carrying
+  `xch_cmd`, `xch_hint` or `xch_graph` — from the client's own tag and attribute tables. They render as
+  Pueblo tags for `Pueblo`, as an image or a span for `Html` where one fits, and as nothing at all
+  everywhere else, carrier included.
+  - Plain HTML stays `HtmlMarkup`'s (Pueblo reads an HTML subset), and styling and links stay
+    `AnsiMarkup`'s, which already writes each dialect's own form. Only what is Pueblo's alone is here,
+    so nothing about the existing kinds changes.
+
 - `MarkupText.GraphemeCount`, lazy `EnumerateGraphemes()`, and `SubstringGraphemes(start[, count])`
   preserve all markup layers while counting and extracting whole extended grapheme clusters.
 - Allocation-free `Graphemes.Count` and `Graphemes.Enumerate` expose cluster counts and UTF-16 ranges.
@@ -91,6 +121,16 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **`MarkupString.Pueblo`, a new package: Pueblo's own extensions.** `PuebloElements` builds the
+  `xch_` vocabulary a Pueblo client reads — `xch_pane`, `xch_page`, `xch_prefetch`, `xch_mudtext`, the
+  `xch_sound`/`xch_alert`/`xch_speech` family, the `xch_mode` switches, and an `<img>` carrying
+  `xch_cmd`, `xch_hint` or `xch_graph` — from the client's own tag and attribute tables. They render as
+  Pueblo tags for `Pueblo`, as an image or a span for `Html` where one fits, and as nothing at all
+  everywhere else, carrier included.
+  - Plain HTML stays `HtmlMarkup`'s (Pueblo reads an HTML subset), and styling and links stay
+    `AnsiMarkup`'s, which already writes each dialect's own form. Only what is Pueblo's alone is here,
+    so nothing about the existing kinds changes.
+
 - A column layout engine in `MarkupString.Layout`. `ColumnFormat` describes a column — how its
   text is shaped into lines, how those lines are drawn, and how it behaves among its neighbours
   — and is composed with `with`. `MarkupText.FormatColumn` draws one; `TextLayout.Rows` and
@@ -120,6 +160,16 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **`MarkupString.Pueblo`, a new package: Pueblo's own extensions.** `PuebloElements` builds the
+  `xch_` vocabulary a Pueblo client reads — `xch_pane`, `xch_page`, `xch_prefetch`, `xch_mudtext`, the
+  `xch_sound`/`xch_alert`/`xch_speech` family, the `xch_mode` switches, and an `<img>` carrying
+  `xch_cmd`, `xch_hint` or `xch_graph` — from the client's own tag and attribute tables. They render as
+  Pueblo tags for `Pueblo`, as an image or a span for `Html` where one fits, and as nothing at all
+  everywhere else, carrier included.
+  - Plain HTML stays `HtmlMarkup`'s (Pueblo reads an HTML subset), and styling and links stay
+    `AnsiMarkup`'s, which already writes each dialect's own form. Only what is Pueblo's alone is here,
+    so nothing about the existing kinds changes.
+
 - `AnsiCss.Fixed` in `MarkupString.Ansi` — the stylesheet for the `ms-*` classes. Every one of
   those classes is written by this package's HTML emitter, so a consumer rendering HTML with
   `MarkupString` + `MarkupString.Ansi` alone can now reach the rules; in 1.0.0 they existed only in
@@ -135,6 +185,16 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## 1.0.0 — 2026-09-07
 
 ### Added
+
+- **`MarkupString.Pueblo`, a new package: Pueblo's own extensions.** `PuebloElements` builds the
+  `xch_` vocabulary a Pueblo client reads — `xch_pane`, `xch_page`, `xch_prefetch`, `xch_mudtext`, the
+  `xch_sound`/`xch_alert`/`xch_speech` family, the `xch_mode` switches, and an `<img>` carrying
+  `xch_cmd`, `xch_hint` or `xch_graph` — from the client's own tag and attribute tables. They render as
+  Pueblo tags for `Pueblo`, as an image or a span for `Html` where one fits, and as nothing at all
+  everywhere else, carrier included.
+  - Plain HTML stays `HtmlMarkup`'s (Pueblo reads an HTML subset), and styling and links stay
+    `AnsiMarkup`'s, which already writes each dialect's own form. Only what is Pueblo's alone is here,
+    so nothing about the existing kinds changes.
 
 - `MarkupText` — immutable text plus coalesced, non-overlapping runs of layered markup, with
   slicing, searching, splitting, trimming, splicing, padding, centring and joining that carry the

@@ -130,6 +130,15 @@ neither the tag nor the character it rode on.
 — nothing, or the content alone for one that wraps, so a `FRAME` a client cannot open does not take the
 text inside it with it. With no predicate every element is written: never asked is not refused.
 
+## Pueblo's own extensions
+
+`MarkupString.Pueblo` is the same idea for the other dialect: `xch_pane`, `xch_page`, `xch_prefetch`,
+the `xch_sound` family and the mode switches — what a Pueblo client reads and nothing else does.
+
+Plain HTML stays `HtmlMarkup`'s, because Pueblo reads an HTML subset, and styling and links stay
+`AnsiMarkup`'s, because those are already written per dialect. Only what is Pueblo's alone lives here,
+and a format that cannot express it writes nothing at all, carrier included.
+
 ## Line framers
 
 An `ILineFramer` writes a prefix at the start of every line that has content — a line holding

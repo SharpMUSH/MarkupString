@@ -3,13 +3,14 @@ using MarkupString;
 using MarkupString.Ansi;
 using MarkupString.Html;
 using MarkupString.Mxp;
+using MarkupString.Pueblo;
 
 // Native-AOT smoke test. It is published with PublishAot and run in CI: the publish must produce no
 // IL2xxx/IL3xxx warning, and the binary must exit 0. What it exercises is the whole pipeline that a
 // consumer touches — registry composition, nested markup, every built-in format, and the JSON
 // round trip — because those are where reflection or dynamic code would have crept in.
 
-MarkupRegistry.Default = MarkupRegistry.Empty.WithAnsi().WithHtml().WithMxp();
+MarkupRegistry.Default = MarkupRegistry.Empty.WithAnsi().WithHtml().WithMxp().WithPueblo();
 
 // Bold red on its own, so the plain SGR sequence appears un-merged with anything else.
 var red = MarkupText.Wrap(AnsiCodeParser.Parse("hr"), "red");
@@ -40,7 +41,10 @@ var command = MarkupText.Wrap(
 // carrier included, which is the part a trimmed build could get wrong.
 var sound = MxpElements.Sound("door.wav", volume: 80, url: "https://example.test/sounds/");
 
-var text = MarkupText.Concat([red, wide, nested, MarkupText.Space, link, MarkupText.Space, command, sound]);
+// And Pueblo's own vocabulary, which the same text carries for a Pueblo client and nobody else.
+var pueblo = PuebloElements.Sound("door.wav", volume: 80);
+
+var text = MarkupText.Concat([red, wide, nested, MarkupText.Space, link, MarkupText.Space, command, sound, pueblo]);
 
 MarkupFormat[] formats =
 [

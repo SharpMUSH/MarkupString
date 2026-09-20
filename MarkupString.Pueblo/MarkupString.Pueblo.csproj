@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>MarkupString.Pueblo</AssemblyName>
+    <RootNamespace>MarkupString.Pueblo</RootNamespace>
+    <PackageId>MarkupString.Pueblo</PackageId>
+    <Title>MarkupString.Pueblo</Title>
+    <IsAotCompatible>true</IsAotCompatible>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>CS1591</NoWarn>
+    <Description>Pueblo's own extensions for MarkupString — its panes, page control, sounds, prefetching and mode switches — written as Pueblo tags for a Pueblo client, as the nearest HTML for a browser, and as nothing at all for a client with neither.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="8.0.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="5.6.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MarkupString\MarkupString.csproj" />
+  </ItemGroup>
+</Project>

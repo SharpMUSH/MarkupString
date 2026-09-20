@@ -1,0 +1,76 @@
+#nullable enable
+const MarkupString.Pueblo.PuebloElement.Carrier = "​" -> string!
+MarkupString.Pueblo.PuebloAttribute
+MarkupString.Pueblo.PuebloAttribute.Deconstruct(out string! Name, out string! Value) -> void
+MarkupString.Pueblo.PuebloAttribute.Equals(MarkupString.Pueblo.PuebloAttribute other) -> bool
+MarkupString.Pueblo.PuebloAttribute.Name.get -> string!
+MarkupString.Pueblo.PuebloAttribute.Name.init -> void
+MarkupString.Pueblo.PuebloAttribute.PuebloAttribute(string! Name, string! Value) -> void
+MarkupString.Pueblo.PuebloAttribute.PuebloAttribute() -> void
+MarkupString.Pueblo.PuebloAttribute.Value.get -> string!
+MarkupString.Pueblo.PuebloAttribute.Value.init -> void
+MarkupString.Pueblo.PuebloClear
+MarkupString.Pueblo.PuebloClear.All = 1 -> MarkupString.Pueblo.PuebloClear
+MarkupString.Pueblo.PuebloClear.Text = 0 -> MarkupString.Pueblo.PuebloClear
+MarkupString.Pueblo.PuebloElement
+MarkupString.Pueblo.PuebloElement.Attributes.get -> System.Collections.Immutable.ImmutableArray<MarkupString.Pueblo.PuebloAttribute>
+MarkupString.Pueblo.PuebloElement.Attributes.init -> void
+MarkupString.Pueblo.PuebloElement.<Clone>$() -> MarkupString.Pueblo.PuebloElement!
+MarkupString.Pueblo.PuebloElementCodec
+MarkupString.Pueblo.PuebloElementCodec.Kind.get -> string!
+MarkupString.Pueblo.PuebloElementCodec.MarkupType.get -> System.Type!
+MarkupString.Pueblo.PuebloElementCodec.PuebloElementCodec() -> void
+MarkupString.Pueblo.PuebloElementCodec.Read(System.Text.Json.JsonElement element) -> MarkupString.IMarkup!
+MarkupString.Pueblo.PuebloElementCodec.Write(System.Text.Json.Utf8JsonWriter! writer, MarkupString.IMarkup! markup) -> void
+MarkupString.Pueblo.PuebloElement.Deconstruct(out string! Name, out System.Collections.Immutable.ImmutableArray<MarkupString.Pueblo.PuebloAttribute> Attributes, out bool WrapsContent) -> void
+MarkupString.Pueblo.PuebloElementEmitter
+MarkupString.Pueblo.PuebloElementEmitter.Emit(MarkupString.IMarkup! markup, System.ReadOnlySpan<char> body, in MarkupString.EmitContext context, System.Buffers.IBufferWriter<char>! output) -> void
+MarkupString.Pueblo.PuebloElementEmitter.Format.get -> MarkupString.MarkupFormat!
+MarkupString.Pueblo.PuebloElementEmitter.MarkupType.get -> System.Type!
+MarkupString.Pueblo.PuebloElementEmitter.PuebloElementEmitter(System.Func<MarkupString.Pueblo.PuebloElement!, bool>? supports) -> void
+MarkupString.Pueblo.PuebloElement.Equals(MarkupString.Pueblo.PuebloElement? other) -> bool
+MarkupString.Pueblo.PuebloElement.Name.get -> string!
+MarkupString.Pueblo.PuebloElement.Name.init -> void
+MarkupString.Pueblo.PuebloElement.PuebloElement(string! Name, System.Collections.Immutable.ImmutableArray<MarkupString.Pueblo.PuebloAttribute> Attributes, bool WrapsContent) -> void
+MarkupString.Pueblo.PuebloElements
+MarkupString.Pueblo.PuebloElement.WrapsContent.get -> bool
+MarkupString.Pueblo.PuebloElement.WrapsContent.init -> void
+MarkupString.Pueblo.PuebloHtmlEmitter
+MarkupString.Pueblo.PuebloHtmlEmitter.Emit(MarkupString.IMarkup! markup, System.ReadOnlySpan<char> body, in MarkupString.EmitContext context, System.Buffers.IBufferWriter<char>! output) -> void
+MarkupString.Pueblo.PuebloHtmlEmitter.Format.get -> MarkupString.MarkupFormat!
+MarkupString.Pueblo.PuebloHtmlEmitter.MarkupType.get -> System.Type!
+MarkupString.Pueblo.PuebloMode
+MarkupString.Pueblo.PuebloMode.Html = 1 -> MarkupString.Pueblo.PuebloMode
+MarkupString.Pueblo.PuebloMode.PureHtml = 2 -> MarkupString.Pueblo.PuebloMode
+MarkupString.Pueblo.PuebloMode.Text = 0 -> MarkupString.Pueblo.PuebloMode
+MarkupString.Pueblo.PuebloRegistration
+MarkupString.Pueblo.PuebloSilentEmitter
+MarkupString.Pueblo.PuebloSilentEmitter.Emit(MarkupString.IMarkup! markup, System.ReadOnlySpan<char> body, in MarkupString.EmitContext context, System.Buffers.IBufferWriter<char>! output) -> void
+MarkupString.Pueblo.PuebloSilentEmitter.Format.get -> MarkupString.MarkupFormat!
+MarkupString.Pueblo.PuebloSilentEmitter.MarkupType.get -> System.Type!
+MarkupString.Pueblo.PuebloSilentEmitter.PuebloSilentEmitter(MarkupString.MarkupFormat! format) -> void
+~override MarkupString.Pueblo.PuebloAttribute.Equals(object obj) -> bool
+override MarkupString.Pueblo.PuebloAttribute.GetHashCode() -> int
+override MarkupString.Pueblo.PuebloAttribute.ToString() -> string!
+override MarkupString.Pueblo.PuebloElement.Equals(object? obj) -> bool
+override MarkupString.Pueblo.PuebloElement.GetHashCode() -> int
+override MarkupString.Pueblo.PuebloElement.ToString() -> string!
+static MarkupString.Pueblo.PuebloAttribute.operator !=(MarkupString.Pueblo.PuebloAttribute left, MarkupString.Pueblo.PuebloAttribute right) -> bool
+static MarkupString.Pueblo.PuebloAttribute.operator ==(MarkupString.Pueblo.PuebloAttribute left, MarkupString.Pueblo.PuebloAttribute right) -> bool
+static MarkupString.Pueblo.PuebloElement.IsValidName(string! name) -> bool
+static MarkupString.Pueblo.PuebloElement.operator !=(MarkupString.Pueblo.PuebloElement? left, MarkupString.Pueblo.PuebloElement? right) -> bool
+static MarkupString.Pueblo.PuebloElement.operator ==(MarkupString.Pueblo.PuebloElement? left, MarkupString.Pueblo.PuebloElement? right) -> bool
+static MarkupString.Pueblo.PuebloElements.Alert(string! file, int? volume = null, string? device = null) -> MarkupString.MarkupText!
+static MarkupString.Pueblo.PuebloElements.Image(string! source, string? command = null, string? hint = null, string? graph = null, string? width = null, string? height = null) -> MarkupString.MarkupText!
+static MarkupString.Pueblo.PuebloElements.Mode(MarkupString.Pueblo.PuebloMode mode) -> MarkupString.MarkupText!
+static MarkupString.Pueblo.PuebloElements.Page(MarkupString.Pueblo.PuebloClear clear = MarkupString.Pueblo.PuebloClear.Text) -> MarkupString.MarkupText!
+static MarkupString.Pueblo.PuebloElements.Pane(MarkupString.MarkupText! content, string! name, string? title = null, string? minimumWidth = null, string? minimumHeight = null, string? alignTo = null, bool? scrolling = null, string? options = null) -> MarkupString.MarkupText!
+static MarkupString.Pueblo.PuebloElements.Prefetch(string! source) -> MarkupString.MarkupText!
+static MarkupString.Pueblo.PuebloElements.Sound(string! file, int? volume = null, string? device = null) -> MarkupString.MarkupText!
+static MarkupString.Pueblo.PuebloElements.Speech(string! text, int? volume = null, string? device = null) -> MarkupString.MarkupText!
+static MarkupString.Pueblo.PuebloElement.Standalone(string! name, params System.ReadOnlySpan<MarkupString.Pueblo.PuebloAttribute> attributes) -> MarkupString.MarkupText!
+static MarkupString.Pueblo.PuebloElement.Wrapping(string! name, MarkupString.MarkupText! content, params System.ReadOnlySpan<MarkupString.Pueblo.PuebloAttribute> attributes) -> MarkupString.MarkupText!
+static MarkupString.Pueblo.PuebloRegistration.WithPueblo(this MarkupString.MarkupRegistry! registry, System.Func<MarkupString.Pueblo.PuebloElement!, bool>? supports = null) -> MarkupString.MarkupRegistry!
+static readonly MarkupString.Pueblo.PuebloElementEmitter.Instance -> MarkupString.Pueblo.PuebloElementEmitter!
+static readonly MarkupString.Pueblo.PuebloHtmlEmitter.Instance -> MarkupString.Pueblo.PuebloHtmlEmitter!
+static MarkupString.Pueblo.PuebloElements.MudText(MarkupString.MarkupText! content) -> MarkupString.MarkupText!
