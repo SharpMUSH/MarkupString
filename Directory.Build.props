@@ -11,7 +11,19 @@
   </PropertyGroup>
 
   <!--
-    Package metadata that is identical across the shipping packages. Everything that
+    Verify 33 fails the build unless the consumer answers its maintenance-fee check. MarkupString is
+    open source and earns nothing, which is Verify's own OpenSource exemption. The exemption is
+    time-bounded, at most twelve months out, so this date has to be moved forward (or the answer
+    changed) before it passes — the build says so when it lapses. Verify's terms:
+    https://github.com/VerifyTests/Verify/blob/main/docs/maintenance-fee.md
+  -->
+  <PropertyGroup>
+    <Verify_SponsorshipExemption>OpenSource</Verify_SponsorshipExemption>
+    <Verify_SponsorshipExemptionUntil>2027-09</Verify_SponsorshipExemptionUntil>
+  </PropertyGroup>
+
+  <!--
+    Package metadata that is identical across the three shipping packages. Everything that
     differs per package — PackageId, AssemblyName, Description, project references — stays in
     the project file. Test and smoke projects set IsPackable=false, so these are inert there.
   -->
