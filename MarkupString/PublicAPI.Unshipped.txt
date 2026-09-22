@@ -199,3 +199,5 @@ static MarkupString.VariableMarkup.operator !=(MarkupString.VariableMarkup? left
 static MarkupString.VariableMarkup.operator ==(MarkupString.VariableMarkup? left, MarkupString.VariableMarkup? right) -> bool
 static readonly MarkupString.ClearScreenMarkup.Instance -> MarkupString.ClearScreenMarkup!
 const MarkupString.MarkupText.PointCarrier = "​" -> string!
+MarkupString.BellMarkup.Carrier.get -> string!
+MarkupString.IPointMarkup.Carrier.get -> string!

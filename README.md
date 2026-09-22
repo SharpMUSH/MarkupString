@@ -118,7 +118,7 @@ TextLayout.Rows(
   pays for a reset it does not need.
 - **Unicode-correct by construction.** Extractions snap inward to cluster boundaries, edits snap
   outward; padding and alignment measure in cells, not code units.
-- **AOT and trimming clean.** All three packages are `IsAotCompatible` with no reflection and no
+- **AOT and trimming clean.** Every package is `IsAotCompatible` with no reflection and no
   dynamic code, and CI publishes a native binary with every assembly rooted, failing on any
   `IL2xxx`/`IL3xxx` warning.
 
@@ -130,7 +130,7 @@ TextLayout.Rows(
 
 Semantic versioning, driven by [MinVer](https://github.com/adamralph/minver): the tag `v1.2.3`
 builds `1.2.3`, and any other commit builds the next patch as a `-preview.0.N` prerelease. The
-three packages share one version and are released together. Public API changes are tracked in
+packages share one version and are released together. Public API changes are tracked in
 `PublicAPI.Shipped.txt` / `PublicAPI.Unshipped.txt` and enforced at build time.
 
 ## Contributing

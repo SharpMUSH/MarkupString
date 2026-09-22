@@ -105,6 +105,11 @@ text: `ToPlainText()`, `ToString()` and equality leave it out, and the renderer 
 format with an emitter for the point writes the point; a format with none writes nothing, not even the
 styling around it. `MarkupText.Point(markup)` makes a point of your own.
 
+A point marks its carrier and nothing else. `MarkupText.Wrap` refuses a point over anything but its own
+carrier, so a point can never stand over words that a format would then swallow, and a cover read back
+with one out of place drops the point rather than the text. Styling *around* a point is fine: the
+styling is written only if the point is.
+
 ### What an MXP client said it supports
 
 MXP asks a client which elements it can render with `<SUPPORT>`, and a client that answered `-image`

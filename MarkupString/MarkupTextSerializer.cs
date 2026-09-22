@@ -43,7 +43,7 @@ namespace MarkupString;
 public static class MarkupTextSerializer
 {
 	/// <summary>The kind written for, and read back as, <see cref="NeutralMarkup.Instance"/>.</summary>
-	private const string NeutralKind = "neutral";
+	private const string NeutralKind = ElementCodecs.NeutralKind;
 
 	/// <summary>
 	/// Leaves non-ASCII text as literal UTF-8 rather than <c>\uXXXX</c> escapes. The default encoder

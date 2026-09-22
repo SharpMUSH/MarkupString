@@ -55,7 +55,7 @@ public class SharedVocabularyTests
 		await Assert.That(Render(music, MarkupFormat.Mxp)).IsEqualTo("<MUSIC theme.mid L=-1 C=1>");
 		await Assert.That(Render(music, MarkupFormat.Pueblo)).IsEqualTo("<img xch_sound=\"loop\" href=\"theme.mid\">");
 		await Assert.That(Render(music, MarkupFormat.Html)).IsEqualTo(
-			"<audio class=\"ms-sound\" data-channel=\"music\" src=\"theme.mid\" preload=\"none\" loop data-continues=\"true\"></audio>");
+			"<audio class=\"ms-sound\" data-channel=\"music\" src=\"theme.mid\" preload=\"none\" loop=\"\" data-continues=\"true\"></audio>");
 	}
 
 	/// <summary>MXP names the file and, separately, where to download it from.</summary>
@@ -218,6 +218,43 @@ public class SharedVocabularyTests
 		await Assert.That(MxpRegistration.Elements).Contains("DEST");
 	}
 
+	// ── An HTML policy reaches these elements too ───────────────────────────────
+
+	/// <summary>
+	/// <c>WithHtml(policy)</c> says every tag rendered for a browser is held to it. These elements are
+	/// tags, so they are held to it too: one the policy refuses is written the way a format that cannot
+	/// express it writes it.
+	/// </summary>
+	[Test]
+	public async Task AnHtmlPolicyHoldsTheseElementsToo()
+	{
+		var policy = HtmlTagPolicy.WellFormed with
+		{
+			AllowedTags = new HashSet<string> { "span" },
+			UrlAttributes = HtmlTagPolicy.AddressAttributes,
+		};
+		var registry = MarkupRegistry.Empty.WithAnsi().WithHtml(policy);
+
+		var line = MarkupText.Concat([
+			MarkupText.Sound("door.wav"),
+			MarkupText.Image("map.png", "A map"),
+			MarkupText.Pane(MarkupText.Plain("gate"), "map")]);
+
+		await Assert.That(line.Render(MarkupFormat.Html, registry))
+			.IsEqualTo("A map<span class=\"ms-pane\" data-pane=\"map\">gate</span>")
+			.Because("audio and img are not allowed tags: the sound goes, the picture leaves its description");
+	}
+
+	[Test]
+	public async Task AnHtmlPolicyCanRefuseAnAddressWithoutRefusingTheElement()
+	{
+		var policy = HtmlTagPolicy.WellFormed with { UrlAttributes = HtmlTagPolicy.AddressAttributes };
+		var registry = MarkupRegistry.Empty.WithAnsi().WithHtml(policy);
+
+		await Assert.That(MarkupText.Image("javascript:alert(1)", "A map").Render(MarkupFormat.Html, registry))
+			.IsEqualTo("<img class=\"ms-image\" alt=\"A map\">");
+	}
+
 	// ── A point is not text ─────────────────────────────────────────────────────
 
 	[Test]
@@ -258,6 +295,67 @@ public class SharedVocabularyTests
 		var status = MarkupText.Status(MarkupText.Plain("x"), "hp", caption: "He said \"hi\" <loudly>");
 
 		await Assert.That(Render(status, MarkupFormat.Mxp)).IsEqualTo("<STAT hp CAPTION=\"He said &quot;hi&quot; &lt;loudly&gt;\">");
+	}
+
+	// ── A point marks its carrier and nothing else ──────────────────────────────
+
+	/// <summary>
+	/// Without this, a point could stand over words: the emitter writes the point and ignores the body,
+	/// so the text under it would be swallowed, and a point over an astral character would fire twice.
+	/// </summary>
+	[Test]
+	public async Task APointCannotBeWrappedAroundText()
+	{
+		await Assert.That(() => MarkupText.Wrap(new SoundMarkup("door.wav"), "The door creaks."))
+			.Throws<ArgumentException>();
+		await Assert.That(() => MarkupText.Wrap(new SoundMarkup("door.wav"), "\U0001F600")).Throws<ArgumentException>();
+		await Assert.That(() => MarkupText.Wrap(BellMarkup.Instance, MarkupText.Plain("x"))).Throws<ArgumentException>();
+		await Assert.That(() => MarkupText.Wrap(
+			MarkupSet.Of([new SoundMarkup("door.wav"), AnsiMarkup.Create(bold: true)]), "loud")).Throws<ArgumentException>();
+	}
+
+	[Test]
+	public async Task APointWrappedInStylingIsStillAPoint()
+	{
+		var styled = MarkupText.Wrap(AnsiMarkup.Create(bold: true), MarkupText.Sound("door.wav"));
+
+		await Assert.That(Render(styled, MarkupFormat.Mxp)).Contains("<SOUND door.wav>");
+		await Assert.That(styled.ToPlainText()).IsEqualTo(string.Empty);
+	}
+
+	/// <summary>
+	/// Two points on one carrier cannot be built, but a cover read back from somewhere else can hold
+	/// them. Each is written, and neither swallows the other.
+	/// </summary>
+	[Test]
+	public async Task EveryPointOnACarrierIsWritten()
+	{
+		var two = MarkupText.Wrap(
+			MarkupSet.Of([new SoundMarkup("door.wav"), new SoundMarkup("bell.wav")]), MarkupText.PointCarrier);
+
+		await Assert.That(Render(two, MarkupFormat.Mxp)).IsEqualTo("<SOUND door.wav><SOUND bell.wav>");
+		await Assert.That(two.ToPlainText()).IsEqualTo(string.Empty);
+	}
+
+	/// <summary>
+	/// A cover that puts a point over real text is not a shape any format can render: the point is
+	/// dropped and the text kept, rather than the text disappearing under it.
+	/// </summary>
+	[Test]
+	public async Task AMisplacedPointIsDroppedAndItsTextKept()
+	{
+		var json = MarkupTextSerializer.Serialize(
+			MarkupText.Concat([MarkupText.Sound("door.wav"), Creaks]), MarkupRegistry.Empty);
+
+		// The cover, rewritten so the sound covers the sentence instead of its carrier.
+		var moved = json.Replace("\"r\":[1,1,16,0]", "\"r\":[1,0,16,1]");
+
+		var back = MarkupTextSerializer.Deserialize(moved, MarkupRegistry.Empty);
+
+		await Assert.That(back.ToPlainText()).EndsWith("The door creaks.");
+		await Assert.That(back.Runs.Any(run => run.Markups.Any(markup => markup is IPointMarkup))).IsFalse();
+		await Assert.That(Render(back, MarkupFormat.Mxp)).EndsWith("The door creaks.")
+			.Because("the sentence is kept; only the point that could not be written where it sat is gone");
 	}
 
 	// ── Storage ──────────────────────────────────────────────────────────────────

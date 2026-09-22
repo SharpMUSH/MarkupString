@@ -16,6 +16,9 @@ public sealed class BellMarkup : IPointMarkup
 	/// <summary>The character a bell is carried on.</summary>
 	public const string Character = "\u0007";
 
+	/// <inheritdoc/>
+	public string Carrier => Character;
+
 	/// <summary>The one instance; a bell carries no state.</summary>
 	public static readonly BellMarkup Instance = new();
 

@@ -19,11 +19,13 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 		ArgumentNullException.ThrowIfNull(set);
 		ArgumentNullException.ThrowIfNull(output);
 
-		using var inner = AnsiEmitterSupport.WriteInner(set, body, context);
-		if (inner is not null) body = inner.WrittenSpan;
+		AnsiEmitterSupport.EmitSegmented(set, body, context, output, WriteSpan);
+		return true;
+	}
 
-		var style = AnsiEmitterSupport.Fold(set, context.Format);
-
+	/// <summary>Writes one stretch of folded layers as a span, with the anchor inside it.</summary>
+	private static void WriteSpan(in AnsiStyle style, ReadOnlySpan<char> body, in EmitContext context, IBufferWriter<char> output)
+	{
 		// Reverse video swaps the two colours rather than asking the browser to.
 		var (foreground, background) = style.Inverted
 			? (style.Background, style.Foreground)
@@ -36,47 +38,41 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 		var hasStyle = foregroundHex.Length > 0 || backgroundHex.Length > 0;
 		var hasClasses = HasClasses(style, hasStyle);
 
-		using var core = new PooledCharWriter(body.Length + 96);
-
-		if (hasStyle || hasClasses)
+		if (!hasStyle && !hasClasses)
 		{
-			core.Write("<span");
-
-			if (hasStyle)
-			{
-				core.Write(" style=\"");
-				if (foregroundHex.Length > 0)
-				{
-					core.Write("color: ");
-					core.Write(foregroundHex);
-				}
-				if (foregroundHex.Length > 0 && backgroundHex.Length > 0) core.Write("; ");
-				if (backgroundHex.Length > 0)
-				{
-					core.Write("background-color: ");
-					core.Write(backgroundHex);
-				}
-				core.Write("\"");
-			}
-
-			if (hasClasses)
-			{
-				core.Write(" class=\"");
-				WriteClasses(style, hasStyle, core);
-				core.Write("\"");
-			}
-
-			core.Write(">");
-			WriteAnchored(style, body, core);
-			core.Write("</span>");
-		}
-		else
-		{
-			WriteAnchored(style, body, core);
+			WriteAnchored(style, body, output);
+			return;
 		}
 
-		AnsiEmitterSupport.WriteWrapped(set, core.WrittenSpan, context, output);
-		return true;
+		output.Write("<span");
+
+		if (hasStyle)
+		{
+			output.Write(" style=\"");
+			if (foregroundHex.Length > 0)
+			{
+				output.Write("color: ");
+				output.Write(foregroundHex);
+			}
+			if (foregroundHex.Length > 0 && backgroundHex.Length > 0) output.Write("; ");
+			if (backgroundHex.Length > 0)
+			{
+				output.Write("background-color: ");
+				output.Write(backgroundHex);
+			}
+			output.Write("\"");
+		}
+
+		if (hasClasses)
+		{
+			output.Write(" class=\"");
+			WriteClasses(style, hasStyle, output);
+			output.Write("\"");
+		}
+
+		output.Write(">");
+		WriteAnchored(style, body, output);
+		output.Write("</span>");
 	}
 
 	/// <summary>

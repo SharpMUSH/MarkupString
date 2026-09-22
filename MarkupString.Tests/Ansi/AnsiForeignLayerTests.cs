@@ -4,9 +4,10 @@ using MarkupString.Ansi;
 /// <summary>
 /// The path a run takes when it carries a layer this package does not own. Every set emitter here
 /// claims every run, so <c>AnsiEmitterSupport</c> is the only thing standing between a foreign layer and
-/// being dropped. It keeps the nesting: foreign layers inside every ANSI layer are applied to the text
-/// before the style is (<c>WriteInner</c>), and the rest wrap the styled output (<c>WriteWrapped</c>),
-/// each innermost first.
+/// being dropped. A format that expresses nesting keeps it (<c>EmitSegmented</c>: a stretch of folded
+/// layers, then the foreign layer's own emitter, then the next stretch). A terminal does not — a style
+/// there is state, not nesting — so <c>WriteWrapped</c> wraps the whole SGR core in the foreign layers,
+/// innermost first.
 /// </summary>
 public class AnsiForeignLayerTests
 {
@@ -60,31 +61,35 @@ public class AnsiForeignLayerTests
 		.WithAnsi()
 		.With(new TagEmitter(MarkupFormat.Ansi))
 		.With(new TagEmitter(MarkupFormat.Html))
+		.With(new TagEmitter(MarkupFormat.Pueblo))
 		.With(new BoldTagEmitter());
 
 	private static readonly AnsiMarkup Red = AnsiMarkup.Create(foreground: new AnsiColor.Standard(1, false));
+
+	private static readonly AnsiMarkup Bold = AnsiMarkup.Create(bold: true);
 
 	private static string Render(MarkupText text, MarkupFormat format) => text.Render(format, Registry);
 
 	// ── Delegation of layers this package does not own ────────────────────────────
 
 	/// <summary>
-	/// Set <c>[Tag("t"), AnsiMarkup(red)]</c>. The tag is inside the colour, so the colour's sequence
-	/// and reset bracket it.
+	/// Set <c>[Tag("t"), AnsiMarkup(red)]</c>. The ANSI sequence and its reset bracket the body — the
+	/// fold produces them around the run's text — and the foreign layer wraps that whole core. Where the
+	/// tag sits relative to the sequence changes nothing on a terminal, which holds the style as state.
 	/// </summary>
 	[Test]
-	public async Task Ansi_ForeignLayerInsideAnAnsiLayer_StaysInsideTheSgr()
+	public async Task Ansi_ForeignLayerInsideAnAnsiLayer_WrapsTheSgrCore()
 	{
 		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new Tag("t"), "x"));
-		await Assert.That(Render(text, MarkupFormat.Ansi)).IsEqualTo($"{Esc}[31m<t>x</t>{Esc}[0m");
+		await Assert.That(Render(text, MarkupFormat.Ansi)).IsEqualTo($"<t>{Esc}[31mx{Esc}[0m</t>");
 	}
 
 	/// <summary>
-	/// Set <c>[AnsiMarkup(red), Tag("t")]</c> — the same two layers the other way round, and the tag
-	/// wraps the colour.
+	/// Set <c>[AnsiMarkup(red), Tag("t")]</c> — the same two layers the other way round, and the
+	/// terminal output is the same.
 	/// </summary>
 	[Test]
-	public async Task Ansi_ForeignLayerOutsideAnAnsiLayer_WrapsTheSgr()
+	public async Task Ansi_ForeignLayerOutsideAnAnsiLayer_RendersTheSame()
 	{
 		var text = MarkupText.Wrap(new Tag("t"), MarkupText.Wrap(Red, "x"));
 		await Assert.That(Render(text, MarkupFormat.Ansi)).IsEqualTo($"<t>{Esc}[31mx{Esc}[0m</t>");
@@ -95,7 +100,7 @@ public class AnsiForeignLayerTests
 	public async Task Ansi_TwoForeignLayers_NestInOrder()
 	{
 		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new Tag("b"), MarkupText.Wrap(new Tag("a"), "x")));
-		await Assert.That(Render(text, MarkupFormat.Ansi)).IsEqualTo($"{Esc}[31m<b><a>x</a></b>{Esc}[0m");
+		await Assert.That(Render(text, MarkupFormat.Ansi)).IsEqualTo($"<b><a>{Esc}[31mx{Esc}[0m</a></b>");
 	}
 
 	/// <summary>The same set in HTML: both tags are inside the colour, so the span wraps them.</summary>
@@ -105,6 +110,35 @@ public class AnsiForeignLayerTests
 		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new Tag("b"), MarkupText.Wrap(new Tag("a"), "x")));
 		await Assert.That(Render(text, MarkupFormat.Html))
 			.IsEqualTo("<span style=\"color: #aa0000\"><b><a>x</a></b></span>");
+	}
+
+	// ── A foreign layer between two of this package's ────────────────────────────
+
+	/// <summary>
+	/// Set <c>[AnsiMarkup(bold), Tag("t"), AnsiMarkup(red)]</c>: a bold inside a tag inside a red. The
+	/// two ANSI layers are not folded into one across the tag — each is written where it sits, so the
+	/// tag stays between them.
+	/// </summary>
+	[Test]
+	public async Task Html_ForeignLayerBetweenTwoAnsiLayers_KeepsItBetweenThem()
+	{
+		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new Tag("t"), MarkupText.Wrap(Bold, "x")));
+
+		await Assert.That(Render(text, MarkupFormat.Html))
+			.IsEqualTo("<span style=\"color: #aa0000\"><t><span class=\"ms-bold\">x</span></t></span>");
+	}
+
+	/// <summary>
+	/// The same set for Pueblo, where a style is SGR: the inner stretch opens inside the tag, and the
+	/// terminal ends up bold red at the text either way.
+	/// </summary>
+	[Test]
+	public async Task Pueblo_ForeignLayerBetweenTwoAnsiLayers_KeepsItBetweenThem()
+	{
+		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new Tag("t"), MarkupText.Wrap(Bold, "x")));
+
+		await Assert.That(Render(text, MarkupFormat.Pueblo))
+			.IsEqualTo($"{Esc}[31m<t>{Esc}[1mx{Esc}[0m</t>{Esc}[0m");
 	}
 
 	/// <summary>A foreign layer alone, with no ANSI layer to fold: only its own emitter runs.</summary>

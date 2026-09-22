@@ -170,25 +170,18 @@ public static class MarkupTextRenderer
 		IBufferWriter<char> output)
 	{
 		var markups = run.Markups;
-		var point = FindPoint(markups);
-		IMarkupEmitter? pointEmitter = null;
-		if (point is not null)
-		{
-			// A point's carrier is not text. With no emitter for this format the point writes nothing —
-			// not the carrier, and not the layers around it, which would wrap an empty body.
-			pointEmitter = registry.FindEmitter(point.GetType(), format);
-			if (pointEmitter is null) return false;
-			markups = Without(markups, point);
-		}
+		var points = CountPoints(markups);
 
 		var front = new PooledCharWriter(body.Length + 16);
 		PooledCharWriter? back = null;
 		try
 		{
-			if (pointEmitter is not null)
+			if (points > 0)
 			{
-				// Equal points side by side coalesce into one run; each carrier is still one point.
-				for (var i = 0; i < body.Length; i++) pointEmitter.Emit(point!, body.Slice(i, 1), context, front);
+				// A point's carrier is not text. With no emitter for this format the point writes nothing
+				// — not the carrier, and not the layers around it, which would wrap an empty body.
+				if (!WritePoints(markups, body, format, registry, context, front)) return false;
+				markups = Without(markups, points);
 				if (markups is null)
 				{
 					output.Write(front.WrittenSpan);
@@ -212,7 +205,7 @@ public static class MarkupTextRenderer
 				back.Clear();
 			}
 
-			var emitted = pointEmitter is not null;
+			var emitted = points > 0;
 			for (var i = 0; i < markups!.Count; i++)
 			{
 				var markup = markups[i];
@@ -235,22 +228,53 @@ public static class MarkupTextRenderer
 		}
 	}
 
-	/// <summary>The point a run carries, if any.</summary>
-	private static IPointMarkup? FindPoint(MarkupSet markups)
+	/// <summary>How many points the run carries. A well-formed run carries at most one.</summary>
+	private static int CountPoints(MarkupSet markups)
 	{
+		var points = 0;
 		foreach (var markup in markups)
-			if (markup is IPointMarkup point) return point;
-		return null;
+			if (markup is IPointMarkup) points++;
+		return points;
 	}
 
-	/// <summary>The run's other layers, or null when the point was its only one.</summary>
-	private static MarkupSet? Without(MarkupSet markups, IPointMarkup point)
+	/// <summary>
+	/// Writes every point the run carries, innermost first, once per carrier it covers — equal points
+	/// side by side coalesce into one run, and each carrier is still one point. Returns whether anything
+	/// was written: a point this format has no emitter for writes nothing at all, and a run of nothing
+	/// but such points is dropped whole, carrier included.
+	/// </summary>
+	private static bool WritePoints(
+		MarkupSet markups,
+		ReadOnlySpan<char> body,
+		MarkupFormat format,
+		MarkupRegistry registry,
+		in EmitContext context,
+		IBufferWriter<char> output)
 	{
-		if (markups.Count == 1) return null;
-
-		var rest = new List<IMarkup>(markups.Count - 1);
+		var written = false;
 		foreach (var markup in markups)
-			if (!ReferenceEquals(markup, point)) rest.Add(markup);
+		{
+			if (markup is not IPointMarkup point) continue;
+
+			var emitter = registry.FindEmitter(point.GetType(), format);
+			if (emitter is null) continue;
+
+			var carrier = point.Carrier.Length;
+			for (var i = 0; i + carrier <= body.Length; i += carrier) emitter.Emit(point, body.Slice(i, carrier), context, output);
+			written = true;
+		}
+
+		return written;
+	}
+
+	/// <summary>The run's layers with the points taken out, or null when it carried nothing else.</summary>
+	private static MarkupSet? Without(MarkupSet markups, int points)
+	{
+		if (markups.Count == points) return null;
+
+		var rest = new List<IMarkup>(markups.Count - points);
+		foreach (var markup in markups)
+			if (markup is not IPointMarkup) rest.Add(markup);
 		return MarkupSet.Of(rest);
 	}
 }

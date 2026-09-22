@@ -7,6 +7,9 @@ namespace MarkupString;
 /// </summary>
 internal static class ElementCodecs
 {
+	/// <summary>The kind the serializer writes for <see cref="NeutralMarkup"/>, which needs no codec.</summary>
+	public const string NeutralKind = "neutral";
+
 	private static readonly IMarkupCodec[] All =
 	[
 		new Codec<BellMarkup>("bell", static (_, _) => { }, static _ => BellMarkup.Instance),
@@ -105,6 +108,9 @@ internal static class ElementCodecs
 	public static IMarkupCodec? Find(Type markupType) => ByType.GetValueOrDefault(markupType);
 
 	public static IMarkupCodec? Find(string kind) => ByKind.GetValueOrDefault(kind);
+
+	/// <summary>Whether <paramref name="kind"/> is one core writes itself, and so not one to register.</summary>
+	public static bool IsReserved(string kind) => kind == NeutralKind || ByKind.ContainsKey(kind);
 
 	private static string? String(JsonElement element, string name) =>
 		element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;

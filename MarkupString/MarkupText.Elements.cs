@@ -19,11 +19,11 @@ public sealed partial class MarkupText
 	/// </summary>
 	public const string PointCarrier = "\u200b";
 
-	/// <summary>A point in the text, riding on <see cref="PointCarrier"/>.</summary>
+	/// <summary>A point in the text, riding on its own <see cref="IPointMarkup.Carrier"/>.</summary>
 	public static MarkupText Point(IPointMarkup markup)
 	{
 		ArgumentNullException.ThrowIfNull(markup);
-		return Wrap(markup, PointCarrier);
+		return Wrap(markup, markup.Carrier);
 	}
 
 	/// <summary>Plays a sound effect. See <see cref="SoundMarkup"/>.</summary>

@@ -17,11 +17,13 @@ public sealed class AnsiBBCodeEmitter : IMarkupSetEmitter
 		ArgumentNullException.ThrowIfNull(set);
 		ArgumentNullException.ThrowIfNull(output);
 
-		using var inner = AnsiEmitterSupport.WriteInner(set, body, context);
-		if (inner is not null) body = inner.WrittenSpan;
+		AnsiEmitterSupport.EmitSegmented(set, body, context, output, WriteTags);
+		return true;
+	}
 
-		var style = AnsiEmitterSupport.Fold(set, context.Format);
-
+	/// <summary>Writes one stretch of folded layers as BBCode tags.</summary>
+	private static void WriteTags(in AnsiStyle style, ReadOnlySpan<char> body, in EmitContext context, IBufferWriter<char> output)
+	{
 		// Reverse video has no BBCode form either, so the colour that would show as the text colour
 		// is the one written.
 		var foreground = style.Inverted ? style.Background : style.Foreground;
@@ -33,35 +35,30 @@ public sealed class AnsiBBCodeEmitter : IMarkupSetEmitter
 			? candidate
 			: null;
 
-		using var core = new PooledCharWriter(body.Length + 64);
-
 		if (hex.Length > 0)
 		{
-			core.Write("[color=");
-			core.Write(hex);
-			core.Write("]");
+			output.Write("[color=");
+			output.Write(hex);
+			output.Write("]");
 		}
 		if (link is not null)
 		{
-			core.Write("[url=");
-			core.Write(link);
-			core.Write("]");
+			output.Write("[url=");
+			output.Write(link);
+			output.Write("]");
 		}
-		if (style.Bold) core.Write("[b]");
-		if (style.Italic) core.Write("[i]");
-		if (style.Underlined) core.Write("[u]");
-		if (style.StrikeThrough) core.Write("[s]");
+		if (style.Bold) output.Write("[b]");
+		if (style.Italic) output.Write("[i]");
+		if (style.Underlined) output.Write("[u]");
+		if (style.StrikeThrough) output.Write("[s]");
 
-		core.Write(body);
+		output.Write(body);
 
-		if (style.StrikeThrough) core.Write("[/s]");
-		if (style.Underlined) core.Write("[/u]");
-		if (style.Italic) core.Write("[/i]");
-		if (style.Bold) core.Write("[/b]");
-		if (link is not null) core.Write("[/url]");
-		if (hex.Length > 0) core.Write("[/color]");
-
-		AnsiEmitterSupport.WriteWrapped(set, core.WrittenSpan, context, output);
-		return true;
+		if (style.StrikeThrough) output.Write("[/s]");
+		if (style.Underlined) output.Write("[/u]");
+		if (style.Italic) output.Write("[/i]");
+		if (style.Bold) output.Write("[/b]");
+		if (link is not null) output.Write("[/url]");
+		if (hex.Length > 0) output.Write("[/color]");
 	}
 }

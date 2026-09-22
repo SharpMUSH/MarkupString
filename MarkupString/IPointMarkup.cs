@@ -15,4 +15,10 @@ namespace MarkupString;
 /// </remarks>
 public interface IPointMarkup : IMarkup
 {
+	/// <summary>
+	/// The character this point rides on, one per occurrence. A point marks its carrier and nothing
+	/// else: <see cref="MarkupText.Wrap(IMarkup, string)"/> refuses any other text, so a point can never
+	/// stand over words a format would then swallow.
+	/// </summary>
+	string Carrier => MarkupText.PointCarrier;
 }

@@ -11,9 +11,11 @@ namespace MarkupString.Html;
 /// <remarks>
 /// Addresses are written as given. Whether a page fetches, plays or shows them — and whether a
 /// relative file name means anything to it — is the page's decision, made with a
-/// <c>Content-Security-Policy</c> or by handling the element itself.
+/// <c>Content-Security-Policy</c>, with an <see cref="HtmlTagPolicy"/>, or by handling the element
+/// itself. With a policy, every element here is held to it as it is written, and one it refuses is
+/// written as a format that cannot express it writes it: nothing for a point, the text for the rest.
 /// </remarks>
-internal sealed class ElementHtmlEmitter(Type markupType) : IMarkupEmitter
+internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy = null) : IMarkupEmitter
 {
 	/// <summary>The markup types this emitter writes.</summary>
 	internal static readonly Type[] Types =
@@ -22,6 +24,19 @@ internal sealed class ElementHtmlEmitter(Type markupType) : IMarkupEmitter
 		typeof(PrefetchMarkup), typeof(ImageMarkup), typeof(PaneMarkup), typeof(VariableMarkup),
 		typeof(GaugeMarkup), typeof(StatusMarkup),
 	];
+
+	/// <summary>How an element is closed.</summary>
+	private enum Shape
+	{
+		/// <summary>A void element: <c>&lt;img&gt;</c>, <c>&lt;link&gt;</c>.</summary>
+		Void,
+
+		/// <summary>An element with no content of its own: <c>&lt;audio&gt;&lt;/audio&gt;</c>, an empty span.</summary>
+		Empty,
+
+		/// <summary>An element around the text it marks.</summary>
+		Wrapping,
+	}
 
 	public Type MarkupType { get; } = markupType;
 
@@ -35,94 +50,137 @@ internal sealed class ElementHtmlEmitter(Type markupType) : IMarkupEmitter
 		switch (markup)
 		{
 			case SoundMarkup sound:
-				output.Write("<audio class=\"ms-sound\"");
-				Attribute(output, "data-channel", sound.Channel == SoundChannel.Music ? "music" : "effects");
-				Attribute(output, "src", sound.Source);
-				Attribute(output, "preload", "none");
-				if (sound.Loops) output.Write(" loop");
-				Attribute(output, "data-volume", sound.Volume);
-				if (!sound.Loops) Attribute(output, "data-repeats", sound.Repeats);
-				if (sound.Continues) Attribute(output, "data-continues", "true");
-				output.Write("></audio>");
-				break;
+				Write(markup, output, "audio", Shape.Empty, body,
+					("class", "ms-sound"),
+					("data-channel", sound.Channel == SoundChannel.Music ? "music" : "effects"),
+					("src", sound.Source),
+					("preload", "none"),
+					("loop", sound.Loops ? string.Empty : null),
+					("data-volume", Number(sound.Volume)),
+					("data-repeats", sound.Loops ? null : Number(sound.Repeats)),
+					("data-continues", sound.Continues ? "true" : null));
+				return;
 
 			case SoundStopMarkup stop:
-				output.Write("<span class=\"ms-sound-stop\"");
-				if (stop.Channel is { } channel) Attribute(output, "data-channel", channel == SoundChannel.Music ? "music" : "effects");
-				output.Write("></span>");
-				break;
+				Write(markup, output, "span", Shape.Empty, body,
+					("class", "ms-sound-stop"),
+					("data-channel", stop.Channel switch
+					{
+						SoundChannel.Effects => "effects",
+						SoundChannel.Music => "music",
+						_ => null,
+					}));
+				return;
 
 			case ClearScreenMarkup:
-				output.Write("<span class=\"ms-clear\"></span>");
-				break;
+				Write(markup, output, "span", Shape.Empty, body, ("class", "ms-clear"));
+				return;
 
 			case ExpireLinksMarkup expire:
-				output.Write("<span class=\"ms-expire\"");
-				Attribute(output, "data-group", expire.Group);
-				output.Write("></span>");
-				break;
+				Write(markup, output, "span", Shape.Empty, body, ("class", "ms-expire"), ("data-group", expire.Group));
+				return;
 
 			case PrefetchMarkup prefetch:
-				output.Write("<link rel=\"prefetch\"");
-				Attribute(output, "href", prefetch.Source);
-				output.Write(">");
-				break;
+				Write(markup, output, "link", Shape.Void, body, ("rel", "prefetch"), ("href", prefetch.Source));
+				return;
 
 			case ImageMarkup image:
-				output.Write("<img class=\"ms-image\"");
-				Attribute(output, "src", image.Source);
-				Attribute(output, "alt", image.Description ?? string.Empty);
-				Attribute(output, "width", image.Width);
-				Attribute(output, "height", image.Height);
-				if (image.Align is { } align) Attribute(output, "data-align", align.ToString().ToLowerInvariant());
-				output.Write(">");
-				break;
+				Write(markup, output, "img", Shape.Void, body,
+					("class", "ms-image"),
+					("src", image.Source),
+					("alt", image.Description ?? string.Empty),
+					("width", Number(image.Width)),
+					("height", Number(image.Height)),
+					("data-align", image.Align?.ToString().ToLowerInvariant()));
+				return;
 
 			case PaneMarkup pane:
-				Wrapping(output, "ms-pane", body, ("data-pane", pane.Name), ("data-title", pane.Title));
-				break;
+				Write(markup, output, "span", Shape.Wrapping, body,
+					("class", "ms-pane"), ("data-pane", pane.Name), ("data-title", pane.Title));
+				return;
 
 			case VariableMarkup variable:
-				Wrapping(output, "ms-variable", body, ("data-name", variable.Name));
-				break;
+				Write(markup, output, "span", Shape.Wrapping, body, ("class", "ms-variable"), ("data-name", variable.Name));
+				return;
 
 			case GaugeMarkup gauge:
-				Wrapping(output, "ms-gauge", body,
-					("data-variable", gauge.Variable), ("data-maximum", gauge.Maximum),
+				Write(markup, output, "span", Shape.Wrapping, body,
+					("class", "ms-gauge"), ("data-variable", gauge.Variable), ("data-maximum", gauge.Maximum),
 					("data-caption", gauge.Caption), ("data-color", gauge.Color));
-				break;
+				return;
 
 			case StatusMarkup status:
-				Wrapping(output, "ms-status", body,
-					("data-variable", status.Variable), ("data-maximum", status.Maximum), ("data-caption", status.Caption));
-				break;
+				Write(markup, output, "span", Shape.Wrapping, body,
+					("class", "ms-status"), ("data-variable", status.Variable),
+					("data-maximum", status.Maximum), ("data-caption", status.Caption));
+				return;
 
 			default:
 				output.Write(body);
-				break;
+				return;
 		}
 	}
 
-	private static void Wrapping(IBufferWriter<char> output, string className, ReadOnlySpan<char> body, params ReadOnlySpan<(string Name, string? Value)> attributes)
+	/// <summary>
+	/// Writes one element, held to the policy when there is one. The tag is built as an
+	/// <see cref="HtmlMarkup"/> so that it is the same thing a policy sees anywhere else. A tag the
+	/// policy refuses leaves what a format that cannot express the element leaves: nothing for a point,
+	/// and the text for everything else — a refused picture still leaves its description.
+	/// </summary>
+	private void Write(
+		IMarkup markup,
+		IBufferWriter<char> output,
+		string name,
+		Shape shape,
+		ReadOnlySpan<char> body,
+		params ReadOnlySpan<(string Name, string? Value)> attributes)
 	{
-		output.Write("<span class=\"");
-		output.Write(className);
-		output.Write("\"");
-		foreach (var (name, value) in attributes) Attribute(output, name, value);
+		var written = new HtmlAttribute[Count(attributes)];
+		var next = 0;
+		foreach (var (attribute, value) in attributes)
+		{
+			if (value is not null) written[next++] = new HtmlAttribute(attribute, value);
+		}
+
+		var tag = HtmlMarkup.Tag(name, written);
+		if (policy is not null)
+		{
+			if (policy.Apply(tag) is not { } held)
+			{
+				if (markup is not IPointMarkup) output.Write(body);
+				return;
+			}
+
+			tag = held;
+		}
+
+		output.Write("<");
+		output.Write(tag.TagName);
+		if (tag.Attributes is { Length: > 0 } rendered)
+		{
+			output.Write(" ");
+			output.Write(rendered);
+		}
 		output.Write(">");
-		output.Write(body);
-		output.Write("</span>");
+
+		if (shape == Shape.Void) return;
+
+		if (shape == Shape.Wrapping) output.Write(body);
+		output.Write("</");
+		output.Write(tag.TagName);
+		output.Write(">");
 	}
 
-	private static void Attribute(IBufferWriter<char> output, string name, int? value)
+	private static int Count(ReadOnlySpan<(string Name, string? Value)> attributes)
 	{
-		if (value is { } number) Attribute(output, name, number.ToString(CultureInfo.InvariantCulture));
+		var count = 0;
+		foreach (var (_, value) in attributes)
+		{
+			if (value is not null) count++;
+		}
+
+		return count;
 	}
 
-	private static void Attribute(IBufferWriter<char> output, string name, string? value)
-	{
-		if (value is null) return;
-		output.Write(" ");
-		output.Write(new HtmlAttribute(name, value).ToString());
-	}
+	private static string? Number(int? value) => value?.ToString(CultureInfo.InvariantCulture);
 }
