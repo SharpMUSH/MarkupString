@@ -1,4 +1,1 @@
 #nullable enable
-MarkupString.Mxp.MxpRegistration
-static MarkupString.Mxp.MxpRegistration.Elements.get -> System.Collections.Generic.IReadOnlyList<string!>!
-static MarkupString.Mxp.MxpRegistration.WithMxp(this MarkupString.MarkupRegistry! registry, System.Func<string!, bool>? supports = null) -> MarkupString.MarkupRegistry!
