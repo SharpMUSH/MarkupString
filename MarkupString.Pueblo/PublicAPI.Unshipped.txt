@@ -1,0 +1,3 @@
+#nullable enable
+MarkupString.Pueblo.PuebloRegistration
+static MarkupString.Pueblo.PuebloRegistration.WithPueblo(this MarkupString.MarkupRegistry! registry) -> MarkupString.MarkupRegistry!

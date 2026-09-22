@@ -53,10 +53,59 @@ internal static class AnsiEmitterSupport
 	}
 
 	/// <summary>
+	/// The layers this package does not own that sit inside every layer it does — a picture inside a
+	/// link — applied to <paramref name="body"/> before any styling is, so they stay inside it. Null when
+	/// there are none, and the body is used as it is.
+	/// </summary>
+	internal static PooledCharWriter? WriteInner(MarkupSet set, ReadOnlySpan<char> body, in EmitContext context)
+	{
+		var boundary = FirstClaimed(set, context.Format);
+		PooledCharWriter? front = null;
+		PooledCharWriter? back = null;
+		try
+		{
+			for (var i = 0; i < boundary; i++)
+			{
+				var emitter = context.Registry.FindEmitter(set[i].GetType(), context.Format);
+				if (emitter is null) continue;
+
+				if (front is null)
+				{
+					front = new PooledCharWriter(body.Length + 16);
+					front.Write(body);
+				}
+
+				back ??= new PooledCharWriter(front.WrittenCount + 16);
+				back.Clear();
+				emitter.Emit(set[i], front.WrittenSpan, context, back);
+				(front, back) = (back, front);
+			}
+
+			var written = front;
+			front = null;
+			return written;
+		}
+		finally
+		{
+			front?.Dispose();
+			back?.Dispose();
+		}
+	}
+
+	/// <summary>The index of the innermost layer this package folds, or the set's size when it folds none.</summary>
+	private static int FirstClaimed(MarkupSet set, MarkupFormat format)
+	{
+		for (var i = 0; i < set.Count; i++)
+			if (ClaimsStyle(set[i], format, out _)) return i;
+		return set.Count;
+	}
+
+	/// <summary>
 	/// Writes <paramref name="core"/> — the run as this package rendered it — wrapped by the layers
-	/// this package does not own in <see cref="EmitContext.Format"/>, innermost first, each through
-	/// its own emitter for that format. A layer with no emitter registered for the format wraps in
-	/// nothing: its body passes through.
+	/// this package does not own in <see cref="EmitContext.Format"/> that sit outside the innermost one
+	/// it does (<see cref="WriteInner"/> took those inside), innermost first, each through its own
+	/// emitter for that format. A layer with no emitter registered for the format wraps in nothing: its
+	/// body passes through.
 	/// </summary>
 	internal static void WriteWrapped(
 		MarkupSet set,
@@ -68,7 +117,7 @@ internal static class AnsiEmitterSupport
 		PooledCharWriter? back = null;
 		try
 		{
-			for (var i = 0; i < set.Count; i++)
+			for (var i = FirstClaimed(set, context.Format); i < set.Count; i++)
 			{
 				var layer = set[i];
 				if (ClaimsStyle(layer, context.Format, out _)) continue;
@@ -133,6 +182,8 @@ internal static class AnsiEmitterSupport
 		TagFlavour flavour)
 	{
 		var style = Fold(set, context.Format);
+		using var inner = WriteInner(set, body, context);
+		if (inner is not null) body = inner.WrittenSpan;
 
 		using var core = new PooledCharWriter(body.Length + 64);
 		SgrWriter.Transition(AnsiStyle.None, style, core);

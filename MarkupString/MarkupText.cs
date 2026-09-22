@@ -4,8 +4,8 @@ namespace MarkupString;
 /// <summary>
 /// Immutable text with zero or more styled-span <see cref="Run"/>s layered over it. Gaps
 /// between runs are plain text. Equality (<see cref="Equals(MarkupText?)"/>, <c>==</c>,
-/// <see cref="GetHashCode"/>) is ordinal comparison of <see cref="Text"/> only — markup never
-/// participates.
+/// <see cref="GetHashCode"/>) is ordinal comparison of <see cref="ToPlainText"/> only — markup never
+/// participates, and neither do the carriers points ride on.
 /// </summary>
 public sealed partial class MarkupText : IEquatable<MarkupText>
 {
@@ -123,12 +123,51 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 		return Concat(list.ToArray().AsSpan());
 	}
 
-	public string ToPlainText() => Text;
-	public override string ToString() => Text;
-	public bool Equals(MarkupText? other) => other is not null && string.Equals(Text, other.Text, StringComparison.Ordinal);
-	public bool TextEquals(string? text) => string.Equals(Text, text, StringComparison.Ordinal);
+	/// <summary>
+	/// The text as a reader sees it: <see cref="Text"/> without the carriers points ride on
+	/// (<see cref="IPointMarkup"/>), which are positions rather than characters.
+	/// </summary>
+	public string ToPlainText() => _plainText ??= WithoutPoints();
+
+	/// <summary>The same as <see cref="ToPlainText"/>.</summary>
+	public override string ToString() => ToPlainText();
+	public bool Equals(MarkupText? other) => other is not null && string.Equals(ToPlainText(), other.ToPlainText(), StringComparison.Ordinal);
+	public bool TextEquals(string? text) => string.Equals(ToPlainText(), text, StringComparison.Ordinal);
 	public override bool Equals(object? obj) => obj is MarkupText other && Equals(other);
-	public override int GetHashCode() => string.GetHashCode(Text, StringComparison.Ordinal);
+	public override int GetHashCode() => string.GetHashCode(ToPlainText(), StringComparison.Ordinal);
+
+	private string? _plainText;
+
+	private string WithoutPoints()
+	{
+		var hasPoint = false;
+		foreach (var run in Runs)
+		{
+			if (IsPoint(run))
+			{
+				hasPoint = true;
+				break;
+			}
+		}
+		if (!hasPoint) return Text;
+
+		var plain = new System.Text.StringBuilder(Text.Length);
+		var position = 0;
+		foreach (var run in Runs)
+		{
+			if (!IsPoint(run)) continue;
+			plain.Append(Text, position, run.Start - position);
+			position = run.End;
+		}
+		return plain.Append(Text, position, Text.Length - position).ToString();
+	}
+
+	private static bool IsPoint(Run run)
+	{
+		foreach (var markup in run.Markups)
+			if (markup is IPointMarkup) return true;
+		return false;
+	}
 	public static bool operator ==(MarkupText? a, MarkupText? b) => a is null ? b is null : a.Equals(b);
 	public static bool operator !=(MarkupText? a, MarkupText? b) => !(a == b);
 

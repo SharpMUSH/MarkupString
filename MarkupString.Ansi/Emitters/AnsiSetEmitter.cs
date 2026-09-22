@@ -18,6 +18,9 @@ public sealed class AnsiSetEmitter : IMarkupSetEmitter
 		ArgumentNullException.ThrowIfNull(set);
 		ArgumentNullException.ThrowIfNull(output);
 
+		using var inner = AnsiEmitterSupport.WriteInner(set, body, context);
+		if (inner is not null) body = inner.WrittenSpan;
+
 		var effective = AnsiEmitterSupport.Fold(set, context.Format);
 		var previous = AnsiEmitterSupport.Fold(context.Previous, context.Format);
 

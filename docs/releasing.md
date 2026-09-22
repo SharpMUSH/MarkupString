@@ -78,12 +78,14 @@ policy names *this* repository — a policy for another repository will not do:
    actually presents — check the owner, repository and workflow filename before anything else.
 
 Package IDs `MarkupString`, `MarkupString.Ansi` and `MarkupString.Html` were unregistered when this
-repository was set up; the first successful push claims them.
+repository was set up; the first successful push claims them. `MarkupString.Mxp` and
+`MarkupString.Pueblo` are claimed the same way by the first release that carries them, under the same
+policy.
 
 ## Checklist
 
 - [ ] `CHANGELOG.md` updated and merged to `main`
-- [ ] `PublicAPI.Unshipped.txt` promoted to `PublicAPI.Shipped.txt` in all three packages
+- [ ] `PublicAPI.Unshipped.txt` promoted to `PublicAPI.Shipped.txt` in every package
 - [ ] Trusted publishing policy exists on nuget.org for `SharpMUSH/MarkupString` (first release only)
 - [ ] Tag pushed, `Release` workflow green
-- [ ] `PackageValidationBaselineVersion` raised to the version just published
+- [ ] `PackageValidationBaselineVersion` raised to the version just published (and added to a package on its first release)

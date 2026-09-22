@@ -11,7 +11,7 @@ namespace MarkupString;
 /// point in the string without moving anything that is laid out around it. A format with no bell drops
 /// the character with every other control, and nothing is left behind.
 /// </remarks>
-public sealed class BellMarkup : IMarkup
+public sealed class BellMarkup : IPointMarkup
 {
 	/// <summary>The character a bell is carried on.</summary>
 	public const string Character = "\u0007";

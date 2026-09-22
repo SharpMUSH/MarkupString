@@ -169,17 +169,42 @@ public static class MarkupTextRenderer
 		in EmitContext context,
 		IBufferWriter<char> output)
 	{
+		var markups = run.Markups;
+		var point = FindPoint(markups);
+		IMarkupEmitter? pointEmitter = null;
+		if (point is not null)
+		{
+			// A point's carrier is not text. With no emitter for this format the point writes nothing —
+			// not the carrier, and not the layers around it, which would wrap an empty body.
+			pointEmitter = registry.FindEmitter(point.GetType(), format);
+			if (pointEmitter is null) return false;
+			markups = Without(markups, point);
+		}
+
 		var front = new PooledCharWriter(body.Length + 16);
 		PooledCharWriter? back = null;
 		try
 		{
-			EncodeText(body, format.Encoding, front);
+			if (pointEmitter is not null)
+			{
+				// Equal points side by side coalesce into one run; each carrier is still one point.
+				for (var i = 0; i < body.Length; i++) pointEmitter.Emit(point!, body.Slice(i, 1), context, front);
+				if (markups is null)
+				{
+					output.Write(front.WrittenSpan);
+					return true;
+				}
+			}
+			else
+			{
+				EncodeText(body, format.Encoding, front);
+			}
 
 			var setEmitter = registry.FindSetEmitter(format);
 			if (setEmitter is not null)
 			{
 				back = new PooledCharWriter(front.WrittenCount + 16);
-				if (setEmitter.TryEmit(run.Markups, front.WrittenSpan, context, back))
+				if (setEmitter.TryEmit(markups!, front.WrittenSpan, context, back))
 				{
 					output.Write(back.WrittenSpan);
 					return true;
@@ -187,10 +212,10 @@ public static class MarkupTextRenderer
 				back.Clear();
 			}
 
-			var emitted = false;
-			for (var i = 0; i < run.Markups.Count; i++)
+			var emitted = pointEmitter is not null;
+			for (var i = 0; i < markups!.Count; i++)
 			{
-				var markup = run.Markups[i];
+				var markup = markups[i];
 				var emitter = registry.FindEmitter(markup.GetType(), format);
 				if (emitter is null) continue;
 				emitted = true;
@@ -208,5 +233,24 @@ public static class MarkupTextRenderer
 			front.Dispose();
 			back?.Dispose();
 		}
+	}
+
+	/// <summary>The point a run carries, if any.</summary>
+	private static IPointMarkup? FindPoint(MarkupSet markups)
+	{
+		foreach (var markup in markups)
+			if (markup is IPointMarkup point) return point;
+		return null;
+	}
+
+	/// <summary>The run's other layers, or null when the point was its only one.</summary>
+	private static MarkupSet? Without(MarkupSet markups, IPointMarkup point)
+	{
+		if (markups.Count == 1) return null;
+
+		var rest = new List<IMarkup>(markups.Count - 1);
+		foreach (var markup in markups)
+			if (!ReferenceEquals(markup, point)) rest.Add(markup);
+		return MarkupSet.Of(rest);
 	}
 }

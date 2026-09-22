@@ -11,15 +11,23 @@ public static class HtmlRegistration
 	/// Ansi package's fold via <see cref="HtmlMarkup.TryGetAnsiStyle"/>, which requires
 	/// <c>WithAnsi()</c> to already be applied.
 	/// </summary>
+	/// <remarks>
+	/// It also writes the shared vocabulary for a browser: a sound as <c>&lt;audio&gt;</c>, a picture as
+	/// <c>&lt;img&gt;</c>, and what HTML has no element for — a pane, a gauge, a clear — as an element
+	/// with an <c>ms-</c> class for the page to act on.
+	/// </remarks>
 	public static MarkupRegistry WithHtml(this MarkupRegistry registry)
 	{
 		ArgumentNullException.ThrowIfNull(registry);
 
-		return registry
+		registry = registry
 			.With(new HtmlTagEmitter(MarkupFormat.Html))
 			.With(new HtmlTagEmitter(MarkupFormat.Pueblo))
 			.With(new HtmlTagEmitter(MarkupFormat.Mxp))
 			.With(new HtmlMarkupCodec());
+
+		foreach (var type in ElementHtmlEmitter.Types) registry = registry.With(new ElementHtmlEmitter(type));
+		return registry;
 	}
 
 	/// <summary>

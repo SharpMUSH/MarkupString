@@ -3,9 +3,10 @@ using MarkupString.Ansi;
 
 /// <summary>
 /// The path a run takes when it carries a layer this package does not own. Every set emitter here
-/// claims every run, so <c>AnsiEmitterSupport.WriteWrapped</c> is the only thing standing between a
-/// foreign layer and being dropped: it wraps the folded ANSI output in the foreign layers'
-/// own emitters, innermost first.
+/// claims every run, so <c>AnsiEmitterSupport</c> is the only thing standing between a foreign layer and
+/// being dropped. It keeps the nesting: foreign layers inside every ANSI layer are applied to the text
+/// before the style is (<c>WriteInner</c>), and the rest wrap the styled output (<c>WriteWrapped</c>),
+/// each innermost first.
 /// </summary>
 public class AnsiForeignLayerTests
 {
@@ -68,23 +69,22 @@ public class AnsiForeignLayerTests
 	// ── Delegation of layers this package does not own ────────────────────────────
 
 	/// <summary>
-	/// Set <c>[Tag("t"), AnsiMarkup(red)]</c>. The ANSI sequence and its reset bracket the body —
-	/// the fold produces them around the run's text — and the foreign layer wraps that whole core.
+	/// Set <c>[Tag("t"), AnsiMarkup(red)]</c>. The tag is inside the colour, so the colour's sequence
+	/// and reset bracket it.
 	/// </summary>
 	[Test]
-	public async Task Ansi_ForeignLayerInsideAnAnsiLayer_WrapsTheSgrCore()
+	public async Task Ansi_ForeignLayerInsideAnAnsiLayer_StaysInsideTheSgr()
 	{
 		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new Tag("t"), "x"));
-		await Assert.That(Render(text, MarkupFormat.Ansi)).IsEqualTo($"<t>{Esc}[31mx{Esc}[0m</t>");
+		await Assert.That(Render(text, MarkupFormat.Ansi)).IsEqualTo($"{Esc}[31m<t>x</t>{Esc}[0m");
 	}
 
 	/// <summary>
-	/// Set <c>[AnsiMarkup(red), Tag("t")]</c> — the same two layers the other way round. The SGR is
-	/// emitted by the fold around the folded body rather than at the layer's own depth, so nesting
-	/// order between an ANSI layer and a foreign one does not move it.
+	/// Set <c>[AnsiMarkup(red), Tag("t")]</c> — the same two layers the other way round, and the tag
+	/// wraps the colour.
 	/// </summary>
 	[Test]
-	public async Task Ansi_ForeignLayerOutsideAnAnsiLayer_RendersTheSame()
+	public async Task Ansi_ForeignLayerOutsideAnAnsiLayer_WrapsTheSgr()
 	{
 		var text = MarkupText.Wrap(new Tag("t"), MarkupText.Wrap(Red, "x"));
 		await Assert.That(Render(text, MarkupFormat.Ansi)).IsEqualTo($"<t>{Esc}[31mx{Esc}[0m</t>");
@@ -95,16 +95,16 @@ public class AnsiForeignLayerTests
 	public async Task Ansi_TwoForeignLayers_NestInOrder()
 	{
 		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new Tag("b"), MarkupText.Wrap(new Tag("a"), "x")));
-		await Assert.That(Render(text, MarkupFormat.Ansi)).IsEqualTo($"<b><a>{Esc}[31mx{Esc}[0m</a></b>");
+		await Assert.That(Render(text, MarkupFormat.Ansi)).IsEqualTo($"{Esc}[31m<b><a>x</a></b>{Esc}[0m");
 	}
 
-	/// <summary>The same set in HTML: the span is the core, and the foreign layers wrap it.</summary>
+	/// <summary>The same set in HTML: both tags are inside the colour, so the span wraps them.</summary>
 	[Test]
-	public async Task Html_TwoForeignLayers_NestAroundTheSpan()
+	public async Task Html_TwoForeignLayers_NestInsideTheSpan()
 	{
 		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new Tag("b"), MarkupText.Wrap(new Tag("a"), "x")));
 		await Assert.That(Render(text, MarkupFormat.Html))
-			.IsEqualTo("<b><a><span style=\"color: #aa0000\">x</span></a></b>");
+			.IsEqualTo("<span style=\"color: #aa0000\"><b><a>x</a></b></span>");
 	}
 
 	/// <summary>A foreign layer alone, with no ANSI layer to fold: only its own emitter runs.</summary>
@@ -166,10 +166,10 @@ public class AnsiForeignLayerTests
 	/// delegated tag, not an <c>ms-bold</c> class.
 	/// </summary>
 	[Test]
-	public async Task Html_FormatSpecificStyleSourceWithAnsiLayer_TagWrapsTheColourSpan()
+	public async Task Html_FormatSpecificStyleSourceWithAnsiLayer_TagSitsInsideTheColourSpan()
 	{
 		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new BoldTag(), "x"));
 		await Assert.That(Render(text, MarkupFormat.Html))
-			.IsEqualTo("<b><span style=\"color: #aa0000\">x</span></b>");
+			.IsEqualTo("<span style=\"color: #aa0000\"><b>x</b></span>");
 	}
 }

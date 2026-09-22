@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>MarkupString.Mxp</AssemblyName>
+    <RootNamespace>MarkupString.Mxp</RootNamespace>
+    <PackageId>MarkupString.Mxp</PackageId>
+    <Title>MarkupString.Mxp</Title>
+    <IsAotCompatible>true</IsAotCompatible>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>CS1591</NoWarn>
+    <!-- No baseline until the first release is out; add PackageValidationBaselineVersion then. -->
+    <EnablePackageValidation>true</EnablePackageValidation>
+    <Description>MXP for MarkupString: writes the shared vocabulary — sounds, music, pictures, panes, gauges, status, variables, link expiry, relocation, login prompts — as MXP tags, holding each to what the client said it supports.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="8.0.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="5.6.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MarkupString\MarkupString.csproj" />
+  </ItemGroup>
+</Project>
