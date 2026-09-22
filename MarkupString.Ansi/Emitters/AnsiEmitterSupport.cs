@@ -53,10 +53,106 @@ internal static class AnsiEmitterSupport
 	}
 
 	/// <summary>
+	/// Writes one contiguous stretch of layers this package folds, around a body the layers inside it
+	/// have already been written into.
+	/// </summary>
+	internal delegate void SegmentWriter(in AnsiStyle style, ReadOnlySpan<char> body, in EmitContext context, IBufferWriter<char> output);
+
+	/// <summary>
+	/// Writes a run in the nesting it was built with, for a format that expresses nesting: the layers
+	/// this package folds are written by <paramref name="writeSegment"/> in stretches, and a layer it
+	/// does not own is written by its own emitter between them. <c>[bold, tag, red]</c> is a bold inside
+	/// a tag inside a red, and comes out that way, rather than as one bold red inside a tag.
+	/// </summary>
+	/// <remarks>
+	/// The common shapes cost nothing extra: with no foreign layer carrying an emitter, this is one
+	/// <paramref name="writeSegment"/> over the whole fold, the same call the emitters made before there
+	/// was anything to interleave.
+	/// </remarks>
+	internal static void EmitSegmented(
+		MarkupSet set,
+		ReadOnlySpan<char> body,
+		in EmitContext context,
+		IBufferWriter<char> output,
+		SegmentWriter writeSegment)
+	{
+		if (!HasDelegatedLayer(set, context))
+		{
+			writeSegment(Fold(set, context.Format), body, context, output);
+			return;
+		}
+
+		PooledCharWriter? front = null;
+		PooledCharWriter? back = null;
+		try
+		{
+			front = new PooledCharWriter(body.Length + 32);
+			front.Write(body);
+			back = new PooledCharWriter(front.WrittenCount + 32);
+
+			var pending = AnsiStyle.None;
+			var hasPending = false;
+
+			// A style that clears discards everything around it (AnsiStyle.Combine), and a delegated layer
+			// in between does not change that: once a stretch has cleared, the stretches outside it write
+			// no styling at all.
+			var cleared = false;
+			for (var i = 0; i < set.Count; i++)
+			{
+				if (ClaimsStyle(set[i], context.Format, out var style))
+				{
+					// Innermost first, and an inner layer's settings win, which is how Fold combines them.
+					pending = hasPending ? style.Combine(pending) : style;
+					hasPending = true;
+					continue;
+				}
+
+				var emitter = context.Registry.FindEmitter(set[i].GetType(), context.Format);
+				if (emitter is null) continue;
+
+				if (hasPending)
+				{
+					cleared |= pending.Clear;
+					back.Clear();
+					writeSegment(cleared ? AnsiStyle.None : pending, front.WrittenSpan, context, back);
+					(front, back) = (back, front);
+					pending = AnsiStyle.None;
+					hasPending = false;
+				}
+
+				back.Clear();
+				emitter.Emit(set[i], front.WrittenSpan, context, back);
+				(front, back) = (back, front);
+			}
+
+			writeSegment(cleared ? AnsiStyle.None : pending, front.WrittenSpan, context, output);
+		}
+		finally
+		{
+			front?.Dispose();
+			back?.Dispose();
+		}
+	}
+
+	/// <summary>Whether any layer is one this package does not fold and something else can write.</summary>
+	private static bool HasDelegatedLayer(MarkupSet set, in EmitContext context)
+	{
+		for (var i = 0; i < set.Count; i++)
+			if (!ClaimsStyle(set[i], context.Format, out _)
+				&& context.Registry.FindEmitter(set[i].GetType(), context.Format) is not null)
+				return true;
+
+		return false;
+	}
+
+	/// <summary>
 	/// Writes <paramref name="core"/> — the run as this package rendered it — wrapped by the layers
-	/// this package does not own in <see cref="EmitContext.Format"/>, innermost first, each through
-	/// its own emitter for that format. A layer with no emitter registered for the format wraps in
-	/// nothing: its body passes through.
+	/// this package does not own in <see cref="EmitContext.Format"/>, innermost first, each through its
+	/// own emitter for that format. A layer with no emitter registered for the format wraps in nothing:
+	/// its body passes through. This is the terminal's shape, where a style is state rather than
+	/// nesting: the sequence is written once around the run, and where a delegated layer's own output
+	/// sits relative to it changes nothing on screen. Formats that express nesting use
+	/// <see cref="EmitSegmented"/>.
 	/// </summary>
 	internal static void WriteWrapped(
 		MarkupSet set,
@@ -132,14 +228,15 @@ internal static class AnsiEmitterSupport
 		IBufferWriter<char> output,
 		TagFlavour flavour)
 	{
-		var style = Fold(set, context.Format);
-
-		using var core = new PooledCharWriter(body.Length + 64);
-		SgrWriter.Transition(AnsiStyle.None, style, core);
-		WriteTaggedLink(style, body, core, flavour);
-		if (LeavesState(style)) SgrWriter.Reset(core);
-
-		WriteWrapped(set, core.WrittenSpan, context, output);
+		// The flavour cannot ride on the delegate's signature, so it is closed over here; a run with
+		// nothing delegated never allocates the closure's work beyond this one call.
+		EmitSegmented(set, body, context, output,
+			(in AnsiStyle style, ReadOnlySpan<char> segment, in EmitContext segmentContext, IBufferWriter<char> segmentOutput) =>
+			{
+				SgrWriter.Transition(AnsiStyle.None, style, segmentOutput);
+				WriteTaggedLink(style, segment, segmentOutput, flavour);
+				if (LeavesState(style)) SgrWriter.Reset(segmentOutput);
+			});
 	}
 
 	/// <summary>

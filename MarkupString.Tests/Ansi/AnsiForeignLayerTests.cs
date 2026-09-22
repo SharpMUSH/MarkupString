@@ -3,9 +3,11 @@ using MarkupString.Ansi;
 
 /// <summary>
 /// The path a run takes when it carries a layer this package does not own. Every set emitter here
-/// claims every run, so <c>AnsiEmitterSupport.WriteWrapped</c> is the only thing standing between a
-/// foreign layer and being dropped: it wraps the folded ANSI output in the foreign layers'
-/// own emitters, innermost first.
+/// claims every run, so <c>AnsiEmitterSupport</c> is the only thing standing between a foreign layer and
+/// being dropped. A format that expresses nesting keeps it (<c>EmitSegmented</c>: a stretch of folded
+/// layers, then the foreign layer's own emitter, then the next stretch). A terminal does not — a style
+/// there is state, not nesting — so <c>WriteWrapped</c> wraps the whole SGR core in the foreign layers,
+/// innermost first.
 /// </summary>
 public class AnsiForeignLayerTests
 {
@@ -59,17 +61,23 @@ public class AnsiForeignLayerTests
 		.WithAnsi()
 		.With(new TagEmitter(MarkupFormat.Ansi))
 		.With(new TagEmitter(MarkupFormat.Html))
+		.With(new TagEmitter(MarkupFormat.Pueblo))
 		.With(new BoldTagEmitter());
 
 	private static readonly AnsiMarkup Red = AnsiMarkup.Create(foreground: new AnsiColor.Standard(1, false));
+
+	private static readonly AnsiMarkup Bold = AnsiMarkup.Create(bold: true);
+
+	private static readonly AnsiMarkup Cleared = AnsiMarkup.Create(clear: true);
 
 	private static string Render(MarkupText text, MarkupFormat format) => text.Render(format, Registry);
 
 	// ── Delegation of layers this package does not own ────────────────────────────
 
 	/// <summary>
-	/// Set <c>[Tag("t"), AnsiMarkup(red)]</c>. The ANSI sequence and its reset bracket the body —
-	/// the fold produces them around the run's text — and the foreign layer wraps that whole core.
+	/// Set <c>[Tag("t"), AnsiMarkup(red)]</c>. The ANSI sequence and its reset bracket the body — the
+	/// fold produces them around the run's text — and the foreign layer wraps that whole core. Where the
+	/// tag sits relative to the sequence changes nothing on a terminal, which holds the style as state.
 	/// </summary>
 	[Test]
 	public async Task Ansi_ForeignLayerInsideAnAnsiLayer_WrapsTheSgrCore()
@@ -79,9 +87,8 @@ public class AnsiForeignLayerTests
 	}
 
 	/// <summary>
-	/// Set <c>[AnsiMarkup(red), Tag("t")]</c> — the same two layers the other way round. The SGR is
-	/// emitted by the fold around the folded body rather than at the layer's own depth, so nesting
-	/// order between an ANSI layer and a foreign one does not move it.
+	/// Set <c>[AnsiMarkup(red), Tag("t")]</c> — the same two layers the other way round, and the
+	/// terminal output is the same.
 	/// </summary>
 	[Test]
 	public async Task Ansi_ForeignLayerOutsideAnAnsiLayer_RendersTheSame()
@@ -98,13 +105,64 @@ public class AnsiForeignLayerTests
 		await Assert.That(Render(text, MarkupFormat.Ansi)).IsEqualTo($"<b><a>{Esc}[31mx{Esc}[0m</a></b>");
 	}
 
-	/// <summary>The same set in HTML: the span is the core, and the foreign layers wrap it.</summary>
+	/// <summary>The same set in HTML: both tags are inside the colour, so the span wraps them.</summary>
 	[Test]
-	public async Task Html_TwoForeignLayers_NestAroundTheSpan()
+	public async Task Html_TwoForeignLayers_NestInsideTheSpan()
 	{
 		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new Tag("b"), MarkupText.Wrap(new Tag("a"), "x")));
 		await Assert.That(Render(text, MarkupFormat.Html))
-			.IsEqualTo("<b><a><span style=\"color: #aa0000\">x</span></a></b>");
+			.IsEqualTo("<span style=\"color: #aa0000\"><b><a>x</a></b></span>");
+	}
+
+	// ── A foreign layer between two of this package's ────────────────────────────
+
+	/// <summary>
+	/// Set <c>[AnsiMarkup(bold), Tag("t"), AnsiMarkup(red)]</c>: a bold inside a tag inside a red. The
+	/// two ANSI layers are not folded into one across the tag — each is written where it sits, so the
+	/// tag stays between them.
+	/// </summary>
+	[Test]
+	public async Task Html_ForeignLayerBetweenTwoAnsiLayers_KeepsItBetweenThem()
+	{
+		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new Tag("t"), MarkupText.Wrap(Bold, "x")));
+
+		await Assert.That(Render(text, MarkupFormat.Html))
+			.IsEqualTo("<span style=\"color: #aa0000\"><t><span class=\"ms-bold\">x</span></t></span>");
+	}
+
+	/// <summary>
+	/// The same set for Pueblo, where a style is SGR: the inner stretch opens inside the tag, and the
+	/// terminal ends up bold red at the text either way.
+	/// </summary>
+	[Test]
+	public async Task Pueblo_ForeignLayerBetweenTwoAnsiLayers_KeepsItBetweenThem()
+	{
+		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new Tag("t"), MarkupText.Wrap(Bold, "x")));
+
+		await Assert.That(Render(text, MarkupFormat.Pueblo))
+			.IsEqualTo($"{Esc}[31m<t>{Esc}[1mx{Esc}[0m</t>{Esc}[0m");
+	}
+
+	/// <summary>
+	/// Set <c>[AnsiMarkup(clear), Tag("t"), AnsiMarkup(red)]</c>. A style that clears discards what is
+	/// around it, and a delegated layer in between does not let the red back in.
+	/// </summary>
+	[Test]
+	public async Task Html_ClearInsideAForeignLayer_StillDiscardsTheStyleAroundIt()
+	{
+		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new Tag("t"), MarkupText.Wrap(Cleared, "x")));
+
+		await Assert.That(Render(text, MarkupFormat.Html)).IsEqualTo("<t>x</t>");
+		await Assert.That(Render(text, MarkupFormat.Pueblo)).IsEqualTo("<t>x</t>");
+	}
+
+	/// <summary>The same set with the clear outside the tag: there is nothing inside it to keep.</summary>
+	[Test]
+	public async Task Html_ClearOutsideAForeignLayer_DiscardsTheStyleToo()
+	{
+		var text = MarkupText.Wrap(Red, MarkupText.Wrap(Cleared, MarkupText.Wrap(new Tag("t"), "x")));
+
+		await Assert.That(Render(text, MarkupFormat.Html)).IsEqualTo("<t>x</t>");
 	}
 
 	/// <summary>A foreign layer alone, with no ANSI layer to fold: only its own emitter runs.</summary>
@@ -166,10 +224,10 @@ public class AnsiForeignLayerTests
 	/// delegated tag, not an <c>ms-bold</c> class.
 	/// </summary>
 	[Test]
-	public async Task Html_FormatSpecificStyleSourceWithAnsiLayer_TagWrapsTheColourSpan()
+	public async Task Html_FormatSpecificStyleSourceWithAnsiLayer_TagSitsInsideTheColourSpan()
 	{
 		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new BoldTag(), "x"));
 		await Assert.That(Render(text, MarkupFormat.Html))
-			.IsEqualTo("<b><span style=\"color: #aa0000\">x</span></b>");
+			.IsEqualTo("<span style=\"color: #aa0000\"><b>x</b></span>");
 	}
 }

@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <!--
-    Package metadata that is identical across the three shipping packages. Everything that
+    Package metadata that is identical across the shipping packages. Everything that
     differs per package — PackageId, AssemblyName, Description, project references — stays in
     the project file. Test and smoke projects set IsPackable=false, so these are inert there.
   -->

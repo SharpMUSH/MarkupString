@@ -5,7 +5,9 @@ public static class AnsiRegistration
 {
 	/// <summary>
 	/// Returns a registry that renders <see cref="AnsiMarkup"/> in all six formats and serialises
-	/// it under kind <c>"ansi"</c>. Plain needs nothing: the body passes through.
+	/// it under kind <c>"ansi"</c>. Plain needs nothing: the body passes through. It also writes the
+	/// bell, a <see cref="ClearScreenMarkup"/> for a terminal, and an <see cref="ImageMarkup"/> as
+	/// BBCode's <c>[img]</c>.
 	/// </summary>
 	/// <remarks>
 	/// The five emitters are <see cref="IMarkupSetEmitter"/>s — one per format, claiming the whole
@@ -30,6 +32,9 @@ public static class AnsiRegistration
 			.With(new BellEmitter(MarkupFormat.Ansi))
 			.With(new BellEmitter(MarkupFormat.Pueblo))
 			.With(new BellEmitter(MarkupFormat.Mxp))
-			.With(new BellEmitter(MarkupFormat.Html));
+			.With(new BellEmitter(MarkupFormat.Html))
+			// From the shared vocabulary, what a terminal and BBCode can express.
+			.With(new ClearScreenAnsiEmitter())
+			.With(new ImageBBCodeEmitter());
 	}
 }

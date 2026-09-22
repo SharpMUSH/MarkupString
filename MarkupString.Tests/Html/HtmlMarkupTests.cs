@@ -98,12 +98,11 @@ public class HtmlMarkupTests
 
 		await Assert.That(Render(text, MarkupFormat.Ansi)).IsEqualTo($"{Esc}[1;31mx{Esc}[0m");
 
-		// Html: "b" does not claim a style there, so it is delegated to HtmlTagEmitter and wraps the
-		// folded <span> from outside — the same nesting AnsiForeignLayerTests establishes for any
-		// layer that answers false for a format (see Html_FormatSpecificStyleSourceWithAnsiLayer_
-		// TagWrapsTheColourSpan, same Wrap(Red, Wrap(<falls-back-tag>, "x")) shape).
+		// Html: "b" does not claim a style there, so it is delegated to HtmlTagEmitter, and it sits
+		// inside the colour's <span> because that is where it was put (see AnsiForeignLayerTests.
+		// Html_FormatSpecificStyleSourceWithAnsiLayer_TagSitsInsideTheColourSpan).
 		await Assert.That(Render(text, MarkupFormat.Html))
-			.IsEqualTo("<b><span style=\"color: #aa0000\">x</span></b>");
+			.IsEqualTo("<span style=\"color: #aa0000\"><b>x</b></span>");
 		await Assert.That(Render(text, MarkupFormat.BBCode)).IsEqualTo("[color=#aa0000][b]x[/b][/color]");
 	}
 

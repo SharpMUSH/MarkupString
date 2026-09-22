@@ -1,7 +1,7 @@
 # Changelog
 
-All notable changes to `MarkupString`, `MarkupString.Ansi` and `MarkupString.Html`. The three
-packages share one version and are released together.
+All notable changes to `MarkupString`, `MarkupString.Ansi`, `MarkupString.Html`, `MarkupString.Mxp`
+and `MarkupString.Pueblo`. The packages share one version and are released together.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -10,13 +10,64 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **A shared vocabulary.** A game puts a thing in its text once and every format writes it in its own
+  dialect, or stands something else in for it. The types are core's and say what a thing is; each
+  format's package says how it is written:
+
+  | Factory | MXP | Pueblo | HTML | ANSI / Plain / BBCode |
+  |---|---|---|---|---|
+  | `MarkupText.Sound`, `Music` | `<SOUND>`, `<MUSIC>` | `<img xch_sound="play"\|"loop">` | `<audio>` | nothing |
+  | `MarkupText.StopSound` | `<SOUND Off>`, `<MUSIC Off>` | `<img xch_sound="stop">` | `ms-sound-stop` | nothing |
+  | `MarkupText.Image` | `<IMAGE>` | `<img>` | `<img>` | its description, or its address; BBCode `[img]` |
+  | `MarkupText.Pane` | `<FRAME>` + `<DEST>` | `<xch_pane action="redirect">` and back | `ms-pane` | its text |
+  | `MarkupText.ClearScreen` | nothing | `<xch_page clear="text">` | `ms-clear` | ANSI `ESC[H ESC[2J` |
+  | `MarkupText.Prefetch` | nothing | `<xch_prefetch>` | `<link rel="prefetch">` | nothing |
+  | `MarkupText.ExpireLinks` | `<EXPIRE>` | nothing | `ms-expire` | nothing |
+  | `MarkupText.Variable`, `Gauge`, `Status` | `<VAR>`, `<GAUGE>`, `<STAT>` | their text | `ms-variable`, `ms-gauge`, `ms-status` | their text |
+  | `MarkupText.Relocate`, `LoginPrompt` | `<RELOCATE>`, `<USER>`, `<PASSWORD>` | nothing | nothing | nothing |
+
+  A link is already this kind of thing (`AnsiMarkup` with a `LinkKind`), so a picture inside a link is
+  a picture that is a link in every dialect. The vocabulary serialises as built-in kinds, so storing it
+  needs no package registered.
+- **Points.** `IPointMarkup` is a markup that stands at a point rather than marking text — a sound, a
+  bell, a clear. It rides on its own `IPointMarkup.Carrier` (a zero-width space, `MarkupText.PointCarrier`;
+  the bell keeps its U+0007), and `MarkupText.Point(markup)` builds one of your own. A format with no
+  emitter for a point writes nothing at all — not the carrier, and not the layers around it. A point
+  marks its carrier and nothing else: `MarkupText.Wrap` refuses one over other text, and a cover read
+  back with a point out of place drops the point and keeps the text.
+- **`MarkupString.Mxp`**, a new package. `WithMxp()` writes the vocabulary as MXP's secure elements.
+  `WithMxp(supports)` holds each element to what the client answered to `<SUPPORT>`: one it refused is
+  written as a format without MXP writes it — nothing for a sound, the description for a picture, the
+  text in the main window for a pane. `MxpRegistration.Elements` lists the names to ask about.
+- **`MarkupString.Pueblo`**, a new package. `WithPueblo()` writes the vocabulary in the Pueblo
+  client's own extensions, with the names and attributes its source reads.
 - **A bell.** `MarkupText.Bell()` marks a point in the text where the client is asked to get someone's
   attention: U+0007 for a terminal, Pueblo or MXP client, and an empty `<span class="ms-bell"
   role="alert">` for HTML, where the page decides what a bell means. Plain and BBCode leave nothing
-  behind. It rides on the single U+0007 it marks, which measures zero display cells, so it survives
-  slicing, concatenation and padding as a point in the string without moving anything laid out around
-  it — and it is the only way to get a control character into rendered output, since the encodings
-  drop them from ordinary text.
+  behind. It is a point riding on the U+0007 it marks, which measures zero display cells, so it survives
+  slicing, concatenation and padding without moving anything laid out around it — and it is the only
+  way to get a control character into rendered output, since the encodings drop them from ordinary
+  text.
+
+### Changed
+
+- **`ToPlainText()`, `ToString()` and equality leave out point carriers.** A sound or a bell is not
+  text a reader or a pattern sees: `Concat(Sound(...), Plain("hi"))` equals `Plain("hi")`. `Text`
+  still holds the carriers, so positions, slicing and padding are unchanged.
+- **The kinds core serialises itself are reserved.** `MarkupRegistry.With(IMarkupCodec)` refuses a
+  codec claiming `"neutral"` or one of the shared vocabulary's kinds, which are written and read
+  without consulting a registry; a codec registered under one would write text that read back as
+  something else.
+- **A layer from another package nested inside ANSI styling now renders inside it.** The Ansi
+  package's set emitters used to wrap every layer they do not own around their own output, whatever
+  the nesting: `Wrap(red, Wrap(HtmlMarkup "b", "x"))` gave `<b><span style="color: …">x</span></b>`.
+  It now gives `<span style="color: …"><b>x</b></span>`, and a picture inside a command link stays
+  inside the link rather than replacing it. A layer *between* two styled layers keeps its place too:
+  `[bold, tag, red]` is a bold inside a tag inside a red, rather than one folded bold-red inside a tag.
+  A terminal is unchanged — a style there is state rather than nesting, so the sequence is still
+  written once around the run.
+
+## 2.2.0 — 2026-09-19
 
 ### Added
 
@@ -148,5 +199,5 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   for existing SGR text, a state-diffing `SgrWriter`, and emitters for all six formats.
 - `MarkupString.Html` — `HtmlMarkup` for raw HTML/MXP tags, folding `b`/`i`/`u`/`s` into terminal
   styling through `IAnsiStyleSource`, and `HtmlCss.Fixed` for the `ms-*` classes the emitters write.
-- All three packages are `IsAotCompatible`, with a native-AOT publish in CI that fails on any
+- Every package is `IsAotCompatible`, with a native-AOT publish in CI that fails on any
   trim or AOT warning.

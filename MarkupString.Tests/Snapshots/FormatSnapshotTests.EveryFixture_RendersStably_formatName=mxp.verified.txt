@@ -22,7 +22,7 @@
 22 nested-three-deep  | <ESC>[1;4;31mdeep<ESC>[0m
 23 adjacent-runs      | <ESC>[31mred<ESC>[0m-<ESC>[1;32mbold green<ESC>[0m<ESC>[4munder<ESC>[0m
 24 html-send          | <send href="north" hint="Go north">north</send>
-25 html-b-in-colour   | <b><ESC>[32mbold green<ESC>[0m</b>
+25 html-b-in-colour   | <ESC>[32m<b>bold green</b><ESC>[0m
 26 unicode            | <ESC>[31m日本語 😀 café<ESC>[0m
 27 needs-encoding     | <ESC>[1m&lt;a href="x"&gt; &amp; 'y' &lt;/a&gt;<ESC>[0m
 28 clear-after-colour | <ESC>[31mred<ESC>[0m<ESC>[0mcleared

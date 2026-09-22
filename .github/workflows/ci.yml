@@ -23,7 +23,7 @@ jobs:
       # SDK (the MSBuild build host crashes). Whitespace rules are syntactic, so nothing is lost.
       - name: Verify formatting
         run: |
-          for dir in MarkupString MarkupString.Ansi MarkupString.Html MarkupString.Tests MarkupString.AotSmoke; do
+          for dir in MarkupString MarkupString.Ansi MarkupString.Html MarkupString.Mxp MarkupString.Pueblo MarkupString.Tests MarkupString.AotSmoke; do
             dotnet format whitespace --folder "$dir" --exclude "**/bin/**" --exclude "**/obj/**" --verify-no-changes
           done
 
@@ -70,7 +70,7 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      # The packages promise IsAotCompatible. Publishing the smoke app with all three assemblies
+      # The packages promise IsAotCompatible. Publishing the smoke app with every package assembly
       # rooted analyses every public entry point, so a trim- or AOT-hostile addition fails here
       # instead of in a consumer's app. Any IL2xxx/IL3xxx warning is an error.
       - name: Publish natively and fail on any trim/AOT warning

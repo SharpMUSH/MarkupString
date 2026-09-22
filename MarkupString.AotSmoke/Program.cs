@@ -2,13 +2,15 @@ using System.Buffers;
 using MarkupString;
 using MarkupString.Ansi;
 using MarkupString.Html;
+using MarkupString.Mxp;
+using MarkupString.Pueblo;
 
 // Native-AOT smoke test. It is published with PublishAot and run in CI: the publish must produce no
 // IL2xxx/IL3xxx warning, and the binary must exit 0. What it exercises is the whole pipeline that a
 // consumer touches — registry composition, nested markup, every built-in format, and the JSON
 // round trip — because those are where reflection or dynamic code would have crept in.
 
-MarkupRegistry.Default = MarkupRegistry.Empty.WithAnsi().WithHtml();
+MarkupRegistry.Default = MarkupRegistry.Empty.WithAnsi().WithHtml().WithMxp().WithPueblo();
 
 // Bold red on its own, so the plain SGR sequence appears un-merged with anything else.
 var red = MarkupText.Wrap(AnsiCodeParser.Parse("hr"), "red");
@@ -35,7 +37,14 @@ var command = MarkupText.Wrap(
 	AnsiMarkup.Create(linkUrl: "look", linkKind: LinkKind.Command),
 	"look");
 
-var text = MarkupText.Concat([red, wide, nested, MarkupText.Space, link, MarkupText.Space, command]);
+// The shared vocabulary: a point (a sound), a markup that stands text in for itself (a picture), and one
+// that carries its text somewhere else (a pane) — each written differently by every format.
+var shared = MarkupText.Concat([
+	MarkupText.Sound("door.wav"),
+	MarkupText.Image("map.png", "A map"),
+	MarkupText.Pane(MarkupText.Plain("gate"), "map")]);
+
+var text = MarkupText.Concat([red, wide, nested, MarkupText.Space, link, MarkupText.Space, command, shared]);
 
 MarkupFormat[] formats =
 [
@@ -87,6 +96,12 @@ Expect(rendered["html"], "color: #ff5555", "html");
 Expect(rendered["pueblo"], "<A XCH_CMD=\"look\"", "pueblo");
 Expect(rendered["mxp"], "<SEND HREF=\"look\"", "mxp");
 Expect(rendered["bbcode"], "[color=#ff5555]", "bbcode");
+Expect(rendered["mxp"], "<SOUND door.wav>", "mxp");
+Expect(rendered["mxp"], "<DEST map>gate</DEST>", "mxp");
+Expect(rendered["pueblo"], "<img xch_sound=\"play\" href=\"door.wav\">", "pueblo");
+Expect(rendered["html"], "<audio class=\"ms-sound\"", "html");
+Expect(rendered["bbcode"], "[img]map.png[/img]", "bbcode");
+Expect(rendered["ansi"], "A mapgate", "ansi");
 
 var graphemeSource = MarkupText.Wrap(HtmlMarkup.Create("b"),
 	MarkupText.Wrap(AnsiMarkup.Create(underlined: true), "界e\u0301😀"));

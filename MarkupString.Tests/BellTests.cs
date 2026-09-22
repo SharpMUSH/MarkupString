@@ -51,8 +51,10 @@ public class BellTests
 		var text = MarkupText.Concat(MarkupText.Bell(), MarkupText.Plain("ab"));
 
 		await Assert.That(DisplayWidth.Of(text.Text)).IsEqualTo(2);
-		await Assert.That(text.ToPlainText()).IsEqualTo(Bel + "ab")
-			.Because("the plain text keeps the position; only a render decides what to do with it");
+		await Assert.That(text.Text).IsEqualTo(Bel + "ab")
+			.Because("the text keeps the position, so slicing and padding carry the bell");
+		await Assert.That(text.ToPlainText()).IsEqualTo("ab")
+			.Because("a bell is a point, and a point is not text a reader or a pattern sees");
 	}
 
 	/// <summary>

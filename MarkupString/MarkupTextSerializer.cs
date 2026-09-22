@@ -28,7 +28,8 @@ namespace MarkupString;
 /// <para>
 /// Each markup object carries a <c>"k"</c> kind discriminator, written first by this class; a
 /// registered <see cref="IMarkupCodec"/> writes and reads only its own properties. <c>"neutral"</c>
-/// is built in and needs no codec. Objects written before <c>"k"</c> existed are still read: <c>"h"</c>
+/// and the shared vocabulary (<see cref="SoundMarkup"/>, <see cref="ImageMarkup"/>, …) are built in and
+/// need no codec. Objects written before <c>"k"</c> existed are still read: <c>"h"</c>
 /// present means html, <c>"n"</c> present means neutral, and anything else is ansi. A kind no codec
 /// claims becomes an <see cref="UnknownMarkup"/> holding the raw object, which is written back
 /// verbatim, so a reader missing a package neither loses nor corrupts its markup.
@@ -42,10 +43,7 @@ namespace MarkupString;
 public static class MarkupTextSerializer
 {
 	/// <summary>The kind written for, and read back as, <see cref="NeutralMarkup.Instance"/>.</summary>
-	private const string NeutralKind = "neutral";
-
-	/// <summary>The kind written for, and read back as, <see cref="BellMarkup.Instance"/>.</summary>
-	private const string BellKind = "bell";
+	private const string NeutralKind = ElementCodecs.NeutralKind;
 
 	/// <summary>
 	/// Leaves non-ASCII text as literal UTF-8 rather than <c>\uXXXX</c> escapes. The default encoder
@@ -197,13 +195,10 @@ public static class MarkupTextSerializer
 		{
 			writer.WriteString("k", NeutralKind);
 		}
-		else if (markup is BellMarkup)
-		{
-			writer.WriteString("k", BellKind);
-		}
 		else
 		{
-			var codec = (registry ?? MarkupRegistry.Default).FindCodec(markup.GetType())
+			var codec = ElementCodecs.Find(markup.GetType())
+				?? (registry ?? MarkupRegistry.Default).FindCodec(markup.GetType())
 				?? throw new InvalidOperationException(
 					$"No markup codec is registered for {markup.GetType()}. Add one with MarkupRegistry.With(IMarkupCodec).");
 			writer.WriteString("k", codec.Kind);
@@ -350,9 +345,7 @@ public static class MarkupTextSerializer
 			: "ansi";
 
 		if (kind == NeutralKind) return NeutralMarkup.Instance;
-		if (kind == BellKind) return BellMarkup.Instance;
-
-		var codec = (registry ?? MarkupRegistry.Default).FindCodec(kind);
+		var codec = ElementCodecs.Find(kind) ?? (registry ?? MarkupRegistry.Default).FindCodec(kind);
 		return codec is null ? new UnknownMarkup(kind, element.GetRawText()) : codec.Read(element);
 	}
 }

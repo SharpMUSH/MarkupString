@@ -4,6 +4,8 @@
 [![MarkupString](https://img.shields.io/nuget/v/MarkupString?label=MarkupString)](https://www.nuget.org/packages/MarkupString)
 [![MarkupString.Ansi](https://img.shields.io/nuget/v/MarkupString.Ansi?label=MarkupString.Ansi)](https://www.nuget.org/packages/MarkupString.Ansi)
 [![MarkupString.Html](https://img.shields.io/nuget/v/MarkupString.Html?label=MarkupString.Html)](https://www.nuget.org/packages/MarkupString.Html)
+[![MarkupString.Mxp](https://img.shields.io/nuget/v/MarkupString.Mxp?label=MarkupString.Mxp)](https://www.nuget.org/packages/MarkupString.Mxp)
+[![MarkupString.Pueblo](https://img.shields.io/nuget/v/MarkupString.Pueblo?label=MarkupString.Pueblo)](https://www.nuget.org/packages/MarkupString.Pueblo)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 
 **Immutable styled text for terminals and the web.** One value — a plain string plus layered
@@ -31,13 +33,17 @@ layout engine: wrap, justify, fill, and assemble columns into aligned rows.
 dotnet add package MarkupString
 dotnet add package MarkupString.Ansi
 dotnet add package MarkupString.Html
+dotnet add package MarkupString.Mxp
+dotnet add package MarkupString.Pueblo
 ```
 
 | Package | What it gives you |
 |---|---|
-| [`MarkupString`](https://www.nuget.org/packages/MarkupString) | The `MarkupText` type, runs, formats, the registry, the emitter/codec contracts, the JSON serializer, grapheme and display-width helpers. No rendering opinions. |
+| [`MarkupString`](https://www.nuget.org/packages/MarkupString) | The `MarkupText` type, runs, formats, the registry, the emitter/codec contracts, the JSON serializer, grapheme and display-width helpers, and the shared vocabulary — sounds, pictures, panes, gauges — that the format packages write. No rendering opinions. |
 | [`MarkupString.Ansi`](https://www.nuget.org/packages/MarkupString.Ansi) | Terminal styling: colours (16 / xterm-256 / truecolor), attributes, links; an `ansi()` code parser and an escape-sequence parser; emitters for ANSI, HTML, Pueblo, MXP and BBCode; and `AnsiCss`, the stylesheet for the `ms-*` classes the HTML emitters write. |
-| [`MarkupString.Html`](https://www.nuget.org/packages/MarkupString.Html) | Raw HTML tag markup — an anchor, a `<pre>`, a `<span class>` — with checked construction and tag policies for untrusted input. |
+| [`MarkupString.Html`](https://www.nuget.org/packages/MarkupString.Html) | Raw HTML tag markup — an anchor, a `<pre>`, a `<span class>` — with checked construction and tag policies for untrusted input; the shared vocabulary for a browser. |
+| [`MarkupString.Mxp`](https://www.nuget.org/packages/MarkupString.Mxp) | The shared vocabulary as MXP's elements, held to what the client said it supports. |
+| [`MarkupString.Pueblo`](https://www.nuget.org/packages/MarkupString.Pueblo) | The shared vocabulary in the Pueblo client's own extensions. |
 
 The core package renders nothing on its own: emitters live in the kind packages, so a consumer
 that only needs one of them pays for one of them, and a kind of your own is a first-class peer
@@ -49,9 +55,11 @@ rather than a fork.
 using MarkupString;
 using MarkupString.Ansi;
 using MarkupString.Html;
+using MarkupString.Mxp;
+using MarkupString.Pueblo;
 
 // Once, at startup. Set-once: a second, different registry throws.
-MarkupRegistry.Default = MarkupRegistry.Empty.WithAnsi().WithHtml();
+MarkupRegistry.Default = MarkupRegistry.Empty.WithAnsi().WithHtml().WithMxp().WithPueblo();
 
 // A command link: each format writes it in its own dialect — <A XCH_CMD> for Pueblo,
 // <SEND HREF> for MXP, a clickable anchor for HTML — and a terminal shows the text.
@@ -60,6 +68,12 @@ var prompt = MarkupText.Wrap(
   MarkupText.Wrap(AnsiCodeParser.Parse("hc"), "Go north"));
 
 Console.WriteLine(prompt.Render(MarkupFormat.Ansi));
+
+// A sound and a picture, said once. MXP gets <SOUND> and <IMAGE>, Pueblo its xch_ tags, a browser
+// <audio> and <img>, and a terminal the picture's description.
+var entrance = MarkupText.Concat([
+  MarkupText.Sound("door.wav"),
+  MarkupText.Image("gate.png", "An iron gate")]);
 ```
 
 Columns, wrapping and justification come from the same value:
@@ -85,7 +99,7 @@ TextLayout.Rows(
 | [Getting started](docs/getting-started.md) | Install, wire up the registry, build and render your first styled text. |
 | [Text operations](docs/text-operations.md) | Slicing, padding, alignment, splitting, splicing — and the grapheme and display-width rules they obey. |
 | [Layout](docs/layout.md) | Wrapping, justification, fills as patterns, and assembling columns into rows. |
-| [Formats and rendering](docs/formats.md) | The six built-in formats, what each emits, how Pueblo and MXP differ, framers and line framers, untrusted tags, custom formats. |
+| [Formats and rendering](docs/formats.md) | The six built-in formats, what each emits, the shared vocabulary, how Pueblo and MXP differ, framers and line framers, untrusted tags, custom formats. |
 | [Custom markup kinds](docs/custom-markup.md) | Write your own `IMarkup`, emitters and codec; compose with the kinds already registered. |
 | [Serialization](docs/serialization.md) | The JSON wire format, forward compatibility, `UnknownMarkup`. |
 | [Releasing](docs/releasing.md) | How a version is cut and published (maintainers). |
@@ -104,7 +118,7 @@ TextLayout.Rows(
   pays for a reset it does not need.
 - **Unicode-correct by construction.** Extractions snap inward to cluster boundaries, edits snap
   outward; padding and alignment measure in cells, not code units.
-- **AOT and trimming clean.** All three packages are `IsAotCompatible` with no reflection and no
+- **AOT and trimming clean.** Every package is `IsAotCompatible` with no reflection and no
   dynamic code, and CI publishes a native binary with every assembly rooted, failing on any
   `IL2xxx`/`IL3xxx` warning.
 
@@ -116,7 +130,7 @@ TextLayout.Rows(
 
 Semantic versioning, driven by [MinVer](https://github.com/adamralph/minver): the tag `v1.2.3`
 builds `1.2.3`, and any other commit builds the next patch as a `-preview.0.N` prerelease. The
-three packages share one version and are released together. Public API changes are tracked in
+packages share one version and are released together. Public API changes are tracked in
 `PublicAPI.Shipped.txt` / `PublicAPI.Unshipped.txt` and enforced at build time.
 
 ## Contributing
