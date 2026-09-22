@@ -68,6 +68,8 @@ public class AnsiForeignLayerTests
 
 	private static readonly AnsiMarkup Bold = AnsiMarkup.Create(bold: true);
 
+	private static readonly AnsiMarkup Cleared = AnsiMarkup.Create(clear: true);
+
 	private static string Render(MarkupText text, MarkupFormat format) => text.Render(format, Registry);
 
 	// ── Delegation of layers this package does not own ────────────────────────────
@@ -139,6 +141,28 @@ public class AnsiForeignLayerTests
 
 		await Assert.That(Render(text, MarkupFormat.Pueblo))
 			.IsEqualTo($"{Esc}[31m<t>{Esc}[1mx{Esc}[0m</t>{Esc}[0m");
+	}
+
+	/// <summary>
+	/// Set <c>[AnsiMarkup(clear), Tag("t"), AnsiMarkup(red)]</c>. A style that clears discards what is
+	/// around it, and a delegated layer in between does not let the red back in.
+	/// </summary>
+	[Test]
+	public async Task Html_ClearInsideAForeignLayer_StillDiscardsTheStyleAroundIt()
+	{
+		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new Tag("t"), MarkupText.Wrap(Cleared, "x")));
+
+		await Assert.That(Render(text, MarkupFormat.Html)).IsEqualTo("<t>x</t>");
+		await Assert.That(Render(text, MarkupFormat.Pueblo)).IsEqualTo("<t>x</t>");
+	}
+
+	/// <summary>The same set with the clear outside the tag: there is nothing inside it to keep.</summary>
+	[Test]
+	public async Task Html_ClearOutsideAForeignLayer_DiscardsTheStyleToo()
+	{
+		var text = MarkupText.Wrap(Red, MarkupText.Wrap(Cleared, MarkupText.Wrap(new Tag("t"), "x")));
+
+		await Assert.That(Render(text, MarkupFormat.Html)).IsEqualTo("<t>x</t>");
 	}
 
 	/// <summary>A foreign layer alone, with no ANSI layer to fold: only its own emitter runs.</summary>

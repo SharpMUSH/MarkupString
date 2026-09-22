@@ -92,6 +92,11 @@ internal static class AnsiEmitterSupport
 
 			var pending = AnsiStyle.None;
 			var hasPending = false;
+
+			// A style that clears discards everything around it (AnsiStyle.Combine), and a delegated layer
+			// in between does not change that: once a stretch has cleared, the stretches outside it write
+			// no styling at all.
+			var cleared = false;
 			for (var i = 0; i < set.Count; i++)
 			{
 				if (ClaimsStyle(set[i], context.Format, out var style))
@@ -107,8 +112,9 @@ internal static class AnsiEmitterSupport
 
 				if (hasPending)
 				{
+					cleared |= pending.Clear;
 					back.Clear();
-					writeSegment(pending, front.WrittenSpan, context, back);
+					writeSegment(cleared ? AnsiStyle.None : pending, front.WrittenSpan, context, back);
 					(front, back) = (back, front);
 					pending = AnsiStyle.None;
 					hasPending = false;
@@ -119,7 +125,7 @@ internal static class AnsiEmitterSupport
 				(front, back) = (back, front);
 			}
 
-			writeSegment(pending, front.WrittenSpan, context, output);
+			writeSegment(cleared ? AnsiStyle.None : pending, front.WrittenSpan, context, output);
 		}
 		finally
 		{
