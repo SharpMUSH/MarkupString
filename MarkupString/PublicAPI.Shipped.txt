@@ -36,6 +36,9 @@ MarkupString.IFormatFramer
 MarkupString.IFormatFramer.Format.get -> MarkupString.MarkupFormat!
 MarkupString.IFormatFramer.WriteEpilogue(bool anyRunEmitted, System.Buffers.IBufferWriter<char>! output) -> void
 MarkupString.IFormatFramer.WritePreamble(System.Buffers.IBufferWriter<char>! output) -> void
+MarkupString.ILineFramer
+MarkupString.ILineFramer.Format.get -> MarkupString.MarkupFormat!
+MarkupString.ILineFramer.WriteLineStart(System.Buffers.IBufferWriter<char>! output) -> void
 MarkupString.IMarkup
 MarkupString.IMarkupCodec
 MarkupString.IMarkupCodec.Kind.get -> string!
@@ -184,11 +187,14 @@ MarkupString.MarkupRegistry.FindCodec(System.Type! markupType) -> MarkupString.I
 MarkupString.MarkupRegistry.FindCodec(string! kind) -> MarkupString.IMarkupCodec?
 MarkupString.MarkupRegistry.FindEmitter(System.Type! markupType, MarkupString.MarkupFormat! format) -> MarkupString.IMarkupEmitter?
 MarkupString.MarkupRegistry.FindFramer(MarkupString.MarkupFormat! format) -> MarkupString.IFormatFramer?
+MarkupString.MarkupRegistry.FindLineFramer(MarkupString.MarkupFormat! format) -> MarkupString.ILineFramer?
 MarkupString.MarkupRegistry.FindSetEmitter(MarkupString.MarkupFormat! format) -> MarkupString.IMarkupSetEmitter?
 MarkupString.MarkupRegistry.With(MarkupString.IFormatFramer! framer) -> MarkupString.MarkupRegistry!
+MarkupString.MarkupRegistry.With(MarkupString.ILineFramer! framer) -> MarkupString.MarkupRegistry!
 MarkupString.MarkupRegistry.With(MarkupString.IMarkupCodec! codec) -> MarkupString.MarkupRegistry!
 MarkupString.MarkupRegistry.With(MarkupString.IMarkupEmitter! emitter) -> MarkupString.MarkupRegistry!
 MarkupString.MarkupRegistry.With(MarkupString.IMarkupSetEmitter! emitter) -> MarkupString.MarkupRegistry!
+MarkupString.MarkupRegistry.WithMxpSecureLines() -> MarkupString.MarkupRegistry!
 MarkupString.MarkupSet
 MarkupString.MarkupSet.Append(MarkupString.IMarkup! outer) -> MarkupString.MarkupSet!
 MarkupString.MarkupSet.Count.get -> int
@@ -241,6 +247,9 @@ MarkupString.MarkupText.WrapLines(int width) -> MarkupString.MarkupText![]!
 MarkupString.MarkupText.WrapLines(int width, MarkupString.Layout.WrapMode mode) -> MarkupString.MarkupText![]!
 MarkupString.MarkupTextRenderer
 MarkupString.MarkupTextSerializer
+MarkupString.MxpSecureLineFramer
+MarkupString.MxpSecureLineFramer.Format.get -> MarkupString.MarkupFormat!
+MarkupString.MxpSecureLineFramer.WriteLineStart(System.Buffers.IBufferWriter<char>! output) -> void
 MarkupString.NeutralMarkup
 MarkupString.NeutralMarkup.NeutralMarkup() -> void
 MarkupString.PadType
@@ -281,6 +290,7 @@ MarkupString.UnknownMarkup.RawJson.get -> string!
 MarkupString.UnknownMarkup.RawJson.init -> void
 MarkupString.UnknownMarkup.UnknownMarkup(string! Kind, string! RawJson) -> void
 abstract MarkupString.Layout.LayoutCell.<Clone>$() -> MarkupString.Layout.LayoutCell!
+const MarkupString.MxpSecureLineFramer.SecureLine = "\u001b[1z" -> string!
 override MarkupString.Edit.GetHashCode() -> int
 override MarkupString.Layout.ColumnFormat.Equals(object? obj) -> bool
 override MarkupString.Layout.ColumnFormat.GetHashCode() -> int
@@ -388,6 +398,7 @@ static readonly MarkupString.MarkupRegistry.Empty -> MarkupString.MarkupRegistry
 static readonly MarkupString.MarkupText.Empty -> MarkupString.MarkupText!
 static readonly MarkupString.MarkupText.NewLine -> MarkupString.MarkupText!
 static readonly MarkupString.MarkupText.Space -> MarkupString.MarkupText!
+static readonly MarkupString.MxpSecureLineFramer.Instance -> MarkupString.MxpSecureLineFramer!
 static readonly MarkupString.NeutralMarkup.Instance -> MarkupString.NeutralMarkup!
 virtual MarkupString.Layout.LayoutCell.EqualityContract.get -> System.Type!
 virtual MarkupString.Layout.LayoutCell.Equals(MarkupString.Layout.LayoutCell? other) -> bool

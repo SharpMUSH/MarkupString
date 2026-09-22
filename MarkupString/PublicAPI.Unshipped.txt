@@ -1,15 +1,4 @@
 #nullable enable
-MarkupString.ILineFramer
-MarkupString.ILineFramer.Format.get -> MarkupString.MarkupFormat!
-MarkupString.ILineFramer.WriteLineStart(System.Buffers.IBufferWriter<char>! output) -> void
-MarkupString.MarkupRegistry.FindLineFramer(MarkupString.MarkupFormat! format) -> MarkupString.ILineFramer?
-MarkupString.MarkupRegistry.With(MarkupString.ILineFramer! framer) -> MarkupString.MarkupRegistry!
-const MarkupString.MxpSecureLineFramer.SecureLine = "\u001b[1z" -> string!
-MarkupString.MxpSecureLineFramer
-MarkupString.MxpSecureLineFramer.Format.get -> MarkupString.MarkupFormat!
-MarkupString.MxpSecureLineFramer.WriteLineStart(System.Buffers.IBufferWriter<char>! output) -> void
-static readonly MarkupString.MxpSecureLineFramer.Instance -> MarkupString.MxpSecureLineFramer!
-MarkupString.MarkupRegistry.WithMxpSecureLines() -> MarkupString.MarkupRegistry!
 const MarkupString.BellMarkup.Character = "\a" -> string!
 MarkupString.BellMarkup
 static MarkupString.MarkupText.Bell() -> MarkupString.MarkupText!
