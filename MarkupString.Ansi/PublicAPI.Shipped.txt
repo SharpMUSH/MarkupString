@@ -103,6 +103,11 @@ MarkupString.Ansi.AnsiStyle.StrikeThrough.get -> bool
 MarkupString.Ansi.AnsiStyle.StrikeThrough.init -> void
 MarkupString.Ansi.AnsiStyle.Underlined.get -> bool
 MarkupString.Ansi.AnsiStyle.Underlined.init -> void
+MarkupString.Ansi.BellEmitter
+MarkupString.Ansi.BellEmitter.BellEmitter(MarkupString.MarkupFormat! format) -> void
+MarkupString.Ansi.BellEmitter.Emit(MarkupString.IMarkup! markup, System.ReadOnlySpan<char> body, in MarkupString.EmitContext context, System.Buffers.IBufferWriter<char>! output) -> void
+MarkupString.Ansi.BellEmitter.Format.get -> MarkupString.MarkupFormat!
+MarkupString.Ansi.BellEmitter.MarkupType.get -> System.Type!
 MarkupString.Ansi.IAnsiStyleSource
 MarkupString.Ansi.IAnsiStyleSource.TryGetAnsiStyle(MarkupString.MarkupFormat! format, out MarkupString.Ansi.AnsiStyle style) -> bool
 MarkupString.Ansi.LinkKind
@@ -117,6 +122,7 @@ MarkupString.Ansi.SgrBuilder.Written.get -> System.ReadOnlySpan<char>
 MarkupString.Ansi.SgrWriter
 MarkupString.Ansi.UrlSafety
 abstract MarkupString.Ansi.AnsiColor.<Clone>$() -> MarkupString.Ansi.AnsiColor!
+const MarkupString.Ansi.BellEmitter.HtmlElement = "<span class=\"ms-bell\" role=\"alert\"></span>" -> string!
 override MarkupString.Ansi.AnsiColor.Default.<Clone>$() -> MarkupString.Ansi.AnsiColor.Default!
 override MarkupString.Ansi.AnsiColor.Default.Equals(object? obj) -> bool
 override MarkupString.Ansi.AnsiColor.Default.GetHashCode() -> int

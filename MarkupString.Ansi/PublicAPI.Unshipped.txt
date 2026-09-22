@@ -1,7 +1,1 @@
 #nullable enable
-const MarkupString.Ansi.BellEmitter.HtmlElement = "<span class=\"ms-bell\" role=\"alert\"></span>" -> string!
-MarkupString.Ansi.BellEmitter
-MarkupString.Ansi.BellEmitter.BellEmitter(MarkupString.MarkupFormat! format) -> void
-MarkupString.Ansi.BellEmitter.Emit(MarkupString.IMarkup! markup, System.ReadOnlySpan<char> body, in MarkupString.EmitContext context, System.Buffers.IBufferWriter<char>! output) -> void
-MarkupString.Ansi.BellEmitter.Format.get -> MarkupString.MarkupFormat!
-MarkupString.Ansi.BellEmitter.MarkupType.get -> System.Type!
