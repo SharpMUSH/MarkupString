@@ -44,6 +44,9 @@ public static class MarkupTextSerializer
 	/// <summary>The kind written for, and read back as, <see cref="NeutralMarkup.Instance"/>.</summary>
 	private const string NeutralKind = "neutral";
 
+	/// <summary>The kind written for, and read back as, <see cref="BellMarkup.Instance"/>.</summary>
+	private const string BellKind = "bell";
+
 	/// <summary>
 	/// Leaves non-ASCII text as literal UTF-8 rather than <c>\uXXXX</c> escapes. The default encoder
 	/// triples the cost of CJK and Cyrillic text, which several games are written in. "Unsafe" here
@@ -194,6 +197,10 @@ public static class MarkupTextSerializer
 		{
 			writer.WriteString("k", NeutralKind);
 		}
+		else if (markup is BellMarkup)
+		{
+			writer.WriteString("k", BellKind);
+		}
 		else
 		{
 			var codec = (registry ?? MarkupRegistry.Default).FindCodec(markup.GetType())
@@ -343,6 +350,7 @@ public static class MarkupTextSerializer
 			: "ansi";
 
 		if (kind == NeutralKind) return NeutralMarkup.Instance;
+		if (kind == BellKind) return BellMarkup.Instance;
 
 		var codec = (registry ?? MarkupRegistry.Default).FindCodec(kind);
 		return codec is null ? new UnknownMarkup(kind, element.GetRawText()) : codec.Read(element);

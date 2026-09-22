@@ -10,6 +10,16 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **A bell.** `MarkupText.Bell()` marks a point in the text where the client is asked to get someone's
+  attention: U+0007 for a terminal, Pueblo or MXP client, and an empty `<span class="ms-bell"
+  role="alert">` for HTML, where the page decides what a bell means. Plain and BBCode leave nothing
+  behind. It rides on the single U+0007 it marks, which measures zero display cells, so it survives
+  slicing, concatenation and padding as a point in the string without moving anything laid out around
+  it — and it is the only way to get a control character into rendered output, since the encodings
+  drop them from ordinary text.
+
+### Added
+
 - **Checked `HtmlMarkup` construction.** `HtmlMarkup.Tag(name, params attributes)` validates the
   tag and attribute names and writes each value encoded, so nothing in a value can end the attribute
   or the tag. `HtmlMarkup.IsValidTagName`, `IsValidAttributeName` and `TryParseAttributes` (which
