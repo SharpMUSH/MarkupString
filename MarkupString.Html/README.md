@@ -14,6 +14,11 @@ Where a tag has no meaning — a terminal — it does not vanish silently: `b`, 
 [`MarkupString.Ansi`](https://www.nuget.org/packages/MarkupString.Ansi), and any other tag leaves
 its body untouched.
 
+`WithHtml()` also writes core's shared vocabulary for a browser: a sound as `<audio>`, a picture as
+`<img>`, and what HTML has no element for — a pane, a gauge, clearing the screen — as an element with
+an `ms-` class for the page to act on. See
+[the shared vocabulary](https://github.com/SharpMUSH/MarkupString/blob/main/docs/formats.md#the-shared-vocabulary).
+
 ```sh
 dotnet add package MarkupString.Html
 ```

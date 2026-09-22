@@ -22,7 +22,7 @@
 22 nested-three-deep  | <span style="color: #aa0000" class="ms-bold ms-underline">deep</span>
 23 adjacent-runs      | <span style="color: #aa0000">red</span>-<span style="color: #00aa00" class="ms-bold">bold green</span><span class="ms-underline">under</span>
 24 html-send          | <send href="north" hint="Go north">north</send>
-25 html-b-in-colour   | <b><span style="color: #00aa00">bold green</span></b>
+25 html-b-in-colour   | <span style="color: #00aa00"><b>bold green</b></span>
 26 unicode            | <span style="color: #aa0000">日本語 😀 café</span>
 27 needs-encoding     | <span class="ms-bold">&lt;a href="x"&gt; &amp; 'y' &lt;/a&gt;</span>
 28 clear-after-colour | <span style="color: #aa0000">red</span>cleared

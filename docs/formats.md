@@ -37,7 +37,85 @@ link.Render(MarkupFormat.Plain);   // north
 ```
 
 A format nothing knows how to write is not an error: the layer is skipped and its body still comes
-out. Text never disappears because a kind had no emitter.
+out. Text never disappears because a kind had no emitter. The one exception is a point
+([below](#points)), which is not text and so leaves nothing.
+
+## A bell
+
+`MarkupText.Bell()` is a point in the text rather than a property of any of it: the client is asked to
+get someone's attention where it sits.
+
+```csharp
+var line = MarkupText.Concat(MarkupText.Plain("Someone pages you"), MarkupText.Bell());
+
+line.Render(MarkupFormat.Ansi);    // Someone pages you\a
+line.Render(MarkupFormat.Html);    // Someone pages you<span class="ms-bell" role="alert"></span>
+line.Render(MarkupFormat.Plain);   // Someone pages you
+```
+
+It rides on the one U+0007 it marks, which measures zero display cells, so slicing, padding and
+concatenation carry it without shifting a column. The text encodings drop control characters, so this
+is the only way one reaches rendered output; what the HTML element means — a sound, a flash, a title
+change, nothing — is the page's to decide.
+
+## The shared vocabulary
+
+Sounds, pictures, panes and the rest are things a game says once. Their types are core's and say what
+a thing is; each format's package says how that format writes it — or what it stands in for it.
+
+```csharp
+MarkupRegistry.Default = MarkupRegistry.Empty.WithAnsi().WithHtml().WithMxp().WithPueblo();
+
+var line = MarkupText.Concat([
+  MarkupText.Sound("door.wav"),
+  MarkupText.Image("map.png", "A map of the city"),
+  MarkupText.Plain(" The door creaks.")]);
+
+line.Render(MarkupFormat.Mxp);     // <SOUND door.wav><IMAGE map.png> The door creaks.
+line.Render(MarkupFormat.Pueblo);  // <img xch_sound="play" href="door.wav"><img src="map.png" alt="A map of the city"> The door creaks.
+line.Render(MarkupFormat.Html);    // <audio class="ms-sound" …></audio><img class="ms-image" src="map.png" alt="A map of the city"> The door creaks.
+line.Render(MarkupFormat.Ansi);    // A map of the city The door creaks.
+```
+
+| Factory | MXP (`WithMxp`) | Pueblo (`WithPueblo`) | HTML (`WithHtml`) | ANSI / BBCode (`WithAnsi`) and Plain |
+|---|---|---|---|---|
+| `Sound`, `Music` | `<SOUND>`, `<MUSIC>` | `<img xch_sound="play">`, or `"loop"` | `<audio preload="none">` | nothing |
+| `StopSound` | `<SOUND Off>` / `<MUSIC Off>` | `<img xch_sound="stop" xch_device>` | `ms-sound-stop` | nothing |
+| `Image` | `<IMAGE>` | `<img>` | `<img>` | the description, or the address; BBCode `[img]` |
+| `Pane` | `<FRAME name><DEST name>…</DEST>` | `<xch_pane action="redirect">…` and back to `_previous` | `ms-pane` around the text | the text |
+| `ClearScreen` | nothing | `<xch_page clear="text">` | `ms-clear` | ANSI `ESC[H ESC[2J` |
+| `Prefetch` | nothing | `<xch_prefetch href xch_prob>` | `<link rel="prefetch">` | nothing |
+| `ExpireLinks` | `<EXPIRE>` | nothing | `ms-expire` | nothing |
+| `Variable`, `Gauge`, `Status` | `<VAR>`, `<GAUGE>`, `<STAT>` | the text | `ms-variable`, `ms-gauge`, `ms-status` around the text | the text |
+| `Relocate`, `LoginPrompt` | `<RELOCATE>`, `<USER>` / `<PASSWORD>` | nothing | nothing | nothing |
+| `Bell` | U+0007 | U+0007 | `ms-bell` | ANSI U+0007 |
+
+An `ms-` element is a hook: the page decides what a clear, a pane or a gauge looks like. Addresses are
+written as given — whether a page fetches or plays one is its own policy, not this library's.
+
+A link is already part of this vocabulary: `AnsiMarkup` with a `LinkKind` is written as each dialect
+spells a link, so a picture inside a link is a clickable picture everywhere.
+
+### Points
+
+A sound, a bell or a clear stands at a point rather than marking text. It implements `IPointMarkup` and
+rides on a carrier — `MarkupText.PointCarrier`, a zero-width space, or the bell's own U+0007 — so it
+keeps its position through slicing, concatenation and padding and measures nothing. The carrier is not
+text: `ToPlainText()`, `ToString()` and equality leave it out, and the renderer never writes it. A
+format with an emitter for the point writes the point; a format with none writes nothing, not even the
+styling around it. `MarkupText.Point(markup)` makes a point of your own.
+
+A point marks its carrier and nothing else. `MarkupText.Wrap` refuses a point over anything but its own
+carrier, so a point can never stand over words that a format would then swallow, and a cover read back
+with one out of place drops the point rather than the text. Styling *around* a point is fine: the
+styling is written only if the point is.
+
+### What an MXP client said it supports
+
+MXP asks a client which elements it can render with `<SUPPORT>`, and a client that answered `-image`
+should not be sent one. `WithMxp(supports)` takes the answer as a predicate over the element names in
+`MxpRegistration.Elements`; an element it refuses is written as if the format had no MXP. Asking is the
+telnet layer's job, and the answer belongs to one connection, so build a registry per answer.
 
 ## Pueblo and MXP
 
@@ -54,6 +132,8 @@ So:
 
 - Build a link with `AnsiMarkup.Create(linkUrl: ..., linkKind: ...)`, never with an `HtmlMarkup`
   that spells one dialect's tag. The Ansi package writes the link each format's own way.
+- Build a sound, a picture or a pane from [the shared vocabulary](#the-shared-vocabulary), never from
+  one dialect's tag.
 - Keep `HtmlMarkup` for tags the formats spell alike — `b`, `i`, `pre`, `font`, `a href`. It is
   written unchanged in `Html`, `Pueblo` and `Mxp`.
 - Render MXP for a live connection through a registry with `WithMxpSecureLines()`, so every line

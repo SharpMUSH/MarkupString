@@ -4,8 +4,8 @@ namespace MarkupString;
 /// <summary>
 /// Immutable text with zero or more styled-span <see cref="Run"/>s layered over it. Gaps
 /// between runs are plain text. Equality (<see cref="Equals(MarkupText?)"/>, <c>==</c>,
-/// <see cref="GetHashCode"/>) is ordinal comparison of <see cref="Text"/> only — markup never
-/// participates.
+/// <see cref="GetHashCode"/>) is ordinal comparison of <see cref="ToPlainText"/> only — markup never
+/// participates, and neither do the carriers points ride on.
 /// </summary>
 public sealed partial class MarkupText : IEquatable<MarkupText>
 {
@@ -19,13 +19,13 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 
 	/// <summary>
 	/// Constructs a <see cref="MarkupText"/> from raw text and candidate runs. Normalises the
-	/// runs: drops empty/out-of-range runs, sorts by <see cref="Run.Start"/>, and coalesces
-	/// adjacent runs carrying an equal <see cref="MarkupSet"/>.
+	/// runs: drops empty/out-of-range runs and points that do not match the text they cover, sorts by
+	/// <see cref="Run.Start"/>, and coalesces adjacent runs carrying an equal <see cref="MarkupSet"/>.
 	/// </summary>
 	internal MarkupText(string text, ImmutableArray<Run> runs)
 	{
 		Text = text;
-		Runs = Normalise(runs, text.Length);
+		Runs = Normalise(runs, text, text.Length);
 	}
 
 	public static MarkupText Plain(string text) => text.Length switch
@@ -36,14 +36,42 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 		_ => new MarkupText(text, ImmutableArray<Run>.Empty),
 	};
 
+	/// <summary>
+	/// A bell: a point in the text asking the client to get someone's attention, measuring zero display
+	/// cells. See <see cref="BellMarkup"/>.
+	/// </summary>
+	public static MarkupText Bell() => Wrap(BellMarkup.Instance, BellMarkup.Character);
+
 	public static MarkupText Wrap(IMarkup markup, string text) => Wrap(MarkupSet.Of(markup), text);
 
-	public static MarkupText Wrap(MarkupSet markups, string text) =>
-		text.Length == 0 ? Empty : new MarkupText(text, [new Run(0, text.Length, markups)]);
+	/// <exception cref="ArgumentException">
+	/// A point in <paramref name="markups"/> stands over something other than its own carrier.
+	/// </exception>
+	public static MarkupText Wrap(MarkupSet markups, string text)
+	{
+		if (text.Length == 0) return Empty;
+		CheckPoints(markups, text);
+		return new MarkupText(text, [new Run(0, text.Length, markups)]);
+	}
 
+	/// <exception cref="ArgumentException">
+	/// <paramref name="markup"/> is a point and <paramref name="inner"/> is something other than its own
+	/// carrier, or already carries markup of its own.
+	/// </exception>
 	public static MarkupText Wrap(IMarkup markup, MarkupText inner)
 	{
 		if (inner.Length == 0) return Empty;
+		if (markup is IPointMarkup point)
+		{
+			CheckPoint(point, inner.Text);
+			if (!inner.Runs.IsDefaultOrEmpty)
+			{
+				throw new ArgumentException(
+					$"{markup.GetType().Name} is a point, and a point marks its carrier alone, which carries no markup of its own.",
+					nameof(inner));
+			}
+		}
+
 		var outer = MarkupSet.Of(markup);
 		var builder = ImmutableArray.CreateBuilder<Run>(inner.Runs.Length * 2 + 1);
 		var position = 0;
@@ -117,12 +145,51 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 		return Concat(list.ToArray().AsSpan());
 	}
 
-	public string ToPlainText() => Text;
-	public override string ToString() => Text;
-	public bool Equals(MarkupText? other) => other is not null && string.Equals(Text, other.Text, StringComparison.Ordinal);
-	public bool TextEquals(string? text) => string.Equals(Text, text, StringComparison.Ordinal);
+	/// <summary>
+	/// The text as a reader sees it: <see cref="Text"/> without the carriers points ride on
+	/// (<see cref="IPointMarkup"/>), which are positions rather than characters.
+	/// </summary>
+	public string ToPlainText() => _plainText ??= WithoutPoints();
+
+	/// <summary>The same as <see cref="ToPlainText"/>.</summary>
+	public override string ToString() => ToPlainText();
+	public bool Equals(MarkupText? other) => other is not null && string.Equals(ToPlainText(), other.ToPlainText(), StringComparison.Ordinal);
+	public bool TextEquals(string? text) => string.Equals(ToPlainText(), text, StringComparison.Ordinal);
 	public override bool Equals(object? obj) => obj is MarkupText other && Equals(other);
-	public override int GetHashCode() => string.GetHashCode(Text, StringComparison.Ordinal);
+	public override int GetHashCode() => string.GetHashCode(ToPlainText(), StringComparison.Ordinal);
+
+	private string? _plainText;
+
+	private string WithoutPoints()
+	{
+		var hasPoint = false;
+		foreach (var run in Runs)
+		{
+			if (IsPoint(run))
+			{
+				hasPoint = true;
+				break;
+			}
+		}
+		if (!hasPoint) return Text;
+
+		var plain = new System.Text.StringBuilder(Text.Length);
+		var position = 0;
+		foreach (var run in Runs)
+		{
+			if (!IsPoint(run)) continue;
+			plain.Append(Text, position, run.Start - position);
+			position = run.End;
+		}
+		return plain.Append(Text, position, Text.Length - position).ToString();
+	}
+
+	private static bool IsPoint(Run run)
+	{
+		foreach (var markup in run.Markups)
+			if (markup is IPointMarkup) return true;
+		return false;
+	}
 	public static bool operator ==(MarkupText? a, MarkupText? b) => a is null ? b is null : a.Equals(b);
 	public static bool operator !=(MarkupText? a, MarkupText? b) => !(a == b);
 
@@ -132,7 +199,64 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 	/// any run was altered (clipped, dropped, merged, or sorted) — never the original array in
 	/// that case, even when the run count happens to match.
 	/// </summary>
-	private static ImmutableArray<Run> Normalise(ImmutableArray<Run> runs, int length)
+	/// <summary>Every point in the set marks only its own carrier.</summary>
+	private static void CheckPoints(MarkupSet markups, string text)
+	{
+		foreach (var markup in markups)
+			if (markup is IPointMarkup point)
+				CheckPoint(point, text);
+	}
+
+	private static void CheckPoint(IPointMarkup point, string text)
+	{
+		if (IsCarriedBy(point, text.AsSpan())) return;
+
+		throw new ArgumentException(
+			$"{point.GetType().Name} is a point: it marks its own carrier, not text. Build one with MarkupText.Point.",
+			nameof(text));
+	}
+
+	/// <summary>Whether <paramref name="text"/> is that point's carrier, one character per occurrence.</summary>
+	private static bool IsCarriedBy(IPointMarkup point, ReadOnlySpan<char> text)
+	{
+		var carrier = point.Carrier.AsSpan();
+		if (carrier.Length == 0 || text.Length == 0 || text.Length % carrier.Length != 0) return false;
+
+		for (var i = 0; i < text.Length; i += carrier.Length)
+			if (!text.Slice(i, carrier.Length).SequenceEqual(carrier))
+				return false;
+
+		return true;
+	}
+
+	/// <summary>
+	/// The set with any point that does not match the text it covers dropped. Construction refuses that
+	/// shape, so this is what stands between a hand-written or corrupted serialised cover and a renderer
+	/// that would write the point and swallow the text under it.
+	/// </summary>
+	private static MarkupSet WithoutMisplacedPoints(MarkupSet markups, ReadOnlySpan<char> text)
+	{
+		var keep = true;
+		foreach (var markup in markups)
+		{
+			if (markup is IPointMarkup point && !IsCarriedBy(point, text))
+			{
+				keep = false;
+				break;
+			}
+		}
+
+		if (keep) return markups;
+
+		var kept = new List<IMarkup>(markups.Count);
+		foreach (var markup in markups)
+			if (markup is not IPointMarkup point || IsCarriedBy(point, text))
+				kept.Add(markup);
+
+		return kept.Count == 0 ? MarkupSet.Of(NeutralMarkup.Instance) : MarkupSet.Of(kept);
+	}
+
+	private static ImmutableArray<Run> Normalise(ImmutableArray<Run> runs, string text, int length)
 	{
 		if (runs.IsDefaultOrEmpty) return ImmutableArray<Run>.Empty;
 		var sorted = false;
@@ -149,7 +273,9 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 				changed = true;
 				continue;
 			}
-			var run = new Run(start, end - start, raw.Markups);
+			var markups = WithoutMisplacedPoints(raw.Markups, text.AsSpan(start, end - start));
+			if (!ReferenceEquals(markups, raw.Markups)) changed = true;
+			var run = new Run(start, end - start, markups);
 			if (run.Start != raw.Start || run.Length != raw.Length) changed = true;
 			if (builder.Count > 0)
 			{

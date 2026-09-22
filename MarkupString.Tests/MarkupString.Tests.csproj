@@ -19,5 +19,7 @@
     <ProjectReference Include="..\MarkupString\MarkupString.csproj" />
     <ProjectReference Include="..\MarkupString.Ansi\MarkupString.Ansi.csproj" />
     <ProjectReference Include="..\MarkupString.Html\MarkupString.Html.csproj" />
+    <ProjectReference Include="..\MarkupString.Mxp\MarkupString.Mxp.csproj" />
+    <ProjectReference Include="..\MarkupString.Pueblo\MarkupString.Pueblo.csproj" />
   </ItemGroup>
 </Project>

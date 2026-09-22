@@ -1,6 +1,6 @@
 # Releasing
 
-For maintainers. The three packages share one version and are always released together.
+For maintainers. The five packages share one version and are always released together.
 
 ## How a version is decided
 
@@ -33,8 +33,9 @@ build if the two ever disagree.
    The tag triggers `.github/workflows/release.yml`. `workflow_dispatch` with the tag name as input
    does the same thing by hand.
 
-4. After the release lands on nuget.org, set `PackageValidationBaselineVersion` to it in each of
-   the three package files. Package validation then diffs every later build against that published
+4. After the release lands on nuget.org, set `PackageValidationBaselineVersion` to it in each
+   package file — a package gets the property with its own first release, since there is nothing to
+   diff against before that. Package validation then diffs every later build against that published
    surface and fails on a break — including one you did not mean to make.
 
    A release that *does* remove or re-signature public API is the exception: drop the property for
@@ -78,12 +79,14 @@ policy names *this* repository — a policy for another repository will not do:
    actually presents — check the owner, repository and workflow filename before anything else.
 
 Package IDs `MarkupString`, `MarkupString.Ansi` and `MarkupString.Html` were unregistered when this
-repository was set up; the first successful push claims them.
+repository was set up; the first successful push claims them. `MarkupString.Mxp` and
+`MarkupString.Pueblo` are claimed the same way by the first release that carries them, under the same
+policy.
 
 ## Checklist
 
 - [ ] `CHANGELOG.md` updated and merged to `main`
-- [ ] `PublicAPI.Unshipped.txt` promoted to `PublicAPI.Shipped.txt` in all three packages
+- [ ] `PublicAPI.Unshipped.txt` promoted to `PublicAPI.Shipped.txt` in every package
 - [ ] Trusted publishing policy exists on nuget.org for `SharpMUSH/MarkupString` (first release only)
 - [ ] Tag pushed, `Release` workflow green
-- [ ] `PackageValidationBaselineVersion` raised to the version just published
+- [ ] `PackageValidationBaselineVersion` raised to the version just published in each released package

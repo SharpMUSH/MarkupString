@@ -128,11 +128,20 @@ public sealed class MarkupRegistry
 	/// or markup type. A codec the new one displaces on either side is dropped from both sides, so a
 	/// kind and a markup type are never mapped to two different codecs: a codec that can no longer
 	/// be found by its wire kind must not still be found by its type, or text would serialise under
-	/// a kind that reads back as something else.
+	/// a kind that reads back as something else. The kinds core writes itself — the shared vocabulary's,
+	/// and <c>"neutral"</c> — are reserved, because they are read without consulting a registry at all.
 	/// </summary>
+	/// <exception cref="ArgumentException"><paramref name="codec"/> claims a kind core writes itself.</exception>
 	public MarkupRegistry With(IMarkupCodec codec)
 	{
 		ArgumentNullException.ThrowIfNull(codec);
+		if (ElementCodecs.IsReserved(codec.Kind))
+		{
+			throw new ArgumentException(
+				$"The kind '{codec.Kind}' is core's own: it is written and read without a registry, so a codec registered under it would write text that reads back as something else. Pick another kind.",
+				nameof(codec));
+		}
+
 		var byKind = new Dictionary<string, IMarkupCodec>(_codecsByKind.Count + 1, StringComparer.Ordinal);
 		foreach (var pair in _codecsByKind)
 			if (pair.Value.MarkupType != codec.MarkupType) byKind[pair.Key] = pair.Value;

@@ -1,12 +1,203 @@
 #nullable enable
-MarkupString.ILineFramer
-MarkupString.ILineFramer.Format.get -> MarkupString.MarkupFormat!
-MarkupString.ILineFramer.WriteLineStart(System.Buffers.IBufferWriter<char>! output) -> void
-MarkupString.MarkupRegistry.FindLineFramer(MarkupString.MarkupFormat! format) -> MarkupString.ILineFramer?
-MarkupString.MarkupRegistry.With(MarkupString.ILineFramer! framer) -> MarkupString.MarkupRegistry!
-const MarkupString.MxpSecureLineFramer.SecureLine = "\u001b[1z" -> string!
-MarkupString.MxpSecureLineFramer
-MarkupString.MxpSecureLineFramer.Format.get -> MarkupString.MarkupFormat!
-MarkupString.MxpSecureLineFramer.WriteLineStart(System.Buffers.IBufferWriter<char>! output) -> void
-static readonly MarkupString.MxpSecureLineFramer.Instance -> MarkupString.MxpSecureLineFramer!
-MarkupString.MarkupRegistry.WithMxpSecureLines() -> MarkupString.MarkupRegistry!
+const MarkupString.BellMarkup.Character = "\a" -> string!
+MarkupString.BellMarkup
+static MarkupString.MarkupText.Bell() -> MarkupString.MarkupText!
+static readonly MarkupString.BellMarkup.Instance -> MarkupString.BellMarkup!
+const MarkupString.SoundMarkup.Forever = -1 -> int
+MarkupString.ClearScreenMarkup
+MarkupString.ExpireLinksMarkup
+MarkupString.ExpireLinksMarkup.<Clone>$() -> MarkupString.ExpireLinksMarkup!
+MarkupString.ExpireLinksMarkup.Deconstruct(out string? Group) -> void
+MarkupString.ExpireLinksMarkup.Equals(MarkupString.ExpireLinksMarkup? other) -> bool
+MarkupString.ExpireLinksMarkup.ExpireLinksMarkup(string? Group = null) -> void
+MarkupString.ExpireLinksMarkup.Group.get -> string?
+MarkupString.ExpireLinksMarkup.Group.init -> void
+MarkupString.GaugeMarkup
+MarkupString.GaugeMarkup.Caption.get -> string?
+MarkupString.GaugeMarkup.Caption.init -> void
+MarkupString.GaugeMarkup.<Clone>$() -> MarkupString.GaugeMarkup!
+MarkupString.GaugeMarkup.Color.get -> string?
+MarkupString.GaugeMarkup.Color.init -> void
+MarkupString.GaugeMarkup.Deconstruct(out string! Variable, out string! Maximum, out string? Caption, out string? Color) -> void
+MarkupString.GaugeMarkup.Equals(MarkupString.GaugeMarkup? other) -> bool
+MarkupString.GaugeMarkup.GaugeMarkup(string! Variable, string! Maximum, string? Caption = null, string? Color = null) -> void
+MarkupString.GaugeMarkup.Maximum.get -> string!
+MarkupString.GaugeMarkup.Maximum.init -> void
+MarkupString.GaugeMarkup.Variable.get -> string!
+MarkupString.GaugeMarkup.Variable.init -> void
+MarkupString.ImageAlign
+MarkupString.ImageAlign.Bottom = 4 -> MarkupString.ImageAlign
+MarkupString.ImageAlign.Left = 0 -> MarkupString.ImageAlign
+MarkupString.ImageAlign.Middle = 3 -> MarkupString.ImageAlign
+MarkupString.ImageAlign.Right = 1 -> MarkupString.ImageAlign
+MarkupString.ImageAlign.Top = 2 -> MarkupString.ImageAlign
+MarkupString.ImageMarkup
+MarkupString.ImageMarkup.Align.get -> MarkupString.ImageAlign?
+MarkupString.ImageMarkup.Align.init -> void
+MarkupString.ImageMarkup.<Clone>$() -> MarkupString.ImageMarkup!
+MarkupString.ImageMarkup.Deconstruct(out string! Source, out string? Description, out int? Width, out int? Height, out MarkupString.ImageAlign? Align) -> void
+MarkupString.ImageMarkup.Description.get -> string?
+MarkupString.ImageMarkup.Description.init -> void
+MarkupString.ImageMarkup.Equals(MarkupString.ImageMarkup? other) -> bool
+MarkupString.ImageMarkup.Height.get -> int?
+MarkupString.ImageMarkup.Height.init -> void
+MarkupString.ImageMarkup.ImageMarkup(string! Source, string? Description = null, int? Width = null, int? Height = null, MarkupString.ImageAlign? Align = null) -> void
+MarkupString.ImageMarkup.Source.get -> string!
+MarkupString.ImageMarkup.Source.init -> void
+MarkupString.ImageMarkup.Width.get -> int?
+MarkupString.ImageMarkup.Width.init -> void
+MarkupString.IPointMarkup
+MarkupString.LoginField
+MarkupString.LoginField.Password = 1 -> MarkupString.LoginField
+MarkupString.LoginField.User = 0 -> MarkupString.LoginField
+MarkupString.LoginPromptMarkup
+MarkupString.LoginPromptMarkup.<Clone>$() -> MarkupString.LoginPromptMarkup!
+MarkupString.LoginPromptMarkup.Deconstruct(out MarkupString.LoginField Field) -> void
+MarkupString.LoginPromptMarkup.Equals(MarkupString.LoginPromptMarkup? other) -> bool
+MarkupString.LoginPromptMarkup.Field.get -> MarkupString.LoginField
+MarkupString.LoginPromptMarkup.Field.init -> void
+MarkupString.LoginPromptMarkup.LoginPromptMarkup(MarkupString.LoginField Field) -> void
+MarkupString.PaneMarkup
+MarkupString.PaneMarkup.<Clone>$() -> MarkupString.PaneMarkup!
+MarkupString.PaneMarkup.Deconstruct(out string! Name, out string? Title) -> void
+MarkupString.PaneMarkup.Equals(MarkupString.PaneMarkup? other) -> bool
+MarkupString.PaneMarkup.Name.get -> string!
+MarkupString.PaneMarkup.Name.init -> void
+MarkupString.PaneMarkup.PaneMarkup(string! Name, string? Title = null) -> void
+MarkupString.PaneMarkup.Title.get -> string?
+MarkupString.PaneMarkup.Title.init -> void
+MarkupString.PrefetchMarkup
+MarkupString.PrefetchMarkup.<Clone>$() -> MarkupString.PrefetchMarkup!
+MarkupString.PrefetchMarkup.Deconstruct(out string! Source) -> void
+MarkupString.PrefetchMarkup.Equals(MarkupString.PrefetchMarkup? other) -> bool
+MarkupString.PrefetchMarkup.PrefetchMarkup(string! Source) -> void
+MarkupString.PrefetchMarkup.Source.get -> string!
+MarkupString.PrefetchMarkup.Source.init -> void
+MarkupString.RelocateMarkup
+MarkupString.RelocateMarkup.<Clone>$() -> MarkupString.RelocateMarkup!
+MarkupString.RelocateMarkup.Deconstruct(out string! Host, out int Port, out bool Quiet) -> void
+MarkupString.RelocateMarkup.Equals(MarkupString.RelocateMarkup? other) -> bool
+MarkupString.RelocateMarkup.Host.get -> string!
+MarkupString.RelocateMarkup.Host.init -> void
+MarkupString.RelocateMarkup.Port.get -> int
+MarkupString.RelocateMarkup.Port.init -> void
+MarkupString.RelocateMarkup.Quiet.get -> bool
+MarkupString.RelocateMarkup.Quiet.init -> void
+MarkupString.RelocateMarkup.RelocateMarkup(string! Host, int Port, bool Quiet = false) -> void
+MarkupString.SoundChannel
+MarkupString.SoundChannel.Effects = 0 -> MarkupString.SoundChannel
+MarkupString.SoundChannel.Music = 1 -> MarkupString.SoundChannel
+MarkupString.SoundMarkup
+MarkupString.SoundMarkup.Channel.get -> MarkupString.SoundChannel
+MarkupString.SoundMarkup.Channel.init -> void
+MarkupString.SoundMarkup.<Clone>$() -> MarkupString.SoundMarkup!
+MarkupString.SoundMarkup.Continues.get -> bool
+MarkupString.SoundMarkup.Continues.init -> void
+MarkupString.SoundMarkup.Deconstruct(out string! Source, out MarkupString.SoundChannel Channel, out int? Volume, out int? Repeats, out bool Continues) -> void
+MarkupString.SoundMarkup.Equals(MarkupString.SoundMarkup? other) -> bool
+MarkupString.SoundMarkup.Loops.get -> bool
+MarkupString.SoundMarkup.Repeats.get -> int?
+MarkupString.SoundMarkup.Repeats.init -> void
+MarkupString.SoundMarkup.SoundMarkup(string! Source, MarkupString.SoundChannel Channel = MarkupString.SoundChannel.Effects, int? Volume = null, int? Repeats = null, bool Continues = false) -> void
+MarkupString.SoundMarkup.Source.get -> string!
+MarkupString.SoundMarkup.Source.init -> void
+MarkupString.SoundMarkup.Volume.get -> int?
+MarkupString.SoundMarkup.Volume.init -> void
+MarkupString.SoundStopMarkup
+MarkupString.SoundStopMarkup.Channel.get -> MarkupString.SoundChannel?
+MarkupString.SoundStopMarkup.Channel.init -> void
+MarkupString.SoundStopMarkup.<Clone>$() -> MarkupString.SoundStopMarkup!
+MarkupString.SoundStopMarkup.Deconstruct(out MarkupString.SoundChannel? Channel) -> void
+MarkupString.SoundStopMarkup.Equals(MarkupString.SoundStopMarkup? other) -> bool
+MarkupString.SoundStopMarkup.SoundStopMarkup(MarkupString.SoundChannel? Channel = null) -> void
+MarkupString.StatusMarkup
+MarkupString.StatusMarkup.Caption.get -> string?
+MarkupString.StatusMarkup.Caption.init -> void
+MarkupString.StatusMarkup.<Clone>$() -> MarkupString.StatusMarkup!
+MarkupString.StatusMarkup.Deconstruct(out string! Variable, out string? Maximum, out string? Caption) -> void
+MarkupString.StatusMarkup.Equals(MarkupString.StatusMarkup? other) -> bool
+MarkupString.StatusMarkup.Maximum.get -> string?
+MarkupString.StatusMarkup.Maximum.init -> void
+MarkupString.StatusMarkup.StatusMarkup(string! Variable, string? Maximum = null, string? Caption = null) -> void
+MarkupString.StatusMarkup.Variable.get -> string!
+MarkupString.StatusMarkup.Variable.init -> void
+MarkupString.VariableMarkup
+MarkupString.VariableMarkup.<Clone>$() -> MarkupString.VariableMarkup!
+MarkupString.VariableMarkup.Deconstruct(out string! Name) -> void
+MarkupString.VariableMarkup.Equals(MarkupString.VariableMarkup? other) -> bool
+MarkupString.VariableMarkup.Name.get -> string!
+MarkupString.VariableMarkup.Name.init -> void
+MarkupString.VariableMarkup.VariableMarkup(string! Name) -> void
+override MarkupString.ExpireLinksMarkup.Equals(object? obj) -> bool
+override MarkupString.ExpireLinksMarkup.GetHashCode() -> int
+override MarkupString.ExpireLinksMarkup.ToString() -> string!
+override MarkupString.GaugeMarkup.Equals(object? obj) -> bool
+override MarkupString.GaugeMarkup.GetHashCode() -> int
+override MarkupString.GaugeMarkup.ToString() -> string!
+override MarkupString.ImageMarkup.Equals(object? obj) -> bool
+override MarkupString.ImageMarkup.GetHashCode() -> int
+override MarkupString.ImageMarkup.ToString() -> string!
+override MarkupString.LoginPromptMarkup.Equals(object? obj) -> bool
+override MarkupString.LoginPromptMarkup.GetHashCode() -> int
+override MarkupString.LoginPromptMarkup.ToString() -> string!
+override MarkupString.PaneMarkup.Equals(object? obj) -> bool
+override MarkupString.PaneMarkup.GetHashCode() -> int
+override MarkupString.PaneMarkup.ToString() -> string!
+override MarkupString.PrefetchMarkup.Equals(object? obj) -> bool
+override MarkupString.PrefetchMarkup.GetHashCode() -> int
+override MarkupString.PrefetchMarkup.ToString() -> string!
+override MarkupString.RelocateMarkup.Equals(object? obj) -> bool
+override MarkupString.RelocateMarkup.GetHashCode() -> int
+override MarkupString.RelocateMarkup.ToString() -> string!
+override MarkupString.SoundMarkup.Equals(object? obj) -> bool
+override MarkupString.SoundMarkup.GetHashCode() -> int
+override MarkupString.SoundMarkup.ToString() -> string!
+override MarkupString.SoundStopMarkup.Equals(object? obj) -> bool
+override MarkupString.SoundStopMarkup.GetHashCode() -> int
+override MarkupString.SoundStopMarkup.ToString() -> string!
+override MarkupString.StatusMarkup.Equals(object? obj) -> bool
+override MarkupString.StatusMarkup.GetHashCode() -> int
+override MarkupString.StatusMarkup.ToString() -> string!
+override MarkupString.VariableMarkup.Equals(object? obj) -> bool
+override MarkupString.VariableMarkup.GetHashCode() -> int
+override MarkupString.VariableMarkup.ToString() -> string!
+static MarkupString.ExpireLinksMarkup.operator !=(MarkupString.ExpireLinksMarkup? left, MarkupString.ExpireLinksMarkup? right) -> bool
+static MarkupString.ExpireLinksMarkup.operator ==(MarkupString.ExpireLinksMarkup? left, MarkupString.ExpireLinksMarkup? right) -> bool
+static MarkupString.GaugeMarkup.operator !=(MarkupString.GaugeMarkup? left, MarkupString.GaugeMarkup? right) -> bool
+static MarkupString.GaugeMarkup.operator ==(MarkupString.GaugeMarkup? left, MarkupString.GaugeMarkup? right) -> bool
+static MarkupString.ImageMarkup.operator !=(MarkupString.ImageMarkup? left, MarkupString.ImageMarkup? right) -> bool
+static MarkupString.ImageMarkup.operator ==(MarkupString.ImageMarkup? left, MarkupString.ImageMarkup? right) -> bool
+static MarkupString.LoginPromptMarkup.operator !=(MarkupString.LoginPromptMarkup? left, MarkupString.LoginPromptMarkup? right) -> bool
+static MarkupString.LoginPromptMarkup.operator ==(MarkupString.LoginPromptMarkup? left, MarkupString.LoginPromptMarkup? right) -> bool
+static MarkupString.MarkupText.ClearScreen() -> MarkupString.MarkupText!
+static MarkupString.MarkupText.ExpireLinks(string? group = null) -> MarkupString.MarkupText!
+static MarkupString.MarkupText.Gauge(MarkupString.MarkupText! content, string! variable, string! maximum, string? caption = null, string? color = null) -> MarkupString.MarkupText!
+static MarkupString.MarkupText.Image(string! source, string? description = null, int? width = null, int? height = null, MarkupString.ImageAlign? align = null) -> MarkupString.MarkupText!
+static MarkupString.MarkupText.LoginPrompt(MarkupString.LoginField field) -> MarkupString.MarkupText!
+static MarkupString.MarkupText.Music(string! source, int? volume = null, int? repeats = null, bool continues = false) -> MarkupString.MarkupText!
+static MarkupString.MarkupText.Pane(MarkupString.MarkupText! content, string! name, string? title = null) -> MarkupString.MarkupText!
+static MarkupString.MarkupText.Point(MarkupString.IPointMarkup! markup) -> MarkupString.MarkupText!
+static MarkupString.MarkupText.Prefetch(string! source) -> MarkupString.MarkupText!
+static MarkupString.MarkupText.Relocate(string! host, int port, bool quiet = false) -> MarkupString.MarkupText!
+static MarkupString.MarkupText.Sound(string! source, int? volume = null, int? repeats = null) -> MarkupString.MarkupText!
+static MarkupString.MarkupText.Status(MarkupString.MarkupText! content, string! variable, string? maximum = null, string? caption = null) -> MarkupString.MarkupText!
+static MarkupString.MarkupText.StopSound(MarkupString.SoundChannel? channel = null) -> MarkupString.MarkupText!
+static MarkupString.MarkupText.Variable(MarkupString.MarkupText! content, string! name) -> MarkupString.MarkupText!
+static MarkupString.PaneMarkup.operator !=(MarkupString.PaneMarkup? left, MarkupString.PaneMarkup? right) -> bool
+static MarkupString.PaneMarkup.operator ==(MarkupString.PaneMarkup? left, MarkupString.PaneMarkup? right) -> bool
+static MarkupString.PrefetchMarkup.operator !=(MarkupString.PrefetchMarkup? left, MarkupString.PrefetchMarkup? right) -> bool
+static MarkupString.PrefetchMarkup.operator ==(MarkupString.PrefetchMarkup? left, MarkupString.PrefetchMarkup? right) -> bool
+static MarkupString.RelocateMarkup.operator !=(MarkupString.RelocateMarkup? left, MarkupString.RelocateMarkup? right) -> bool
+static MarkupString.RelocateMarkup.operator ==(MarkupString.RelocateMarkup? left, MarkupString.RelocateMarkup? right) -> bool
+static MarkupString.SoundMarkup.operator !=(MarkupString.SoundMarkup? left, MarkupString.SoundMarkup? right) -> bool
+static MarkupString.SoundMarkup.operator ==(MarkupString.SoundMarkup? left, MarkupString.SoundMarkup? right) -> bool
+static MarkupString.SoundStopMarkup.operator !=(MarkupString.SoundStopMarkup? left, MarkupString.SoundStopMarkup? right) -> bool
+static MarkupString.SoundStopMarkup.operator ==(MarkupString.SoundStopMarkup? left, MarkupString.SoundStopMarkup? right) -> bool
+static MarkupString.StatusMarkup.operator !=(MarkupString.StatusMarkup? left, MarkupString.StatusMarkup? right) -> bool
+static MarkupString.StatusMarkup.operator ==(MarkupString.StatusMarkup? left, MarkupString.StatusMarkup? right) -> bool
+static MarkupString.VariableMarkup.operator !=(MarkupString.VariableMarkup? left, MarkupString.VariableMarkup? right) -> bool
+static MarkupString.VariableMarkup.operator ==(MarkupString.VariableMarkup? left, MarkupString.VariableMarkup? right) -> bool
+static readonly MarkupString.ClearScreenMarkup.Instance -> MarkupString.ClearScreenMarkup!
+const MarkupString.MarkupText.PointCarrier = "​" -> string!
+MarkupString.BellMarkup.Carrier.get -> string!
+MarkupString.IPointMarkup.Carrier.get -> string!
