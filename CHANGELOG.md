@@ -6,6 +6,18 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+- **A Pueblo line ending is `<BR>` and a newline.** A Pueblo client renders the stream as HTML, where a
+  newline is whitespace, so every line ran into the one after it. `MarkupFormat.Pueblo` now encodes with
+  the new `TextEncoding.HtmlLineBreaks`, which is `Html` plus that substitution — what PennMUSH's
+  `queue_eol` writes in HTML mode — and the `\r` of a `\r\n` goes with it. A blank line is a break like
+  any other, and text that does not end in a newline gets none.
+  - `MarkupFormat.Html` and `MarkupFormat.Mxp` are unchanged, deliberately: a page decides its own line
+    handling in its stylesheet, and an MXP client reads a newline as a break already.
+
 ## 2.3.0 — 2026-09-22
 
 ### Added

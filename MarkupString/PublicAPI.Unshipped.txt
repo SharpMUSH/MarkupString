@@ -1,1 +1,2 @@
 #nullable enable
+MarkupString.TextEncoding.HtmlLineBreaks = 3 -> MarkupString.TextEncoding

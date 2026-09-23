@@ -31,6 +31,9 @@ public static class MarkupTextRenderer
 	/// <summary><see cref="Controls"/> plus the characters HTML encodes.</summary>
 	private static readonly SearchValues<char> ControlsAndHtml = SearchValues.Create(ControlCharacters + HtmlCharacters);
 
+	/// <summary><see cref="ControlsAndHtml"/> plus the line endings <see cref="TextEncoding.HtmlLineBreaks"/> rewrites.</summary>
+	private static readonly SearchValues<char> ControlsHtmlAndLines = SearchValues.Create(ControlCharacters + HtmlCharacters + "\r\n");
+
 	/// <summary>Writes <paramref name="text"/> to <paramref name="output"/> under <paramref name="encoding"/>.</summary>
 	public static void EncodeText(ReadOnlySpan<char> text, TextEncoding encoding, IBufferWriter<char> output)
 	{
@@ -41,7 +44,10 @@ public static class MarkupTextRenderer
 				Strip(text, output);
 				break;
 			case TextEncoding.Html:
-				HtmlEncode(text, output);
+				HtmlEncode(text, output, lineBreaks: false);
+				break;
+			case TextEncoding.HtmlLineBreaks:
+				HtmlEncode(text, output, lineBreaks: true);
 				break;
 			default:
 				output.Write(text);
@@ -64,11 +70,15 @@ public static class MarkupTextRenderer
 		}
 	}
 
-	private static void HtmlEncode(ReadOnlySpan<char> text, IBufferWriter<char> output)
+	/// <summary>The line ending a client renders the stream as HTML reads as one.</summary>
+	private const string HtmlLineBreak = "<BR>\n";
+
+	private static void HtmlEncode(ReadOnlySpan<char> text, IBufferWriter<char> output, bool lineBreaks)
 	{
+		var searchValues = lineBreaks ? ControlsHtmlAndLines : ControlsAndHtml;
 		while (!text.IsEmpty)
 		{
-			var index = text.IndexOfAny(ControlsAndHtml);
+			var index = text.IndexOfAny(searchValues);
 			if (index < 0)
 			{
 				output.Write(text);
@@ -80,6 +90,14 @@ public static class MarkupTextRenderer
 				case '<': output.Write("&lt;"); break;
 				case '>': output.Write("&gt;"); break;
 				case '&': output.Write("&amp;"); break;
+				case '\n': output.Write(HtmlLineBreak); break;
+
+				// A CRLF is one line ending, so the newline is consumed with the return; a lone CR is
+				// still an ending on the clients old enough to write one.
+				case '\r':
+					output.Write(HtmlLineBreak);
+					if (index + 1 < text.Length && text[index + 1] == '\n') index++;
+					break;
 				default: break;   // a control character: dropped
 			}
 			text = text[(index + 1)..];
