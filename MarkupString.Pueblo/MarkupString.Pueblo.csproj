@@ -7,8 +7,12 @@
     <IsAotCompatible>true</IsAotCompatible>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>CS1591</NoWarn>
-    <!-- No baseline until the first release is out; add PackageValidationBaselineVersion then. -->
+    <!-- Every build is diffed against the last release, so a removed or re-signatured public member
+         fails here rather than in a consumer's restore. Raise this to the newest published version
+         each time one goes out; drop it for a release that removes public API on purpose, and put
+         it back straight after. -->
     <EnablePackageValidation>true</EnablePackageValidation>
+    <PackageValidationBaselineVersion>2.3.0</PackageValidationBaselineVersion>
     <Description>Pueblo for MarkupString: writes the shared vocabulary — sounds, pictures, panes, clearing the screen, prefetching — in the Pueblo client's own HTML extensions.</Description>
   </PropertyGroup>
 
