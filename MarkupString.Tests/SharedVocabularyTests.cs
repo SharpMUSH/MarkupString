@@ -604,6 +604,31 @@ public class SharedVocabularyTests
 			.StartsWith("<pre class=\"ms-preformatted\">\n");
 	}
 
+	/// <summary>
+	/// A set is what applies to one stretch of text, and applying the same thing twice is applying it
+	/// once. Without that, a region nested in an equal one wrote its element twice and each occurrence
+	/// was indistinguishable to anything asking where the region began and ended — the outer one ended
+	/// early and opened again for the rest.
+	/// </summary>
+	[Test]
+	public async Task ARegionNestedInAnEqualOneIsOneRegion()
+	{
+		var nested = MarkupText.Preformatted(MarkupText.Concat([
+			MarkupText.Preformatted(MarkupText.Plain("x")),
+			MarkupText.Plain("y")]));
+
+		await Assert.That(Render(nested, MarkupFormat.Html)).IsEqualTo("<pre class=\"ms-preformatted\">xy</pre>");
+		await Assert.That(Render(nested, MarkupFormat.Pueblo)).IsEqualTo("<xch_mudtext>xy</xch_mudtext>");
+	}
+
+	[Test]
+	public async Task APaneNestedInTheSamePaneIsOnePane()
+	{
+		var nested = MarkupText.Pane(MarkupText.Pane(MarkupText.Plain("x"), "map"), "map");
+
+		await Assert.That(Render(nested, MarkupFormat.Mxp)).IsEqualTo("<FRAME map><DEST map>x</DEST>");
+	}
+
 	// ── Storage ──────────────────────────────────────────────────────────────────
 
 	/// <summary>The vocabulary is core's, so text carrying it round-trips with no package registered at all.</summary>

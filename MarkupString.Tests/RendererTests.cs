@@ -304,6 +304,21 @@ public class RendererTests
 		await Assert.That(format!.Encoding).IsEqualTo(encoding);
 	}
 
+	/// <summary>
+	/// A set carries each layer once: the same markup applied twice to one stretch of text is applied
+	/// once, so nothing writes its element twice.
+	/// </summary>
+	[Test]
+	public async Task MarkupSet_CarriesEachLayerOnce()
+	{
+		IMarkup pre = PreformattedMarkup.Instance;
+		IMarkup neutral = NeutralMarkup.Instance;
+
+		await Assert.That(MarkupSet.Of([pre, pre]).Count).IsEqualTo(1);
+		await Assert.That(MarkupSet.Of(pre).Append(pre).Count).IsEqualTo(1);
+		await Assert.That(MarkupSet.Of([pre, neutral, pre]).Count).IsEqualTo(2);
+	}
+
 	[Test]
 	public async Task Format_TryParse_UnknownNameIsNull()
 		=> await Assert.That(MarkupFormat.TryParse("bogus")).IsNull();

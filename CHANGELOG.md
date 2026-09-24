@@ -33,6 +33,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **A `MarkupSet` carries each layer once.** The same markup applied twice to one stretch of text is
+  applied once: `Wrap(x, Wrap(x, text))` is one layer, not two. A repeat had its emitter write the
+  element twice — `<pre><pre>` — and left the two occurrences indistinguishable to anything asking
+  where a region began and ended, so the outer one ended early and opened again for the rest.
+
 - **A Pueblo line ending is `<BR>` and a newline.** A Pueblo client renders the stream as HTML, where a
   newline is whitespace, so every line ran into the one after it. `MarkupFormat.Pueblo` now encodes with
   the new `TextEncoding.HtmlLineBreaks`, which is `Html` plus that substitution — what PennMUSH's
