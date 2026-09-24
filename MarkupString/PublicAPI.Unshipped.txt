@@ -8,3 +8,5 @@ static MarkupString.MarkupText.Preformatted(MarkupString.MarkupText! content) ->
 static readonly MarkupString.PreformattedMarkup.Instance -> MarkupString.PreformattedMarkup!
 MarkupString.EmitContext.EndsRegion(MarkupString.IMarkup! markup) -> bool
 MarkupString.EmitContext.StartsRegion(MarkupString.IMarkup! markup) -> bool
+MarkupString.EmitContext.Markups.get -> MarkupString.MarkupSet!
+MarkupString.EmitContext.Markups.init -> void

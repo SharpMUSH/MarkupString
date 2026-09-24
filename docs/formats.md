@@ -177,7 +177,8 @@ format would have given it instead of losing every break in it.
 
 A wrapping markup covers as many runs as its content has, so the emitters ask
 `EmitContext.StartsRegion` and `EndsRegion` and write one element around the whole stretch rather than
-one per run.
+one per run. A stretch continues only while the layers enclosing it do, so regions nest rather than
+cross.
 
 ## Colour fidelity
 

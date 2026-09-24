@@ -174,9 +174,10 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 			}
 			output.Write(">");
 
-			// A parser drops a newline that sits immediately after <pre>, so text that begins with one
-			// loses a line unless it is given another.
-			if (shape == Shape.Wrapping && body.Length > 0 && body[0] == '\n'
+			// A parser drops the line ending that sits immediately after <pre> — any of CR, LF or CRLF,
+			// which it normalises first — so text that begins with one loses a line unless it is given
+			// another.
+			if (shape == Shape.Wrapping && body.Length > 0 && (body[0] == '\n' || body[0] == '\r')
 				&& tag.TagName.Equals("pre", StringComparison.OrdinalIgnoreCase))
 			{
 				output.Write("\n");

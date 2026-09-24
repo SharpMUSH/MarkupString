@@ -163,6 +163,7 @@ public static class MarkupTextRenderer
 			{
 				Format = format,
 				Registry = registry,
+				Markups = run.Markups,
 				Previous = i > 0 && runs[i - 1].End == run.Start ? runs[i - 1].Markups : null,
 				Next = i + 1 < runs.Length && runs[i + 1].Start == run.End ? runs[i + 1].Markups : null,
 				IsFirstRun = i == 0,

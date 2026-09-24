@@ -18,13 +18,15 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   wrapping layer written per run produced a string of elements — a `<pre>` each, a pane opened and
   closed around every word. The vocabulary's wrapping emitters now write one element around the lot,
   in all three dialects. Two adjacent regions that are equal are one region; ones that differ each
-  open their own.
+  open their own, and a region carries on only while the layers enclosing it do — a variable inside
+  one pane and then another is two variables, not one crossing the boundary between them.
 - **`MarkupText.Preformatted`**, the first of them: text laid out by its own spacing — a table, a map,
   a listing. Pueblo writes `<xch_mudtext>`, which puts the client back on MUD-text conventions, so the
   region keeps its own line endings rather than gaining a `<BR>` on each that the client would break
   again. A browser gets `<pre>`, and every other format the text itself. Everything else the encoding
   does — the entities, the dropped control characters — still happens inside it, and a leading newline
-  is padded, since an HTML parser drops the one that sits immediately after `<pre>`.
+  is padded — CR, LF or CRLF — since an HTML parser normalises the line ending that sits immediately
+  after `<pre>` and then drops it.
   - A layer's encoding applies only where that layer is actually written: preformatting rendered
     through a registry without the package that writes `<xch_mudtext>` marks nothing, so the region
     keeps the line endings the format would have given it rather than losing every break in it.

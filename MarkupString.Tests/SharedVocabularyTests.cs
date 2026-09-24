@@ -571,6 +571,39 @@ public class SharedVocabularyTests
 			.Because("with the package, the region is marked and keeps its own endings");
 	}
 
+	/// <summary>
+	/// A region carries on only while what encloses it does. Two panes each holding the same variable
+	/// are two variables: one that carried across the boundary would be closed after its pane was, which
+	/// is elements that cross rather than nest.
+	/// </summary>
+	[Test]
+	public async Task ARegionDoesNotOutliveWhatEnclosesIt()
+	{
+		var panes = MarkupText.Concat([
+			MarkupText.Pane(MarkupText.Variable(MarkupText.Plain("42"), "hp"), "map"),
+			MarkupText.Pane(MarkupText.Variable(MarkupText.Plain("7"), "hp"), "log")]);
+
+		await Assert.That(Render(panes, MarkupFormat.Mxp)).IsEqualTo(
+			"<FRAME map><DEST map><VAR hp>42</VAR></DEST><FRAME log><DEST log><VAR hp>7</VAR></DEST>");
+
+		var html = Render(panes, MarkupFormat.Html);
+
+		await Assert.That(html.Split("<span class=\"ms-pane\"").Length - 1).IsEqualTo(2);
+		await Assert.That(html.Split("<span class=\"ms-variable\"").Length - 1).IsEqualTo(2);
+	}
+
+	[Test]
+	[Arguments("\nfoo")]
+	[Arguments("\r\nfoo")]
+	[Arguments("\rfoo")]
+	public async Task AnyLeadingLineEndingSurvivesTheOpeningPre(string text)
+	{
+		// The parser normalises CR and CRLF to LF and then drops the one that sits immediately after the
+		// tag, so all three need the padding.
+		await Assert.That(Render(MarkupText.Preformatted(MarkupText.Plain(text)), MarkupFormat.Html))
+			.StartsWith("<pre class=\"ms-preformatted\">\n");
+	}
+
 	// ── Storage ──────────────────────────────────────────────────────────────────
 
 	/// <summary>The vocabulary is core's, so text carrying it round-trips with no package registered at all.</summary>
