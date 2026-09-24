@@ -487,6 +487,90 @@ public class SharedVocabularyTests
 		await Assert.That(Render(back, MarkupFormat.Pueblo)).IsEqualTo(Render(table, MarkupFormat.Pueblo));
 	}
 
+	// ── One element per region ──────────────────────────────────────────────────
+
+	/// <summary>
+	/// Text that carries markup of its own is several runs, and a wrapper written per run would be a
+	/// string of elements: a <c>&lt;pre&gt;</c> each, or a pane opened and closed around every word.
+	/// </summary>
+	[Test]
+	public async Task AWrappedRegionIsOneElement_HoweverManyRunsItsContentIsIn()
+	{
+		var table = MarkupText.Preformatted(MarkupText.Concat([
+			MarkupText.Wrap(AnsiMarkup.Create(bold: true), MarkupText.Plain("north")),
+			MarkupText.Plain("  2\n")]));
+
+		var pueblo = Render(table, MarkupFormat.Pueblo);
+
+		await Assert.That(pueblo.Split("<xch_mudtext>").Length - 1).IsEqualTo(1);
+		await Assert.That(pueblo.Split("</xch_mudtext>").Length - 1).IsEqualTo(1);
+		await Assert.That(pueblo).StartsWith("<xch_mudtext>");
+		await Assert.That(pueblo).EndsWith("</xch_mudtext>");
+
+		var html = Render(table, MarkupFormat.Html);
+
+		await Assert.That(html.Split("<pre").Length - 1).IsEqualTo(1);
+		await Assert.That(html).EndsWith("</pre>");
+	}
+
+	[Test]
+	public async Task APaneIsRedirectedOnce_AndTurnedRoundOnce()
+	{
+		var pane = MarkupText.Pane(
+			MarkupText.Concat([
+				MarkupText.Wrap(AnsiMarkup.Create(bold: true), MarkupText.Plain("North")),
+				MarkupText.Plain(": the gate")]),
+			"map");
+
+		var pueblo = Render(pane, MarkupFormat.Pueblo);
+
+		await Assert.That(pueblo.Split("<xch_pane").Length - 1).IsEqualTo(2)
+			.Because("one redirect to the pane, and one back to where text was going before");
+		await Assert.That(Render(pane, MarkupFormat.Mxp).Split("<DEST").Length - 1).IsEqualTo(1);
+	}
+
+	/// <summary>Two regions that are not the same thing still get one element each.</summary>
+	[Test]
+	public async Task TwoDifferentPanesAreTwoPanes()
+	{
+		var panes = MarkupText.Concat([
+			MarkupText.Pane(MarkupText.Plain("a"), "map"),
+			MarkupText.Pane(MarkupText.Plain("b"), "log")]);
+
+		await Assert.That(Render(panes, MarkupFormat.Pueblo).Split("name=\"map\"").Length - 1).IsEqualTo(1);
+		await Assert.That(Render(panes, MarkupFormat.Pueblo).Split("name=\"log\"").Length - 1).IsEqualTo(1);
+	}
+
+	/// <summary>
+	/// An HTML parser drops a newline sitting immediately after <c>&lt;pre&gt;</c>, so text that begins
+	/// with one loses a line unless it is given another.
+	/// </summary>
+	[Test]
+	public async Task ALeadingNewlineSurvivesTheOpeningPre()
+	{
+		await Assert.That(Render(MarkupText.Preformatted(MarkupText.Plain("\nfoo")), MarkupFormat.Html))
+			.IsEqualTo("<pre class=\"ms-preformatted\">\n\nfoo</pre>");
+		await Assert.That(Render(MarkupText.Preformatted(MarkupText.Plain("foo")), MarkupFormat.Html))
+			.IsEqualTo("<pre class=\"ms-preformatted\">foo</pre>")
+			.Because("text that does not begin with one needs no padding");
+	}
+
+	/// <summary>
+	/// Preformatting that reaches a registry without the package that writes <c>&lt;xch_mudtext&gt;</c>
+	/// marks nothing, so the client is still reading HTML and still needs its line endings. Suspending
+	/// them there would lose every break in the region.
+	/// </summary>
+	[Test]
+	public async Task WithoutThePackageThatMarksTheRegion_TheLineEndingsStay()
+	{
+		var table = MarkupText.Preformatted(MarkupText.Plain("a\nb\n"));
+		var withoutPueblo = MarkupRegistry.Empty.WithAnsi().WithHtml();
+
+		await Assert.That(table.Render(MarkupFormat.Pueblo, withoutPueblo)).IsEqualTo("a<BR>\nb<BR>\n");
+		await Assert.That(Render(table, MarkupFormat.Pueblo)).IsEqualTo("<xch_mudtext>a\nb\n</xch_mudtext>")
+			.Because("with the package, the region is marked and keeps its own endings");
+	}
+
 	// ── Storage ──────────────────────────────────────────────────────────────────
 
 	/// <summary>The vocabulary is core's, so text carrying it round-trips with no package registered at all.</summary>

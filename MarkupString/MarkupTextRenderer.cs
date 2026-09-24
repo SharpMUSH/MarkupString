@@ -208,7 +208,7 @@ public static class MarkupTextRenderer
 			}
 			else
 			{
-				EncodeText(body, EncodingFor(markups, format), front);
+				EncodeText(body, EncodingFor(markups, format, registry), front);
 			}
 
 			var setEmitter = registry.FindSetEmitter(format);
@@ -248,12 +248,21 @@ public static class MarkupTextRenderer
 
 	/// <summary>
 	/// The encoding for a run's text: the innermost layer that decides one
-	/// (<see cref="ITextEncodingSource"/>), or the format's own when none does.
+	/// (<see cref="ITextEncodingSource"/>) and is written in this format, or the format's own when none
+	/// is.
 	/// </summary>
-	private static TextEncoding EncodingFor(MarkupSet markups, MarkupFormat format)
+	/// <remarks>
+	/// A layer only governs the text it covers if it is actually written. Preformatting that reaches a
+	/// registry without the package that writes <c>&lt;xch_mudtext&gt;</c> marks nothing, so the client is
+	/// still reading HTML and still needs the line endings the format would have written — suspending
+	/// them there would lose every break in the region.
+	/// </remarks>
+	private static TextEncoding EncodingFor(MarkupSet markups, MarkupFormat format, MarkupRegistry registry)
 	{
 		for (var i = 0; i < markups.Count; i++)
-			if (markups[i] is ITextEncodingSource source && source.TryGetEncoding(format, out var encoding))
+			if (markups[i] is ITextEncodingSource source
+				&& registry.FindEmitter(markups[i].GetType(), format) is not null
+				&& source.TryGetEncoding(format, out var encoding))
 				return encoding;
 
 		return format.Encoding;

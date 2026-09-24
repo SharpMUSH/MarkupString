@@ -77,10 +77,16 @@ internal sealed class ElementMxpEmitter(Type markupType, Func<string, bool>? sup
 					return;
 				}
 
-				tag.Open("FRAME").Positional(pane.Name).Named("TITLE", pane.Title).Close();
-				tag.Open("DEST").Positional(pane.Name).Close();
+				// One frame and one destination around the whole pane, however many runs its content is
+				// in: a DEST per run would open and close the redirect around every word.
+				if (context.StartsRegion(markup))
+				{
+					tag.Open("FRAME").Positional(pane.Name).Named("TITLE", pane.Title).Close();
+					tag.Open("DEST").Positional(pane.Name).Close();
+				}
+
 				output.Write(body);
-				output.Write("</DEST>");
+				if (context.EndsRegion(markup)) output.Write("</DEST>");
 				return;
 
 			case ExpireLinksMarkup expire:
@@ -109,9 +115,9 @@ internal sealed class ElementMxpEmitter(Type markupType, Func<string, bool>? sup
 					return;
 				}
 
-				tag.Open("VAR").Positional(variable.Name).Close();
+				if (context.StartsRegion(markup)) tag.Open("VAR").Positional(variable.Name).Close();
 				output.Write(body);
-				output.Write("</VAR>");
+				if (context.EndsRegion(markup)) output.Write("</VAR>");
 				return;
 
 			case GaugeMarkup gauge:

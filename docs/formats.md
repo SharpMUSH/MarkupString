@@ -171,7 +171,13 @@ conventions and breaks the lines itself, so the `<BR>` would double every one of
 the encoding does, the entities and the dropped control characters, still happens. A browser gets
 `<pre>`, and every other format the text as it stands. The innermost layer that answers wins, the way
 the innermost styling does, and text between runs carries no markup and always takes the format's own
-encoding.
+encoding. A layer's encoding applies only where that layer is actually written — preformatting that
+reaches a registry without `WithPueblo()` marks nothing, so the region keeps the line endings the
+format would have given it instead of losing every break in it.
+
+A wrapping markup covers as many runs as its content has, so the emitters ask
+`EmitContext.StartsRegion` and `EndsRegion` and write one element around the whole stretch rather than
+one per run.
 
 ## Colour fidelity
 

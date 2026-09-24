@@ -6,3 +6,5 @@ MarkupString.PreformattedMarkup
 MarkupString.PreformattedMarkup.TryGetEncoding(MarkupString.MarkupFormat! format, out MarkupString.TextEncoding encoding) -> bool
 static MarkupString.MarkupText.Preformatted(MarkupString.MarkupText! content) -> MarkupString.MarkupText!
 static readonly MarkupString.PreformattedMarkup.Instance -> MarkupString.PreformattedMarkup!
+MarkupString.EmitContext.EndsRegion(MarkupString.IMarkup! markup) -> bool
+MarkupString.EmitContext.StartsRegion(MarkupString.IMarkup! markup) -> bool
