@@ -12,7 +12,7 @@
          each time one goes out; drop it for a release that removes public API on purpose, and put
          it back straight after. -->
     <EnablePackageValidation>true</EnablePackageValidation>
-    <PackageValidationBaselineVersion>2.3.0</PackageValidationBaselineVersion>
+    <PackageValidationBaselineVersion>2.4.0</PackageValidationBaselineVersion>
     <Description>MXP for MarkupString: writes the shared vocabulary — sounds, music, pictures, panes, gauges, status, variables, link expiry, relocation, login prompts — as MXP tags, holding each to what the client said it supports.</Description>
   </PropertyGroup>
 
