@@ -158,10 +158,27 @@ browser page decides its own line handling in its stylesheet, and whether a brea
 paragraph belongs to the document rather than to this library. An MXP client is a line-oriented MUD
 client that reads a newline as a break already.
 
-This is the line discipline of the whole stream. A region that wants MUD-text conventions inside an
-HTML-mode connection — Pueblo's `<xch_mudtext>` — is not expressible yet: it needs a markup that can
-override the encoding for the text it covers, which is
-[issue #21](https://github.com/SharpMUSH/MarkupString/issues/21).
+This is the line discipline of the whole stream. A region laid out by its own spacing suspends it:
+
+```csharp
+MarkupText.Preformatted(MarkupText.Plain("north  2\nsouth  1\n")).Render(MarkupFormat.Pueblo);
+// <xch_mudtext>north  2\nsouth  1\n</xch_mudtext>
+```
+
+`PreformattedMarkup` is an `ITextEncodingSource`: a markup that decides how the text it covers is
+encoded, in place of the format's own. Inside Pueblo's `<xch_mudtext>` the client is back on MUD-text
+conventions and breaks the lines itself, so the `<BR>` would double every one of them — everything else
+the encoding does, the entities and the dropped control characters, still happens. A browser gets
+`<pre>`, and every other format the text as it stands. The innermost layer that answers wins, the way
+the innermost styling does, and text between runs carries no markup and always takes the format's own
+encoding. A layer's encoding applies only where that layer is actually written — preformatting that
+reaches a registry without `WithPueblo()` marks nothing, so the region keeps the line endings the
+format would have given it instead of losing every break in it.
+
+A wrapping markup covers as many runs as its content has, so the emitters ask
+`EmitContext.StartsRegion` and `EndsRegion` and write one element around the whole stretch rather than
+one per run. A stretch continues only while the layers enclosing it do, so regions nest rather than
+cross.
 
 ## Colour fidelity
 

@@ -31,16 +31,49 @@ public sealed class MarkupSet : IEquatable<MarkupSet>, IReadOnlyList<IMarkup>
 	}
 
 	public static MarkupSet Of(IMarkup markup) => Canonical(new MarkupSet([markup]));
-	public static MarkupSet Of(ReadOnlySpan<IMarkup> markups) => Canonical(new MarkupSet(markups.ToArray()));
-	public static MarkupSet Of(IEnumerable<IMarkup> markups) => Canonical(new MarkupSet(markups.ToArray()));
+	public static MarkupSet Of(ReadOnlySpan<IMarkup> markups) => Canonical(new MarkupSet(Distinct(markups.ToArray())));
+	public static MarkupSet Of(IEnumerable<IMarkup> markups) => Canonical(new MarkupSet(Distinct(markups.ToArray())));
 
 	/// <summary>Returns a new set with <paramref name="outer"/> added as the new outermost layer.</summary>
+	/// <remarks>A layer the set already carries is not added twice; see <see cref="Distinct"/>.</remarks>
 	public MarkupSet Append(IMarkup outer)
 	{
 		var items = new IMarkup[_items.Length + 1];
 		_items.CopyTo(items, 0);
 		items[^1] = outer;
-		return Canonical(new MarkupSet(items));
+		return Canonical(new MarkupSet(Distinct(items)));
+	}
+
+	/// <summary>
+	/// The layers with any repeat of an equal one dropped, keeping the innermost of each.
+	/// </summary>
+	/// <remarks>
+	/// A set is what applies to one stretch of text, and applying the same thing to it twice is applying
+	/// it once: bold inside bold is bold, and a preformatted region inside an equal one is one region.
+	/// Keeping the repeat would have an emitter write its element twice — <c>&lt;pre&gt;&lt;pre&gt;</c> —
+	/// and leave the two occurrences indistinguishable to anything asking where a region begins and ends.
+	/// </remarks>
+	private static IMarkup[] Distinct(IMarkup[] items)
+	{
+		if (items.Length < 2) return items;
+
+		var kept = new List<IMarkup>(items.Length);
+		foreach (var item in items)
+		{
+			var seen = false;
+			foreach (var already in kept)
+			{
+				if (Equals(already, item))
+				{
+					seen = true;
+					break;
+				}
+			}
+
+			if (!seen) kept.Add(item);
+		}
+
+		return kept.Count == items.Length ? items : kept.ToArray();
 	}
 
 	private static MarkupSet Canonical(MarkupSet candidate)

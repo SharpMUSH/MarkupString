@@ -22,7 +22,7 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 	[
 		typeof(SoundMarkup), typeof(SoundStopMarkup), typeof(ClearScreenMarkup), typeof(ExpireLinksMarkup),
 		typeof(PrefetchMarkup), typeof(ImageMarkup), typeof(PaneMarkup), typeof(VariableMarkup),
-		typeof(GaugeMarkup), typeof(StatusMarkup),
+		typeof(GaugeMarkup), typeof(StatusMarkup), typeof(PreformattedMarkup),
 	];
 
 	/// <summary>How an element is closed.</summary>
@@ -50,7 +50,7 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 		switch (markup)
 		{
 			case SoundMarkup sound:
-				Write(markup, output, "audio", Shape.Empty, body,
+				Write(markup, output, "audio", Shape.Empty, body, context,
 					("class", "ms-sound"),
 					("data-channel", sound.Channel == SoundChannel.Music ? "music" : "effects"),
 					("src", sound.Source),
@@ -62,7 +62,7 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 				return;
 
 			case SoundStopMarkup stop:
-				Write(markup, output, "span", Shape.Empty, body,
+				Write(markup, output, "span", Shape.Empty, body, context,
 					("class", "ms-sound-stop"),
 					("data-channel", stop.Channel switch
 					{
@@ -73,19 +73,19 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 				return;
 
 			case ClearScreenMarkup:
-				Write(markup, output, "span", Shape.Empty, body, ("class", "ms-clear"));
+				Write(markup, output, "span", Shape.Empty, body, context, ("class", "ms-clear"));
 				return;
 
 			case ExpireLinksMarkup expire:
-				Write(markup, output, "span", Shape.Empty, body, ("class", "ms-expire"), ("data-group", expire.Group));
+				Write(markup, output, "span", Shape.Empty, body, context, ("class", "ms-expire"), ("data-group", expire.Group));
 				return;
 
 			case PrefetchMarkup prefetch:
-				Write(markup, output, "link", Shape.Void, body, ("rel", "prefetch"), ("href", prefetch.Source));
+				Write(markup, output, "link", Shape.Void, body, context, ("rel", "prefetch"), ("href", prefetch.Source));
 				return;
 
 			case ImageMarkup image:
-				Write(markup, output, "img", Shape.Void, body,
+				Write(markup, output, "img", Shape.Void, body, context,
 					("class", "ms-image"),
 					("src", image.Source),
 					("alt", image.Description ?? string.Empty),
@@ -94,23 +94,27 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 					("data-align", image.Align?.ToString().ToLowerInvariant()));
 				return;
 
+			case PreformattedMarkup:
+				Write(markup, output, "pre", Shape.Wrapping, body, context, ("class", "ms-preformatted"));
+				return;
+
 			case PaneMarkup pane:
-				Write(markup, output, "span", Shape.Wrapping, body,
+				Write(markup, output, "span", Shape.Wrapping, body, context,
 					("class", "ms-pane"), ("data-pane", pane.Name), ("data-title", pane.Title));
 				return;
 
 			case VariableMarkup variable:
-				Write(markup, output, "span", Shape.Wrapping, body, ("class", "ms-variable"), ("data-name", variable.Name));
+				Write(markup, output, "span", Shape.Wrapping, body, context, ("class", "ms-variable"), ("data-name", variable.Name));
 				return;
 
 			case GaugeMarkup gauge:
-				Write(markup, output, "span", Shape.Wrapping, body,
+				Write(markup, output, "span", Shape.Wrapping, body, context,
 					("class", "ms-gauge"), ("data-variable", gauge.Variable), ("data-maximum", gauge.Maximum),
 					("data-caption", gauge.Caption), ("data-color", gauge.Color));
 				return;
 
 			case StatusMarkup status:
-				Write(markup, output, "span", Shape.Wrapping, body,
+				Write(markup, output, "span", Shape.Wrapping, body, context,
 					("class", "ms-status"), ("data-variable", status.Variable),
 					("data-maximum", status.Maximum), ("data-caption", status.Caption));
 				return;
@@ -133,6 +137,7 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 		string name,
 		Shape shape,
 		ReadOnlySpan<char> body,
+		in EmitContext context,
 		params ReadOnlySpan<(string Name, string? Value)> attributes)
 	{
 		var written = new HtmlAttribute[Count(attributes)];
@@ -154,18 +159,37 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 			tag = held;
 		}
 
-		output.Write("<");
-		output.Write(tag.TagName);
-		if (tag.Attributes is { Length: > 0 } rendered)
+		// One element around the whole stretch this layer covers, however many runs its content is in.
+		var opens = shape != Shape.Wrapping || context.StartsRegion(markup);
+		var closes = shape != Shape.Wrapping || context.EndsRegion(markup);
+
+		if (opens)
 		{
-			output.Write(" ");
-			output.Write(rendered);
+			output.Write("<");
+			output.Write(tag.TagName);
+			if (tag.Attributes is { Length: > 0 } rendered)
+			{
+				output.Write(" ");
+				output.Write(rendered);
+			}
+			output.Write(">");
+
+			// A parser drops the line ending that sits immediately after <pre> — any of CR, LF or CRLF,
+			// which it normalises first — so text that begins with one loses a line unless it is given
+			// another.
+			if (shape == Shape.Wrapping && body.Length > 0 && (body[0] == '\n' || body[0] == '\r')
+				&& tag.TagName.Equals("pre", StringComparison.OrdinalIgnoreCase))
+			{
+				output.Write("\n");
+			}
 		}
-		output.Write(">");
 
 		if (shape == Shape.Void) return;
 
 		if (shape == Shape.Wrapping) output.Write(body);
+
+		if (!closes) return;
+
 		output.Write("</");
 		output.Write(tag.TagName);
 		output.Write(">");

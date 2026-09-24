@@ -8,7 +8,35 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+
+- **A markup can decide how the text it covers is encoded.** `ITextEncodingSource` answers with a
+  `TextEncoding` in place of the format's own, innermost layer first; text between runs carries no
+  markup and always takes the format's.
+- **`EmitContext.StartsRegion` / `EndsRegion`**, which tell an emitter whether the run it is writing
+  begins or ends the stretch a layer covers. Text carrying markup of its own is several runs, and a
+  wrapping layer written per run produced a string of elements — a `<pre>` each, a pane opened and
+  closed around every word. The vocabulary's wrapping emitters now write one element around the lot,
+  in all three dialects. Two adjacent regions that are equal are one region; ones that differ each
+  open their own, and a region carries on only while the layers enclosing it do — a variable inside
+  one pane and then another is two variables, not one crossing the boundary between them.
+- **`MarkupText.Preformatted`**, the first of them: text laid out by its own spacing — a table, a map,
+  a listing. Pueblo writes `<xch_mudtext>`, which puts the client back on MUD-text conventions, so the
+  region keeps its own line endings rather than gaining a `<BR>` on each that the client would break
+  again. A browser gets `<pre>`, and every other format the text itself. Everything else the encoding
+  does — the entities, the dropped control characters — still happens inside it, and a leading newline
+  is padded — CR, LF or CRLF — since an HTML parser normalises the line ending that sits immediately
+  after `<pre>` and then drops it.
+  - A layer's encoding applies only where that layer is actually written: preformatting rendered
+    through a registry without the package that writes `<xch_mudtext>` marks nothing, so the region
+    keeps the line endings the format would have given it rather than losing every break in it.
+
 ### Changed
+
+- **A `MarkupSet` carries each layer once.** The same markup applied twice to one stretch of text is
+  applied once: `Wrap(x, Wrap(x, text))` is one layer, not two. A repeat had its emitter write the
+  element twice — `<pre><pre>` — and left the two occurrences indistinguishable to anything asking
+  where a region began and ended, so the outer one ended early and opened again for the rest.
 
 - **A Pueblo line ending is `<BR>` and a newline.** A Pueblo client renders the stream as HTML, where a
   newline is whitespace, so every line ran into the one after it. `MarkupFormat.Pueblo` now encodes with

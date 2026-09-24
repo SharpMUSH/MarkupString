@@ -18,7 +18,7 @@ internal sealed class ElementPuebloEmitter(Type markupType) : IMarkupEmitter
 	internal static readonly Type[] Types =
 	[
 		typeof(SoundMarkup), typeof(SoundStopMarkup), typeof(ClearScreenMarkup), typeof(PrefetchMarkup),
-		typeof(ImageMarkup), typeof(PaneMarkup),
+		typeof(ImageMarkup), typeof(PaneMarkup), typeof(PreformattedMarkup),
 	];
 
 	/// <summary>The pane name Pueblo reads as "back to wherever text was going before".</summary>
@@ -71,10 +71,26 @@ internal sealed class ElementPuebloEmitter(Type markupType) : IMarkupEmitter
 					("align", image.Align?.ToString().ToLowerInvariant()));
 				return;
 
-			case PaneMarkup pane:
-				Tag(output, "xch_pane", ("action", "redirect"), ("name", pane.Name), ("panetitle", pane.Title));
+			case PreformattedMarkup:
+				// The client is back on MUD-text conventions inside this: it breaks the lines itself, and
+				// the font is fixed-width. PreformattedMarkup suspends the <BR> substitution to match.
+				// One element around the whole region, however many runs its content is in.
+				if (context.StartsRegion(markup)) output.Write("<xch_mudtext>");
 				output.Write(body);
-				Tag(output, "xch_pane", ("action", "redirect"), ("name", PreviousPane));
+				if (context.EndsRegion(markup)) output.Write("</xch_mudtext>");
+				return;
+
+			case PaneMarkup pane:
+				if (context.StartsRegion(markup))
+				{
+					Tag(output, "xch_pane", ("action", "redirect"), ("name", pane.Name), ("panetitle", pane.Title));
+				}
+
+				output.Write(body);
+
+				// The redirect stays in force until it is sent back, so it is turned round once, after
+				// everything the pane covers — not around each run of it.
+				if (context.EndsRegion(markup)) Tag(output, "xch_pane", ("action", "redirect"), ("name", PreviousPane));
 				return;
 
 			default:

@@ -14,6 +14,7 @@ internal static class ElementCodecs
 	[
 		new Codec<BellMarkup>("bell", static (_, _) => { }, static _ => BellMarkup.Instance),
 		new Codec<ClearScreenMarkup>("clear", static (_, _) => { }, static _ => ClearScreenMarkup.Instance),
+		new Codec<PreformattedMarkup>("pre", static (_, _) => { }, static _ => PreformattedMarkup.Instance),
 		new Codec<SoundMarkup>("sound",
 			static (w, m) =>
 			{

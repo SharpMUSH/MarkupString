@@ -416,6 +416,219 @@ public class SharedVocabularyTests
 			.IsEqualTo("north\nsouth");
 	}
 
+	// ── A region with its own layout ────────────────────────────────────────────
+
+	/// <summary>
+	/// Inside <c>&lt;xch_mudtext&gt;</c> the client is back on MUD-text conventions and breaks the lines
+	/// itself, so the <c>&lt;BR&gt;</c> the format writes everywhere else would double every one of them.
+	/// </summary>
+	[Test]
+	public async Task PreformattedKeepsItsOwnLineEndings()
+	{
+		var table = MarkupText.Preformatted(MarkupText.Plain("north  2\nsouth  1\n"));
+
+		await Assert.That(Render(table, MarkupFormat.Pueblo))
+			.IsEqualTo("<xch_mudtext>north  2\nsouth  1\n</xch_mudtext>");
+	}
+
+	[Test]
+	public async Task PreformattedIsAPreForABrowser_AndTheTextItselfEverywhereElse()
+	{
+		var table = MarkupText.Preformatted(MarkupText.Plain("north  2\nsouth  1"));
+
+		await Assert.That(Render(table, MarkupFormat.Html))
+			.IsEqualTo("<pre class=\"ms-preformatted\">north  2\nsouth  1</pre>");
+		await Assert.That(Render(table, MarkupFormat.Ansi)).IsEqualTo("north  2\nsouth  1");
+		await Assert.That(Render(table, MarkupFormat.Mxp)).IsEqualTo("north  2\nsouth  1");
+		await Assert.That(Render(table, MarkupFormat.Plain)).IsEqualTo("north  2\nsouth  1");
+	}
+
+	/// <summary>The region is what changes, not the format: the text around it ends its lines as usual.</summary>
+	[Test]
+	public async Task OnlyTheTextThePreformattingCoversKeepsItsNewlines()
+	{
+		var line = MarkupText.Concat([
+			MarkupText.Plain("You see:\n"),
+			MarkupText.Preformatted(MarkupText.Plain("a  1\nb  2\n")),
+			MarkupText.Plain("Nothing else.\n")]);
+
+		await Assert.That(Render(line, MarkupFormat.Pueblo)).IsEqualTo(
+			"You see:<BR>\n<xch_mudtext>a  1\nb  2\n</xch_mudtext>Nothing else.<BR>\n");
+	}
+
+	/// <summary>Everything else the encoding does is still done: this suspends the line breaks alone.</summary>
+	[Test]
+	public async Task PreformattedStillEncodesWhatIsMarkupInHtml()
+	{
+		var table = MarkupText.Preformatted(MarkupText.Plain("a < b & c\n"));
+
+		await Assert.That(Render(table, MarkupFormat.Pueblo))
+			.IsEqualTo("<xch_mudtext>a &lt; b &amp; c\n</xch_mudtext>");
+	}
+
+	[Test]
+	public async Task StylingInsideAPreformattedRegionStillRenders()
+	{
+		var table = MarkupText.Preformatted(
+			MarkupText.Wrap(AnsiMarkup.Create(bold: true), MarkupText.Plain("north\n")));
+
+		await Assert.That(Render(table, MarkupFormat.Pueblo)).Contains("north\n");
+		await Assert.That(Render(table, MarkupFormat.Ansi)).Contains("north");
+	}
+
+	[Test]
+	public async Task PreformattedRoundTripsThroughTheSerializer()
+	{
+		var table = MarkupText.Preformatted(MarkupText.Plain("a\nb"));
+
+		var back = MarkupTextSerializer.Deserialize(
+			MarkupTextSerializer.Serialize(table, MarkupRegistry.Empty), MarkupRegistry.Empty);
+
+		await Assert.That(Render(back, MarkupFormat.Pueblo)).IsEqualTo(Render(table, MarkupFormat.Pueblo));
+	}
+
+	// ── One element per region ──────────────────────────────────────────────────
+
+	/// <summary>
+	/// Text that carries markup of its own is several runs, and a wrapper written per run would be a
+	/// string of elements: a <c>&lt;pre&gt;</c> each, or a pane opened and closed around every word.
+	/// </summary>
+	[Test]
+	public async Task AWrappedRegionIsOneElement_HoweverManyRunsItsContentIsIn()
+	{
+		var table = MarkupText.Preformatted(MarkupText.Concat([
+			MarkupText.Wrap(AnsiMarkup.Create(bold: true), MarkupText.Plain("north")),
+			MarkupText.Plain("  2\n")]));
+
+		var pueblo = Render(table, MarkupFormat.Pueblo);
+
+		await Assert.That(pueblo.Split("<xch_mudtext>").Length - 1).IsEqualTo(1);
+		await Assert.That(pueblo.Split("</xch_mudtext>").Length - 1).IsEqualTo(1);
+		await Assert.That(pueblo).StartsWith("<xch_mudtext>");
+		await Assert.That(pueblo).EndsWith("</xch_mudtext>");
+
+		var html = Render(table, MarkupFormat.Html);
+
+		await Assert.That(html.Split("<pre").Length - 1).IsEqualTo(1);
+		await Assert.That(html).EndsWith("</pre>");
+	}
+
+	[Test]
+	public async Task APaneIsRedirectedOnce_AndTurnedRoundOnce()
+	{
+		var pane = MarkupText.Pane(
+			MarkupText.Concat([
+				MarkupText.Wrap(AnsiMarkup.Create(bold: true), MarkupText.Plain("North")),
+				MarkupText.Plain(": the gate")]),
+			"map");
+
+		var pueblo = Render(pane, MarkupFormat.Pueblo);
+
+		await Assert.That(pueblo.Split("<xch_pane").Length - 1).IsEqualTo(2)
+			.Because("one redirect to the pane, and one back to where text was going before");
+		await Assert.That(Render(pane, MarkupFormat.Mxp).Split("<DEST").Length - 1).IsEqualTo(1);
+	}
+
+	/// <summary>Two regions that are not the same thing still get one element each.</summary>
+	[Test]
+	public async Task TwoDifferentPanesAreTwoPanes()
+	{
+		var panes = MarkupText.Concat([
+			MarkupText.Pane(MarkupText.Plain("a"), "map"),
+			MarkupText.Pane(MarkupText.Plain("b"), "log")]);
+
+		await Assert.That(Render(panes, MarkupFormat.Pueblo).Split("name=\"map\"").Length - 1).IsEqualTo(1);
+		await Assert.That(Render(panes, MarkupFormat.Pueblo).Split("name=\"log\"").Length - 1).IsEqualTo(1);
+	}
+
+	/// <summary>
+	/// An HTML parser drops a newline sitting immediately after <c>&lt;pre&gt;</c>, so text that begins
+	/// with one loses a line unless it is given another.
+	/// </summary>
+	[Test]
+	public async Task ALeadingNewlineSurvivesTheOpeningPre()
+	{
+		await Assert.That(Render(MarkupText.Preformatted(MarkupText.Plain("\nfoo")), MarkupFormat.Html))
+			.IsEqualTo("<pre class=\"ms-preformatted\">\n\nfoo</pre>");
+		await Assert.That(Render(MarkupText.Preformatted(MarkupText.Plain("foo")), MarkupFormat.Html))
+			.IsEqualTo("<pre class=\"ms-preformatted\">foo</pre>")
+			.Because("text that does not begin with one needs no padding");
+	}
+
+	/// <summary>
+	/// Preformatting that reaches a registry without the package that writes <c>&lt;xch_mudtext&gt;</c>
+	/// marks nothing, so the client is still reading HTML and still needs its line endings. Suspending
+	/// them there would lose every break in the region.
+	/// </summary>
+	[Test]
+	public async Task WithoutThePackageThatMarksTheRegion_TheLineEndingsStay()
+	{
+		var table = MarkupText.Preformatted(MarkupText.Plain("a\nb\n"));
+		var withoutPueblo = MarkupRegistry.Empty.WithAnsi().WithHtml();
+
+		await Assert.That(table.Render(MarkupFormat.Pueblo, withoutPueblo)).IsEqualTo("a<BR>\nb<BR>\n");
+		await Assert.That(Render(table, MarkupFormat.Pueblo)).IsEqualTo("<xch_mudtext>a\nb\n</xch_mudtext>")
+			.Because("with the package, the region is marked and keeps its own endings");
+	}
+
+	/// <summary>
+	/// A region carries on only while what encloses it does. Two panes each holding the same variable
+	/// are two variables: one that carried across the boundary would be closed after its pane was, which
+	/// is elements that cross rather than nest.
+	/// </summary>
+	[Test]
+	public async Task ARegionDoesNotOutliveWhatEnclosesIt()
+	{
+		var panes = MarkupText.Concat([
+			MarkupText.Pane(MarkupText.Variable(MarkupText.Plain("42"), "hp"), "map"),
+			MarkupText.Pane(MarkupText.Variable(MarkupText.Plain("7"), "hp"), "log")]);
+
+		await Assert.That(Render(panes, MarkupFormat.Mxp)).IsEqualTo(
+			"<FRAME map><DEST map><VAR hp>42</VAR></DEST><FRAME log><DEST log><VAR hp>7</VAR></DEST>");
+
+		var html = Render(panes, MarkupFormat.Html);
+
+		await Assert.That(html.Split("<span class=\"ms-pane\"").Length - 1).IsEqualTo(2);
+		await Assert.That(html.Split("<span class=\"ms-variable\"").Length - 1).IsEqualTo(2);
+	}
+
+	[Test]
+	[Arguments("\nfoo")]
+	[Arguments("\r\nfoo")]
+	[Arguments("\rfoo")]
+	public async Task AnyLeadingLineEndingSurvivesTheOpeningPre(string text)
+	{
+		// The parser normalises CR and CRLF to LF and then drops the one that sits immediately after the
+		// tag, so all three need the padding.
+		await Assert.That(Render(MarkupText.Preformatted(MarkupText.Plain(text)), MarkupFormat.Html))
+			.StartsWith("<pre class=\"ms-preformatted\">\n");
+	}
+
+	/// <summary>
+	/// A set is what applies to one stretch of text, and applying the same thing twice is applying it
+	/// once. Without that, a region nested in an equal one wrote its element twice and each occurrence
+	/// was indistinguishable to anything asking where the region began and ended — the outer one ended
+	/// early and opened again for the rest.
+	/// </summary>
+	[Test]
+	public async Task ARegionNestedInAnEqualOneIsOneRegion()
+	{
+		var nested = MarkupText.Preformatted(MarkupText.Concat([
+			MarkupText.Preformatted(MarkupText.Plain("x")),
+			MarkupText.Plain("y")]));
+
+		await Assert.That(Render(nested, MarkupFormat.Html)).IsEqualTo("<pre class=\"ms-preformatted\">xy</pre>");
+		await Assert.That(Render(nested, MarkupFormat.Pueblo)).IsEqualTo("<xch_mudtext>xy</xch_mudtext>");
+	}
+
+	[Test]
+	public async Task APaneNestedInTheSamePaneIsOnePane()
+	{
+		var nested = MarkupText.Pane(MarkupText.Pane(MarkupText.Plain("x"), "map"), "map");
+
+		await Assert.That(Render(nested, MarkupFormat.Mxp)).IsEqualTo("<FRAME map><DEST map>x</DEST>");
+	}
+
 	// ── Storage ──────────────────────────────────────────────────────────────────
 
 	/// <summary>The vocabulary is core's, so text carrying it round-trips with no package registered at all.</summary>

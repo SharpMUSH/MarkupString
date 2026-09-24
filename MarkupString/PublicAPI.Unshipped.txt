@@ -1,2 +1,12 @@
 #nullable enable
 MarkupString.TextEncoding.HtmlLineBreaks = 3 -> MarkupString.TextEncoding
+MarkupString.ITextEncodingSource
+MarkupString.ITextEncodingSource.TryGetEncoding(MarkupString.MarkupFormat! format, out MarkupString.TextEncoding encoding) -> bool
+MarkupString.PreformattedMarkup
+MarkupString.PreformattedMarkup.TryGetEncoding(MarkupString.MarkupFormat! format, out MarkupString.TextEncoding encoding) -> bool
+static MarkupString.MarkupText.Preformatted(MarkupString.MarkupText! content) -> MarkupString.MarkupText!
+static readonly MarkupString.PreformattedMarkup.Instance -> MarkupString.PreformattedMarkup!
+MarkupString.EmitContext.EndsRegion(MarkupString.IMarkup! markup) -> bool
+MarkupString.EmitContext.StartsRegion(MarkupString.IMarkup! markup) -> bool
+MarkupString.EmitContext.Markups.get -> MarkupString.MarkupSet!
+MarkupString.EmitContext.Markups.init -> void
