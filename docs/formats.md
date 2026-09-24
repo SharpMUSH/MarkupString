@@ -19,7 +19,7 @@ decision about an audience, and it is made where that audience is known.
 | `Plain` | control characters stripped | nothing — the body passes through | nothing |
 | `Ansi` | verbatim | SGR sequences, written as diffs between runs | folds `b`/`i`/`u`/`s` into styling |
 | `Html` | HTML-escaped | `<span>` with `ms-*` classes and inline colour | the tag itself |
-| `Pueblo` | HTML-escaped | SGR sequences (Pueblo reads ANSI), plus `<A XCH_CMD>` / `<A HREF>` for a link | the tag itself |
+| `Pueblo` | HTML-escaped, and a line ending becomes `<BR>` | SGR sequences (Pueblo reads ANSI), plus `<A XCH_CMD>` / `<A HREF>` for a link | the tag itself |
 | `Mxp` | HTML-escaped | SGR sequences, plus `<SEND HREF>` / `<A HREF>` for a link | the tag itself |
 | `BBCode` | control characters stripped | `[color]`, `[b]`, `[i]`, `[u]`, `[s]` | nothing — the body passes through |
 
@@ -138,6 +138,30 @@ So:
   written unchanged in `Html`, `Pueblo` and `Mxp`.
 - Render MXP for a live connection through a registry with `WithMxpSecureLines()`, so every line
   opens in secure mode. See [Line framers](#line-framers).
+
+### Line endings
+
+A Pueblo client renders the stream as HTML, where a newline is whitespace: without help, every line
+runs into the one after it. So `MarkupFormat.Pueblo` encodes a line ending as `<BR>` and a newline —
+what PennMUSH's `queue_eol` writes in HTML mode — and the `\r` of a `\r\n` goes with it, the break
+being the tag now.
+
+```csharp
+MarkupText.Plain("north\nsouth\n").Render(MarkupFormat.Pueblo);   // north<BR>\nsouth<BR>\n
+```
+
+A blank line is a break like any other; text that does not end in a newline gets none, so rendering
+pieces separately and joining them adds nothing.
+
+The other two formats that encode as HTML keep their newlines, and the difference is deliberate. A
+browser page decides its own line handling in its stylesheet, and whether a break is a `<br>` or a
+paragraph belongs to the document rather than to this library. An MXP client is a line-oriented MUD
+client that reads a newline as a break already.
+
+This is the line discipline of the whole stream. A region that wants MUD-text conventions inside an
+HTML-mode connection — Pueblo's `<xch_mudtext>` — is not expressible yet: it needs a markup that can
+override the encoding for the text it covers, which is
+[issue #21](https://github.com/SharpMUSH/MarkupString/issues/21).
 
 ## Colour fidelity
 

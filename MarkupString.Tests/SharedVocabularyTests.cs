@@ -358,6 +358,64 @@ public class SharedVocabularyTests
 			.Because("the sentence is kept; only the point that could not be written where it sat is gone");
 	}
 
+	// ── Line endings ────────────────────────────────────────────────────────────
+
+	/// <summary>
+	/// A Pueblo client renders the stream as HTML, where a newline is whitespace. PennMUSH's
+	/// <c>queue_eol</c> writes <c>&lt;BR&gt;\n</c> in HTML mode, and so does this.
+	/// </summary>
+	[Test]
+	public async Task PuebloEndsALineTheWayAnHtmlClientReadsOne()
+	{
+		var lines = MarkupText.Plain("north\nsouth\n");
+
+		await Assert.That(Render(lines, MarkupFormat.Pueblo)).IsEqualTo("north<BR>\nsouth<BR>\n");
+	}
+
+	[Test]
+	public async Task ABlankLineIsItsOwnBreak()
+	{
+		await Assert.That(Render(MarkupText.Plain("a\n\nb"), MarkupFormat.Pueblo)).IsEqualTo("a<BR>\n<BR>\nb")
+			.Because("a blank line the player was meant to see is a break like any other");
+	}
+
+	[Test]
+	public async Task ACarriageReturnGoesWithTheNewlineItBelongedTo()
+	{
+		await Assert.That(Render(MarkupText.Plain("a\r\nb"), MarkupFormat.Pueblo)).IsEqualTo("a<BR>\nb");
+		await Assert.That(Render(MarkupText.Plain("a\rb"), MarkupFormat.Pueblo)).IsEqualTo("a<BR>\nb");
+	}
+
+	[Test]
+	public async Task TextWithNoEndingGetsNoBreak()
+	{
+		await Assert.That(Render(MarkupText.Plain("north"), MarkupFormat.Pueblo)).IsEqualTo("north")
+			.Because("a fragment has not ended a line, so rendering pieces and joining them adds nothing");
+	}
+
+	[Test]
+	public async Task ALineInsideMarkupEndsTheSameWay()
+	{
+		var styled = MarkupText.Wrap(AnsiMarkup.Create(bold: true), MarkupText.Plain("north\nsouth"));
+
+		await Assert.That(Render(styled, MarkupFormat.Pueblo)).Contains("north<BR>\nsouth");
+	}
+
+	/// <summary>
+	/// The other two formats that encode as HTML keep their newlines. A page decides its own line
+	/// handling in its stylesheet, and an MXP client is line-oriented and reads a newline as a break.
+	/// </summary>
+	[Test]
+	[Arguments("html")]
+	[Arguments("mxp")]
+	[Arguments("ansi")]
+	[Arguments("plain")]
+	public async Task EveryOtherFormatLeavesTheNewlineAlone(string format)
+	{
+		await Assert.That(Render(MarkupText.Plain("north\nsouth"), MarkupFormat.TryParse(format)!))
+			.IsEqualTo("north\nsouth");
+	}
+
 	// ── Storage ──────────────────────────────────────────────────────────────────
 
 	/// <summary>The vocabulary is core's, so text carrying it round-trips with no package registered at all.</summary>

@@ -30,6 +30,12 @@ line.Render(MarkupFormat.Pueblo, registry);
 // <img xch_sound="play" href="door.wav" xch_volume="80"><xch_pane action="redirect" name="map" panetitle="The Map">North: the gate<xch_pane action="redirect" name="_previous">
 ```
 
+## Line endings
+
+A Pueblo connection is in HTML mode, where a newline is whitespace, so `MarkupFormat.Pueblo` writes a
+line ending as `<BR>` and a newline — PennMUSH's `queue_eol` in HTML mode. That is part of the format
+itself and needs no registration; this package is what writes the tags.
+
 ## Elements
 
 | Factory | Written as |

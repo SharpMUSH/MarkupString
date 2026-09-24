@@ -20,7 +20,7 @@ public sealed class MarkupFormat : IEquatable<MarkupFormat>
 	public static readonly MarkupFormat Plain = new("plain", TextEncoding.StripControls);
 	public static readonly MarkupFormat Ansi = new("ansi", TextEncoding.None);
 	public static readonly MarkupFormat Html = new("html", TextEncoding.Html);
-	public static readonly MarkupFormat Pueblo = new("pueblo", TextEncoding.Html);
+	public static readonly MarkupFormat Pueblo = new("pueblo", TextEncoding.HtmlLineBreaks);
 	public static readonly MarkupFormat Mxp = new("mxp", TextEncoding.Html);
 	public static readonly MarkupFormat BBCode = new("bbcode", TextEncoding.StripControls);
 

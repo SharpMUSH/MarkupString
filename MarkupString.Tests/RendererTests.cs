@@ -294,7 +294,7 @@ public class RendererTests
 	[Arguments("plain", TextEncoding.StripControls)]
 	[Arguments("ANSI", TextEncoding.None)]
 	[Arguments("html", TextEncoding.Html)]
-	[Arguments("Pueblo", TextEncoding.Html)]
+	[Arguments("Pueblo", TextEncoding.HtmlLineBreaks)]
 	[Arguments("mxp", TextEncoding.Html)]
 	[Arguments("bbcode", TextEncoding.StripControls)]
 	public async Task Format_TryParse_ResolvesBuiltInsCaseInsensitively(string name, TextEncoding encoding)
