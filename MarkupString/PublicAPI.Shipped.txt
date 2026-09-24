@@ -17,18 +17,22 @@ MarkupString.Edit.Start.get -> int
 MarkupString.Edit.Start.init -> void
 MarkupString.EmitContext
 MarkupString.EmitContext.EmitContext() -> void
+MarkupString.EmitContext.EndsRegion(MarkupString.IMarkup! markup) -> bool
 MarkupString.EmitContext.Format.get -> MarkupString.MarkupFormat!
 MarkupString.EmitContext.Format.init -> void
 MarkupString.EmitContext.IsFirstRun.get -> bool
 MarkupString.EmitContext.IsFirstRun.init -> void
 MarkupString.EmitContext.IsLastRun.get -> bool
 MarkupString.EmitContext.IsLastRun.init -> void
+MarkupString.EmitContext.Markups.get -> MarkupString.MarkupSet!
+MarkupString.EmitContext.Markups.init -> void
 MarkupString.EmitContext.Next.get -> MarkupString.MarkupSet?
 MarkupString.EmitContext.Next.init -> void
 MarkupString.EmitContext.Previous.get -> MarkupString.MarkupSet?
 MarkupString.EmitContext.Previous.init -> void
 MarkupString.EmitContext.Registry.get -> MarkupString.MarkupRegistry!
 MarkupString.EmitContext.Registry.init -> void
+MarkupString.EmitContext.StartsRegion(MarkupString.IMarkup! markup) -> bool
 MarkupString.ExpireLinksMarkup
 MarkupString.ExpireLinksMarkup.<Clone>$() -> MarkupString.ExpireLinksMarkup!
 MarkupString.ExpireLinksMarkup.Deconstruct(out string? Group) -> void
@@ -77,6 +81,8 @@ MarkupString.IMarkupSetEmitter.Format.get -> MarkupString.MarkupFormat!
 MarkupString.IMarkupSetEmitter.TryEmit(MarkupString.MarkupSet! set, System.ReadOnlySpan<char> body, in MarkupString.EmitContext context, System.Buffers.IBufferWriter<char>! output) -> bool
 MarkupString.IPointMarkup
 MarkupString.IPointMarkup.Carrier.get -> string!
+MarkupString.ITextEncodingSource
+MarkupString.ITextEncodingSource.TryGetEncoding(MarkupString.MarkupFormat! format, out MarkupString.TextEncoding encoding) -> bool
 MarkupString.ImageAlign
 MarkupString.ImageAlign.Bottom = 4 -> MarkupString.ImageAlign
 MarkupString.ImageAlign.Left = 0 -> MarkupString.ImageAlign
@@ -329,6 +335,8 @@ MarkupString.PrefetchMarkup.Equals(MarkupString.PrefetchMarkup? other) -> bool
 MarkupString.PrefetchMarkup.PrefetchMarkup(string! Source) -> void
 MarkupString.PrefetchMarkup.Source.get -> string!
 MarkupString.PrefetchMarkup.Source.init -> void
+MarkupString.PreformattedMarkup
+MarkupString.PreformattedMarkup.TryGetEncoding(MarkupString.MarkupFormat! format, out MarkupString.TextEncoding encoding) -> bool
 MarkupString.RelocateMarkup
 MarkupString.RelocateMarkup.<Clone>$() -> MarkupString.RelocateMarkup!
 MarkupString.RelocateMarkup.Deconstruct(out string! Host, out int Port, out bool Quiet) -> void
@@ -391,6 +399,7 @@ MarkupString.StatusMarkup.Variable.get -> string!
 MarkupString.StatusMarkup.Variable.init -> void
 MarkupString.TextEncoding
 MarkupString.TextEncoding.Html = 2 -> MarkupString.TextEncoding
+MarkupString.TextEncoding.HtmlLineBreaks = 3 -> MarkupString.TextEncoding
 MarkupString.TextEncoding.None = 0 -> MarkupString.TextEncoding
 MarkupString.TextEncoding.StripControls = 1 -> MarkupString.TextEncoding
 MarkupString.TrimType
@@ -550,6 +559,7 @@ static MarkupString.MarkupText.Pane(MarkupString.MarkupText! content, string! na
 static MarkupString.MarkupText.Plain(string! text) -> MarkupString.MarkupText!
 static MarkupString.MarkupText.Point(MarkupString.IPointMarkup! markup) -> MarkupString.MarkupText!
 static MarkupString.MarkupText.Prefetch(string! source) -> MarkupString.MarkupText!
+static MarkupString.MarkupText.Preformatted(MarkupString.MarkupText! content) -> MarkupString.MarkupText!
 static MarkupString.MarkupText.Relocate(string! host, int port, bool quiet = false) -> MarkupString.MarkupText!
 static MarkupString.MarkupText.Sound(string! source, int? volume = null, int? repeats = null) -> MarkupString.MarkupText!
 static MarkupString.MarkupText.Status(MarkupString.MarkupText! content, string! variable, string? maximum = null, string? caption = null) -> MarkupString.MarkupText!
@@ -602,6 +612,7 @@ static readonly MarkupString.MarkupText.NewLine -> MarkupString.MarkupText!
 static readonly MarkupString.MarkupText.Space -> MarkupString.MarkupText!
 static readonly MarkupString.MxpSecureLineFramer.Instance -> MarkupString.MxpSecureLineFramer!
 static readonly MarkupString.NeutralMarkup.Instance -> MarkupString.NeutralMarkup!
+static readonly MarkupString.PreformattedMarkup.Instance -> MarkupString.PreformattedMarkup!
 virtual MarkupString.Layout.LayoutCell.EqualityContract.get -> System.Type!
 virtual MarkupString.Layout.LayoutCell.Equals(MarkupString.Layout.LayoutCell? other) -> bool
 virtual MarkupString.Layout.LayoutCell.PrintMembers(System.Text.StringBuilder! builder) -> bool
