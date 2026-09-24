@@ -22,7 +22,7 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 	[
 		typeof(SoundMarkup), typeof(SoundStopMarkup), typeof(ClearScreenMarkup), typeof(ExpireLinksMarkup),
 		typeof(PrefetchMarkup), typeof(ImageMarkup), typeof(PaneMarkup), typeof(VariableMarkup),
-		typeof(GaugeMarkup), typeof(StatusMarkup),
+		typeof(GaugeMarkup), typeof(StatusMarkup), typeof(PreformattedMarkup),
 	];
 
 	/// <summary>How an element is closed.</summary>
@@ -92,6 +92,10 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 					("width", Number(image.Width)),
 					("height", Number(image.Height)),
 					("data-align", image.Align?.ToString().ToLowerInvariant()));
+				return;
+
+			case PreformattedMarkup:
+				Write(markup, output, "pre", Shape.Wrapping, body, ("class", "ms-preformatted"));
 				return;
 
 			case PaneMarkup pane:

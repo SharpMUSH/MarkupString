@@ -18,7 +18,7 @@ internal sealed class ElementPuebloEmitter(Type markupType) : IMarkupEmitter
 	internal static readonly Type[] Types =
 	[
 		typeof(SoundMarkup), typeof(SoundStopMarkup), typeof(ClearScreenMarkup), typeof(PrefetchMarkup),
-		typeof(ImageMarkup), typeof(PaneMarkup),
+		typeof(ImageMarkup), typeof(PaneMarkup), typeof(PreformattedMarkup),
 	];
 
 	/// <summary>The pane name Pueblo reads as "back to wherever text was going before".</summary>
@@ -69,6 +69,14 @@ internal sealed class ElementPuebloEmitter(Type markupType) : IMarkupEmitter
 					("width", image.Width?.ToString(CultureInfo.InvariantCulture)),
 					("height", image.Height?.ToString(CultureInfo.InvariantCulture)),
 					("align", image.Align?.ToString().ToLowerInvariant()));
+				return;
+
+			case PreformattedMarkup:
+				// The client is back on MUD-text conventions inside this: it breaks the lines itself, and
+				// the font is fixed-width. PreformattedMarkup suspends the <BR> substitution to match.
+				output.Write("<xch_mudtext>");
+				output.Write(body);
+				output.Write("</xch_mudtext>");
 				return;
 
 			case PaneMarkup pane:

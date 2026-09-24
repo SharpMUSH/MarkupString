@@ -45,6 +45,7 @@ itself and needs no registration; this package is what writes the tags.
 | `MarkupText.Image(source, description, width, height, align)` | `<img src= alt= width= height= align=>` |
 | `MarkupText.Pane(content, name, title)` | `<xch_pane action="redirect" name= panetitle=>content<xch_pane action="redirect" name="_previous">` |
 | `MarkupText.ClearScreen()` | `<xch_page clear="text">` |
+| `MarkupText.Preformatted(content)` | `<xch_mudtext>content</xch_mudtext>`, with the region's own line endings kept |
 | `MarkupText.Prefetch(source)` | `<xch_prefetch href= xch_prob="100">` |
 
 Pueblo has two players, one for wave files and one for MIDI, and picks between them by the file; it

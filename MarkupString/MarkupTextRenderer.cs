@@ -208,7 +208,7 @@ public static class MarkupTextRenderer
 			}
 			else
 			{
-				EncodeText(body, format.Encoding, front);
+				EncodeText(body, EncodingFor(markups, format), front);
 			}
 
 			var setEmitter = registry.FindSetEmitter(format);
@@ -244,6 +244,19 @@ public static class MarkupTextRenderer
 			front.Dispose();
 			back?.Dispose();
 		}
+	}
+
+	/// <summary>
+	/// The encoding for a run's text: the innermost layer that decides one
+	/// (<see cref="ITextEncodingSource"/>), or the format's own when none does.
+	/// </summary>
+	private static TextEncoding EncodingFor(MarkupSet markups, MarkupFormat format)
+	{
+		for (var i = 0; i < markups.Count; i++)
+			if (markups[i] is ITextEncodingSource source && source.TryGetEncoding(format, out var encoding))
+				return encoding;
+
+		return format.Encoding;
 	}
 
 	/// <summary>How many points the run carries. A well-formed run carries at most one.</summary>

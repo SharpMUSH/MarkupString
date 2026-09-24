@@ -416,6 +416,77 @@ public class SharedVocabularyTests
 			.IsEqualTo("north\nsouth");
 	}
 
+	// ── A region with its own layout ────────────────────────────────────────────
+
+	/// <summary>
+	/// Inside <c>&lt;xch_mudtext&gt;</c> the client is back on MUD-text conventions and breaks the lines
+	/// itself, so the <c>&lt;BR&gt;</c> the format writes everywhere else would double every one of them.
+	/// </summary>
+	[Test]
+	public async Task PreformattedKeepsItsOwnLineEndings()
+	{
+		var table = MarkupText.Preformatted(MarkupText.Plain("north  2\nsouth  1\n"));
+
+		await Assert.That(Render(table, MarkupFormat.Pueblo))
+			.IsEqualTo("<xch_mudtext>north  2\nsouth  1\n</xch_mudtext>");
+	}
+
+	[Test]
+	public async Task PreformattedIsAPreForABrowser_AndTheTextItselfEverywhereElse()
+	{
+		var table = MarkupText.Preformatted(MarkupText.Plain("north  2\nsouth  1"));
+
+		await Assert.That(Render(table, MarkupFormat.Html))
+			.IsEqualTo("<pre class=\"ms-preformatted\">north  2\nsouth  1</pre>");
+		await Assert.That(Render(table, MarkupFormat.Ansi)).IsEqualTo("north  2\nsouth  1");
+		await Assert.That(Render(table, MarkupFormat.Mxp)).IsEqualTo("north  2\nsouth  1");
+		await Assert.That(Render(table, MarkupFormat.Plain)).IsEqualTo("north  2\nsouth  1");
+	}
+
+	/// <summary>The region is what changes, not the format: the text around it ends its lines as usual.</summary>
+	[Test]
+	public async Task OnlyTheTextThePreformattingCoversKeepsItsNewlines()
+	{
+		var line = MarkupText.Concat([
+			MarkupText.Plain("You see:\n"),
+			MarkupText.Preformatted(MarkupText.Plain("a  1\nb  2\n")),
+			MarkupText.Plain("Nothing else.\n")]);
+
+		await Assert.That(Render(line, MarkupFormat.Pueblo)).IsEqualTo(
+			"You see:<BR>\n<xch_mudtext>a  1\nb  2\n</xch_mudtext>Nothing else.<BR>\n");
+	}
+
+	/// <summary>Everything else the encoding does is still done: this suspends the line breaks alone.</summary>
+	[Test]
+	public async Task PreformattedStillEncodesWhatIsMarkupInHtml()
+	{
+		var table = MarkupText.Preformatted(MarkupText.Plain("a < b & c\n"));
+
+		await Assert.That(Render(table, MarkupFormat.Pueblo))
+			.IsEqualTo("<xch_mudtext>a &lt; b &amp; c\n</xch_mudtext>");
+	}
+
+	[Test]
+	public async Task StylingInsideAPreformattedRegionStillRenders()
+	{
+		var table = MarkupText.Preformatted(
+			MarkupText.Wrap(AnsiMarkup.Create(bold: true), MarkupText.Plain("north\n")));
+
+		await Assert.That(Render(table, MarkupFormat.Pueblo)).Contains("north\n");
+		await Assert.That(Render(table, MarkupFormat.Ansi)).Contains("north");
+	}
+
+	[Test]
+	public async Task PreformattedRoundTripsThroughTheSerializer()
+	{
+		var table = MarkupText.Preformatted(MarkupText.Plain("a\nb"));
+
+		var back = MarkupTextSerializer.Deserialize(
+			MarkupTextSerializer.Serialize(table, MarkupRegistry.Empty), MarkupRegistry.Empty);
+
+		await Assert.That(Render(back, MarkupFormat.Pueblo)).IsEqualTo(Render(table, MarkupFormat.Pueblo));
+	}
+
 	// ── Storage ──────────────────────────────────────────────────────────────────
 
 	/// <summary>The vocabulary is core's, so text carrying it round-trips with no package registered at all.</summary>

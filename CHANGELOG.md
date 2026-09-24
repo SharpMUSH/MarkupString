@@ -8,6 +8,17 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+
+- **A markup can decide how the text it covers is encoded.** `ITextEncodingSource` answers with a
+  `TextEncoding` in place of the format's own, innermost layer first; text between runs carries no
+  markup and always takes the format's.
+- **`MarkupText.Preformatted`**, the first of them: text laid out by its own spacing — a table, a map,
+  a listing. Pueblo writes `<xch_mudtext>`, which puts the client back on MUD-text conventions, so the
+  region keeps its own line endings rather than gaining a `<BR>` on each that the client would break
+  again. A browser gets `<pre>`, and every other format the text itself. Everything else the encoding
+  does — the entities, the dropped control characters — still happens inside it.
+
 ### Changed
 
 - **A Pueblo line ending is `<BR>` and a newline.** A Pueblo client renders the stream as HTML, where a

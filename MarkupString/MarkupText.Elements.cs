@@ -78,6 +78,16 @@ public sealed partial class MarkupText
 		return Wrap(new PaneMarkup(name, title), content);
 	}
 
+	/// <summary>
+	/// Text laid out by its own spacing — a table, a map, a listing — whose line endings are its own and
+	/// whose font is fixed-width. See <see cref="PreformattedMarkup"/>.
+	/// </summary>
+	public static MarkupText Preformatted(MarkupText content)
+	{
+		ArgumentNullException.ThrowIfNull(content);
+		return Wrap(PreformattedMarkup.Instance, content);
+	}
+
 	/// <summary>Clears what the player has been shown. See <see cref="ClearScreenMarkup"/>.</summary>
 	public static MarkupText ClearScreen() => Point(ClearScreenMarkup.Instance);
 
