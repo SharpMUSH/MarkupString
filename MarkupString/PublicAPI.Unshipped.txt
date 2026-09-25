@@ -1,1 +1,9 @@
 #nullable enable
+MarkupString.ControlCharacterWidth
+MarkupString.ControlCharacterWidth.One = 1 -> MarkupString.ControlCharacterWidth
+MarkupString.ControlCharacterWidth.Zero = 0 -> MarkupString.ControlCharacterWidth
+MarkupString.MarkupText.GetDisplayWidth(MarkupString.ControlCharacterWidth controls) -> int
+static MarkupString.DisplayWidth.IndexAtWidth(System.ReadOnlySpan<char> text, int cells, MarkupString.ControlCharacterWidth controls) -> int
+static MarkupString.DisplayWidth.IndexFromWidthEnd(System.ReadOnlySpan<char> text, int cells, MarkupString.ControlCharacterWidth controls) -> int
+static MarkupString.DisplayWidth.Of(System.ReadOnlySpan<char> text, MarkupString.ControlCharacterWidth controls) -> int
+static MarkupString.DisplayWidth.OfRune(System.Text.Rune rune, MarkupString.ControlCharacterWidth controls) -> int

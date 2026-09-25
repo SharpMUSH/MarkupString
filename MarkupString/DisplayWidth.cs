@@ -2,9 +2,23 @@ using System.Globalization;
 using System.Text;
 namespace MarkupString;
 
+/// <summary>How <see cref="DisplayWidth"/> counts a C0 or C1 control character.</summary>
+public enum ControlCharacterWidth
+{
+	/// <summary>0 cells, as a terminal draws it. The default.</summary>
+	Zero,
+
+	/// <summary>
+	/// 1 cell per control code point, for callers that count characters the way a MUSH's
+	/// <c>strlen</c> does: a tab or a newline is one character there, though it draws nothing.
+	/// </summary>
+	One,
+}
+
 /// <summary>
 /// Terminal column width of text: 0 cells for controls, combining marks and format characters,
-/// 2 for East Asian wide and fullwidth code points, 1 for everything else.
+/// 2 for East Asian wide and fullwidth code points, 1 for everything else. Each measure has an
+/// overload taking a <see cref="ControlCharacterWidth"/> that counts controls as 1 instead.
 /// </summary>
 public static class DisplayWidth
 {
@@ -13,10 +27,16 @@ public static class DisplayWidth
 	private const int HangulJongseongEnd = 0x11FF;
 
 	/// <summary>Cells occupied by <paramref name="rune"/> on its own: 0, 1 or 2.</summary>
-	public static int OfRune(Rune rune)
+	public static int OfRune(Rune rune) => OfRune(rune, ControlCharacterWidth.Zero);
+
+	/// <summary>
+	/// Cells occupied by <paramref name="rune"/> on its own, with a C0 or C1 control counted as
+	/// <paramref name="controls"/> says.
+	/// </summary>
+	public static int OfRune(Rune rune, ControlCharacterWidth controls)
 	{
 		var value = rune.Value;
-		if (value < 0x20 || value is >= 0x7F and <= 0x9F) return 0;
+		if (value < 0x20 || value is >= 0x7F and <= 0x9F) return controls == ControlCharacterWidth.One ? 1 : 0;
 		if (value < 0x300) return 1;
 		if (value is >= HangulJungseongStart and <= HangulJongseongEnd) return 0;
 		if (IsZeroWidthCategory(Rune.GetUnicodeCategory(rune))) return 0;
@@ -27,13 +47,20 @@ public static class DisplayWidth
 	/// Cells occupied by <paramref name="text"/>. A ZERO WIDTH JOINER collapses the emoji that
 	/// follows it into the sequence it joins, so a joined family counts as one emoji.
 	/// </summary>
-	public static int Of(ReadOnlySpan<char> text)
+	public static int Of(ReadOnlySpan<char> text) => Of(text, ControlCharacterWidth.Zero);
+
+	/// <summary>
+	/// Cells occupied by <paramref name="text"/>, with each C0 or C1 control code point counted as
+	/// <paramref name="controls"/> says — so under <see cref="ControlCharacterWidth.One"/> a CRLF
+	/// is 2.
+	/// </summary>
+	public static int Of(ReadOnlySpan<char> text, ControlCharacterWidth controls)
 	{
 		var width = 0;
 		var afterJoiner = false;
 		foreach (var rune in text.EnumerateRunes())
 		{
-			var cells = OfRune(rune);
+			var cells = OfRune(rune, controls);
 			if (afterJoiner && cells == 2) cells = 0;
 			afterJoiner = rune.Value == ZeroWidthJoiner;
 			width += cells;
@@ -46,6 +73,13 @@ public static class DisplayWidth
 	/// <paramref name="cells"/> columns. Never returns an index inside a grapheme cluster.
 	/// </summary>
 	public static int IndexAtWidth(ReadOnlySpan<char> text, int cells)
+		=> IndexAtWidth(text, cells, ControlCharacterWidth.Zero);
+
+	/// <summary>
+	/// <see cref="IndexAtWidth(ReadOnlySpan{char}, int)"/>, with each C0 or C1 control counted as
+	/// <paramref name="controls"/> says.
+	/// </summary>
+	public static int IndexAtWidth(ReadOnlySpan<char> text, int cells, ControlCharacterWidth controls)
 	{
 		if (cells <= 0) return 0;
 		var used = 0;
@@ -62,7 +96,7 @@ public static class DisplayWidth
 			{
 				length = StringInfo.GetNextTextElementLength(text[position..]);
 				if (length <= 0) length = 1;
-				width = Of(text.Slice(position, length));
+				width = Of(text.Slice(position, length), controls);
 			}
 			if (used + width > cells) return position;
 			used += width;
@@ -73,10 +107,17 @@ public static class DisplayWidth
 
 	/// <summary>
 	/// The smallest cluster boundary in <paramref name="text"/> whose suffix fits in
-	/// <paramref name="cells"/> columns. The mirror of <see cref="IndexAtWidth"/>: never returns
+	/// <paramref name="cells"/> columns. The mirror of <see cref="IndexAtWidth(ReadOnlySpan{char}, int)"/>: never returns
 	/// an index inside a grapheme cluster.
 	/// </summary>
 	public static int IndexFromWidthEnd(ReadOnlySpan<char> text, int cells)
+		=> IndexFromWidthEnd(text, cells, ControlCharacterWidth.Zero);
+
+	/// <summary>
+	/// <see cref="IndexFromWidthEnd(ReadOnlySpan{char}, int)"/>, with each C0 or C1 control counted
+	/// as <paramref name="controls"/> says.
+	/// </summary>
+	public static int IndexFromWidthEnd(ReadOnlySpan<char> text, int cells, ControlCharacterWidth controls)
 	{
 		if (cells <= 0) return text.Length;
 		var used = 0;
@@ -84,7 +125,7 @@ public static class DisplayWidth
 		while (position > 0)
 		{
 			var start = Graphemes.SnapStart(text, position - 1);
-			var width = Of(text[start..position]);
+			var width = Of(text[start..position], controls);
 			if (used + width > cells) return position;
 			used += width;
 			position = start;

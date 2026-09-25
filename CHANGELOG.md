@@ -6,6 +6,18 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- **`ControlCharacterWidth`**, for counting C0 and C1 control characters as 1 cell instead of 0.
+  `DisplayWidth.OfRune`, `Of`, `IndexAtWidth` and `IndexFromWidthEnd` each gain an overload that
+  takes one, and `MarkupText.GetDisplayWidth(ControlCharacterWidth)` measures a markup string the
+  same way. It is for a character count that still wants display cells for everything else — a
+  MUSH's `strlen`, where a tab is one character but a combining mark is none. Each control code
+  point counts on its own, so a CRLF is 2. The existing overloads and `MarkupText.DisplayWidth`
+  still count controls as 0.
+
 ## 2.4.0 — 2026-09-24
 
 ### Added
