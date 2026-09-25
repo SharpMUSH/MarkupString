@@ -27,6 +27,14 @@ public sealed partial class MarkupText
 	public int DisplayWidth => _displayWidth >= 0 ? _displayWidth : _displayWidth = Cells.Of(Text);
 
 	/// <summary>
+	/// <see cref="DisplayWidth"/>, with each C0 or C1 control character counted as
+	/// <paramref name="controls"/> says: under <see cref="ControlCharacterWidth.One"/> a tab or a
+	/// newline is one cell, as a character count such as a MUSH's <c>strlen</c> wants it.
+	/// </summary>
+	public int GetDisplayWidth(ControlCharacterWidth controls)
+		=> controls == ControlCharacterWidth.Zero ? DisplayWidth : Cells.Of(Text, controls);
+
+	/// <summary>
 	/// The remainder of the text from <paramref name="start"/>, whose index snaps back to the start
 	/// of the cluster it lands in.
 	/// </summary>
