@@ -37,4 +37,26 @@ public static class AnsiRegistration
 			.With(new ClearScreenAnsiEmitter())
 			.With(new ImageBBCodeEmitter());
 	}
+
+	/// <summary>
+	/// Returns a registry that writes colour for one client: every colour at <paramref name="colorDepth"/>, in
+	/// <see cref="MarkupFormat.Ansi"/>, <see cref="MarkupFormat.Pueblo"/> and <see cref="MarkupFormat.Mxp"/>,
+	/// the formats that send SGR. Call it on a registry <see cref="WithAnsi"/> has already filled, as a server
+	/// does once per kind of client: what a client can display belongs to that connection.
+	/// </summary>
+	/// <param name="registry">The registry to add to.</param>
+	/// <param name="colorDepth">The colour the client can display.</param>
+	/// <param name="hyperlinks">
+	/// Whether a URL link is written as an OSC 8 hyperlink in <see cref="MarkupFormat.Ansi"/>; when false, its
+	/// text is written alone. Pueblo and MXP write links as their own tags either way.
+	/// </param>
+	public static MarkupRegistry WithAnsiOutput(this MarkupRegistry registry, AnsiColorDepth colorDepth, bool hyperlinks = true)
+	{
+		ArgumentNullException.ThrowIfNull(registry);
+
+		return registry
+			.With(new AnsiSetEmitter(colorDepth, hyperlinks))
+			.With(new AnsiPuebloEmitter(colorDepth))
+			.With(new AnsiMxpEmitter(colorDepth));
+	}
 }

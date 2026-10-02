@@ -5,8 +5,14 @@ namespace MarkupString.Ansi;
 /// Renders a run for a Pueblo client: colours and attributes as SGR — Pueblo clients read ANSI —
 /// and links as <c>&lt;A XCH_CMD&gt;</c> (command) or <c>&lt;A HREF&gt;</c> (URL).
 /// </summary>
-public sealed class AnsiPuebloEmitter : IMarkupSetEmitter
+/// <param name="colorDepth">The colour the client can display; each style is written at this depth.</param>
+public sealed class AnsiPuebloEmitter(AnsiColorDepth colorDepth) : IMarkupSetEmitter
 {
+	/// <summary>Every colour as it is.</summary>
+	public AnsiPuebloEmitter() : this(AnsiColorDepth.TrueColor)
+	{
+	}
+
 	/// <inheritdoc/>
 	public MarkupFormat Format => MarkupFormat.Pueblo;
 
@@ -15,7 +21,7 @@ public sealed class AnsiPuebloEmitter : IMarkupSetEmitter
 	{
 		ArgumentNullException.ThrowIfNull(set);
 		ArgumentNullException.ThrowIfNull(output);
-		AnsiEmitterSupport.EmitTagged(set, body, context, output, TagFlavour.Pueblo);
+		AnsiEmitterSupport.EmitTagged(set, body, context, output, TagFlavour.Pueblo, colorDepth);
 		return true;
 	}
 }

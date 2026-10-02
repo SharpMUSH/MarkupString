@@ -8,3 +8,17 @@ MarkupString.Ansi.AnsiStyle.InvertedOff.init -> void
 MarkupString.Ansi.AnsiStyle.UnderlinedOff.get -> bool
 MarkupString.Ansi.AnsiStyle.UnderlinedOff.init -> void
 static MarkupString.Ansi.AnsiCodeParser.Parse(string! codes, System.Func<string!, MarkupString.Ansi.AnsiColor?>! namedColor) -> MarkupString.Ansi.AnsiMarkup!
+MarkupString.Ansi.AnsiCodeWriter
+MarkupString.Ansi.AnsiColorDepth
+MarkupString.Ansi.AnsiColorDepth.Attributes = 3 -> MarkupString.Ansi.AnsiColorDepth
+MarkupString.Ansi.AnsiColorDepth.None = 4 -> MarkupString.Ansi.AnsiColorDepth
+MarkupString.Ansi.AnsiColorDepth.Standard = 2 -> MarkupString.Ansi.AnsiColorDepth
+MarkupString.Ansi.AnsiColorDepth.TrueColor = 0 -> MarkupString.Ansi.AnsiColorDepth
+MarkupString.Ansi.AnsiColorDepth.Xterm256 = 1 -> MarkupString.Ansi.AnsiColorDepth
+MarkupString.Ansi.AnsiMxpEmitter.AnsiMxpEmitter(MarkupString.Ansi.AnsiColorDepth colorDepth) -> void
+MarkupString.Ansi.AnsiPuebloEmitter.AnsiPuebloEmitter(MarkupString.Ansi.AnsiColorDepth colorDepth) -> void
+MarkupString.Ansi.AnsiSetEmitter.AnsiSetEmitter(MarkupString.Ansi.AnsiColorDepth colorDepth, bool hyperlinks) -> void
+MarkupString.Ansi.AnsiStyle.AtDepth(MarkupString.Ansi.AnsiColorDepth depth) -> MarkupString.Ansi.AnsiStyle
+static MarkupString.Ansi.AnsiCodeWriter.Write(in MarkupString.Ansi.AnsiStyle style) -> string!
+static MarkupString.Ansi.AnsiCodeWriter.WriteColor(MarkupString.Ansi.AnsiColor? color, bool background) -> string!
+static MarkupString.Ansi.AnsiRegistration.WithAnsiOutput(this MarkupString.MarkupRegistry! registry, MarkupString.Ansi.AnsiColorDepth colorDepth, bool hyperlinks = true) -> MarkupString.MarkupRegistry!
