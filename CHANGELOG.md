@@ -8,6 +8,14 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+
+- **`AnsiCodeParser`: an `h` with no palette letter to brighten is bold.** PennMUSH's `h` is the hilite
+  bit on whatever colour the text has, sent as SGR 1. The parser only used it to raise a following
+  palette letter to its bright twin (or to set bold before a background letter), so `h` on its own
+  produced no markup, and `hu` and `hd` lost it. An `h` that no palette letter in its token takes up now
+  sets `AnsiStyle.Bold`. `hr` is unchanged: the bright red, not bold.
+
 ### Added
 
 - **`ControlCharacterWidth`**, for counting C0 and C1 control characters as 1 cell instead of 0.

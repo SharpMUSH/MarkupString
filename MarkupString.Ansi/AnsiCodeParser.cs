@@ -18,7 +18,9 @@ namespace MarkupString.Ansi;
 /// <c>h</c> (highlight) modifier raises a following foreground letter to its bright variant, for the
 /// rest of that token only. A following background letter has no bright variant — terminals have no
 /// "bright background" SGR distinct from bold text — so <c>h</c> there sets
-/// <see cref="AnsiStyle.Bold"/> instead and leaves the background colour at its normal intensity. A
+/// <see cref="AnsiStyle.Bold"/> instead and leaves the background colour at its normal intensity. An
+/// <c>h</c> that no palette letter in its token takes up is PennMUSH's hilite on whatever colour the text
+/// has, which is SGR 1: <c>h</c>, <c>hu</c> and <c>hd</c> set <see cref="AnsiStyle.Bold"/>. A
 /// leading <c>/</c> on a token targets the background. Unrecognised tokens and malformed colours are
 /// ignored rather than throwing.
 /// </para>
@@ -142,8 +144,16 @@ public static class AnsiCodeParser
 
 			// Single-letter codes. 'h' is a per-token modifier, so it resets on every token.
 			var highlight = false;
+			// Whether a palette letter has taken the highlight up; one that none has is bold.
+			var highlightUsed = false;
 			foreach (var chr in code)
 			{
+				if (highlight && chr is 'x' or 'r' or 'g' or 'y' or 'b' or 'm' or 'c' or 'w'
+					or 'X' or 'R' or 'G' or 'Y' or 'B' or 'M' or 'C' or 'W')
+				{
+					highlightUsed = true;
+				}
+
 				switch (chr)
 				{
 					case 'h': highlight = true; break;
@@ -186,6 +196,9 @@ public static class AnsiCodeParser
 					case 'W': background = new AnsiColor.Standard(7, false); bold |= highlight; break;
 				}
 			}
+
+			// PennMUSH's hilite with no palette letter to brighten: SGR 1 on whatever colour the text has.
+			bold |= highlight && !highlightUsed;
 		}
 
 		return AnsiMarkup.Create(
