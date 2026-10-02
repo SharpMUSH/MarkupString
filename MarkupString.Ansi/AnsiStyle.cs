@@ -128,4 +128,38 @@ public readonly record struct AnsiStyle
 			LinkKind = linkKind
 		};
 	}
+
+	/// <summary>
+	/// This style as a client limited to <paramref name="depth"/> can show it: colours it cannot display are
+	/// replaced by the nearest it can (<see cref="AnsiColor.NearestXtermIndex"/>,
+	/// <see cref="AnsiColor.NearestStandard"/>) or dropped, and at <see cref="AnsiColorDepth.None"/> only the
+	/// link is left. Attributes are kept at every depth but <see cref="AnsiColorDepth.None"/>.
+	/// </summary>
+	/// <exception cref="ArgumentOutOfRangeException"><paramref name="depth"/> is not a defined value.</exception>
+	public AnsiStyle AtDepth(AnsiColorDepth depth) => depth switch
+	{
+		AnsiColorDepth.TrueColor => this,
+		AnsiColorDepth.Xterm256 => this with { Foreground = ToXterm256(Foreground), Background = ToXterm256(Background) },
+		AnsiColorDepth.Standard => this with { Foreground = ToStandard(Foreground), Background = ToStandard(Background) },
+		AnsiColorDepth.Attributes => this with
+		{
+			Bold = Bold || Foreground is AnsiColor.Standard { Bright: true },
+			Foreground = null,
+			Background = null
+		},
+		AnsiColorDepth.None => new AnsiStyle { LinkUrl = LinkUrl, LinkText = LinkText, LinkKind = LinkKind },
+		_ => throw new ArgumentOutOfRangeException(nameof(depth), depth, null)
+	};
+
+	private static AnsiColor? ToXterm256(AnsiColor? color) =>
+		color is AnsiColor.Rgb rgb ? AnsiColor.NearestXtermIndex(rgb) : color;
+
+	private static AnsiColor? ToStandard(AnsiColor? color) => color switch
+	{
+		// The first sixteen palette entries are the standard colours themselves.
+		AnsiColor.Xterm { Index: < 16 } xterm => new AnsiColor.Standard((byte)(xterm.Index % 8), xterm.Index >= 8),
+		AnsiColor.Xterm xterm => AnsiColor.NearestStandard(xterm.ToRgb()!),
+		AnsiColor.Rgb rgb => AnsiColor.NearestStandard(rgb),
+		_ => color
+	};
 }

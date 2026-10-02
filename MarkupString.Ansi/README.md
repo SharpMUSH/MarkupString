@@ -34,6 +34,7 @@ var back = MarkupTextSerializer.Deserialize(json);
 
 `AnsiCodeParser.Parse` takes MUSH `ansi()` syntax — `hr`, `/R`, `+xterm200`, `#ff5555`,
 `<255 0 0>` — and `AnsiMarkup.Create(...)` builds the same thing from named arguments.
+`AnsiCodeWriter.Write(style)` goes the other way, from a style to the codes that produce it.
 
 ## Formats
 
@@ -49,6 +50,12 @@ An MXP client reads tags only on a line opened in secure mode. The core package'
 `MarkupRegistry.WithMxpSecureLines()` opens every line of `Mxp` output with `ESC[1z`. Use it on the
 registry that renders for an MXP connection, and leave it off the one used for tests, logs and
 previews.
+
+A client that cannot show every colour gets its own registry:
+`MarkupRegistry.Default.WithAnsiOutput(AnsiColorDepth.Xterm256)` writes each colour as the nearest one the
+256-colour palette has, `Standard` as the nearest of the sixteen, `Attributes` with no colour at all, and
+`None` with no SGR. It covers `Ansi`, `Pueblo` and `Mxp`. Pass `hyperlinks: false` for a terminal that
+prints OSC 8 instead of reading it.
 
 ## Styling the HTML output
 

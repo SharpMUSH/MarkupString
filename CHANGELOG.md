@@ -8,6 +8,24 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+
+- **`AnsiColorDepth` and `MarkupRegistry.WithAnsiOutput(AnsiColorDepth, bool hyperlinks = true)`**, for
+  writing colour a client can display. A server builds one registry per kind of client and renders each
+  connection's output through it, so it never rewrites escape sequences after the fact. At `Xterm256` an RGB
+  colour becomes its nearest palette entry; at `Standard` an RGB or palette colour becomes the nearest of the
+  sixteen, with xterm entries 0-15 mapping exactly; `Attributes` drops colour but writes a bright palette
+  foreground as bold; `None` writes no SGR. It applies to `Ansi`, `Pueblo` and `Mxp`, the formats that send
+  SGR. With `hyperlinks: false`, a URL link in `Ansi` is written as its text alone instead of OSC 8.
+  `AnsiStyle.AtDepth` is the mapping on its own, and `AnsiSetEmitter`, `AnsiPuebloEmitter` and
+  `AnsiMxpEmitter` take the depth in a constructor.
+- **`AnsiCodeWriter`**, the inverse of `AnsiCodeParser`: `Write(AnsiStyle)` gives the `ansi()` codes that
+  produce a style, in the order PennMUSH's `write_ansi_letters` uses (`hBr`, `#ff0000!#0000ff`, `Hr`).
+  `WriteColor` writes one colour. A bright palette background has no letter and is written as its xterm entry
+  (`!+xterm9`).
+
+## 2.6.0 — 2026-10-02
+
 ### Fixed
 
 `AnsiCodeParser` now reads `ansi()` codes the way PennMUSH's `define_ansi_data` does, so a game can hand it
@@ -36,6 +54,11 @@ the codes it is given and keep no parser of its own.
   caller: the names are the game's configuration, not the markup layer's. A name may carry `_` or `-`.
 - **`AnsiStyle.BlinkOff`, `BoldOff`, `InvertedOff`, `UnderlinedOff`**, the off codes above. They serialise as
   `nbl`, `nbo`, `nin` and `nun`; a payload without them reads as before.
+
+## 2.5.0 — 2026-09-24
+
+### Added
+
 - **`ControlCharacterWidth`**, for counting C0 and C1 control characters as 1 cell instead of 0.
   `DisplayWidth.OfRune`, `Of`, `IndexAtWidth` and `IndexFromWidthEnd` each gain an overload that
   takes one, and `MarkupText.GetDisplayWidth(ControlCharacterWidth)` measures a markup string the

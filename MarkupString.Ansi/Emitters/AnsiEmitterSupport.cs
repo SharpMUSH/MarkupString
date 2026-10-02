@@ -226,16 +226,18 @@ internal static class AnsiEmitterSupport
 		ReadOnlySpan<char> body,
 		in EmitContext context,
 		IBufferWriter<char> output,
-		TagFlavour flavour)
+		TagFlavour flavour,
+		AnsiColorDepth colorDepth)
 	{
-		// The flavour cannot ride on the delegate's signature, so it is closed over here; a run with
-		// nothing delegated never allocates the closure's work beyond this one call.
+		// The flavour and depth cannot ride on the delegate's signature, so they are closed over here; a run
+		// with nothing delegated never allocates the closure's work beyond this one call.
 		EmitSegmented(set, body, context, output,
 			(in AnsiStyle style, ReadOnlySpan<char> segment, in EmitContext segmentContext, IBufferWriter<char> segmentOutput) =>
 			{
-				SgrWriter.Transition(AnsiStyle.None, style, segmentOutput);
-				WriteTaggedLink(style, segment, segmentOutput, flavour);
-				if (LeavesState(style)) SgrWriter.Reset(segmentOutput);
+				var shown = style.AtDepth(colorDepth);
+				SgrWriter.Transition(AnsiStyle.None, shown, segmentOutput);
+				WriteTaggedLink(shown, segment, segmentOutput, flavour);
+				if (LeavesState(shown)) SgrWriter.Reset(segmentOutput);
 			});
 	}
 
