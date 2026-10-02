@@ -10,14 +10,32 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
-- **`AnsiCodeParser`: an `h` with no palette letter to brighten is bold.** PennMUSH's `h` is the hilite
-  bit on whatever colour the text has, sent as SGR 1. The parser only used it to raise a following
-  palette letter to its bright twin (or to set bold before a background letter), so `h` on its own
-  produced no markup, and `hu` and `hd` lost it. An `h` that no palette letter in its token takes up now
-  sets `AnsiStyle.Bold`. `hr` is unchanged: the bright red, not bold.
+`AnsiCodeParser` now reads `ansi()` codes the way PennMUSH's `define_ansi_data` does, so a game can hand it
+the codes it is given and keep no parser of its own.
+
+- **An `h` with no palette letter to brighten is bold.** PennMUSH's `h` is the hilite bit on whatever colour
+  the text has, sent as SGR 1. The parser only used it to raise a following palette letter to its bright
+  twin (or to set bold before a background letter), so `h` on its own produced no markup, and `hu` and
+  `hd` lost it. An `h` that no palette letter in its run takes up now sets `AnsiStyle.Bold`. `hr` is
+  unchanged: the bright red, not bold.
+- **`F`, `H`, `I` and `U` turn their attribute off, inside an enclosing span too.** They used to clear only
+  what the same code string had set, so `U` inside an underlined span was still underlined: `Combine`
+  joined the two spans' attributes. Each is now recorded (`AnsiStyle.BlinkOff`, `BoldOff`, `InvertedOff`,
+  `UnderlinedOff`) and `Combine` removes the attribute from what the enclosing span carries, as PennMUSH's
+  `nest_ansi_data` does. `H` also brings an inherited bright palette colour back to its normal intensity,
+  since that brightness is the same hilite, and `hrH` is plain red. The later of an attribute and its
+  capital wins, as before.
+- **A colour may follow letters without a space, and `/` or `!` marks the background anywhere.** `u#ff0000`,
+  `u200`, `hBr` and `#ff0000!#0000ff` are read as PennMUSH reads them; they used to be one unreadable token.
+- **A `+name` colour no longer falls through to the letters.** `+red` read `r`, `e` and then `d`, the default
+  foreground. Without a resolver it is now ignored.
 
 ### Added
 
+- **`AnsiCodeParser.Parse(string, Func<string, AnsiColor?>)`**, which resolves `+name` colours through the
+  caller: the names are the game's configuration, not the markup layer's. A name may carry `_` or `-`.
+- **`AnsiStyle.BlinkOff`, `BoldOff`, `InvertedOff`, `UnderlinedOff`**, the off codes above. They serialise as
+  `nbl`, `nbo`, `nin` and `nun`; a payload without them reads as before.
 - **`ControlCharacterWidth`**, for counting C0 and C1 control characters as 1 cell instead of 0.
   `DisplayWidth.OfRune`, `Of`, `IndexAtWidth` and `IndexFromWidthEnd` each gain an overload that
   takes one, and `MarkupText.GetDisplayWidth(ControlCharacterWidth)` measures a markup string the

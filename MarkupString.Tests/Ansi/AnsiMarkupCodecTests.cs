@@ -195,4 +195,11 @@ public class AnsiMarkupCodecTests
 		await Assert.That(text.Render(MarkupFormat.Html, Registry))
 			.IsEqualTo("<span style=\"color: #ff5555\"><a class=\"ms-cmd-link\" role=\"button\" tabindex=\"0\" xch_cmd=\"look\">x</a></span>");
 	}
+
+	[Test]
+	public async Task OffCodes_RoundTrip()
+	{
+		var style = new AnsiStyle { BlinkOff = true, BoldOff = true, InvertedOff = true, UnderlinedOff = true };
+		await Assert.That(RoundTrip(new AnsiMarkup(style))).IsEqualTo(style);
+	}
 }

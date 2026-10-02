@@ -1,1 +1,10 @@
 #nullable enable
+MarkupString.Ansi.AnsiStyle.BlinkOff.get -> bool
+MarkupString.Ansi.AnsiStyle.BlinkOff.init -> void
+MarkupString.Ansi.AnsiStyle.BoldOff.get -> bool
+MarkupString.Ansi.AnsiStyle.BoldOff.init -> void
+MarkupString.Ansi.AnsiStyle.InvertedOff.get -> bool
+MarkupString.Ansi.AnsiStyle.InvertedOff.init -> void
+MarkupString.Ansi.AnsiStyle.UnderlinedOff.get -> bool
+MarkupString.Ansi.AnsiStyle.UnderlinedOff.init -> void
+static MarkupString.Ansi.AnsiCodeParser.Parse(string! codes, System.Func<string!, MarkupString.Ansi.AnsiColor?>! namedColor) -> MarkupString.Ansi.AnsiMarkup!
