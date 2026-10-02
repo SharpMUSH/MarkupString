@@ -227,4 +227,38 @@ public class AnsiStyleTests
 		await Assert.That(s.Underlined).IsTrue();
 		await Assert.That(s.StrikeThrough).IsTrue();
 	}
+
+	[Test]
+	public async Task Combine_AnInnerOffCodeTurnsTheOuterAttributeOff()
+	{
+		// PennMUSH's nest_ansi_data: the inner span's offbits clear the outer's bits.
+		var outer = new AnsiStyle { Underlined = true, Blink = true, Inverted = true, Bold = true };
+		var inner = new AnsiStyle { UnderlinedOff = true, BlinkOff = true, InvertedOff = true, BoldOff = true };
+		var result = outer.Combine(inner);
+		await Assert.That(result.Underlined).IsFalse();
+		await Assert.That(result.Blink).IsFalse();
+		await Assert.That(result.Inverted).IsFalse();
+		await Assert.That(result.Bold).IsFalse();
+	}
+
+	[Test]
+	public async Task Combine_HiliteOffDimsAnInheritedBrightColour()
+	{
+		var outer = new AnsiStyle { Foreground = new AnsiColor.Standard(1, true) };
+		var result = outer.Combine(new AnsiStyle { BoldOff = true });
+		await Assert.That(result.Foreground).IsEqualTo(new AnsiColor.Standard(1, false));
+	}
+
+	[Test]
+	public async Task Combine_AnOffCodeHoldsForWhatItEncloses_UntilTurnedBackOn()
+	{
+		var outer = new AnsiStyle { Underlined = true };
+		var middle = outer.Combine(new AnsiStyle { UnderlinedOff = true });
+		await Assert.That(middle.Combine(AnsiStyle.None).Underlined).IsFalse();
+		await Assert.That(middle.Combine(new AnsiStyle { Underlined = true }).Underlined).IsTrue();
+	}
+
+	[Test]
+	public async Task AnOffCodeAloneIsAnAttribute()
+		=> await Assert.That(new AnsiStyle { UnderlinedOff = true }.IsNone).IsFalse();
 }

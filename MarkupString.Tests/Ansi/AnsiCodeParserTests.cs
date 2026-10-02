@@ -274,4 +274,94 @@ public class AnsiCodeParserTests
 	{
 		await Assert.That(AnsiCodeParser.Parse("hr")).IsEqualTo(AnsiCodeParser.Parse("hr"));
 	}
+
+	[Test]
+	[Arguments("uU", false, true)]
+	[Arguments("Uu", true, false)]
+	[Arguments("u U", false, true)]
+	public async Task AnAttributeAndItsCapital_TheLaterWins(string code, bool underlined, bool off)
+	{
+		var style = AnsiCodeParser.Parse(code).Style;
+		await Assert.That(style.Underlined).IsEqualTo(underlined);
+		await Assert.That(style.UnderlinedOff).IsEqualTo(off);
+	}
+
+	[Test]
+	[Arguments("F")]
+	[Arguments("H")]
+	[Arguments("I")]
+	[Arguments("U")]
+	public async Task EachOffCode_IsRecorded(string code)
+	{
+		var style = AnsiCodeParser.Parse(code).Style;
+		await Assert.That(style.IsNone).IsFalse();
+		await Assert.That(code switch
+		{
+			"F" => style.BlinkOff,
+			"H" => style.BoldOff,
+			"I" => style.InvertedOff,
+			_ => style.UnderlinedOff,
+		}).IsTrue();
+	}
+
+	[Test]
+	public async Task HiliteOff_DimsTheColourItHadBrightened()
+	{
+		var style = AnsiCodeParser.Parse("hrH").Style;
+		await Assert.That(style.Foreground).IsEqualTo(new AnsiColor.Standard(1, false));
+		await Assert.That(style.BoldOff).IsTrue();
+	}
+
+	[Test]
+	public async Task AColourMayFollowLettersWithoutASpace()
+	{
+		// PennMUSH's define_ansi_data reads one string; decompose() writes codes this way.
+		var style = AnsiCodeParser.Parse("u#ff0000").Style;
+		await Assert.That(style.Underlined).IsTrue();
+		await Assert.That(style.Foreground).IsEqualTo(new AnsiColor.Rgb(255, 0, 0));
+
+		var xterm = AnsiCodeParser.Parse("u200").Style;
+		await Assert.That(xterm.Underlined).IsTrue();
+		await Assert.That(xterm.Foreground).IsEqualTo(new AnsiColor.Xterm(200));
+	}
+
+	[Test]
+	[Arguments("#ff0000!#0000ff")]
+	[Arguments("#ff0000/#0000ff")]
+	public async Task ABangOrSlashMarksTheNextColourAsTheBackground(string code)
+	{
+		var style = AnsiCodeParser.Parse(code).Style;
+		await Assert.That(style.Foreground).IsEqualTo(new AnsiColor.Rgb(255, 0, 0));
+		await Assert.That(style.Background).IsEqualTo(new AnsiColor.Rgb(0, 0, 255));
+	}
+
+	[Test]
+	public async Task LettersBeforeAndAfterAColourKeepTheirRun()
+	{
+		var style = AnsiCodeParser.Parse("hBr").Style;
+		await Assert.That(style.Background).IsEqualTo(new AnsiColor.Standard(4, false));
+		await Assert.That(style.Foreground).IsEqualTo(new AnsiColor.Standard(1, true));
+	}
+
+	[Test]
+	public async Task NamedColours_AreResolvedByTheCaller()
+	{
+		var named = AnsiCodeParser.Parse("+light_blue!+dark-red",
+			name => name switch
+			{
+				"light_blue" => new AnsiColor.Rgb(173, 216, 230),
+				"dark-red" => new AnsiColor.Rgb(139, 0, 0),
+				_ => null,
+			}).Style;
+		await Assert.That(named.Foreground).IsEqualTo(new AnsiColor.Rgb(173, 216, 230));
+		await Assert.That(named.Background).IsEqualTo(new AnsiColor.Rgb(139, 0, 0));
+	}
+
+	[Test]
+	public async Task NamedColours_WithoutAResolver_AreIgnored()
+	{
+		// They used to fall through to the letters: "+red" read r, e, then d, the default foreground.
+		await Assert.That(AnsiCodeParser.Parse("+red").Style).IsEqualTo(AnsiStyle.None);
+		await Assert.That(AnsiCodeParser.Parse("+nosuch", _ => null).Style).IsEqualTo(AnsiStyle.None);
+	}
 }

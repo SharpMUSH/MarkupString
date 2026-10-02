@@ -395,4 +395,13 @@ public class AnsiRenderTests
 	{
 		await Assert.That(UrlSafety.IsSafeNavigableUrl(url)).IsEqualTo(expected);
 	}
+
+	[Test]
+	public async Task Ansi_AnOffCodeInsideItsAttribute_RendersWithoutIt()
+	{
+		// ansi(u,a[ansi(U,b)]c): b is not underlined, as in PennMUSH.
+		var off = AnsiCodeParser.Parse("U");
+		var text = MarkupText.Wrap(Underline, MarkupText.Concat([MarkupText.Plain("a"), MarkupText.Wrap(off, "b"), MarkupText.Plain("c")]));
+		await Assert.That(Render(text, MarkupFormat.Ansi)).IsEqualTo($"{Esc}[4ma{Esc}[0mb{Esc}[4mc{Esc}[0m");
+	}
 }
