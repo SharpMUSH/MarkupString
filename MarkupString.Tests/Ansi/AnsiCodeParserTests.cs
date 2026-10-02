@@ -60,6 +60,33 @@ public class AnsiCodeParserTests
 	}
 
 	[Test]
+	[Arguments("h")]
+	[Arguments("hu")]
+	[Arguments("uh")]
+	[Arguments("hd")]
+	public async Task Highlight_WithNoPaletteLetterToBrighten_IsBold(string code)
+	{
+		// PennMUSH's 'h' is the hilite bit on whatever colour the text has, sent as SGR 1. With no
+		// palette letter after it to raise, it is bold; ansi(h,x) used to come back with no markup at all.
+		var style = AnsiCodeParser.Parse(code).Style;
+		await Assert.That(style.Bold).IsTrue();
+		await Assert.That(style.Foreground is AnsiColor.Standard).IsFalse();
+	}
+
+	[Test]
+	public async Task Highlight_OnAPaletteLetter_IsTheBrightColourAndNotBold()
+	{
+		var style = AnsiCodeParser.Parse("hru").Style;
+		await Assert.That(style.Foreground).IsEqualTo(new AnsiColor.Standard(1, true));
+		await Assert.That(style.Bold).IsFalse();
+		await Assert.That(style.Underlined).IsTrue();
+	}
+
+	[Test]
+	public async Task Highlight_CancelledBeforeTheEndOfItsToken_IsNothing()
+		=> await Assert.That(AnsiCodeParser.Parse("hH").Style.Bold).IsFalse();
+
+	[Test]
 	public async Task Highlight_IsPerTokenAndCancelledByUppercaseH()
 	{
 		// h applies for the rest of its own token only.
