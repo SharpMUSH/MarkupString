@@ -189,6 +189,9 @@ cross.
 - HTML writes a hex colour, resolving standard and xterm indices through `AnsiPalette`.
 - A downgrade uses the redmean distance: `AnsiColor.NearestXterm`, `NearestXtermIndex` and
   `NearestStandard` are public if you need to do it yourself.
+- A client that shows less than truecolor gets a registry of its own,
+  `registry.WithAnsiOutput(AnsiColorDepth.Xterm256)` (or `Standard`, `Attributes`, `None`), and every
+  colour is written at that depth in `Ansi`, `Pueblo` and `Mxp`. `AnsiStyle.AtDepth` is the mapping.
 
 ## Diffed ANSI
 
