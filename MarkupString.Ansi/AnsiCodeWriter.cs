@@ -13,7 +13,8 @@ namespace MarkupString.Ansi;
 /// <c>f h i u</c>, the ones turning an attribute off <c>F H I U</c>, a palette background letter, the
 /// foreground (a letter, <c>#rrggbb</c> or <c>+xtermN</c>), and a background that is not a letter after
 /// <c>!</c>. So <c>hBr</c> and <c>#ff0000!#0000ff</c>. A bright palette foreground is its letter after
-/// <c>h</c>; a bright palette background has no letter and is written as its xterm entry,
+/// <c>h</c>; bold on a normal palette foreground is <c>h</c> after its letter, <c>Brh</c>, since an <c>h</c> before
+/// it would brighten it; a bright palette background has no letter and is written as its xterm entry,
 /// <c>!+xterm8</c> to <c>!+xterm15</c>. Attributes <c>ansi()</c> has no code for (faint, italic,
 /// overline, strike-through) and links are not written.
 /// </remarks>
@@ -29,8 +30,11 @@ public static class AnsiCodeWriter
 
 		// n first: it discards what surrounds the span, and the codes after it are what the span sets.
 		if (style.Clear) codes.Append('n');
+		// h brightens a palette letter after it in the same run, so bold on a normal palette foreground is written
+		// after the letter (rh), where it brightens nothing and is read as bold.
+		var boldAfterLetter = style.Bold && style.Foreground is AnsiColor.Standard { Bright: false };
 		if (style.Blink) codes.Append('f');
-		if (style.Bold || style.Foreground is AnsiColor.Standard { Bright: true }) codes.Append('h');
+		if ((style.Bold && !boldAfterLetter) || style.Foreground is AnsiColor.Standard { Bright: true }) codes.Append('h');
 		if (style.Inverted) codes.Append('i');
 		if (style.Underlined) codes.Append('u');
 		if (style.BlinkOff) codes.Append('F');
@@ -41,6 +45,7 @@ public static class AnsiCodeWriter
 		var background = WriteColor(style.Background, background: true);
 		if (background.Length == 1) codes.Append(background);
 		codes.Append(WriteColor(style.Foreground, background: false));
+		if (boldAfterLetter) codes.Append('h');
 		if (background.Length > 1) codes.Append('!').Append(background);
 
 		return codes.ToString();

@@ -54,6 +54,14 @@ public class AnsiColorDepthTests
 	}
 
 	[Test]
+	public async Task Standard_AnOffCodeKeepsAnInheritedColourFromBeingWrittenBold()
+	{
+		// xterm 9 is bright red, which the standard palette writes as bold; H inside it turns that off.
+		var text = MarkupText.Wrap(AnsiMarkup.Create(foreground: new AnsiColor.Xterm(9)), MarkupText.Wrap(AnsiCodeParser.Parse("H"), "a"));
+		await Assert.That(Render(text, MarkupFormat.Ansi, AnsiColorDepth.Standard)).IsEqualTo($"{Esc}[31ma{Esc}[0m");
+	}
+
+	[Test]
 	public async Task Attributes_DropsColourButKeepsABrightForegroundAsBold()
 	{
 		var text = MarkupText.Concat([

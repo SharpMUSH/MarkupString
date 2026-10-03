@@ -22,7 +22,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **`AnsiCodeWriter`**, the inverse of `AnsiCodeParser`: `Write(AnsiStyle)` gives the `ansi()` codes that
   produce a style, in the order PennMUSH's `write_ansi_letters` uses (`hBr`, `#ff0000!#0000ff`, `Hr`).
   `WriteColor` writes one colour. A bright palette background has no letter and is written as its xterm entry
-  (`!+xterm9`).
+  (`!+xterm9`), and bold on a normal palette foreground puts the `h` after the letter (`rh`), where it does not
+  brighten it.
 
 ## 2.6.0 — 2026-10-02
 
