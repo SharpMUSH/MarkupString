@@ -140,7 +140,14 @@ public readonly record struct AnsiStyle
 	{
 		AnsiColorDepth.TrueColor => this,
 		AnsiColorDepth.Xterm256 => this with { Foreground = ToXterm256(Foreground), Background = ToXterm256(Background) },
-		AnsiColorDepth.Standard => this with { Foreground = ToStandard(Foreground), Background = ToStandard(Background) },
+		AnsiColorDepth.Standard => this with
+		{
+			// A bright standard colour is written as bold, so one an off code dimmed must not come back as it.
+			Foreground = ToStandard(Foreground) is AnsiColor.Standard { Bright: true } bright && BoldOff
+				? new AnsiColor.Standard(bright.Index, false)
+				: ToStandard(Foreground),
+			Background = ToStandard(Background)
+		},
 		AnsiColorDepth.Attributes => this with
 		{
 			Bold = Bold || Foreground is AnsiColor.Standard { Bright: true },
