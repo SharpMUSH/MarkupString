@@ -277,3 +277,4 @@ virtual MarkupString.Layout.LayoutNode.Equals(MarkupString.Layout.LayoutNode? ot
 virtual MarkupString.Layout.LayoutNode.PrintMembers(System.Text.StringBuilder! builder) -> bool
 ~override MarkupString.Layout.BlockSize.Equals(object obj) -> bool
 static MarkupString.MarkupTextRenderer.RenderFragment(MarkupString.MarkupText! text, MarkupString.MarkupFormat! format, MarkupString.MarkupRegistry! registry, System.Buffers.IBufferWriter<char>! output) -> void
+static MarkupString.Layout.BlockLayout.Nodes(MarkupString.MarkupText! content, MarkupString.Layout.Alignment alignment = MarkupString.Layout.Alignment.Left) -> System.Collections.Generic.IReadOnlyList<MarkupString.Layout.LayoutNode!>!

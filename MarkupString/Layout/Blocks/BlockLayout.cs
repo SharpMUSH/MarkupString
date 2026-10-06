@@ -63,6 +63,39 @@ public static class BlockLayout
 	}
 
 	/// <summary>
+	/// <paramref name="content"/> as a sequence of nodes: each intact block standing on lines of its own
+	/// as the tree it was laid out from, and the text between blocks as <see cref="TextNode"/>s, the line
+	/// ending that separates text from a block dropped. How a builder that takes a body nests the
+	/// blocks inside it — a box whose body holds columns, then a rule, then text.
+	/// </summary>
+	public static IReadOnlyList<LayoutNode> Nodes(MarkupText content, Alignment alignment = Alignment.Left)
+	{
+		ArgumentNullException.ThrowIfNull(content);
+		var nodes = new List<LayoutNode>();
+		var position = 0;
+		foreach (var region in BlockRegions.Find(content))
+		{
+			if (region.Markup is not LayoutMarkup layout || !region.Intact || !region.Standalone) continue;
+			AddText(content, position, region.Start, alignment, nodes);
+			nodes.Add(layout.Root);
+			position = region.End;
+		}
+		AddText(content, position, content.Length, alignment, nodes);
+		return nodes;
+	}
+
+	private static void AddText(MarkupText content, int start, int end, Alignment alignment, List<LayoutNode> nodes)
+	{
+		var text = content.Text;
+		if (start > 0 && start < end && text[start] == '\r') start++;
+		if (start > 0 && start < end && text[start] == '\n') start++;
+		if (end < text.Length && end > start && text[end - 1] == '\n') end--;
+		if (end < text.Length && end > start && text[end - 1] == '\r') end--;
+		if (end <= start) return;
+		nodes.Add(new TextNode(content.Substring(start, end - start), alignment));
+	}
+
+	/// <summary>
 	/// <paramref name="text"/> with every intact block laid out again under <paramref name="options"/>:
 	/// a <see cref="LayoutMarkup.Fluid"/> block at <paramref name="width"/>, any other at its own width.
 	/// A block that was cut, edited or shares a line with other text is left as it is.
