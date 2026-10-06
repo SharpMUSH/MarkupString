@@ -87,29 +87,64 @@ public sealed record BorderStyle
 	public bool IsAscii => All(piece => IsAsciiText(piece.Text));
 
 	/// <summary>
-	/// This style with each piece that is not plain ASCII replaced by the matching <see cref="Ascii"/>
-	/// piece, for a client that cannot show anything else.
+	/// This style for a client that shows nothing beyond ASCII: each box-drawing character becomes the
+	/// ASCII one closest to it, so a double frame keeps its <c>=</c> edges, and a piece holding anything
+	/// else (an emoji, a title bracket like <c>┤ </c>) becomes the matching <see cref="Ascii"/> piece.
+	/// Colour on a piece is kept.
 	/// </summary>
 	public BorderStyle ToAscii()
 	{
 		if (IsAscii) return this;
-		static MarkupText Pick(MarkupText piece, MarkupText fallback) => IsAsciiText(piece.Text) ? piece : fallback;
+		static MarkupText Edge(MarkupText piece, MarkupText fallback) => AsciiText(piece) ?? fallback;
+		static MarkupText Bracket(MarkupText piece, MarkupText fallback) => IsAsciiText(piece.Text) ? piece : fallback;
 		return this with
 		{
-			TopLeft = Pick(TopLeft, Ascii.TopLeft),
-			Top = Pick(Top, Ascii.Top),
-			TopRight = Pick(TopRight, Ascii.TopRight),
-			Left = Pick(Left, Ascii.Left),
-			Right = Pick(Right, Ascii.Right),
-			BottomLeft = Pick(BottomLeft, Ascii.BottomLeft),
-			Bottom = Pick(Bottom, Ascii.Bottom),
-			BottomRight = Pick(BottomRight, Ascii.BottomRight),
-			TeeLeft = Pick(TeeLeft, Ascii.TeeLeft),
-			TeeRight = Pick(TeeRight, Ascii.TeeRight),
-			TitleOpen = Pick(TitleOpen, Ascii.TitleOpen),
-			TitleClose = Pick(TitleClose, Ascii.TitleClose),
+			TopLeft = Edge(TopLeft, Ascii.TopLeft),
+			Top = Edge(Top, Ascii.Top),
+			TopRight = Edge(TopRight, Ascii.TopRight),
+			Left = Edge(Left, Ascii.Left),
+			Right = Edge(Right, Ascii.Right),
+			BottomLeft = Edge(BottomLeft, Ascii.BottomLeft),
+			Bottom = Edge(Bottom, Ascii.Bottom),
+			BottomRight = Edge(BottomRight, Ascii.BottomRight),
+			TeeLeft = Edge(TeeLeft, Ascii.TeeLeft),
+			TeeRight = Edge(TeeRight, Ascii.TeeRight),
+			TitleOpen = Bracket(TitleOpen, Ascii.TitleOpen),
+			TitleClose = Bracket(TitleClose, Ascii.TitleClose),
 		};
 	}
+
+	/// <summary>
+	/// <paramref name="text"/> with each box-drawing character replaced by the ASCII one closest to it —
+	/// a light line <c>-</c>, a double or heavy one <c>=</c>, an upright <c>|</c>, a corner, tee or
+	/// cross <c>+</c> — keeping its markup; null when it holds a character outside ASCII that is not
+	/// box drawing.
+	/// </summary>
+	internal static MarkupText? AsciiText(MarkupText text)
+	{
+		if (IsAsciiText(text.Text)) return text;
+		var chars = text.Text.ToCharArray();
+		for (var i = 0; i < chars.Length; i++)
+		{
+			if (chars[i] is >= ' ' and <= '~') continue;
+			if (AsciiFor(chars[i]) is not { } ascii) return null;
+			chars[i] = ascii;
+		}
+		return new MarkupText(new string(chars), text.Runs);
+	}
+
+	/// <summary>The ASCII stand-in for a box-drawing character (U+2500 to U+257F), or null.</summary>
+	private static char? AsciiFor(char c) => c switch
+	{
+		'─' or '┄' or '┈' or '╌' or '╴' or '╶' => '-',
+		'━' or '┅' or '┉' or '╍' or '═' or '╸' or '╺' => '=',
+		'│' or '┃' or '┆' or '┇' or '┊' or '┋' or '╎' or '╏' or '║' or '╵' or '╷' or '╹' or '╻' => '|',
+		'╱' => '/',
+		'╲' => '\\',
+		'╳' => 'X',
+		>= '\u2500' and <= '\u257F' => '+',
+		_ => null,
+	};
 
 	private bool All(Func<MarkupText, bool> test) =>
 		test(TopLeft) && test(Top) && test(TopRight) && test(Left) && test(Right) && test(BottomLeft)
