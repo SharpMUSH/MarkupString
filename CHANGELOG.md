@@ -10,22 +10,31 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- **Block layout** (`MarkupString.Layout`): a tree of `BoxNode`, `RuleNode`, `FlexNode`, `TextNode`,
-  `StackNode`, `FigureNode`, `FieldsNode` (labelled values lined up in a column, as a `<dl>` in HTML) and
-  `TreeNode` (items under their parents with `TreeGuide` lines, as nested `<ul>`), `GaugeNode` (a bar, as
-  `<meter>`), `BulletsNode` (bulleted or numbered items), `GridNode` (short items in as many columns as fit)
-  and `TableNode` (columns that wrap, then drop by priority, then turn rows into cards; a `<table>` in HTML) that `BlockLayout.Build` lays out as lines of text at a width and wraps in a
-  `LayoutMarkup` carrying the tree. A terminal gets the box art; HTML draws the tree as a `<fieldset>` box
-  with its title as the legend, dividers, a wrapping flex row sized in `ch`, and a picture floated beside
-  its text (`LayoutCss.Fixed` styles the classes). A figure's text art stands in for the picture in a
-  terminal, with the text beside it flowing round the art. `BorderStyle` has seven presets (`none`,
-  `ascii`, `mush`, `single`, `double`, `heavy`, `rounded`) and every piece can be replaced, coloured, or
-  made a pattern. `BlockLayout.Relayout` lays intact blocks out again for a reader: a fluid block at the
-  reader's width, any block in ASCII borders (`AsciiOnly`: each box-drawing character becomes its nearest ASCII one, so a double or heavy line keeps `=` and a light one `-`; a flex separator is translated too) or as its content in reading order for a screen
-  reader (`Linear`). `BlockLayout.AsNode` nests a whole block in a larger one.
+- **Block layout** (`MarkupString.Layout`): blocks that draw themselves — `Frame`, `Rule`, `Flex`,
+  `TextBlock`, `Stack`, `Figure`, `Fields` (labelled values lined up in a column, as a `<dl>` in HTML),
+  `Tree` (items under their parents with `TreeGuide` lines, as nested `<ul>`), `Gauge` (a bar, as
+  `<meter>`), `Bullets` (bulleted or numbered items), `Grid` (short items in as many columns as fit) and
+  `Table` (columns that wrap, then drop by priority, then turn rows into cards; a `<table>` in HTML) —
+  that `BlockLayout.Build` lays out as lines of text at a width and wraps in a `LayoutMarkup` carrying
+  the tree. A terminal gets the box art; HTML draws the tree as a `<fieldset>` box with its title as the
+  legend, dividers, a wrapping flex row sized in `ch`, and a picture floated beside its text
+  (`LayoutCss.Fixed` styles the classes). A figure's text art stands in for the picture in a terminal,
+  with the text beside it flowing round the art. `BorderStyle` has seven presets (`none`, `ascii`,
+  `mush`, `single`, `double`, `heavy`, `rounded`) and every piece can be replaced, coloured, or made a
+  pattern. `BlockLayout.Relayout` lays intact blocks out again for a reader: a fluid block at the
+  reader's width, any block in ASCII borders (`AsciiOnly`: each box-drawing character becomes its
+  nearest ASCII one, so a double or heavy line keeps `=` and a light one `-`) or as its content in
+  reading order for a screen reader (`Linear`). `BlockLayout.AsBlock` nests a whole block in a larger one.
+- **Composition**: optional properties left unset come from the `LayoutTheme` of the `LayoutContext`
+  a block is drawn in. The modifiers `Bordered`, `Sized`, `Aligned`, `Shaded`, `Colored` and `Themed`
+  wrap any block. A block of a game's own derives from `Block`; `BlockCodec` (registered with
+  `MarkupRegistry.With(BlockCodec)`) keeps it through the serializer, and
+  `HtmlRegistration.WithBlockHtml<T>` draws it in HTML, which otherwise shows its lines in a `<pre>`.
 - **`ColorGradient`**: colour stops blended in OKLCH (the default), Oklab or HSL, never sRGB, with
-  `At`, `Paint` and `ToCss`. A gauge shades its bar with one, by cell or by value. `IColorMarkup` is the
-  colour layer it shades with; `AnsiMarkup` implements it.
+  `At`, `Paint`, `Shade` and `ToCss`, `Mirror` and `Repeat`. `Shade` colours text along its characters,
+  its words, across, down or diagonally (`GradientFlow`); `.Shaded()` does the same for a block. A gauge
+  shades its bar with one, by cell or by value. `IColorMarkup` is the colour layer it shades with;
+  `AnsiMarkup` implements it.
 - **`IBlockMarkup` and `IBlockEmitter`**, the general mechanism behind it: a layer a format may draw from
   its own description instead of the text. The renderer hands a block to its emitter only when the text
   it covers is unchanged (a fingerprint check) and on lines of its own, so a block cut, edited or run into

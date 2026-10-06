@@ -262,19 +262,16 @@ the boxes, titled rules, side-by-side columns and pictures a game draws its `+fi
 screens with — and keeps the tree with the text, so a format that can draw structure does.
 
 ```csharp
-var finger = new BoxNode(
-  new StackNode(
+var finger = new Stack(
+[
+  new Flex(
   [
-    new FlexNode(
-    [
-      new FlexItem(new TextNode(MarkupText.Plain("Sex: Male\nSpecies: Human")), BlockSize.Cells(35)),
-      new FlexItem(new TextNode(MarkupText.Plain("Job: Dark Warrior\nOnline: 1h")), BlockSize.Cells(36)),
-    ], new FlexOptions { Separator = MarkupText.Plain(" | ") }),
-    new RuleNode(MarkupText.Plain("Quote"), BorderStyle.Mush),
-    new TextNode(MarkupText.Plain("Hooooo?")),
-  ]),
-  BorderStyle.Mush with { TitleOpen = MarkupText.Plain("<< "), TitleClose = MarkupText.Plain(" >>") },
-  MarkupText.Plain("Mannaz Byron"));
+    MarkupText.Plain("Sex: Male\nSpecies: Human").ToBlock().Sized(BlockSize.Cells(35)),
+    MarkupText.Plain("Job: Dark Warrior\nOnline: 1h").ToBlock().Sized(BlockSize.Cells(36)),
+  ]) { Separator = MarkupText.Plain(" | ") },
+  new Rule(MarkupText.Plain("Quote")),
+  MarkupText.Plain("Hooooo?"),
+]).Bordered(MarkupText.Plain("Mannaz Byron"), BorderStyle.Mush with { TitleOpen = MarkupText.Plain("<< "), TitleClose = MarkupText.Plain(" >>") });
 
 var text = BlockLayout.Build(finger, 78);
 ```
@@ -283,7 +280,7 @@ var text = BlockLayout.Build(finger, 78);
 +=============================<< Mannaz Byron >>=============================+
 | Sex: Male                           | Job: Dark Warrior                    |
 | Species: Human                      | Online: 1h                           |
-+==================================< Quote >=================================+
++=================================<< Quote >>================================+
 | Hooooo?                                                                    |
 +============================================================================+
 ```
@@ -293,24 +290,57 @@ draws the same tree as a `<fieldset>` with a legend, a divider, and a flex row w
 35 and 36 `ch` and wrap onto rows of their own on a narrower page. Include `LayoutCss.Fixed`, or
 your own copy of its rules, on the page.
 
-| Node | Terminal | HTML |
-|---|---|---|
-| `BoxNode` | the frame, its title set into the top edge | `<fieldset>` and `<legend>` |
-| `RuleNode` | a line of the border's top edge with the title in it; inside a box, a divider meeting the sides | a line drawn in CSS |
-| `FlexNode` | items side by side at widths shared from `BlockSize` bases, stacked when one would fall under its `Min` | a wrapping flex row |
-| `FigureNode` | the text art, with `Beside` flowing round it | an `<img>` floated beside it |
-| `FieldsNode` | labels in one column, values lined up in the next, a long value wrapping under itself | a `<dl>` laid out as a two-column grid |
-| `TreeNode` | items under their parents, joined by guide lines | nested `<ul>` with the guides drawn in CSS |
-| `GaugeNode` | a bar filled to its share of the width, with its figures | a `<meter>` |
-| `BulletsNode` | items with a bullet or number, wrapped lines hanging under the text | `<ul>` or `<ol>` |
-| `GridNode` | short items in as many columns as fit, down each column or across each row | a CSS multi-column or grid list |
-| `TableNode` | columns sized to their widest cell, wrapping and then leaving out columns when narrow | a `<table>` that hides low-priority columns on a narrow page |
-| `TextNode`, `StackNode` | wrapped text; children in order | the same, as blocks |
+### How it fits together
 
-**Labelled values.** `FieldsNode` is the `Sex: Male` / `Species: Human` part of a sheet: the label
+- **A block draws itself.** Every block derives from `Block` and draws its own lines at the width it
+  is given (`Draw`), and its content in reading order for a screen reader (`DrawLinear`). It measures
+  itself (`Measure`) when a table or a row needs to know how wide it wants to be. Text converts to a
+  block wherever one is wanted.
+- **Optional means "inherit unless set".** Optional properties are `init` properties. A look the block
+  leaves unset — a border, a tree guide, a gauge's pieces, the bullet, the separator after a label, the
+  line under table headings — comes from the `LayoutTheme` of the `LayoutContext` it is drawn in, and
+  in the end from `LayoutTheme.Defaults`. A rule inside a frame with no border of its own takes the
+  frame's.
+- **Modifiers wrap any block.** `Bordered`, `Sized`, `Aligned`, `Shaded`, `Colored` and `Themed` are
+  extension methods that return a wrapping block, so they chain.
+- **Formats plug in per block.** The terminal text comes from the block. HTML comes from a renderer
+  registered for its type; a block with none is shown as its lines in a `<pre>`. JSON comes from a
+  `BlockCodec`.
+
+| Block | Terminal | HTML |
+|---|---|---|
+| `Frame` (`.Bordered(title, border)`) | the frame, its title set into the top edge | `<fieldset>` and `<legend>` |
+| `Rule` | a line of the border's top edge with the title in it; inside a frame, a divider meeting the sides | a line drawn in CSS |
+| `Flex` | items side by side at widths shared from their `Sized` bases, stacked when one would fall under its `Min` | a wrapping flex row |
+| `Figure` | the text art, with `Beside` flowing round it | an `<img>` floated beside it |
+| `Fields` | labels in one column, values lined up in the next, a long value wrapping under itself | a `<dl>` laid out as a two-column grid |
+| `Tree` | items under their parents, joined by guide lines | nested `<ul>` with the guides drawn in CSS |
+| `Gauge` | a bar filled to its share of the width, with its figures | a `<meter>` |
+| `Bullets` | items with a bullet or number, wrapped lines hanging under the text | `<ul>` or `<ol>` |
+| `Grid` | short items in as many columns as fit, down each column or across each row | a CSS multi-column or grid list |
+| `Table` | columns sized to their widest cell, wrapping and then leaving out columns when narrow | a `<table>` that hides low-priority columns on a narrow page |
+| `TextBlock`, `Stack` | wrapped text; children in order | the same, as blocks |
+
+| Modifier | What it does |
+|---|---|
+| `.Bordered(title, border)` | a `Frame` round the block |
+| `.Sized(basis, min, grow)` | how wide it asks to be in a `Flex` |
+| `.Aligned(alignment)` | where text inside it sits, unless the text says otherwise; a table column does this for its cells |
+| `.Shaded(gradient, flow)` | its borders and text in the colours of a gradient |
+| `.Colored(markup)` | a colour (or any layer) under the colour it sets itself |
+| `.Themed(theme)` | a different look for everything inside it that sets none of its own |
+
+```csharp
+// One sheet, heavy frames and arrow bullets throughout, the title row shaded.
+var sheet = new Stack([header.Shaded(gradient), stats, notes])
+  .Themed(new LayoutTheme { Border = BorderStyle.Heavy, Bullet = MarkupText.Plain("→") });
+```
+
+**Labelled values.** `Fields` is the `Sex: Male` / `Species: Human` part of a sheet: the label
 column is as wide as the longest label (at most half the width) and every value starts in the same
-column. `FieldsOptions` sets the separator (`": "`), right-aligned labels, a leader that fills from
-the label to the separator, and how many columns the fields are dealt into, down each column first.
+column. It sets the separator (the theme's `": "` unless given), right-aligned labels, a leader that
+fills from the label to the separator, and how many columns the fields are dealt into, down each
+column first.
 
 ```
 Columns = 2, at 60:
@@ -329,7 +359,7 @@ Species: Human
 When the value column would be narrower than ten cells, each label goes on a line of its own with
 its value indented under it, and columns that do not fit stack.
 
-**Trees.** `TreeNode` draws each `TreeItem` with its children under it. The top level sits at the left
+**Trees.** `Tree` draws each `TreeItem` with its children under it. The top level sits at the left
 edge; each level below gets a guide. `TreeGuide` has six presets (`line`, `rounded`, `heavy`,
 `double`, `ascii`, `none`), and its four pieces (branch, last branch, the pipe that carries a level on,
 and the blank where it has ended) can be replaced.
@@ -343,9 +373,9 @@ Channels                  Channels
    └─ +admin                 `- +admin
 ```
 
-**Gauges.** `GaugeNode(value, maximum, label)` draws a bar. With no `BarWidth` the bar takes what the
-label and figures leave of the width. `GaugeOptions` sets the filled and empty pieces (`█`, `░`), the
-ends, and whether the figures read `50%`, `6/12` or nothing.
+**Gauges.** `new Gauge(value, maximum) { Label = ... }` draws a bar. With no `BarWidth` the bar takes
+what the label and figures leave of the width. The filled and empty pieces (`█`, `░`) and the ends come
+from the theme unless set, and `Show` makes the figures read `50%`, `6/12` or nothing.
 
 ```
 HP [██████░░░░░] 50%         at 20
@@ -353,19 +383,33 @@ HP [######-----] 50%         AsciiOnly
 HP: 6 of 12 (50%)            Linear
 ```
 
-**Gradients.** `GaugeOptions.Gradient` shades the filled part with a `ColorGradient`: colour stops
-(any `IColorMarkup`, such as an `AnsiMarkup` with a foreground) blended in a `GradientSpace`.
-`Oklch`, the default, keeps the middle as bright and vivid as the ends, so red to green passes
-through yellow rather than sRGB's dark olive; `Oklab` blends straight across with no hue swing;
-`Hsl` gives the brighter, uneven rainbow sweep. With `GaugeShade.Cells` each cell takes the colour
-at its place along the whole bar; with `GaugeShade.Value` the filled part is one colour, the one at
-the value's place. In HTML the bar becomes a `div` whose fill is a CSS `linear-gradient` in the same
-space, after a fallback through nine colours worked out here. `ColorGradient.At`, `Paint` and
-`ToCss` are there for anything else that wants a gradient.
+**Gradients.** A `ColorGradient` is colour stops (any `IColorMarkup`, such as an `AnsiMarkup` with a
+foreground) blended in a `GradientSpace`. `Oklch`, the default, keeps the middle as bright and vivid
+as the ends, so red to green passes through yellow rather than sRGB's dark olive; `Oklab` blends
+straight across with no hue swing; `Hsl` gives the brighter, uneven rainbow sweep. `Mirror` runs the
+colours there and back; `Repeat` runs them more than once over the length.
 
-**Lists.** `BulletsNode` marks each item with a bullet, a dash, a number, a letter or a roman numeral
-(`BulletStyle`), or a marker of your own, starting from `Start`. Numbers line up on their right, and a
-wrapped line hangs under the item's text.
+`gradient.Shade(text, flow)` colours any text, and `.Shaded(gradient, flow)` any block. The
+`GradientFlow` says which way the colours run:
+
+| Flow | Each character's colour comes from |
+|---|---|
+| `Characters` | its place among the characters that show, in reading order, on through every line |
+| `Words` | its word's place among the words |
+| `Across` | its column, so the colours line up down the text (the default for a block) |
+| `Down` | its line |
+| `Diagonal` | its column and line together, from the top-left corner to the bottom-right |
+
+Spaces take no colour, and colour the text sets itself is kept. A gauge's `Gradient` shades its
+filled part: with `GaugeShade.Cells` each cell takes the colour at its place along the whole bar, with
+`GaugeShade.Value` the filled part is one colour, the one at the value's place. In HTML a shaded
+block's text is clipped to a CSS `linear-gradient` in the same space (after a fallback through colours
+worked out here) and its borders are drawn in it; a browser cannot run colour along characters or
+words, so those run across.
+
+**Lists.** `Bullets` marks each item with the theme's bullet, a dash, a number, a letter or a roman
+numeral (`BulletStyle`), or a marker of your own, starting from `Start`. Numbers line up on their
+right, and a wrapped line hangs under the item's text.
 
 ```
 • Be kind to          9. Nine
@@ -373,7 +417,7 @@ wrapped line hangs under the item's text.
 • No spam
 ```
 
-**Columns of names.** `GridNode` is the `ls` layout for short items such as a `who` list: as many
+**Columns of names.** `Grid` is the `ls` layout for short items such as a `who` list: as many
 columns as the widest item allows, filled down each column, or across each row with `Across`.
 
 ```
@@ -382,13 +426,13 @@ Raya      Quill
 Tomas     Ottoline
 ```
 
-**Tables.** `TableNode` takes `TableColumn`s (header, alignment, least and most width, priority,
-whether it wraps) and rows of cells. Each column asks for its widest cell. When the table is too
-wide, the columns that wrap give way, widest first, down to their least width; then the column with
-the highest `Priority` number is left out, and so on. A column that does not wrap is shown whole or
-not at all. When not even the most important column fits, each row becomes a card of labelled
-values. In HTML, a column of priority 2 carries `ms-p2` and one of 3 or more `ms-p3`, which `LayoutCss.Fixed`
-hides on narrow pages.
+**Tables.** `Table` takes `TableColumn`s (header, alignment, least and most width, priority, whether
+it wraps) and rows of cells; a cell's text takes its column's alignment. Each column asks for its
+widest cell. When the table is too wide, the columns that wrap give way, widest first, down to their
+least width; then the column with the highest `Priority` number is left out, and so on. A column that
+does not wrap is shown whole or not at all. When not even the most important column fits, each row
+becomes a card of labelled values. In HTML, a column of priority 2 carries `ms-p2` and one of 3 or
+more `ms-p3`, which `LayoutCss.Fixed` hides on narrow pages.
 
 ```
 At 30:                            At 18:
@@ -407,7 +451,7 @@ round a title — so any of them can be replaced or coloured, and an edge is a f
 Slicing, editing and searching work on the text. The renderer draws the tree only when the stretch
 the layer covers is unchanged and on lines of its own; a cut or edited block renders as text.
 
-**Laying out again.** `BlockLayout.Relayout(text, width, options)` replaces each intact block with
+**Laying out again.** `BlockLayout.Relayout(text, width, context)` replaces each intact block with
 a fresh layout: a block built with `fluid: true` at the reader's width, and any block with ASCII
 borders (`AsciiOnly`) or as its content in reading order (`Linear`, for a screen reader).
 
@@ -419,5 +463,33 @@ separator is translated the same way, and so are gauge, bullet and table pieces 
 a `█` `#`). Text inside a block is never changed. `Linear` drops borders
 and guides, reads fields as `Label: value` lines and indents tree levels with spaces.
 
-**Nesting.** `BlockLayout.AsNode(content)` returns the tree of a text that is one whole block, and
-a `TextNode` otherwise, so a builder that takes text as an argument nests a block it is given.
+**Nesting.** `BlockLayout.AsBlock(content)` returns the tree of a text that is one whole block, and
+a `TextBlock` otherwise, so a builder that takes text as an argument nests a block it is given.
+`BlockLayout.Blocks(content)` splits a text into the blocks standing on lines of their own and the
+text between them.
+
+### A block of your own
+
+Derive from `Block` and draw. The context says whether the reader wants ASCII (`context.Glyph`
+translates a piece) or reading order, and `context.Draw` draws a child.
+
+```csharp
+public sealed record Dice(ImmutableArray<int> Faces) : Block
+{
+  public override void Draw(LayoutContext context, int width, IList<MarkupText> lines) =>
+    lines.Add(MarkupText.Plain(string.Join(" ", Faces.Select(f => context.AsciiOnly ? $"[{f}]" : ((char)('⚀' + f - 1)).ToString()))));
+
+  public override void DrawLinear(LayoutContext context, int width, IList<MarkupText> lines) =>
+    lines.Add(MarkupText.Plain("Rolled " + string.Join(", ", Faces)));
+}
+
+var registry = MarkupRegistry.Empty.WithAnsi().WithHtml()
+  .With(BlockCodec.Create<Dice>("dice",
+    (dice, w) => w.String("f", string.Join(",", dice.Faces)),
+    r => new Dice([.. (r.String("f") ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse)])))
+  .WithBlockHtml<Dice>((dice, html) => html.Write($"<span class=\"dice\">{string.Join(" ", dice.Faces)}</span>"));
+```
+
+Without the codec, a dice block is written to JSON as the text it draws, so it still shows. A
+reader that meets a kind it has no codec for leaves the whole layout as its text and never lays it
+out again. Without the HTML renderer, it shows in a page as its lines in a `<pre>`.

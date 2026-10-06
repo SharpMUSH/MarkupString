@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+using System.Collections.Frozen;
 using System.Globalization;
 using System.Text.Json;
 
@@ -7,7 +7,7 @@ namespace MarkupString.Layout;
 /// <summary>
 /// The JSON form of a <see cref="LayoutMarkup"/>. Core's own, like the shared vocabulary, because the
 /// text inside the tree carries markup of every kind and has to be written with the registry the
-/// whole text is.
+/// whole text is. Each block is written by its <see cref="BlockCodec"/>.
 /// </summary>
 internal static class LayoutJson
 {
@@ -21,498 +21,262 @@ internal static class LayoutJson
 		writer.WriteString("h", layout.Hash.ToString("x16", CultureInfo.InvariantCulture));
 		writer.WriteString("id", layout.Id.ToString("x16", CultureInfo.InvariantCulture));
 		writer.WritePropertyName("n");
-		WriteNode(writer, layout.Root, registry);
+		new BlockWriter(writer, registry, layout.Width).Object(layout.Root);
 	}
 
 	public static IMarkup Read(JsonElement element, MarkupRegistry? registry)
 	{
-		var hash = Hex(element, "h");
-		var root = element.TryGetProperty("n", out var node) ? ReadNode(node, registry) : Empty;
-		return new LayoutMarkup(root, Int(element, "w") ?? 0, Bool(element, "fl"), Int(element, "l") ?? -1, hash, Hex(element, "id"));
+		var state = new BlockReader.State(registry);
+		var layout = new BlockReader(element, state, 0);
+		var root = layout.Block("n") ?? new Stack([]);
+		// A tree that could not all be read must not be drawn in place of its text, or laid out again:
+		// a length no text has keeps the block from ever counting as intact.
+		var length = state.Incomplete ? -1 : layout.Int("l") ?? -1;
+		return new LayoutMarkup(root, layout.Int("w") ?? 0, layout.Bool("fl"), length, layout.Hex("h"), layout.Hex("id"));
 	}
 
-	private static ulong Hex(JsonElement element, string name) =>
-		String(element, name) is { } hex && ulong.TryParse(hex, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out var value)
-			? value
-			: 0UL;
+	public static BlockCodec? CodecFor(Type type, MarkupRegistry? registry) =>
+		ByType.TryGetValue(type, out var codec) ? codec : registry?.FindBlockCodec(type);
 
-	private static readonly LayoutNode Empty = new StackNode([]);
+	public static BlockCodec? CodecFor(string kind, MarkupRegistry? registry) =>
+		ByKind.TryGetValue(kind, out var codec) ? codec : registry?.FindBlockCodec(kind);
 
-	private static void WriteNode(Utf8JsonWriter writer, LayoutNode node, MarkupRegistry? registry)
-	{
-		writer.WriteStartObject();
-		switch (node)
-		{
-			case TextNode text:
-				writer.WriteString("t", "text");
-				WriteText(writer, "c", text.Content, registry);
-				if (text.Alignment != Alignment.Left) writer.WriteString("a", Name(text.Alignment));
-				break;
-			case StackNode stack:
-				writer.WriteString("t", "stack");
-				writer.WriteStartArray("ch");
-				foreach (var child in stack.Children) WriteNode(writer, child, registry);
-				writer.WriteEndArray();
-				break;
-			case BoxNode box:
-				writer.WriteString("t", "box");
-				writer.WritePropertyName("b");
-				WriteNode(writer, box.Body, registry);
-				WriteBorder(writer, box.Border, registry);
-				if (box.Title is { } boxTitle) WriteText(writer, "ti", boxTitle, registry);
-				if (box.TitleAlignment != Alignment.Center) writer.WriteString("ta", Name(box.TitleAlignment));
-				if (box.Padding != 1) writer.WriteNumber("p", box.Padding);
-				break;
-			case RuleNode rule:
-				writer.WriteString("t", "rule");
-				WriteBorder(writer, rule.Border, registry);
-				if (rule.Title is { } ruleTitle) WriteText(writer, "ti", ruleTitle, registry);
-				if (rule.TitleAlignment != Alignment.Center) writer.WriteString("ta", Name(rule.TitleAlignment));
-				break;
-			case FlexNode flex:
-				writer.WriteString("t", "flex");
-				writer.WriteStartArray("it");
-				foreach (var item in flex.Items)
-				{
-					writer.WriteStartObject();
-					writer.WritePropertyName("c");
-					WriteNode(writer, item.Content, registry);
-					if (item.Basis.Kind != BlockSizeKind.Auto) writer.WriteString("b", item.Basis.ToString());
-					if (item.Min != 1) writer.WriteNumber("m", item.Min);
-					if (item.Grow != 0) writer.WriteNumber("g", item.Grow);
-					writer.WriteEndObject();
-				}
-				writer.WriteEndArray();
-				var options = flex.Options;
-				if (options.Gap != FlexOptions.Default.Gap) writer.WriteNumber("g", options.Gap);
-				if (options.Separator is { } separator) WriteText(writer, "s", separator, registry);
-				if (options.Justify != FlexJustify.Start) writer.WriteString("j", options.Justify.ToString().ToLowerInvariant());
-				if (options.Align != FlexAlign.Start) writer.WriteString("a", options.Align.ToString().ToLowerInvariant());
-				if (options.Vertical) writer.WriteBoolean("v", true);
-				break;
-			case FigureNode figure:
-				writer.WriteString("t", "figure");
-				writer.WriteString("s", figure.Image.Source);
-				if (figure.Image.Description is { } description) writer.WriteString("d", description);
-				if (figure.Image.Width is { } width) writer.WriteNumber("w", width);
-				if (figure.Image.Height is { } height) writer.WriteNumber("h", height);
-				if (figure.Art.Length > 0) WriteText(writer, "art", figure.Art, registry);
-				if (figure.Float != FigureFloat.None) writer.WriteString("f", figure.Float.ToString().ToLowerInvariant());
-				if (figure.Beside is { } beside)
-				{
-					writer.WritePropertyName("bd");
-					WriteNode(writer, beside, registry);
-				}
-				if (figure.Gap != 2) writer.WriteNumber("g", figure.Gap);
-				break;
-			case FieldsNode fields:
-				writer.WriteString("t", "fields");
-				writer.WriteStartArray("f");
-				foreach (var field in fields.Fields)
-				{
-					writer.WriteStartObject();
-					WriteText(writer, "k", field.Label, registry);
-					writer.WritePropertyName("v");
-					WriteNode(writer, field.Value, registry);
-					writer.WriteEndObject();
-				}
-				writer.WriteEndArray();
-				var settings = fields.Options;
-				if (settings.LabelAlignment != Alignment.Left) writer.WriteString("a", Name(settings.LabelAlignment));
-				if (!Same(settings.Separator, FieldsOptions.Default.Separator)) WriteText(writer, "s", settings.Separator, registry);
-				if (settings.Leader is { } leader) WriteText(writer, "ld", leader, registry);
-				if (settings.Columns != 1) writer.WriteNumber("c", settings.Columns);
-				if (settings.Gap != FieldsOptions.Default.Gap) writer.WriteNumber("g", settings.Gap);
-				break;
-			case TreeNode tree:
-				writer.WriteString("t", "tree");
-				WriteTreeItems(writer, "it", tree.Items, registry);
-				writer.WriteStartObject("gd");
-				writer.WriteString("n", tree.Guide.Name);
-				var preset = TreeGuide.Preset(tree.Guide.Name) ?? TreeGuide.None;
-				foreach (var (key, get) in GuidePieces)
-					if (!Same(get(tree.Guide), get(preset))) WriteText(writer, key, get(tree.Guide), registry);
-				writer.WriteEndObject();
-				break;
-			case GaugeNode gauge:
-				writer.WriteString("t", "gauge");
-				writer.WriteNumber("v", gauge.Value);
-				writer.WriteNumber("m", gauge.Maximum);
-				if (gauge.Label is { } gaugeLabel) WriteText(writer, "k", gaugeLabel, registry);
-				var gaugeOptions = gauge.Options;
-				var gaugeDefault = GaugeOptions.Default;
-				if (!Same(gaugeOptions.Filled, gaugeDefault.Filled)) WriteText(writer, "f", gaugeOptions.Filled, registry);
-				if (!Same(gaugeOptions.Empty, gaugeDefault.Empty)) WriteText(writer, "e", gaugeOptions.Empty, registry);
-				if (!Same(gaugeOptions.Open, gaugeDefault.Open)) WriteText(writer, "o", gaugeOptions.Open, registry);
-				if (!Same(gaugeOptions.Close, gaugeDefault.Close)) WriteText(writer, "c", gaugeOptions.Close, registry);
-				if (gaugeOptions.Show != GaugeShow.Percent) writer.WriteString("sh", gaugeOptions.Show.ToString().ToLowerInvariant());
-				if (gaugeOptions.BarWidth != 0) writer.WriteNumber("bw", gaugeOptions.BarWidth);
-				if (gaugeOptions.Gradient is { } gradient) WriteGradient(writer, "gr", gradient, registry);
-				if (gaugeOptions.Shade != GaugeShade.Cells) writer.WriteString("sd", gaugeOptions.Shade.ToString().ToLowerInvariant());
-				break;
-			case BulletsNode bullets:
-				writer.WriteString("t", "bullets");
-				writer.WriteStartArray("it");
-				if (!bullets.Items.IsDefault)
-					foreach (var item in bullets.Items) WriteNode(writer, item, registry);
-				writer.WriteEndArray();
-				if (bullets.Options.Style != BulletStyle.Bullet) writer.WriteString("st", bullets.Options.Style.ToString().ToLowerInvariant());
-				if (bullets.Options.Marker is { } marker) WriteText(writer, "mk", marker, registry);
-				if (bullets.Options.Start != 1) writer.WriteNumber("s", bullets.Options.Start);
-				break;
-			case GridNode grid:
-				writer.WriteString("t", "grid");
-				writer.WriteStartArray("it");
-				if (!grid.Items.IsDefault)
-					foreach (var item in grid.Items) MarkupTextSerializer.Write(writer, item, registry);
-				writer.WriteEndArray();
-				if (grid.Gap != 2) writer.WriteNumber("g", grid.Gap);
-				if (grid.Across) writer.WriteBoolean("ac", true);
-				break;
-			case TableNode table:
-				writer.WriteString("t", "table");
-				writer.WriteStartArray("cols");
-				if (!table.Columns.IsDefault)
-				{
-					foreach (var column in table.Columns)
-					{
-						writer.WriteStartObject();
-						WriteText(writer, "h", column.Header, registry);
-						if (column.Alignment != Alignment.Left) writer.WriteString("a", Name(column.Alignment));
-						if (column.Min != 1) writer.WriteNumber("mn", column.Min);
-						if (column.Max != 0) writer.WriteNumber("mx", column.Max);
-						if (column.Priority != 1) writer.WriteNumber("p", column.Priority);
-						if (!column.Wrap) writer.WriteBoolean("nw", true);
-						writer.WriteEndObject();
-					}
-				}
-				writer.WriteEndArray();
-				writer.WriteStartArray("rows");
-				if (!table.Rows.IsDefault)
-				{
-					foreach (var row in table.Rows)
-					{
-						writer.WriteStartArray();
-						if (!row.IsDefault)
-							foreach (var cell in row) WriteNode(writer, cell, registry);
-						writer.WriteEndArray();
-					}
-				}
-				writer.WriteEndArray();
-				if (table.Options.Gap != TableOptions.Default.Gap) writer.WriteNumber("g", table.Options.Gap);
-				if (table.Options.Separator is { } tableSeparator) WriteText(writer, "s", tableSeparator, registry);
-				if (!Same(table.Options.HeaderRule, TableOptions.Default.HeaderRule)) WriteText(writer, "hr", table.Options.HeaderRule, registry);
-				break;
-			default:
-				writer.WriteString("t", "stack");
-				break;
-		}
-		writer.WriteEndObject();
-	}
+	/// <summary>Whether <paramref name="kind"/> names a built-in block, which a registered codec may not claim.</summary>
+	public static bool IsBuiltIn(string kind) => ByKind.ContainsKey(kind);
 
-	private static LayoutNode ReadNode(JsonElement element, MarkupRegistry? registry)
-	{
-		if (element.ValueKind != JsonValueKind.Object) return Empty;
-		switch (String(element, "t"))
-		{
-			case "text":
-				return new TextNode(Text(element, "c", registry) ?? MarkupText.Empty, Align(element, "a", Alignment.Left));
-			case "stack":
-				return new StackNode(Nodes(element, "ch", registry));
-			case "box":
-				return new BoxNode(
-					element.TryGetProperty("b", out var body) ? ReadNode(body, registry) : Empty,
-					ReadBorder(element, registry),
-					Text(element, "ti", registry),
-					Align(element, "ta", Alignment.Center),
-					Int(element, "p") ?? 1);
-			case "rule":
-				return new RuleNode(Text(element, "ti", registry), ReadBorder(element, registry), Align(element, "ta", Alignment.Center));
-			case "flex":
-				var items = ImmutableArray.CreateBuilder<FlexItem>();
-				if (element.TryGetProperty("it", out var list) && list.ValueKind == JsonValueKind.Array)
-				{
-					foreach (var item in list.EnumerateArray())
-					{
-						if (item.ValueKind != JsonValueKind.Object) continue;
-						items.Add(new FlexItem(
-							item.TryGetProperty("c", out var content) ? ReadNode(content, registry) : Empty,
-							BlockSize.TryParse(String(item, "b"), out var basis) ? basis : BlockSize.Auto,
-							Int(item, "m") ?? 1,
-							Int(item, "g") ?? 0));
-					}
-				}
-				return new FlexNode(items.ToImmutable(), new FlexOptions
-				{
-					Gap = Int(element, "g") ?? FlexOptions.Default.Gap,
-					Separator = Text(element, "s", registry),
-					Justify = Enum.TryParse<FlexJustify>(String(element, "j"), ignoreCase: true, out var justify) ? justify : FlexJustify.Start,
-					Align = Enum.TryParse<FlexAlign>(String(element, "a"), ignoreCase: true, out var align) ? align : FlexAlign.Start,
-					Vertical = Bool(element, "v"),
-				});
-			case "figure":
-				return new FigureNode(
-					new ImageMarkup(String(element, "s") ?? string.Empty, String(element, "d"), Int(element, "w"), Int(element, "h")),
-					Text(element, "art", registry) ?? MarkupText.Empty,
-					Enum.TryParse<FigureFloat>(String(element, "f"), ignoreCase: true, out var side) ? side : FigureFloat.None,
-					element.TryGetProperty("bd", out var beside) ? ReadNode(beside, registry) : null,
-					Int(element, "g") ?? 2);
-			case "fields":
-				var fields = ImmutableArray.CreateBuilder<Field>();
-				if (element.TryGetProperty("f", out var pairs) && pairs.ValueKind == JsonValueKind.Array)
-				{
-					foreach (var pair in pairs.EnumerateArray())
-					{
-						if (pair.ValueKind != JsonValueKind.Object) continue;
-						fields.Add(new Field(
-							Text(pair, "k", registry) ?? MarkupText.Empty,
-							pair.TryGetProperty("v", out var value) ? ReadNode(value, registry) : Empty));
-					}
-				}
-				return new FieldsNode(fields.ToImmutable(), new FieldsOptions
-				{
-					LabelAlignment = Align(element, "a", Alignment.Left),
-					Separator = Text(element, "s", registry) ?? FieldsOptions.Default.Separator,
-					Leader = Text(element, "ld", registry),
-					Columns = Math.Clamp(Int(element, "c") ?? 1, 1, 64),
-					Gap = Int(element, "g") ?? FieldsOptions.Default.Gap,
-				});
-			case "tree":
-				return new TreeNode(ReadTreeItems(element, "it", registry, 0), ReadGuide(element, registry));
-			case "gauge":
-				var gaugeDefault = GaugeOptions.Default;
-				return new GaugeNode(
-					Double(element, "v") ?? 0,
-					Double(element, "m") ?? 0,
-					Text(element, "k", registry),
-					new GaugeOptions
-					{
-						Filled = Text(element, "f", registry) ?? gaugeDefault.Filled,
-						Empty = Text(element, "e", registry) ?? gaugeDefault.Empty,
-						Open = Text(element, "o", registry) ?? gaugeDefault.Open,
-						Close = Text(element, "c", registry) ?? gaugeDefault.Close,
-						Show = Enum.TryParse<GaugeShow>(String(element, "sh"), ignoreCase: true, out var show) ? show : GaugeShow.Percent,
-						BarWidth = Math.Clamp(Int(element, "bw") ?? 0, 0, 4096),
-						Gradient = ReadGradient(element, "gr", registry),
-						Shade = Enum.TryParse<GaugeShade>(String(element, "sd"), ignoreCase: true, out var shade) ? shade : GaugeShade.Cells,
-					});
-			case "bullets":
-				return new BulletsNode(Nodes(element, "it", registry), new BulletOptions
-				{
-					Style = Enum.TryParse<BulletStyle>(String(element, "st"), ignoreCase: true, out var style) ? style : BulletStyle.Bullet,
-					Marker = Text(element, "mk", registry),
-					Start = Int(element, "s") ?? 1,
-				});
-			case "grid":
-				var gridItems = ImmutableArray.CreateBuilder<MarkupText>();
-				if (element.TryGetProperty("it", out var gridList) && gridList.ValueKind == JsonValueKind.Array)
-					foreach (var item in gridList.EnumerateArray())
-						if (item.ValueKind == JsonValueKind.Object) gridItems.Add(MarkupTextSerializer.Read(item, registry));
-				return new GridNode(gridItems.ToImmutable(), Math.Clamp(Int(element, "g") ?? 2, 0, 64), Bool(element, "ac"));
-			case "table":
-				var columns = ImmutableArray.CreateBuilder<TableColumn>();
-				if (element.TryGetProperty("cols", out var columnList) && columnList.ValueKind == JsonValueKind.Array)
-				{
-					foreach (var column in columnList.EnumerateArray())
-					{
-						if (column.ValueKind != JsonValueKind.Object) continue;
-						columns.Add(new TableColumn(
-							Text(column, "h", registry) ?? MarkupText.Empty,
-							Align(column, "a", Alignment.Left),
-							Int(column, "mn") ?? 1,
-							Int(column, "mx") ?? 0,
-							Int(column, "p") ?? 1,
-							!Bool(column, "nw")));
-					}
-				}
-				var rows = ImmutableArray.CreateBuilder<ImmutableArray<LayoutNode>>();
-				if (element.TryGetProperty("rows", out var rowList) && rowList.ValueKind == JsonValueKind.Array)
-				{
-					foreach (var row in rowList.EnumerateArray())
-					{
-						if (row.ValueKind != JsonValueKind.Array) continue;
-						var cells = ImmutableArray.CreateBuilder<LayoutNode>();
-						foreach (var cell in row.EnumerateArray()) cells.Add(ReadNode(cell, registry));
-						rows.Add(cells.ToImmutable());
-					}
-				}
-				return new TableNode(columns.ToImmutable(), rows.ToImmutable(), new TableOptions
-				{
-					Gap = Int(element, "g") ?? TableOptions.Default.Gap,
-					Separator = Text(element, "s", registry),
-					HeaderRule = Text(element, "hr", registry) ?? TableOptions.Default.HeaderRule,
-				});
-			default:
-				return Empty;
-		}
-	}
-
-	/// <summary>How deep a tree read back may nest, so a hostile payload cannot exhaust the stack.</summary>
-	private const int MaxTreeDepth = 64;
-
-	private static void WriteTreeItems(Utf8JsonWriter writer, string name, ImmutableArray<TreeItem> items, MarkupRegistry? registry)
-	{
-		writer.WriteStartArray(name);
-		if (!items.IsDefault)
-		{
-			foreach (var item in items)
+	private static readonly BlockCodec[] BuiltIns =
+	[
+		BlockCodec.Create<TextBlock>("text",
+			(b, w) =>
 			{
-				writer.WriteStartObject();
-				writer.WritePropertyName("c");
-				WriteNode(writer, item.Content, registry);
-				if (!item.Children.IsDefaultOrEmpty) WriteTreeItems(writer, "ch", item.Children, registry);
-				writer.WriteEndObject();
-			}
-		}
-		writer.WriteEndArray();
-	}
-
-	private static ImmutableArray<TreeItem> ReadTreeItems(JsonElement element, string name, MarkupRegistry? registry, int depth)
-	{
-		if (depth > MaxTreeDepth || !element.TryGetProperty(name, out var list) || list.ValueKind != JsonValueKind.Array) return [];
-		var items = ImmutableArray.CreateBuilder<TreeItem>();
-		foreach (var item in list.EnumerateArray())
-		{
-			if (item.ValueKind != JsonValueKind.Object) continue;
-			items.Add(new TreeItem(
-				item.TryGetProperty("c", out var content) ? ReadNode(content, registry) : Empty,
-				ReadTreeItems(item, "ch", registry, depth + 1)));
-		}
-		return items.ToImmutable();
-	}
-
-	private static readonly (string Key, Func<TreeGuide, MarkupText> Get)[] GuidePieces =
-	[
-		("b", g => g.Branch), ("l", g => g.Last), ("p", g => g.Pipe), ("e", g => g.Blank),
+				w.Text("c", b.Content);
+				if (b.Alignment is { } alignment) w.String("a", Name(alignment));
+			},
+			r => new TextBlock(r.Text("c") ?? MarkupText.Empty) { Alignment = r.String("a") is null ? null : r.Enum("a", Alignment.Left) }),
+		BlockCodec.Create<Stack>("stack", (b, w) => w.Blocks("ch", b.Children.IsDefault ? [] : b.Children), r => new Stack(r.Blocks("ch"))),
+		BlockCodec.Create<Rule>("rule",
+			(b, w) =>
+			{
+				w.Text("ti", b.Title);
+				w.Border("bs", b.Border);
+				w.Enum("ta", b.TitleAlignment, Alignment.Center);
+			},
+			r => new Rule(r.Text("ti")) { Border = r.Border("bs"), TitleAlignment = r.Enum("ta", Alignment.Center) }),
+		BlockCodec.Create<Frame>("frame",
+			(b, w) =>
+			{
+				w.Block("b", b.Body);
+				w.Border("bs", b.Border);
+				w.Text("ti", b.Title);
+				w.Enum("ta", b.TitleAlignment, Alignment.Center);
+				w.Int("p", b.Padding, 1);
+			},
+			r => new Frame(r.Block("b") ?? new Stack([]))
+			{
+				Border = r.Border("bs"),
+				Title = r.Text("ti"),
+				TitleAlignment = r.Enum("ta", Alignment.Center),
+				Padding = r.Int("p", 1, 0, 64),
+			}),
+		BlockCodec.Create<Flex>("flex",
+			(b, w) =>
+			{
+				w.Blocks("it", b.Items.IsDefault ? [] : b.Items);
+				w.Int("g", b.Gap, 2);
+				w.Text("s", b.Separator);
+				w.Enum("j", b.Justify);
+				w.Enum("a", b.Align);
+				w.Bool("v", b.Vertical);
+			},
+			r => new Flex(r.Blocks("it"))
+			{
+				Gap = r.Int("g", 2, 0, 64),
+				Separator = r.Text("s"),
+				Justify = r.Enum<FlexJustify>("j"),
+				Align = r.Enum<FlexAlign>("a"),
+				Vertical = r.Bool("v"),
+			}),
+		BlockCodec.Create<Sized>("sized",
+			(b, w) =>
+			{
+				w.Block("c", b.Content);
+				if (b.Basis.Kind != BlockSizeKind.Auto) w.String("b", b.Basis.ToString());
+				w.Int("m", b.Min, 1);
+				w.Int("g", b.Grow, 1);
+			},
+			r => new Sized(r.Block("c") ?? new Stack([]))
+			{
+				Basis = BlockSize.TryParse(r.String("b"), out var basis) ? basis : BlockSize.Auto,
+				Min = r.Int("m", 1, 0, 4096),
+				Grow = r.Int("g", 1, 0, 1000),
+			}),
+		BlockCodec.Create<Figure>("figure",
+			(b, w) =>
+			{
+				w.String("s", b.Image.Source);
+				w.String("d", b.Image.Description);
+				if (b.Image.Width is { } width) w.Int("w", width);
+				if (b.Image.Height is { } height) w.Int("h", height);
+				if (b.Art.Length > 0) w.Text("art", b.Art);
+				w.Enum("f", b.Float);
+				w.Block("bd", b.Beside);
+				w.Int("g", b.Gap, 2);
+			},
+			r => new Figure(new ImageMarkup(r.String("s") ?? string.Empty, r.String("d"), r.Int("w"), r.Int("h")), r.Text("art") ?? MarkupText.Empty)
+			{
+				Float = r.Enum<FigureFloat>("f"),
+				Beside = r.Block("bd"),
+				Gap = r.Int("g", 2, 0, 64),
+			}),
+		BlockCodec.Create<Fields>("fields",
+			(b, w) =>
+			{
+				w.Array("f", b.Items.IsDefault ? [] : b.Items, (field, fw) =>
+				{
+					fw.Text("k", field.Label);
+					fw.Block("v", field.Value);
+				});
+				w.Enum("a", b.LabelAlignment, Alignment.Left);
+				w.Text("s", b.Separator);
+				w.Text("ld", b.Leader);
+				w.Int("c", b.Columns, 1);
+				w.Int("g", b.Gap, 3);
+			},
+			r => new Fields(r.Array("f", fr => new Field(fr.Text("k") ?? MarkupText.Empty, fr.Block("v") ?? new Stack([]))))
+			{
+				LabelAlignment = r.Enum("a", Alignment.Left),
+				Separator = r.Text("s"),
+				Leader = r.Text("ld"),
+				Columns = r.Int("c", 1, 1, 64),
+				Gap = r.Int("g", 3, 0, 64),
+			}),
+		BlockCodec.Create<Tree>("tree",
+			(b, w) =>
+			{
+				WriteTreeItems(w, b.Items);
+				w.Guide("gd", b.Guide);
+			},
+			r => new Tree(ReadTreeItems(r)) { Guide = r.Guide("gd") }),
+		BlockCodec.Create<Gauge>("gauge",
+			(b, w) =>
+			{
+				w.Number("v", b.Value);
+				w.Number("m", b.Maximum);
+				w.Text("k", b.Label);
+				w.Text("f", b.Filled);
+				w.Text("e", b.Empty);
+				w.Text("o", b.Open);
+				w.Text("c", b.Close);
+				w.Enum("sh", b.Show);
+				w.Int("bw", b.BarWidth);
+				w.Gradient("gr", b.Gradient);
+				w.Enum("sd", b.Shade);
+			},
+			r => new Gauge(r.Number("v") ?? 0, r.Number("m") ?? 0)
+			{
+				Label = r.Text("k"),
+				Filled = r.Text("f"),
+				Empty = r.Text("e"),
+				Open = r.Text("o"),
+				Close = r.Text("c"),
+				Show = r.Enum<GaugeShow>("sh"),
+				BarWidth = r.Int("bw", 0, 0, 4096),
+				Gradient = r.Gradient("gr"),
+				Shade = r.Enum<GaugeShade>("sd"),
+			}),
+		BlockCodec.Create<Bullets>("bullets",
+			(b, w) =>
+			{
+				w.Blocks("it", b.Items.IsDefault ? [] : b.Items);
+				w.Enum("st", b.Style);
+				w.Text("mk", b.Marker);
+				w.Int("s", b.Start, 1);
+			},
+			r => new Bullets(r.Blocks("it")) { Style = r.Enum<BulletStyle>("st"), Marker = r.Text("mk"), Start = r.Int("s", 1, -100000, 100000) }),
+		BlockCodec.Create<Grid>("grid",
+			(b, w) =>
+			{
+				w.Texts("it", b.Items.IsDefault ? [] : b.Items);
+				w.Int("g", b.Gap, 2);
+				w.Bool("ac", b.Across);
+			},
+			r => new Grid(r.Texts("it")) { Gap = r.Int("g", 2, 0, 64), Across = r.Bool("ac") }),
+		BlockCodec.Create<Table>("table",
+			(b, w) =>
+			{
+				w.Array("cols", b.Columns.IsDefault ? [] : b.Columns, (column, cw) =>
+				{
+					cw.Text("h", column.Header);
+					cw.Enum("a", column.Alignment, Alignment.Left);
+					cw.Int("mn", column.Min, 1);
+					cw.Int("mx", column.Max);
+					cw.Int("p", column.Priority, 1);
+					cw.Bool("nw", !column.Wrap);
+				});
+				w.Array("rows", b.Rows.IsDefault ? [] : b.Rows, (row, rw) => rw.Blocks("c", row.IsDefault ? [] : row));
+				w.Int("g", b.Gap, 2);
+				w.Text("s", b.Separator);
+				w.Text("hr", b.HeaderRule);
+			},
+			r => new Table(
+				r.Array("cols", cr => new TableColumn(cr.Text("h") ?? MarkupText.Empty)
+				{
+					Alignment = cr.Enum("a", Alignment.Left),
+					Min = cr.Int("mn", 1, 0, 4096),
+					Max = cr.Int("mx", 0, 0, 4096),
+					Priority = cr.Int("p", 1, 1, 1000),
+					Wrap = !cr.Bool("nw"),
+				}),
+				r.Array("rows", rr => rr.Blocks("c")))
+			{
+				Gap = r.Int("g", 2, 0, 64),
+				Separator = r.Text("s"),
+				HeaderRule = r.Text("hr"),
+			}),
+		BlockCodec.Create<Aligned>("aligned",
+			(b, w) =>
+			{
+				w.Block("c", b.Content);
+				w.String("a", Name(b.Alignment));
+			},
+			r => new Aligned(r.Block("c") ?? new Stack([]), r.Enum("a", Alignment.Left))),
+		BlockCodec.Create<Shaded>("shaded",
+			(b, w) =>
+			{
+				w.Block("c", b.Content);
+				w.Gradient("gr", b.Gradient);
+				w.Enum("fl", b.Flow, GradientFlow.Across);
+			},
+			r => new Shaded(r.Block("c") ?? new Stack([]), r.Gradient("gr") ?? new ColorGradient([])) { Flow = r.Enum("fl", GradientFlow.Across) }),
+		BlockCodec.Create<Colored>("colored",
+			(b, w) =>
+			{
+				w.Block("c", b.Content);
+				w.Markup("m", b.Markup);
+			},
+			r => r.Markup("m") is { } markup ? new Colored(r.Block("c") ?? new Stack([]), markup) : new Colored(r.Block("c") ?? new Stack([]), NeutralMarkup.Instance)),
+		BlockCodec.Create<Themed>("themed",
+			(b, w) =>
+			{
+				w.Block("c", b.Content);
+				w.Theme("th", b.Theme);
+			},
+			r => new Themed(r.Block("c") ?? new Stack([]), r.Theme("th"))),
 	];
 
-	private static TreeGuide ReadGuide(JsonElement element, MarkupRegistry? registry)
-	{
-		if (!element.TryGetProperty("gd", out var guide) || guide.ValueKind != JsonValueKind.Object) return TreeGuide.Line;
-		var style = TreeGuide.Preset(String(guide, "n") ?? string.Empty) ?? TreeGuide.None;
-		MarkupText Piece(string key, MarkupText fallback) => Text(guide, key, registry) ?? fallback;
-		return style with
+	private static readonly FrozenDictionary<string, BlockCodec> ByKind = BuiltIns.ToFrozenDictionary(codec => codec.Kind, StringComparer.Ordinal);
+
+	private static readonly FrozenDictionary<Type, BlockCodec> ByType = BuiltIns.ToFrozenDictionary(codec => codec.BlockType);
+
+	private static void WriteTreeItems(BlockWriter writer, System.Collections.Immutable.ImmutableArray<TreeItem> items) =>
+		writer.Array("it", items.IsDefault ? [] : items, (item, iw) =>
 		{
-			Name = String(guide, "n") ?? style.Name,
-			Branch = Piece("b", style.Branch),
-			Last = Piece("l", style.Last),
-			Pipe = Piece("p", style.Pipe),
-			Blank = Piece("e", style.Blank),
-		};
-	}
+			iw.Block("c", item.Content);
+			if (!item.Children.IsDefaultOrEmpty) WriteTreeItems(iw, item.Children);
+		});
 
-	private static readonly (string Key, Func<BorderStyle, MarkupText> Get)[] Pieces =
-	[
-		("tl", b => b.TopLeft), ("t", b => b.Top), ("tr", b => b.TopRight), ("l", b => b.Left), ("r", b => b.Right),
-		("bl", b => b.BottomLeft), ("b", b => b.Bottom), ("br", b => b.BottomRight), ("el", b => b.TeeLeft),
-		("er", b => b.TeeRight), ("o", b => b.TitleOpen), ("c", b => b.TitleClose),
-	];
-
-	/// <summary>A border as its preset's name and the pieces that differ from that preset.</summary>
-	private static void WriteBorder(Utf8JsonWriter writer, BorderStyle border, MarkupRegistry? registry)
-	{
-		writer.WriteStartObject("bs");
-		writer.WriteString("n", border.Name);
-		var preset = BorderStyle.Preset(border.Name) ?? BorderStyle.None;
-		foreach (var (key, get) in Pieces)
-			if (!Same(get(border), get(preset))) WriteText(writer, key, get(border), registry);
-		writer.WriteEndObject();
-	}
-
-	private static BorderStyle ReadBorder(JsonElement element, MarkupRegistry? registry)
-	{
-		if (!element.TryGetProperty("bs", out var border) || border.ValueKind != JsonValueKind.Object) return BorderStyle.None;
-		var style = BorderStyle.Preset(String(border, "n") ?? string.Empty) ?? BorderStyle.None;
-		MarkupText Piece(string key, MarkupText fallback) => Text(border, key, registry) ?? fallback;
-		return style with
-		{
-			TopLeft = Piece("tl", style.TopLeft),
-			Top = Piece("t", style.Top),
-			TopRight = Piece("tr", style.TopRight),
-			Left = Piece("l", style.Left),
-			Right = Piece("r", style.Right),
-			BottomLeft = Piece("bl", style.BottomLeft),
-			Bottom = Piece("b", style.Bottom),
-			BottomRight = Piece("br", style.BottomRight),
-			TeeLeft = Piece("el", style.TeeLeft),
-			TeeRight = Piece("er", style.TeeRight),
-			TitleOpen = Piece("o", style.TitleOpen),
-			TitleClose = Piece("c", style.TitleClose),
-		};
-	}
-
-	private static ImmutableArray<LayoutNode> Nodes(JsonElement element, string name, MarkupRegistry? registry)
-	{
-		if (!element.TryGetProperty(name, out var list) || list.ValueKind != JsonValueKind.Array) return [];
-		var nodes = ImmutableArray.CreateBuilder<LayoutNode>();
-		foreach (var child in list.EnumerateArray()) nodes.Add(ReadNode(child, registry));
-		return nodes.ToImmutable();
-	}
-
-	private static void WriteText(Utf8JsonWriter writer, string name, MarkupText text, MarkupRegistry? registry)
-	{
-		writer.WritePropertyName(name);
-		MarkupTextSerializer.Write(writer, text, registry);
-	}
-
-	/// <summary>A gradient as its space and its stops, each stop a one-character text carrying the stop's layer.</summary>
-	private static void WriteGradient(Utf8JsonWriter writer, string name, ColorGradient gradient, MarkupRegistry? registry)
-	{
-		writer.WriteStartObject(name);
-		writer.WriteString("sp", gradient.Space.ToString().ToLowerInvariant());
-		writer.WriteStartArray("st");
-		foreach (var stop in gradient.Stops.IsDefault ? [] : gradient.Stops)
-			MarkupTextSerializer.Write(writer, MarkupText.Wrap(stop, "#"), registry);
-		writer.WriteEndArray();
-		writer.WriteEndObject();
-	}
-
-	private static ColorGradient? ReadGradient(JsonElement element, string name, MarkupRegistry? registry)
-	{
-		if (!element.TryGetProperty(name, out var value) || value.ValueKind != JsonValueKind.Object) return null;
-		var stops = value.TryGetProperty("st", out var list) && list.ValueKind == JsonValueKind.Array
-			? list.EnumerateArray()
-				.Where(stop => stop.ValueKind == JsonValueKind.Object)
-				.Select(stop => MarkupTextSerializer.Read(stop, registry))
-				.SelectMany(text => text.Runs.SelectMany(run => run.Markups).OfType<IColorMarkup>().Take(1))
-				.ToImmutableArray()
-			: [];
-		var space = Enum.TryParse<GradientSpace>(String(value, "sp"), ignoreCase: true, out var parsed) ? parsed : GradientSpace.Oklch;
-		return new ColorGradient(stops, space);
-	}
-
-	private static MarkupText? Text(JsonElement element, string name, MarkupRegistry? registry) =>
-		element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Object
-			? MarkupTextSerializer.Read(value, registry)
-			: null;
+	private static System.Collections.Immutable.ImmutableArray<TreeItem> ReadTreeItems(BlockReader reader) =>
+		reader.Array("it", item => new TreeItem(item.Block("c") ?? new Stack([]), ReadTreeItems(item)));
 
 	private static string Name(Alignment alignment) => alignment.ToString().ToLowerInvariant();
-
-	private static Alignment Align(JsonElement element, string name, Alignment fallback) =>
-		Enum.TryParse<Alignment>(String(element, name), ignoreCase: true, out var alignment) ? alignment : fallback;
-
-	private static string? String(JsonElement element, string name) =>
-		element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
-
-	private static int? Int(JsonElement element, string name) =>
-		element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number)
-			? number
-			: null;
-
-	/// <summary>
-	/// Whether <paramref name="piece"/> is the default it would be read back as: the same characters with
-	/// no markup. <see cref="MarkupText.Equals(MarkupText)"/> compares plain text only, so a coloured piece
-	/// would otherwise be taken for the default and its colour lost.
-	/// </summary>
-	private static bool Same(MarkupText piece, MarkupText fallback) =>
-		ReferenceEquals(piece, fallback)
-		|| (piece.Text == fallback.Text && piece.Runs.IsDefaultOrEmpty && fallback.Runs.IsDefaultOrEmpty);
-
-	private static double? Double(JsonElement element, string name) =>
-		element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var number) && double.IsFinite(number)
-			? number
-			: null;
-
-	private static bool Bool(JsonElement element, string name) =>
-		element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.True;
 }

@@ -16,6 +16,8 @@ public sealed class MarkupRegistry
 	private readonly FrozenDictionary<string, IMarkupCodec> _codecsByKind;
 	private readonly FrozenDictionary<Type, IMarkupCodec> _codecsByType;
 	private readonly FrozenDictionary<(Type MarkupType, MarkupFormat Format), IBlockEmitter> _blockEmitters;
+	private readonly FrozenDictionary<string, Layout.BlockCodec> _blockCodecsByKind;
+	private readonly FrozenDictionary<Type, Layout.BlockCodec> _blockCodecsByType;
 
 	private MarkupRegistry(
 		FrozenDictionary<(Type, MarkupFormat), IMarkupEmitter> emitters,
@@ -24,8 +26,12 @@ public sealed class MarkupRegistry
 		FrozenDictionary<MarkupFormat, ILineFramer> lineFramers,
 		FrozenDictionary<string, IMarkupCodec> codecsByKind,
 		FrozenDictionary<Type, IMarkupCodec> codecsByType,
-		FrozenDictionary<(Type, MarkupFormat), IBlockEmitter> blockEmitters)
+		FrozenDictionary<(Type, MarkupFormat), IBlockEmitter> blockEmitters,
+		FrozenDictionary<string, Layout.BlockCodec> blockCodecsByKind,
+		FrozenDictionary<Type, Layout.BlockCodec> blockCodecsByType)
 	{
+		_blockCodecsByKind = blockCodecsByKind;
+		_blockCodecsByType = blockCodecsByType;
 		_emitters = emitters;
 		_setEmitters = setEmitters;
 		_framers = framers;
@@ -43,7 +49,9 @@ public sealed class MarkupRegistry
 		FrozenDictionary<MarkupFormat, ILineFramer>.Empty,
 		FrozenDictionary<string, IMarkupCodec>.Empty,
 		FrozenDictionary<Type, IMarkupCodec>.Empty,
-		FrozenDictionary<(Type, MarkupFormat), IBlockEmitter>.Empty);
+		FrozenDictionary<(Type, MarkupFormat), IBlockEmitter>.Empty,
+		FrozenDictionary<string, Layout.BlockCodec>.Empty,
+		FrozenDictionary<Type, Layout.BlockCodec>.Empty);
 
 	private static MarkupRegistry? _default;
 
@@ -94,7 +102,7 @@ public sealed class MarkupRegistry
 		var emitters = new Dictionary<(Type, MarkupFormat), IMarkupEmitter>(_emitters.Count + 1);
 		foreach (var pair in _emitters) emitters[pair.Key] = pair.Value;
 		emitters[(emitter.MarkupType, emitter.Format)] = emitter;
-		return new MarkupRegistry(emitters.ToFrozenDictionary(), _setEmitters, _framers, _lineFramers, _codecsByKind, _codecsByType, _blockEmitters);
+		return new MarkupRegistry(emitters.ToFrozenDictionary(), _setEmitters, _framers, _lineFramers, _codecsByKind, _codecsByType, _blockEmitters, _blockCodecsByKind, _blockCodecsByType);
 	}
 
 	/// <summary>Returns a registry with <paramref name="emitter"/> added, replacing any set emitter for the same format.</summary>
@@ -104,7 +112,7 @@ public sealed class MarkupRegistry
 		var setEmitters = new Dictionary<MarkupFormat, IMarkupSetEmitter>(_setEmitters.Count + 1);
 		foreach (var pair in _setEmitters) setEmitters[pair.Key] = pair.Value;
 		setEmitters[emitter.Format] = emitter;
-		return new MarkupRegistry(_emitters, setEmitters.ToFrozenDictionary(), _framers, _lineFramers, _codecsByKind, _codecsByType, _blockEmitters);
+		return new MarkupRegistry(_emitters, setEmitters.ToFrozenDictionary(), _framers, _lineFramers, _codecsByKind, _codecsByType, _blockEmitters, _blockCodecsByKind, _blockCodecsByType);
 	}
 
 	/// <summary>Returns a registry with <paramref name="framer"/> added, replacing any framer for the same format.</summary>
@@ -114,7 +122,7 @@ public sealed class MarkupRegistry
 		var framers = new Dictionary<MarkupFormat, IFormatFramer>(_framers.Count + 1);
 		foreach (var pair in _framers) framers[pair.Key] = pair.Value;
 		framers[framer.Format] = framer;
-		return new MarkupRegistry(_emitters, _setEmitters, framers.ToFrozenDictionary(), _lineFramers, _codecsByKind, _codecsByType, _blockEmitters);
+		return new MarkupRegistry(_emitters, _setEmitters, framers.ToFrozenDictionary(), _lineFramers, _codecsByKind, _codecsByType, _blockEmitters, _blockCodecsByKind, _blockCodecsByType);
 	}
 
 	/// <summary>Returns a registry with <paramref name="framer"/> added, replacing any line framer for the same format.</summary>
@@ -124,7 +132,7 @@ public sealed class MarkupRegistry
 		var lineFramers = new Dictionary<MarkupFormat, ILineFramer>(_lineFramers.Count + 1);
 		foreach (var pair in _lineFramers) lineFramers[pair.Key] = pair.Value;
 		lineFramers[framer.Format] = framer;
-		return new MarkupRegistry(_emitters, _setEmitters, _framers, lineFramers.ToFrozenDictionary(), _codecsByKind, _codecsByType, _blockEmitters);
+		return new MarkupRegistry(_emitters, _setEmitters, _framers, lineFramers.ToFrozenDictionary(), _codecsByKind, _codecsByType, _blockEmitters, _blockCodecsByKind, _blockCodecsByType);
 	}
 
 	/// <summary>
@@ -154,7 +162,7 @@ public sealed class MarkupRegistry
 		foreach (var pair in _codecsByType)
 			if (!string.Equals(pair.Value.Kind, codec.Kind, StringComparison.Ordinal)) byType[pair.Key] = pair.Value;
 		byType[codec.MarkupType] = codec;
-		return new MarkupRegistry(_emitters, _setEmitters, _framers, _lineFramers, byKind.ToFrozenDictionary(StringComparer.Ordinal), byType.ToFrozenDictionary(), _blockEmitters);
+		return new MarkupRegistry(_emitters, _setEmitters, _framers, _lineFramers, byKind.ToFrozenDictionary(StringComparer.Ordinal), byType.ToFrozenDictionary(), _blockEmitters, _blockCodecsByKind, _blockCodecsByType);
 	}
 
 	/// <summary>
@@ -169,7 +177,7 @@ public sealed class MarkupRegistry
 		var emitters = new Dictionary<(Type, MarkupFormat), IBlockEmitter>(_blockEmitters.Count + 1);
 		foreach (var pair in _blockEmitters) emitters[pair.Key] = pair.Value;
 		emitters[(emitter.MarkupType, emitter.Format)] = emitter;
-		return new MarkupRegistry(_emitters, _setEmitters, _framers, _lineFramers, _codecsByKind, _codecsByType, emitters.ToFrozenDictionary());
+		return new MarkupRegistry(_emitters, _setEmitters, _framers, _lineFramers, _codecsByKind, _codecsByType, emitters.ToFrozenDictionary(), _blockCodecsByKind, _blockCodecsByType);
 	}
 
 	/// <summary>The block emitter for <paramref name="markupType"/> in <paramref name="format"/>, or null.</summary>
@@ -210,4 +218,35 @@ public sealed class MarkupRegistry
 	/// <summary>The codec for a markup type, or <see langword="null"/>.</summary>
 	public IMarkupCodec? FindCodec(Type markupType) =>
 		_codecsByType.TryGetValue(markupType, out var codec) ? codec : null;
+
+	/// <summary>
+	/// A registry identical to this one plus <paramref name="codec"/>, which writes a block of your own
+	/// into a layout's JSON and reads it back, replacing any codec for the same kind or block type.
+	/// </summary>
+	/// <exception cref="ArgumentException"><paramref name="codec"/> claims a built-in block's kind.</exception>
+	public MarkupRegistry With(Layout.BlockCodec codec)
+	{
+		ArgumentNullException.ThrowIfNull(codec);
+		if (Layout.LayoutJson.IsBuiltIn(codec.Kind))
+			throw new ArgumentException($"The block kind '{codec.Kind}' is a built-in block's. Pick another kind.", nameof(codec));
+
+		var byKind = new Dictionary<string, Layout.BlockCodec>(StringComparer.Ordinal);
+		foreach (var pair in _blockCodecsByKind)
+			if (pair.Value.BlockType != codec.BlockType) byKind[pair.Key] = pair.Value;
+		byKind[codec.Kind] = codec;
+		var byType = new Dictionary<Type, Layout.BlockCodec>();
+		foreach (var pair in _blockCodecsByType)
+			if (!string.Equals(pair.Value.Kind, codec.Kind, StringComparison.Ordinal)) byType[pair.Key] = pair.Value;
+		byType[codec.BlockType] = codec;
+		return new MarkupRegistry(_emitters, _setEmitters, _framers, _lineFramers, _codecsByKind, _codecsByType, _blockEmitters,
+			byKind.ToFrozenDictionary(StringComparer.Ordinal), byType.ToFrozenDictionary());
+	}
+
+	/// <summary>The block codec registered for <paramref name="kind"/>, or <see langword="null"/>.</summary>
+	public Layout.BlockCodec? FindBlockCodec(string kind) =>
+		_blockCodecsByKind.TryGetValue(kind, out var codec) ? codec : null;
+
+	/// <summary>The block codec registered for <paramref name="blockType"/>, or <see langword="null"/>.</summary>
+	public Layout.BlockCodec? FindBlockCodec(Type blockType) =>
+		_blockCodecsByType.TryGetValue(blockType, out var codec) ? codec : null;
 }

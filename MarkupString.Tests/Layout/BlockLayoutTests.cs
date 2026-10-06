@@ -10,21 +10,20 @@ public class BlockLayoutTests
 
 	private static MarkupText P(string text) => MarkupText.Plain(text);
 
-	private static LayoutNode Finger() => new BoxNode(
-		new StackNode(
+	private static TextBlock T(string text) => new(P(text));
+
+	private static Block Finger() => new Stack(
+	[
+		new Flex(
 		[
-			new FlexNode(
-			[
-				new FlexItem(new TextNode(P("Sex: Male\nSpecies: Human (Machinery Child)")), BlockSize.Cells(35)),
-				new FlexItem(new TextNode(P("Job: Dark Warrior / Mad Scientist\nOrigin: Super Robot Wars AG\nOnline: 1h, Idle: 0s")), BlockSize.Cells(36)),
-			], new FlexOptions { Separator = P(" | ") }),
-			new RuleNode(P("Factions"), BorderStyle.Mush),
-			new TextNode(P("MEDJAI, Court of Stardust")),
-			new RuleNode(P("Quote"), BorderStyle.Mush),
-			new TextNode(P("Hooooo?")),
-		]),
-		BorderStyle.Mush with { TitleOpen = P("<< "), TitleClose = P(" >>") },
-		P("Mannaz Byron (Mannaz)"));
+			T("Sex: Male\nSpecies: Human (Machinery Child)").Sized(BlockSize.Cells(35)),
+			T("Job: Dark Warrior / Mad Scientist\nOrigin: Super Robot Wars AG\nOnline: 1h, Idle: 0s").Sized(BlockSize.Cells(36)),
+		]) { Separator = P(" | ") },
+		new Rule(P("Factions")) { Border = BorderStyle.Mush },
+		P("MEDJAI, Court of Stardust"),
+		new Rule(P("Quote")) { Border = BorderStyle.Mush },
+		P("Hooooo?"),
+	]).Bordered(P("Mannaz Byron (Mannaz)"), BorderStyle.Mush with { TitleOpen = P("<< "), TitleClose = P(" >>") });
 
 	private const string FingerText =
 		"+=========================<< Mannaz Byron (Mannaz) >>========================+\n" +
@@ -61,7 +60,7 @@ public class BlockLayoutTests
 	public async Task CellMarkup_SurvivesIntoTheHtml()
 	{
 		var red = MarkupText.Wrap(AnsiCodeParser.Parse("r"), "Hooooo?");
-		var html = BlockLayout.Build(new BoxNode(new TextNode(red), BorderStyle.Single), 20).Render(MarkupFormat.Html, Registry);
+		var html = BlockLayout.Build(new TextBlock(red).Bordered(border: BorderStyle.Single), 20).Render(MarkupFormat.Html, Registry);
 
 		await Assert.That(html).Contains("<div class=\"ms-text\">" + red.Render(MarkupFormat.Html, Registry) + "</div>");
 	}
@@ -90,7 +89,7 @@ public class BlockLayoutTests
 	[Test]
 	public async Task BlockSharingALine_RendersAsItsText()
 	{
-		var text = MarkupText.Concat(P("Look: "), BlockLayout.Build(new RuleNode(P("Hi"), BorderStyle.Mush), 20));
+		var text = MarkupText.Concat(P("Look: "), BlockLayout.Build(new Rule(P("Hi")) { Border = BorderStyle.Mush }, 20));
 
 		await Assert.That(text.Render(MarkupFormat.Html, Registry)).IsEqualTo("Look: =======&lt; Hi &gt;=======");
 	}
@@ -98,7 +97,7 @@ public class BlockLayoutTests
 	[Test]
 	public async Task BlockOnLinesOfItsOwn_DrawsAmongOtherText()
 	{
-		var text = MarkupText.Join(MarkupText.NewLine, [P("Before"), BlockLayout.Build(new RuleNode(P("Hi"), BorderStyle.Mush), 20), P("After")]);
+		var text = MarkupText.Join(MarkupText.NewLine, [P("Before"), BlockLayout.Build(new Rule(P("Hi")) { Border = BorderStyle.Mush }, 20), P("After")]);
 
 		await Assert.That(text.Render(MarkupFormat.Html, Registry)).IsEqualTo(
 			"Before\n<div class=\"ms-layout\" style=\"max-width:20ch\"><div class=\"ms-rule ms-border-mush\" role=\"separator\"><span class=\"ms-rule-title\">Hi</span></div></div>\nAfter");
@@ -115,7 +114,7 @@ public class BlockLayoutTests
 		await Assert.That(read.Text).IsEqualTo(text.Text);
 		await Assert.That(read.Render(MarkupFormat.Html, Registry)).IsEqualTo(text.Render(MarkupFormat.Html, Registry));
 		await Assert.That(MarkupTextSerializer.Serialize(read, Registry)).IsEqualTo(json);
-		await Assert.That(BlockLayout.Relayout(read, 40, BlockRenderOptions.Default).ToPlainText())
+		await Assert.That(BlockLayout.Relayout(read, 40, LayoutContext.Default).ToPlainText())
 			.IsEqualTo(BlockLayout.Build(Finger(), 40).ToPlainText());
 	}
 
@@ -123,11 +122,11 @@ public class BlockLayoutTests
 	public async Task Serializer_KeepsCustomBorderPieces()
 	{
 		var border = BorderStyle.Double with { Top = MarkupText.Wrap(AnsiCodeParser.Parse("b"), "=-") };
-		var text = BlockLayout.Build(new BoxNode(new TextNode(P("x")), border, P("T")), 12);
+		var text = BlockLayout.Build(new TextBlock(P("x")).Bordered(P("T"), border), 12);
 
 		var read = MarkupTextSerializer.Deserialize(MarkupTextSerializer.Serialize(text, Registry), Registry);
 
-		await Assert.That(BlockLayout.Relayout(read, 0, BlockRenderOptions.Default with { AsciiOnly = false }).Render(MarkupFormat.Ansi, Registry))
+		await Assert.That(BlockLayout.Relayout(read, 0, LayoutContext.Default with { AsciiOnly = false }).Render(MarkupFormat.Ansi, Registry))
 			.IsEqualTo(text.Render(MarkupFormat.Ansi, Registry));
 		await Assert.That(text.ToPlainText().Split('\n')[0]).IsEqualTo("╔=-=╡ T ╞=-╗");
 	}
@@ -135,9 +134,9 @@ public class BlockLayoutTests
 	[Test]
 	public async Task Relayout_FitsAFluidBlockToTheReader()
 	{
-		var text = BlockLayout.Build(new BoxNode(new TextNode(P("one two three four five six")), BorderStyle.Ascii), 40, fluid: true);
+		var text = BlockLayout.Build(new TextBlock(P("one two three four five six")).Bordered(border: BorderStyle.Ascii), 40, fluid: true);
 
-		var narrow = BlockLayout.Relayout(text, 16, BlockRenderOptions.Default);
+		var narrow = BlockLayout.Relayout(text, 16, LayoutContext.Default);
 
 		await Assert.That(narrow.ToPlainText()).IsEqualTo(
 			"+--------------+\n" +
@@ -150,17 +149,17 @@ public class BlockLayoutTests
 	[Test]
 	public async Task Relayout_KeepsAFixedBlocksWidth()
 	{
-		var text = BlockLayout.Build(new RuleNode(null, BorderStyle.Ascii), 10);
+		var text = BlockLayout.Build(new Rule { Border = BorderStyle.Ascii }, 10);
 
-		await Assert.That(BlockLayout.Relayout(text, 30, BlockRenderOptions.Default).ToPlainText()).IsEqualTo("----------");
+		await Assert.That(BlockLayout.Relayout(text, 30, LayoutContext.Default).ToPlainText()).IsEqualTo("----------");
 	}
 
 	[Test]
 	public async Task Relayout_AsciiOnly_ReplacesBoxDrawing()
 	{
-		var text = BlockLayout.Build(new BoxNode(new TextNode(P("hi")), BorderStyle.Double, P("T")), 10);
+		var text = BlockLayout.Build(new TextBlock(P("hi")).Bordered(P("T"), BorderStyle.Double), 10);
 
-		var ascii = BlockLayout.Relayout(text, 0, new BlockRenderOptions { AsciiOnly = true });
+		var ascii = BlockLayout.Relayout(text, 0, new LayoutContext { AsciiOnly = true });
 
 		await Assert.That(ascii.ToPlainText()).IsEqualTo(
 			"+==< T >=+\n" +
@@ -174,9 +173,9 @@ public class BlockLayoutTests
 	[Arguments("rounded", "+---+")]
 	public async Task AsciiOnly_KeepsTheWeightOfTheLine(string preset, string top)
 	{
-		var text = BlockLayout.Build(new BoxNode(new TextNode(P("x")), BorderStyle.Preset(preset)!), 5);
+		var text = BlockLayout.Build(new TextBlock(P("x")).Bordered(border: BorderStyle.Preset(preset)!), 5);
 
-		var ascii = BlockLayout.Relayout(text, 0, new BlockRenderOptions { AsciiOnly = true });
+		var ascii = BlockLayout.Relayout(text, 0, new LayoutContext { AsciiOnly = true });
 
 		await Assert.That(ascii.ToPlainText().Split('\n')[0]).IsEqualTo(top);
 	}
@@ -186,26 +185,25 @@ public class BlockLayoutTests
 	public async Task AsciiOnly_ReplacesAPieceItCannotTranslate()
 	{
 		var style = BorderStyle.Single with { Top = P("★") };
-		var text = BlockLayout.Build(new BoxNode(new TextNode(P("x")), style), 5);
+		var text = BlockLayout.Build(new TextBlock(P("x")).Bordered(border: style), 5);
 
-		await Assert.That(BlockLayout.Relayout(text, 0, new BlockRenderOptions { AsciiOnly = true }).ToPlainText().Split('\n')[0])
+		await Assert.That(BlockLayout.Relayout(text, 0, new LayoutContext { AsciiOnly = true }).ToPlainText().Split('\n')[0])
 			.IsEqualTo("+---+");
 	}
 
 	[Test]
 	public async Task AsciiOnly_TranslatesAFlexSeparator()
 	{
-		var flex = new FlexNode([new FlexItem(new TextNode(P("a")), BlockSize.Cells(3)), new FlexItem(new TextNode(P("b")), BlockSize.Cells(3))],
-			FlexOptions.Default with { Separator = P(" │ ") });
+		var flex = new Flex([T("a").Sized(BlockSize.Cells(3)), T("b").Sized(BlockSize.Cells(3))]) { Separator = P(" │ ") };
 		var text = BlockLayout.Build(flex, 9);
 
-		await Assert.That(BlockLayout.Relayout(text, 0, new BlockRenderOptions { AsciiOnly = true }).ToPlainText()).IsEqualTo("a   | b  ");
+		await Assert.That(BlockLayout.Relayout(text, 0, new LayoutContext { AsciiOnly = true }).ToPlainText()).IsEqualTo("a   | b  ");
 	}
 
 	[Test]
 	public async Task Linear_ReadsTheContentInOrder()
 	{
-		var lines = BlockLayout.Lines(Finger(), 78, new BlockRenderOptions { Linear = true });
+		var lines = BlockLayout.Lines(Finger(), 78, new LayoutContext { Linear = true });
 
 		await Assert.That(string.Join("\n", lines.Select(l => l.ToPlainText()))).IsEqualTo(
 			"Mannaz Byron (Mannaz)\nSex: Male\nSpecies: Human (Machinery Child)\nJob: Dark Warrior / Mad Scientist\n" +
@@ -215,11 +213,11 @@ public class BlockLayoutTests
 	[Test]
 	public async Task Flex_StacksWhenItemsDoNotFit()
 	{
-		var flex = new FlexNode(
+		var flex = new Flex(
 		[
-			new FlexItem(new TextNode(P("left")), BlockSize.Cells(10)),
-			new FlexItem(new TextNode(P("right")), BlockSize.Cells(10)),
-		], FlexOptions.Default);
+			T("left").Sized(BlockSize.Cells(10)),
+			T("right").Sized(BlockSize.Cells(10)),
+		]);
 
 		await Assert.That(string.Join("|", BlockLayout.Lines(flex, 15).Select(l => l.ToPlainText()))).IsEqualTo("left           |right          ");
 		await Assert.That(string.Join("|", BlockLayout.Lines(flex, 22).Select(l => l.ToPlainText()))).IsEqualTo("left        right     ");
@@ -228,12 +226,13 @@ public class BlockLayoutTests
 	[Test]
 	public async Task Flex_AutoItemsShareTheRest()
 	{
-		var flex = new FlexNode(
+		var flex = new Flex(
 		[
-			new FlexItem(new TextNode(P("a")), BlockSize.Cells(4)),
-			new FlexItem(new TextNode(P("b"))),
-			new FlexItem(new TextNode(P("c")), Grow: 2),
-		], new FlexOptions { Gap = 1 });
+			T("a").Sized(BlockSize.Cells(4)),
+			P("b"),
+			T("c").Sized(grow: 2),
+		])
+		{ Gap = 1 };
 
 		// 20 cells, two gaps: 18 to share. 4 fixed; 14 split 1:2 as 4 and 9, the odd cell to the first.
 		await Assert.That(BlockLayout.Lines(flex, 20)[0].ToPlainText()).IsEqualTo("a    b     c        ");
@@ -242,12 +241,12 @@ public class BlockLayoutTests
 	[Test]
 	public async Task Figure_TextFlowsRoundTheArt()
 	{
-		var figure = new FigureNode(
-			new ImageMarkup("https://example.com/cat.png", "A cat"),
-			P("/\\_/\\\n( o.o )\n > ^ <"),
-			FigureFloat.Left,
-			new TextNode(P("The cat sits by the fire and watches the door all night long.")),
-			Gap: 1);
+		var figure = new Figure(new ImageMarkup("https://example.com/cat.png", "A cat"), P("/\\_/\\\n( o.o )\n > ^ <"))
+		{
+			Float = FigureFloat.Left,
+			Beside = P("The cat sits by the fire and watches the door all night long."),
+			Gap = 1,
+		};
 
 		var lines = BlockLayout.Lines(figure, 24).Select(l => l.ToPlainText()).ToArray();
 
@@ -261,7 +260,7 @@ public class BlockLayoutTests
 	[Test]
 	public async Task Figure_InHtml_FloatsThePicture()
 	{
-		var figure = new FigureNode(new ImageMarkup("https://example.com/cat.png", "A \"cat\""), P("art"), FigureFloat.Right, new TextNode(P("Text")));
+		var figure = new Figure(new ImageMarkup("https://example.com/cat.png", "A \"cat\""), P("art")) { Float = FigureFloat.Right, Beside = P("Text") };
 
 		var html = BlockLayout.Build(figure, 30).Render(MarkupFormat.Html, Registry);
 
@@ -272,7 +271,7 @@ public class BlockLayoutTests
 	public async Task Figure_RefusedPicture_ShowsItsArt()
 	{
 		var registry = Registry.WithLayoutImages(source => !source.Contains("example.com", StringComparison.Ordinal));
-		var figure = new FigureNode(new ImageMarkup("https://example.com/cat.png", "A cat"), P("=^.^="));
+		var figure = new Figure(new ImageMarkup("https://example.com/cat.png", "A cat"), P("=^.^="));
 
 		var html = BlockLayout.Build(figure, 30).Render(MarkupFormat.Html, registry);
 
@@ -283,7 +282,7 @@ public class BlockLayoutTests
 	[Test]
 	public async Task Figure_ScriptAddress_IsNeverShown()
 	{
-		var figure = new FigureNode(new ImageMarkup("javascript:alert(1)", "x"), MarkupText.Empty);
+		var figure = new Figure(new ImageMarkup("javascript:alert(1)", "x"), MarkupText.Empty);
 
 		await Assert.That(BlockLayout.Build(figure, 30).Render(MarkupFormat.Html, Registry)).DoesNotContain("javascript");
 	}
@@ -295,7 +294,7 @@ public class BlockLayoutTests
 	[Arguments("file:///etc/passwd", false)]
 	public async Task Figure_RelativeAddresses_AreTheGamesOwn(string source, bool shown)
 	{
-		var figure = new FigureNode(new ImageMarkup(source, "x"), MarkupText.Empty);
+		var figure = new Figure(new ImageMarkup(source, "x"), MarkupText.Empty);
 
 		var html = BlockLayout.Build(figure, 30).Render(MarkupFormat.Html, Registry);
 		await Assert.That(html.Contains("<img")).IsEqualTo(shown).Because(html);
@@ -308,8 +307,8 @@ public class BlockLayoutTests
 	[Test]
 	public async Task LookAlikeLayouts_KeepTheirOwnTrees()
 	{
-		var shown = BlockLayout.Build(new FigureNode(new ImageMarkup("https://example.com/a.png", "x"), MarkupText.Empty), 30);
-		var refused = BlockLayout.Build(new FigureNode(new ImageMarkup("file:///a.png", "x"), MarkupText.Empty), 30);
+		var shown = BlockLayout.Build(new Figure(new ImageMarkup("https://example.com/a.png", "x"), MarkupText.Empty), 30);
+		var refused = BlockLayout.Build(new Figure(new ImageMarkup("file:///a.png", "x"), MarkupText.Empty), 30);
 
 		await Assert.That(refused.Render(MarkupFormat.Html, Registry)).DoesNotContain("<img");
 		await Assert.That(shown.Render(MarkupFormat.Html, Registry)).Contains("src=\"https://example.com/a.png\"");
@@ -318,7 +317,7 @@ public class BlockLayoutTests
 	[Test]
 	public async Task TheSameBoxTwice_IsTwoBoxes()
 	{
-		var box = new BoxNode(new TextNode(P("Hi")), BorderStyle.Ascii);
+		var box = new TextBlock(P("Hi")).Bordered(border: BorderStyle.Ascii);
 		var html = MarkupText.Concat([BlockLayout.Build(box, 10), P("\n"), BlockLayout.Build(box, 10)]).Render(MarkupFormat.Html, Registry);
 
 		await Assert.That(html.Split("<fieldset").Length - 1).IsEqualTo(2);
@@ -329,18 +328,18 @@ public class BlockLayoutTests
 	[Arguments(Alignment.Right, "========< T >=")]
 	[Arguments(Alignment.Center, "=====< T >====")]
 	public async Task Rule_TitleToOneSide_StaysACellIn(Alignment alignment, string expected)
-		=> await Assert.That(BlockLayout.Build(new RuleNode(P("T"), BorderStyle.Mush, alignment), 14).ToPlainText()).IsEqualTo(expected);
+		=> await Assert.That(BlockLayout.Build(new Rule(P("T")) { Border = BorderStyle.Mush, TitleAlignment = alignment }, 14).ToPlainText()).IsEqualTo(expected);
 
 	[Test]
-	public async Task AsNode_AdoptsAWholeBlock()
+	public async Task AsBlock_AdoptsAWholeBlock()
 	{
-		var inner = BlockLayout.Build(new RuleNode(P("Inner"), BorderStyle.Ascii), 30);
+		var inner = BlockLayout.Build(new Rule(P("Inner")) { Border = BorderStyle.Ascii }, 30);
 
-		await Assert.That(BlockLayout.AsNode(inner)).IsTypeOf<RuleNode>();
-		await Assert.That(BlockLayout.AsNode(MarkupText.Concat(inner, P("!")))).IsTypeOf<TextNode>();
+		await Assert.That(BlockLayout.AsBlock(inner)).IsTypeOf<Rule>();
+		await Assert.That(BlockLayout.AsBlock(MarkupText.Concat(inner, P("!")))).IsTypeOf<TextBlock>();
 
 		// Adopted as a rule, it becomes the box's divider rather than a quoted line of text.
-		var outer = BlockLayout.Build(new BoxNode(BlockLayout.AsNode(inner), BorderStyle.Ascii), 20);
+		var outer = BlockLayout.Build(BlockLayout.AsBlock(inner).Bordered(border: BorderStyle.Ascii), 20);
 		await Assert.That(outer.ToPlainText()).IsEqualTo(
 			"+------------------+\n" +
 			"+-----< Inner >----+\n" +
@@ -350,7 +349,7 @@ public class BlockLayoutTests
 	[Test]
 	public async Task RepeatedBlock_MergesAndFallsBackToText()
 	{
-		var rule = BlockLayout.Build(new RuleNode(null, BorderStyle.Ascii), 4);
+		var rule = BlockLayout.Build(new Rule { Border = BorderStyle.Ascii }, 4);
 		var twice = MarkupText.Concat(rule, rule);
 
 		await Assert.That(twice.Render(MarkupFormat.Html, Registry)).IsEqualTo("--------");
@@ -384,17 +383,17 @@ public class BlockLayoutTests
 		await Assert.That(BlockSize.TryParse(text, out _)).IsFalse();
 
 	[Test]
-	public async Task Nodes_SplitsBlocksFromTheTextAroundThem()
+	public async Task Blocks_SplitsBlocksFromTheTextAroundThem()
 	{
-		var rule = BlockLayout.Build(new RuleNode(P("Quote"), BorderStyle.Mush), 20);
+		var rule = BlockLayout.Build(new Rule(P("Quote")) { Border = BorderStyle.Mush }, 20);
 		var body = MarkupText.Join(MarkupText.NewLine, [P("Intro"), rule, P("Hooooo?")]);
 
-		var nodes = BlockLayout.Nodes(body);
+		var nodes = BlockLayout.Blocks(body);
 
 		await Assert.That(nodes.Count).IsEqualTo(3);
-		await Assert.That(((TextNode)nodes[0]).Content.ToPlainText()).IsEqualTo("Intro");
-		await Assert.That(nodes[1]).IsTypeOf<RuleNode>();
-		await Assert.That(((TextNode)nodes[2]).Content.ToPlainText()).IsEqualTo("Hooooo?");
-		await Assert.That(BlockLayout.Nodes(MarkupText.Concat(P("x "), rule)).Single()).IsTypeOf<TextNode>();
+		await Assert.That(((TextBlock)nodes[0]).Content.ToPlainText()).IsEqualTo("Intro");
+		await Assert.That(nodes[1]).IsTypeOf<Rule>();
+		await Assert.That(((TextBlock)nodes[2]).Content.ToPlainText()).IsEqualTo("Hooooo?");
+		await Assert.That(BlockLayout.Blocks(MarkupText.Concat(P("x "), rule)).Single()).IsTypeOf<TextBlock>();
 	}
 }
