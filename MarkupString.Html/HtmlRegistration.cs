@@ -24,7 +24,8 @@ public static class HtmlRegistration
 			.With(new HtmlTagEmitter(MarkupFormat.Html))
 			.With(new HtmlTagEmitter(MarkupFormat.Pueblo))
 			.With(new HtmlTagEmitter(MarkupFormat.Mxp))
-			.With(new HtmlMarkupCodec());
+			.With(new HtmlMarkupCodec())
+			.With(new LayoutHtmlEmitter());
 
 		foreach (var type in ElementHtmlEmitter.Types) registry = registry.With(new ElementHtmlEmitter(type));
 		return registry;
@@ -45,5 +46,17 @@ public static class HtmlRegistration
 		registry = registry.WithHtml().With(new HtmlTagEmitter(MarkupFormat.Html, htmlPolicy));
 		foreach (var type in ElementHtmlEmitter.Types) registry = registry.With(new ElementHtmlEmitter(type, htmlPolicy));
 		return registry;
+	}
+
+	/// <summary>
+	/// Holds the pictures a layout's figures show in HTML to <paramref name="allowImage"/>, which is given
+	/// each address; a refused one shows its text art, or its description, instead.
+	/// </summary>
+	/// <remarks>Only http, https and relative addresses are ever shown, whatever this allows.</remarks>
+	public static MarkupRegistry WithLayoutImages(this MarkupRegistry registry, Func<string, bool> allowImage)
+	{
+		ArgumentNullException.ThrowIfNull(registry);
+		ArgumentNullException.ThrowIfNull(allowImage);
+		return registry.With(new LayoutHtmlEmitter(allowImage));
 	}
 }
