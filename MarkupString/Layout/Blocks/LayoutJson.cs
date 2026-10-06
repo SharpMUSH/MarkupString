@@ -19,18 +19,22 @@ internal static class LayoutJson
 		if (layout.Fluid) writer.WriteBoolean("fl", true);
 		writer.WriteNumber("l", layout.Length);
 		writer.WriteString("h", layout.Hash.ToString("x16", CultureInfo.InvariantCulture));
+		writer.WriteString("id", layout.Id.ToString("x16", CultureInfo.InvariantCulture));
 		writer.WritePropertyName("n");
 		WriteNode(writer, layout.Root, registry);
 	}
 
 	public static IMarkup Read(JsonElement element, MarkupRegistry? registry)
 	{
-		var hash = String(element, "h") is { } hex && ulong.TryParse(hex, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out var parsed)
-			? parsed
-			: 0UL;
+		var hash = Hex(element, "h");
 		var root = element.TryGetProperty("n", out var node) ? ReadNode(node, registry) : Empty;
-		return new LayoutMarkup(root, Int(element, "w") ?? 0, Bool(element, "fl"), Int(element, "l") ?? -1, hash);
+		return new LayoutMarkup(root, Int(element, "w") ?? 0, Bool(element, "fl"), Int(element, "l") ?? -1, hash, Hex(element, "id"));
 	}
+
+	private static ulong Hex(JsonElement element, string name) =>
+		String(element, name) is { } hex && ulong.TryParse(hex, NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out var value)
+			? value
+			: 0UL;
 
 	private static readonly LayoutNode Empty = new StackNode([]);
 

@@ -23,10 +23,12 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **`IBlockMarkup` and `IBlockEmitter`**, the general mechanism behind it: a layer a format may draw from
   its own description instead of the text. The renderer hands a block to its emitter only when the text
   it covers is unchanged (a fingerprint check) and on lines of its own, so a block cut, edited or run into
-  other text renders as the text it now is. `MarkupRegistry.With(IBlockEmitter)`, `FindBlockEmitter`, and
+  other text renders as the text it now is. Each layout carries an `Id`, so two built apart never merge
+  into one region or stand in for each other, however alike their text. `MarkupRegistry.With(IBlockEmitter)`, `FindBlockEmitter`, and
   `MarkupTextRenderer.RenderFragment` for an emitter writing nested text.
 - **`HtmlRegistration.WithLayoutImages(Func<string, bool>)`** holds the pictures layouts show in HTML to a
-  host's policy; a refused picture shows its text art or description.
+  host's policy; a refused picture shows its text art or description. Only http, https and relative
+  addresses are ever shown; `//host` addresses are not.
 
 ## 2.7.0 — 2026-10-02
 

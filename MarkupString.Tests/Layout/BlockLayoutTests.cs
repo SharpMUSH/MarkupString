@@ -255,6 +255,42 @@ public class BlockLayoutTests
 	}
 
 	[Test]
+	[Arguments("/images/cat.png", true)]
+	[Arguments("images/cat.png", true)]
+	[Arguments("//elsewhere.example/cat.png", false)]
+	[Arguments("file:///etc/passwd", false)]
+	public async Task Figure_RelativeAddresses_AreTheGamesOwn(string source, bool shown)
+	{
+		var figure = new FigureNode(new ImageMarkup(source, "x"), MarkupText.Empty);
+
+		var html = BlockLayout.Build(figure, 30).Render(MarkupFormat.Html, Registry);
+		await Assert.That(html.Contains("<img")).IsEqualTo(shown).Because(html);
+	}
+
+	/// <summary>
+	/// Two layouts that draw the same text are still two layouts: one never takes the other's place,
+	/// as an interned run's layer would if they compared equal.
+	/// </summary>
+	[Test]
+	public async Task LookAlikeLayouts_KeepTheirOwnTrees()
+	{
+		var shown = BlockLayout.Build(new FigureNode(new ImageMarkup("https://example.com/a.png", "x"), MarkupText.Empty), 30);
+		var refused = BlockLayout.Build(new FigureNode(new ImageMarkup("file:///a.png", "x"), MarkupText.Empty), 30);
+
+		await Assert.That(refused.Render(MarkupFormat.Html, Registry)).DoesNotContain("<img");
+		await Assert.That(shown.Render(MarkupFormat.Html, Registry)).Contains("src=\"https://example.com/a.png\"");
+	}
+
+	[Test]
+	public async Task TheSameBoxTwice_IsTwoBoxes()
+	{
+		var box = new BoxNode(new TextNode(P("Hi")), BorderStyle.Ascii);
+		var html = MarkupText.Concat([BlockLayout.Build(box, 10), P("\n"), BlockLayout.Build(box, 10)]).Render(MarkupFormat.Html, Registry);
+
+		await Assert.That(html.Split("<fieldset").Length - 1).IsEqualTo(2);
+	}
+
+	[Test]
 	public async Task AsNode_AdoptsAWholeBlock()
 	{
 		var inner = BlockLayout.Build(new RuleNode(P("Inner"), BorderStyle.Ascii), 30);

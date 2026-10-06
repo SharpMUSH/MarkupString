@@ -207,8 +207,15 @@ internal sealed class LayoutHtmlEmitter(Func<string, bool>? allowImage = null) :
 	private bool IsShowable(string source)
 	{
 		if (string.IsNullOrWhiteSpace(source) || source.Any(c => char.IsControl(c) || char.IsWhiteSpace(c))) return false;
-		if (!Uri.TryCreate(source, UriKind.RelativeOrAbsolute, out var uri)) return false;
-		if (uri.IsAbsoluteUri && uri.Scheme is not ("http" or "https")) return false;
+
+		// On Unix a rooted path parses as an absolute file: address and "//host" as one on another
+		// host, so both are decided before the parser sees them.
+		if (source.StartsWith("//", StringComparison.Ordinal) || source.StartsWith('\\')) return false;
+		if (!source.StartsWith('/'))
+		{
+			if (!Uri.TryCreate(source, UriKind.RelativeOrAbsolute, out var uri)) return false;
+			if (uri.IsAbsoluteUri && uri.Scheme is not ("http" or "https")) return false;
+		}
 		return allowImage?.Invoke(source) ?? true;
 	}
 
