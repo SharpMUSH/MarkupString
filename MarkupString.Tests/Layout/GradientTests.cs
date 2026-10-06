@@ -74,8 +74,8 @@ public class GradientTests
 	public async Task Css_NamesTheSpace()
 		=> await Assert.That(Gradient(GradientSpace.Oklch, Red, Blue).ToCss()).IsEqualTo("linear-gradient(to right in oklch, #ff0000, #0000ff)");
 
-	private static GaugeNode Gauge(GaugeShade shade, double value = 6) =>
-		new(value, 12, null, GaugeOptions.Default with { BarWidth = 4, Show = GaugeShow.None, Gradient = Gradient(GradientSpace.Oklch, Red, Lime), Shade = shade });
+	private static Gauge Gauge(GaugeShade shade, double value = 6) =>
+		new(value, 12) { BarWidth = 4, Show = GaugeShow.None, Gradient = Gradient(GradientSpace.Oklch, Red, Lime), Shade = shade };
 
 	[Test]
 	public async Task Gauge_ByCell_EachCellTakesItsPlace()
@@ -114,11 +114,11 @@ public class GradientTests
 	[Test]
 	public async Task Gauge_Gradient_SurvivesTheSerializer()
 	{
-		var text = BlockLayout.Build(Gauge(GaugeShade.Value) with { Options = Gauge(GaugeShade.Value).Options with { Gradient = Gradient(GradientSpace.Hsl, Red, Blue) } }, 20);
+		var text = BlockLayout.Build(Gauge(GaugeShade.Value) with { Gradient = Gradient(GradientSpace.Hsl, Red, Blue) }, 20);
 
 		var read = MarkupTextSerializer.Deserialize(MarkupTextSerializer.Serialize(text, Registry), Registry);
 
-		await Assert.That(BlockLayout.Relayout(read, 0, BlockRenderOptions.Default).Render(MarkupFormat.Ansi, Registry))
+		await Assert.That(BlockLayout.Relayout(read, 0, LayoutContext.Default).Render(MarkupFormat.Ansi, Registry))
 			.IsEqualTo(text.Render(MarkupFormat.Ansi, Registry));
 		await Assert.That(read.Render(MarkupFormat.Html, Registry)).IsEqualTo(text.Render(MarkupFormat.Html, Registry));
 	}

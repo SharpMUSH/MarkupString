@@ -10,18 +10,18 @@ public class FieldsAndTreeTests
 
 	private static MarkupText P(string text) => MarkupText.Plain(text);
 
-	private static string[] Lines(LayoutNode node, int width, BlockRenderOptions? options = null) =>
-		[.. BlockLayout.Lines(node, width, options).Select(line => line.ToPlainText().TrimEnd())];
+	private static string[] Lines(Block block, int width, LayoutContext? context = null) =>
+		[.. BlockLayout.Lines(block, width, context).Select(line => line.ToPlainText().TrimEnd())];
 
-	private static FieldsNode Fields(FieldsOptions? options, params (string Label, string Value)[] pairs) =>
-		new([.. pairs.Select(pair => new Field(P(pair.Label), new TextNode(P(pair.Value))))], options ?? FieldsOptions.Default);
+	private static Fields Sheet(params (string Label, string Value)[] pairs) =>
+		new([.. pairs.Select(pair => new Field(P(pair.Label), P(pair.Value)))]);
 
-	private static readonly (string, string)[] Sheet =
+	private static readonly (string, string)[] Character =
 		[("Sex", "Male"), ("Species", "Human"), ("Job", "Dark Warrior"), ("Origin", "Super Robot Wars AG")];
 
 	[Test]
 	public async Task Fields_LineTheValuesUp()
-		=> await Assert.That(Lines(Fields(null, Sheet), 40)).IsEquivalentTo(new[]
+		=> await Assert.That(Lines(Sheet(Character), 40)).IsEquivalentTo(new[]
 		{
 			"Sex:     Male",
 			"Species: Human",
@@ -31,7 +31,7 @@ public class FieldsAndTreeTests
 
 	[Test]
 	public async Task Fields_RightAlignedLabels()
-		=> await Assert.That(Lines(Fields(FieldsOptions.Default with { LabelAlignment = Alignment.Right }, Sheet[..2]), 40)).IsEquivalentTo(new[]
+		=> await Assert.That(Lines(Sheet(Character[..2]) with { LabelAlignment = Alignment.Right }, 40)).IsEquivalentTo(new[]
 		{
 			"    Sex: Male",
 			"Species: Human",
@@ -39,7 +39,7 @@ public class FieldsAndTreeTests
 
 	[Test]
 	public async Task Fields_LeaderFillsToTheSeparator()
-		=> await Assert.That(Lines(Fields(FieldsOptions.Default with { Leader = P(".") }, Sheet[..2]), 40)).IsEquivalentTo(new[]
+		=> await Assert.That(Lines(Sheet(Character[..2]) with { Leader = P(".") }, 40)).IsEquivalentTo(new[]
 		{
 			"Sex....: Male",
 			"Species: Human",
@@ -48,7 +48,7 @@ public class FieldsAndTreeTests
 	/// <summary>A value too long for its column wraps under itself, not under the label.</summary>
 	[Test]
 	public async Task Fields_ValueWrapsWithAHangingIndent()
-		=> await Assert.That(Lines(Fields(null, ("Quote", "Hooooo? said the machine child, laughing")), 24)).IsEquivalentTo(new[]
+		=> await Assert.That(Lines(Sheet(("Quote", "Hooooo? said the machine child, laughing")), 24)).IsEquivalentTo(new[]
 		{
 			"Quote: Hooooo? said the",
 			"       machine child,",
@@ -57,7 +57,7 @@ public class FieldsAndTreeTests
 
 	[Test]
 	public async Task Fields_TooNarrow_PutEachLabelOverItsValue()
-		=> await Assert.That(Lines(Fields(null, ("Species", "Human")), 14)).IsEquivalentTo(new[]
+		=> await Assert.That(Lines(Sheet(("Species", "Human")), 14)).IsEquivalentTo(new[]
 		{
 			"Species:",
 			"  Human",
@@ -65,7 +65,7 @@ public class FieldsAndTreeTests
 
 	[Test]
 	public async Task Fields_DealtIntoColumns_DownFirst()
-		=> await Assert.That(Lines(Fields(FieldsOptions.Default with { Columns = 2 }, Sheet), 60)).IsEquivalentTo(new[]
+		=> await Assert.That(Lines(Sheet(Character) with { Columns = 2 }, 60)).IsEquivalentTo(new[]
 		{
 			"Sex:     Male" + new string(' ', 19) + "Job:    Dark Warrior",
 			"Species: Human" + new string(' ', 18) + "Origin: Super Robot Wars AG",
@@ -73,7 +73,7 @@ public class FieldsAndTreeTests
 
 	[Test]
 	public async Task Fields_ColumnsStackWhenNarrow()
-		=> await Assert.That(Lines(Fields(FieldsOptions.Default with { Columns = 2 }, Sheet), 30)).IsEquivalentTo(new[]
+		=> await Assert.That(Lines(Sheet(Character) with { Columns = 2 }, 30)).IsEquivalentTo(new[]
 		{
 			"Sex:     Male",
 			"Species: Human",
@@ -84,31 +84,32 @@ public class FieldsAndTreeTests
 	[Test]
 	public async Task Fields_InHtml_AreADefinitionList()
 	{
-		var html = BlockLayout.Build(Fields(null, Sheet[..1]), 30).Render(MarkupFormat.Html, Registry);
+		var html = BlockLayout.Build(Sheet(Character[..1]), 30).Render(MarkupFormat.Html, Registry);
 
 		await Assert.That(html).Contains("<dl class=\"ms-fields\"><div class=\"ms-field\"><dt>Sex:</dt><dd><div class=\"ms-text\">Male</div></dd></div></dl>");
 	}
 
 	[Test]
 	public async Task Fields_Linear_ReadLabelThenValue()
-		=> await Assert.That(Lines(Fields(FieldsOptions.Default with { Columns = 2 }, Sheet[..2]), 40, new BlockRenderOptions { Linear = true }))
+		=> await Assert.That(Lines(Sheet(Character[..2]) with { Columns = 2 }, 40, new LayoutContext { Linear = true }))
 			.IsEquivalentTo(new[] { "Sex: Male", "Species: Human" });
 
-	private static TreeNode Channels(TreeGuide guide) => new(
+	private static Tree Channels(TreeGuide guide) => new(
 	[
-		new TreeItem(new TextNode(P("Channels")),
+		new TreeItem(P("Channels"),
 		[
-			new TreeItem(new TextNode(P("Public")),
+			new TreeItem(P("Public"),
 			[
-				new TreeItem(new TextNode(P("+chat"))),
-				new TreeItem(new TextNode(P("+ooc"))),
+				new TreeItem(P("+chat")),
+				new TreeItem(P("+ooc")),
 			]),
-			new TreeItem(new TextNode(P("Staff")),
+			new TreeItem(P("Staff"),
 			[
-				new TreeItem(new TextNode(P("+admin"))),
+				new TreeItem(P("+admin")),
 			]),
 		]),
-	], guide);
+	])
+	{ Guide = guide };
 
 	[Test]
 	public async Task Tree_DrawsGuides()
@@ -124,7 +125,7 @@ public class FieldsAndTreeTests
 
 	[Test]
 	public async Task Tree_AsciiOnly_KeepsTheLastBranchDistinct()
-		=> await Assert.That(Lines(Channels(TreeGuide.Rounded), 30, new BlockRenderOptions { AsciiOnly = true })).IsEquivalentTo(new[]
+		=> await Assert.That(Lines(Channels(TreeGuide.Rounded), 30, new LayoutContext { AsciiOnly = true })).IsEquivalentTo(new[]
 		{
 			"Channels",
 			"|- Public",
@@ -137,7 +138,7 @@ public class FieldsAndTreeTests
 	[Test]
 	public async Task Tree_LongItemWrapsUnderItself()
 	{
-		var tree = new TreeNode([new TreeItem(new TextNode(P("Root")), [new TreeItem(new TextNode(P("a long item that wraps"))), new TreeItem(new TextNode(P("b")))])], TreeGuide.Line);
+		var tree = new Tree([new TreeItem(P("Root"), [new TreeItem(P("a long item that wraps")), new TreeItem(P("b"))])]);
 
 		await Assert.That(Lines(tree, 16)).IsEquivalentTo(new[]
 		{
@@ -150,7 +151,7 @@ public class FieldsAndTreeTests
 
 	[Test]
 	public async Task Tree_Linear_IndentsInsteadOfDrawing()
-		=> await Assert.That(Lines(Channels(TreeGuide.Line), 30, new BlockRenderOptions { Linear = true })).IsEquivalentTo(new[]
+		=> await Assert.That(Lines(Channels(TreeGuide.Line), 30, new LayoutContext { Linear = true })).IsEquivalentTo(new[]
 		{
 			"Channels",
 			"  Public",
@@ -172,14 +173,14 @@ public class FieldsAndTreeTests
 	[Test]
 	public async Task FieldsAndTree_SurviveTheSerializer()
 	{
-		var node = new StackNode([Fields(FieldsOptions.Default with { Leader = P("."), Columns = 2, LabelAlignment = Alignment.Right }, Sheet), Channels(TreeGuide.Heavy with { Last = P("┗▶ ") })]);
+		var node = new Stack([Sheet(Character) with { Leader = P("."), Columns = 2, LabelAlignment = Alignment.Right }, Channels(TreeGuide.Heavy with { Last = P("┗▶ ") })]);
 		var text = BlockLayout.Build(node, 60);
 
 		var json = MarkupTextSerializer.Serialize(text, Registry);
 		var read = MarkupTextSerializer.Deserialize(json, Registry);
 
 		await Assert.That(read.Render(MarkupFormat.Html, Registry)).IsEqualTo(text.Render(MarkupFormat.Html, Registry));
-		await Assert.That(BlockLayout.Relayout(read, 0, new BlockRenderOptions { AsciiOnly = true }).ToPlainText()).Contains("`- +admin");
+		await Assert.That(BlockLayout.Relayout(read, 0, new LayoutContext { AsciiOnly = true }).ToPlainText()).Contains("`- +admin");
 		await Assert.That(MarkupTextSerializer.Serialize(read, Registry)).IsEqualTo(json);
 	}
 }

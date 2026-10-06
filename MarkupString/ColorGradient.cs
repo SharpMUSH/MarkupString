@@ -42,6 +42,25 @@ public enum GradientSpace
 	Hsl,
 }
 
+/// <summary>Which way a <see cref="ColorGradient"/> runs over text (<see cref="ColorGradient.Shade"/>).</summary>
+public enum GradientFlow
+{
+	/// <summary>Along the characters that show, in reading order, on through every line.</summary>
+	Characters,
+
+	/// <summary>Along the words, each word in one colour.</summary>
+	Words,
+
+	/// <summary>Left to right by column, every line alike, so the colours line up down the text.</summary>
+	Across,
+
+	/// <summary>Top to bottom, each line in one colour.</summary>
+	Down,
+
+	/// <summary>From the top-left corner to the bottom-right, a line counting as two columns, as a terminal cell is about twice as tall as it is wide.</summary>
+	Diagonal,
+}
+
 /// <summary>
 /// Colours blended one into the next, evenly spaced from 0 to 1. <see cref="At"/> gives the colour
 /// at a point; <see cref="ToCss()"/> the same gradient for a page. Colours are blended in
@@ -57,6 +76,22 @@ public sealed record ColorGradient(ImmutableArray<IColorMarkup> Stops, GradientS
 {
 	private RgbColor[] Colors => [.. (Stops.IsDefault ? [] : Stops).Select(stop => stop.Foreground).OfType<RgbColor>()];
 
+	/// <summary>Whether the colours run back again once they reach the end: red to blue to red.</summary>
+	public bool Mirror { get; init; }
+
+	/// <summary>How many times the colours run over the length, one after the other.</summary>
+	public int Repeat { get; init; } = 1;
+
+	private int Cycles => Math.Clamp(Repeat, 1, 1000);
+
+	/// <summary>Where along the stops <paramref name="position"/> falls, once repeated and mirrored.</summary>
+	private double Place(double position)
+	{
+		var scaled = Math.Clamp(position, 0, 1) * Cycles;
+		var part = scaled >= Cycles ? 1 : scaled - Math.Floor(scaled);
+		return Mirror ? 1 - Math.Abs(2 * part - 1) : part;
+	}
+
 	/// <summary>Whether there is a colour to draw: at least one stop with a known colour.</summary>
 	public bool IsEmpty => Colors.Length == 0;
 
@@ -67,7 +102,7 @@ public sealed record ColorGradient(ImmutableArray<IColorMarkup> Stops, GradientS
 		if (colors.Length == 0) return default;
 		if (colors.Length == 1 || !double.IsFinite(position)) return colors[0];
 
-		var scaled = Math.Clamp(position, 0, 1) * (colors.Length - 1);
+		var scaled = Place(position) * (colors.Length - 1);
 		var segment = Math.Min((int)scaled, colors.Length - 2);
 		return Blend(colors[segment], colors[segment + 1], scaled - segment, Space);
 	}
@@ -84,33 +119,121 @@ public sealed record ColorGradient(ImmutableArray<IColorMarkup> Stops, GradientS
 	}
 
 	/// <summary>
-	/// The gradient as a CSS <c>linear-gradient</c> from left to right, in its own space
-	/// (<c>linear-gradient(to right in oklch, …)</c>); empty when there is no colour.
+	/// <paramref name="text"/> in the gradient's colours, running <paramref name="flow"/>. Spaces take
+	/// no colour, and colour the text sets itself is kept.
 	/// </summary>
-	public string ToCss()
+	public MarkupText Shade(MarkupText text, GradientFlow flow = GradientFlow.Characters)
 	{
-		var colors = Colors;
-		if (colors.Length == 0) return string.Empty;
-		var list = string.Join(", ", (colors.Length == 1 ? [colors[0], colors[0]] : colors).Select(color => color.ToHex()));
-		return $"linear-gradient(to right in {Space.ToString().ToLowerInvariant()}, {list})";
+		ArgumentNullException.ThrowIfNull(text);
+		var lines = text.Split("\n");
+		return MarkupText.Join(MarkupText.NewLine, ShadeLines(lines, flow, lines.Max(line => line.DisplayWidth)));
+	}
+
+	/// <summary>Each of <paramref name="lines"/> shaded as one block <paramref name="width"/> cells wide.</summary>
+	internal MarkupText[] ShadeLines(IReadOnlyList<MarkupText> lines, GradientFlow flow, int width)
+	{
+		if (IsEmpty || lines.Count == 0) return [.. lines];
+
+		// Every character that shows, with its line, its column and its word.
+		var cells = new List<(int Row, int Column, int Word, MarkupText Character)>[lines.Count];
+		var shown = 0;
+		var words = 0;
+		for (var row = 0; row < lines.Count; row++)
+		{
+			cells[row] = [];
+			var column = 0;
+			var inWord = false;
+			foreach (var character in lines[row].EnumerateGraphemes())
+			{
+				var visible = !string.IsNullOrWhiteSpace(character.ToPlainText());
+				if (visible && !inWord) words++;
+				inWord = visible;
+				cells[row].Add((row, visible ? column : -1, words - 1, character));
+				if (visible) shown++;
+				column += character.DisplayWidth;
+			}
+		}
+
+		var height = lines.Count;
+		var across = Math.Max(1, width) - 1;
+		var diagonal = across + 2 * (height - 1);
+		static double Of(double place, double length) => length > 0 ? place / length : 0;
+
+		var result = new MarkupText[lines.Count];
+		var index = 0;
+		for (var row = 0; row < lines.Count; row++)
+		{
+			var pieces = new List<MarkupText>(cells[row].Count);
+			foreach (var (_, column, word, character) in cells[row])
+			{
+				if (column < 0)
+				{
+					pieces.Add(character);
+					continue;
+				}
+				var position = flow switch
+				{
+					GradientFlow.Words => Of(word, words - 1),
+					GradientFlow.Across => Of(column, across),
+					GradientFlow.Down => Of(row, height - 1),
+					GradientFlow.Diagonal => Of(column + 2 * row, diagonal),
+					_ => Of(index, shown - 1),
+				};
+				index++;
+				pieces.Add(Paint(character, position));
+			}
+			result[row] = MarkupText.Concat(pieces);
+		}
+		return result;
 	}
 
 	/// <summary>
-	/// The gradient as a plain CSS <c>linear-gradient</c> through <paramref name="samples"/> colours
-	/// worked out here, for a browser that cannot blend in <see cref="Space"/> itself. Blending in sRGB
-	/// between close samples draws nearly the same thing.
+	/// The gradient as a CSS <c>linear-gradient</c> from left to right, in its own space
+	/// (<c>linear-gradient(to right in oklch, …)</c>); empty when there is no colour.
 	/// </summary>
-	public string ToCss(int samples)
+	public string ToCss() => ToCss("to right");
+
+	/// <summary>The gradient as a CSS <c>linear-gradient</c> running <paramref name="direction"/>, <c>to bottom</c> say, in its own space.</summary>
+	public string ToCss(string direction)
+	{
+		var colors = Colors;
+		if (colors.Length == 0) return string.Empty;
+		if (colors.Length == 1) colors = [colors[0], colors[0]];
+		var space = Space.ToString().ToLowerInvariant();
+		if (!Mirror && Cycles == 1)
+			return $"linear-gradient({direction} in {space}, {string.Join(", ", colors.Select(color => color.ToHex()))})";
+
+		// Each run of the colours over its own stretch; a mirrored run goes there and back.
+		var run = Mirror ? [.. colors, .. colors.Reverse().Skip(1)] : colors;
+		var stops = new List<string>();
+		for (var cycle = 0; cycle < Cycles; cycle++)
+			for (var i = 0; i < run.Length; i++)
+				stops.Add($"{run[i].ToHex()} {Percent((cycle + i / (double)(run.Length - 1)) / Cycles)}");
+		return $"linear-gradient({direction} in {space}, {string.Join(", ", stops)})";
+	}
+
+	/// <summary>
+	/// The gradient as a plain CSS <c>linear-gradient</c> through <paramref name="samples"/> colours a
+	/// run, left to right, worked out here, for a browser that cannot blend in <see cref="Space"/> itself. Blending in
+	/// sRGB between close samples draws nearly the same thing.
+	/// </summary>
+	public string ToCss(int samples) => ToCss(samples, "to right");
+
+	/// <summary>The sampled gradient (<see cref="ToCss(int)"/>) running <paramref name="direction"/>.</summary>
+	public string ToCss(int samples, string direction)
 	{
 		if (IsEmpty) return string.Empty;
-		samples = Math.Max(2, samples);
+		samples = Math.Max(2, samples) * Cycles * (Mirror ? 2 : 1);
 		var list = string.Join(", ", Enumerable.Range(0, samples).Select(i => At(i / (double)(samples - 1)).ToHex()));
-		return $"linear-gradient(to right, {list})";
+		return $"linear-gradient({direction}, {list})";
 	}
+
+	private static string Percent(double fraction) =>
+		(Math.Round(fraction * 100, 2)).ToString("0.##", CultureInfo.InvariantCulture) + "%";
 
 	/// <inheritdoc/>
 	public bool Equals(ColorGradient? other) =>
-		other is not null && Space == other.Space
+		other is not null && Space == other.Space && Mirror == other.Mirror && Cycles == other.Cycles
 		&& (Stops.IsDefault ? [] : Stops).SequenceEqual(other.Stops.IsDefault ? [] : other.Stops);
 
 	/// <inheritdoc/>
@@ -118,6 +241,8 @@ public sealed record ColorGradient(ImmutableArray<IColorMarkup> Stops, GradientS
 	{
 		var hash = new HashCode();
 		hash.Add(Space);
+		hash.Add(Mirror);
+		hash.Add(Cycles);
 		foreach (var stop in Stops.IsDefault ? [] : Stops) hash.Add(stop);
 		return hash.ToHashCode();
 	}

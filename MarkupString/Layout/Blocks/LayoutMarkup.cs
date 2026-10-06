@@ -13,13 +13,13 @@ namespace MarkupString.Layout;
 public sealed class LayoutMarkup : IBlockMarkup, IEquatable<LayoutMarkup>
 {
 	/// <summary>Creates the layer for <paramref name="root"/> laid out at <paramref name="width"/> as <paramref name="text"/>.</summary>
-	public LayoutMarkup(LayoutNode root, int width, bool fluid, ReadOnlySpan<char> text)
+	public LayoutMarkup(Block root, int width, bool fluid, ReadOnlySpan<char> text)
 		: this(root, width, fluid, text.Length, Fingerprint(text), NewId())
 	{
 	}
 
 	/// <summary>Creates the layer from an identity and a fingerprint already taken, as a reader does.</summary>
-	public LayoutMarkup(LayoutNode root, int width, bool fluid, int length, ulong hash, ulong id)
+	public LayoutMarkup(Block root, int width, bool fluid, int length, ulong hash, ulong id)
 	{
 		ArgumentNullException.ThrowIfNull(root);
 		Root = root;
@@ -34,7 +34,7 @@ public sealed class LayoutMarkup : IBlockMarkup, IEquatable<LayoutMarkup>
 	public ulong Id { get; }
 
 	/// <summary>The tree.</summary>
-	public LayoutNode Root { get; }
+	public Block Root { get; }
 
 	/// <summary>The width the text was laid out at.</summary>
 	public int Width { get; }

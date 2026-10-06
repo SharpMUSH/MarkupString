@@ -1,7 +1,7 @@
 namespace MarkupString.Layout;
 
 /// <summary>
-/// The characters a <see cref="TreeNode"/>'s guide lines are drawn with. Each piece is drawn before an
+/// The characters a <see cref="Tree"/>'s guide lines are drawn with. Each piece is drawn before an
 /// item's lines, all four the same width so the levels line up.
 /// </summary>
 public sealed record TreeGuide

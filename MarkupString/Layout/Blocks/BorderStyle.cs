@@ -1,7 +1,7 @@
 namespace MarkupString.Layout;
 
 /// <summary>
-/// The characters a <see cref="BoxNode"/> or a <see cref="RuleNode"/> is drawn with. Every piece is
+/// The characters a <see cref="Frame"/> or a <see cref="Rule"/> is drawn with. Every piece is
 /// <see cref="MarkupText"/>, so it can carry colour, and the edges are fill patterns: <c>=-</c>
 /// alternates along the whole edge.
 /// </summary>

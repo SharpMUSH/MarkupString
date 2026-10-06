@@ -67,6 +67,9 @@ public static class LayoutCss
 		".ms-grid { list-style: none; margin: 0; padding: 0; display: grid; }\n" +
 		".ms-grid.ms-down { display: block; }\n" +
 		".ms-grid > li { break-inside: avoid; white-space: pre-wrap; overflow-wrap: anywhere; }\n" +
+		".ms-pre { margin: 0; font: inherit; white-space: pre; overflow-x: auto; }\n" +
+		".ms-shaded { -webkit-background-clip: text; background-clip: text; color: transparent; }\n" +
+		".ms-shaded :is(.ms-box, .ms-gauge-bar), .ms-shaded :is(.ms-rule, .ms-divider)::before, .ms-shaded :is(.ms-rule, .ms-divider)::after { border-image: var(--ms-shade) 1; }\n" +
 		".ms-table-wrap { max-width: 100%; overflow-x: auto; }\n" +
 		".ms-table { border-collapse: collapse; }\n" +
 		".ms-table th, .ms-table td { padding: 0 1ch; vertical-align: top; text-align: left; }\n" +

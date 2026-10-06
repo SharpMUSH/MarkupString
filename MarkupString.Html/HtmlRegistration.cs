@@ -25,7 +25,7 @@ public static class HtmlRegistration
 			.With(new HtmlTagEmitter(MarkupFormat.Pueblo))
 			.With(new HtmlTagEmitter(MarkupFormat.Mxp))
 			.With(new HtmlMarkupCodec())
-			.With(new LayoutHtmlEmitter());
+			.With(LayoutHtmlEmitter.Default);
 
 		foreach (var type in ElementHtmlEmitter.Types) registry = registry.With(new ElementHtmlEmitter(type));
 		return registry;
@@ -57,6 +57,17 @@ public static class HtmlRegistration
 	{
 		ArgumentNullException.ThrowIfNull(registry);
 		ArgumentNullException.ThrowIfNull(allowImage);
-		return registry.With(new LayoutHtmlEmitter(allowImage));
+		return registry.With(LayoutHtmlEmitter.In(registry).WithImages(allowImage));
+	}
+
+	/// <summary>
+	/// Draws blocks of type <typeparamref name="T"/> in HTML with <paramref name="renderer"/>, in place of
+	/// the lines they draw in a <c>&lt;pre&gt;</c>. Apply it after <c>WithHtml()</c>.
+	/// </summary>
+	public static MarkupRegistry WithBlockHtml<T>(this MarkupRegistry registry, BlockHtmlRenderer<T> renderer) where T : Layout.Block
+	{
+		ArgumentNullException.ThrowIfNull(registry);
+		ArgumentNullException.ThrowIfNull(renderer);
+		return registry.With(LayoutHtmlEmitter.In(registry).With(typeof(T), (block, html) => renderer((T)block, html)));
 	}
 }
