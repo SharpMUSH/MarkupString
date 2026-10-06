@@ -111,7 +111,7 @@ internal static class ElementCodecs
 	public static IMarkupCodec? Find(string kind) => ByKind.GetValueOrDefault(kind);
 
 	/// <summary>Whether <paramref name="kind"/> is one core writes itself, and so not one to register.</summary>
-	public static bool IsReserved(string kind) => kind == NeutralKind || ByKind.ContainsKey(kind);
+	public static bool IsReserved(string kind) => kind == NeutralKind || kind == Layout.LayoutJson.Kind || ByKind.ContainsKey(kind);
 
 	private static string? String(JsonElement element, string name) =>
 		element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;

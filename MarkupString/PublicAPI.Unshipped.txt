@@ -1,9 +1,279 @@
 #nullable enable
+abstract MarkupString.Layout.LayoutNode.<Clone>$() -> MarkupString.Layout.LayoutNode!
 MarkupString.ControlCharacterWidth
 MarkupString.ControlCharacterWidth.One = 1 -> MarkupString.ControlCharacterWidth
 MarkupString.ControlCharacterWidth.Zero = 0 -> MarkupString.ControlCharacterWidth
+MarkupString.IBlockEmitter
+MarkupString.IBlockEmitter.Format.get -> MarkupString.MarkupFormat!
+MarkupString.IBlockEmitter.MarkupType.get -> System.Type!
+MarkupString.IBlockEmitter.TryEmit(MarkupString.IBlockMarkup! markup, MarkupString.MarkupText! region, MarkupString.MarkupRegistry! registry, System.Buffers.IBufferWriter<char>! output) -> bool
+MarkupString.IBlockMarkup
+MarkupString.IBlockMarkup.Covers(System.ReadOnlySpan<char> text) -> bool
+MarkupString.Layout.BlockLayout
+MarkupString.Layout.BlockRenderOptions
+MarkupString.Layout.BlockRenderOptions.<Clone>$() -> MarkupString.Layout.BlockRenderOptions!
+MarkupString.Layout.BlockRenderOptions.AsciiOnly.get -> bool
+MarkupString.Layout.BlockRenderOptions.AsciiOnly.init -> void
+MarkupString.Layout.BlockRenderOptions.BlockRenderOptions() -> void
+MarkupString.Layout.BlockRenderOptions.Equals(MarkupString.Layout.BlockRenderOptions? other) -> bool
+MarkupString.Layout.BlockRenderOptions.Linear.get -> bool
+MarkupString.Layout.BlockRenderOptions.Linear.init -> void
+MarkupString.Layout.BlockSize
+MarkupString.Layout.BlockSize.BlockSize() -> void
+MarkupString.Layout.BlockSize.Equals(MarkupString.Layout.BlockSize other) -> bool
+MarkupString.Layout.BlockSize.Kind.get -> MarkupString.Layout.BlockSizeKind
+MarkupString.Layout.BlockSize.Resolve(int available) -> int?
+MarkupString.Layout.BlockSize.Value.get -> int
+MarkupString.Layout.BlockSizeKind
+MarkupString.Layout.BlockSizeKind.Auto = 0 -> MarkupString.Layout.BlockSizeKind
+MarkupString.Layout.BlockSizeKind.Cells = 1 -> MarkupString.Layout.BlockSizeKind
+MarkupString.Layout.BlockSizeKind.Percent = 2 -> MarkupString.Layout.BlockSizeKind
+MarkupString.Layout.BorderStyle
+MarkupString.Layout.BorderStyle.<Clone>$() -> MarkupString.Layout.BorderStyle!
+MarkupString.Layout.BorderStyle.BorderStyle() -> void
+MarkupString.Layout.BorderStyle.Bottom.get -> MarkupString.MarkupText!
+MarkupString.Layout.BorderStyle.Bottom.init -> void
+MarkupString.Layout.BorderStyle.BottomLeft.get -> MarkupString.MarkupText!
+MarkupString.Layout.BorderStyle.BottomLeft.init -> void
+MarkupString.Layout.BorderStyle.BottomRight.get -> MarkupString.MarkupText!
+MarkupString.Layout.BorderStyle.BottomRight.init -> void
+MarkupString.Layout.BorderStyle.Equals(MarkupString.Layout.BorderStyle? other) -> bool
+MarkupString.Layout.BorderStyle.IsAscii.get -> bool
+MarkupString.Layout.BorderStyle.Left.get -> MarkupString.MarkupText!
+MarkupString.Layout.BorderStyle.Left.init -> void
+MarkupString.Layout.BorderStyle.Name.get -> string!
+MarkupString.Layout.BorderStyle.Name.init -> void
+MarkupString.Layout.BorderStyle.Right.get -> MarkupString.MarkupText!
+MarkupString.Layout.BorderStyle.Right.init -> void
+MarkupString.Layout.BorderStyle.TeeLeft.get -> MarkupString.MarkupText!
+MarkupString.Layout.BorderStyle.TeeLeft.init -> void
+MarkupString.Layout.BorderStyle.TeeRight.get -> MarkupString.MarkupText!
+MarkupString.Layout.BorderStyle.TeeRight.init -> void
+MarkupString.Layout.BorderStyle.TitleClose.get -> MarkupString.MarkupText!
+MarkupString.Layout.BorderStyle.TitleClose.init -> void
+MarkupString.Layout.BorderStyle.TitleOpen.get -> MarkupString.MarkupText!
+MarkupString.Layout.BorderStyle.TitleOpen.init -> void
+MarkupString.Layout.BorderStyle.ToAscii() -> MarkupString.Layout.BorderStyle!
+MarkupString.Layout.BorderStyle.Top.get -> MarkupString.MarkupText!
+MarkupString.Layout.BorderStyle.Top.init -> void
+MarkupString.Layout.BorderStyle.TopLeft.get -> MarkupString.MarkupText!
+MarkupString.Layout.BorderStyle.TopLeft.init -> void
+MarkupString.Layout.BorderStyle.TopRight.get -> MarkupString.MarkupText!
+MarkupString.Layout.BorderStyle.TopRight.init -> void
+MarkupString.Layout.BoxNode
+MarkupString.Layout.BoxNode.Body.get -> MarkupString.Layout.LayoutNode!
+MarkupString.Layout.BoxNode.Body.init -> void
+MarkupString.Layout.BoxNode.Border.get -> MarkupString.Layout.BorderStyle!
+MarkupString.Layout.BoxNode.Border.init -> void
+MarkupString.Layout.BoxNode.BoxNode(MarkupString.Layout.LayoutNode! Body, MarkupString.Layout.BorderStyle! Border, MarkupString.MarkupText? Title = null, MarkupString.Layout.Alignment TitleAlignment = MarkupString.Layout.Alignment.Center, int Padding = 1) -> void
+MarkupString.Layout.BoxNode.Deconstruct(out MarkupString.Layout.LayoutNode! Body, out MarkupString.Layout.BorderStyle! Border, out MarkupString.MarkupText? Title, out MarkupString.Layout.Alignment TitleAlignment, out int Padding) -> void
+MarkupString.Layout.BoxNode.Equals(MarkupString.Layout.BoxNode? other) -> bool
+MarkupString.Layout.BoxNode.Padding.get -> int
+MarkupString.Layout.BoxNode.Padding.init -> void
+MarkupString.Layout.BoxNode.Title.get -> MarkupString.MarkupText?
+MarkupString.Layout.BoxNode.Title.init -> void
+MarkupString.Layout.BoxNode.TitleAlignment.get -> MarkupString.Layout.Alignment
+MarkupString.Layout.BoxNode.TitleAlignment.init -> void
+MarkupString.Layout.FigureFloat
+MarkupString.Layout.FigureFloat.Left = 1 -> MarkupString.Layout.FigureFloat
+MarkupString.Layout.FigureFloat.None = 0 -> MarkupString.Layout.FigureFloat
+MarkupString.Layout.FigureFloat.Right = 2 -> MarkupString.Layout.FigureFloat
+MarkupString.Layout.FigureNode
+MarkupString.Layout.FigureNode.Art.get -> MarkupString.MarkupText!
+MarkupString.Layout.FigureNode.Art.init -> void
+MarkupString.Layout.FigureNode.Beside.get -> MarkupString.Layout.LayoutNode?
+MarkupString.Layout.FigureNode.Beside.init -> void
+MarkupString.Layout.FigureNode.Deconstruct(out MarkupString.ImageMarkup! Image, out MarkupString.MarkupText! Art, out MarkupString.Layout.FigureFloat Float, out MarkupString.Layout.LayoutNode? Beside, out int Gap) -> void
+MarkupString.Layout.FigureNode.Equals(MarkupString.Layout.FigureNode? other) -> bool
+MarkupString.Layout.FigureNode.FigureNode(MarkupString.ImageMarkup! Image, MarkupString.MarkupText! Art, MarkupString.Layout.FigureFloat Float = MarkupString.Layout.FigureFloat.None, MarkupString.Layout.LayoutNode? Beside = null, int Gap = 2) -> void
+MarkupString.Layout.FigureNode.Float.get -> MarkupString.Layout.FigureFloat
+MarkupString.Layout.FigureNode.Float.init -> void
+MarkupString.Layout.FigureNode.Gap.get -> int
+MarkupString.Layout.FigureNode.Gap.init -> void
+MarkupString.Layout.FigureNode.Image.get -> MarkupString.ImageMarkup!
+MarkupString.Layout.FigureNode.Image.init -> void
+MarkupString.Layout.FlexAlign
+MarkupString.Layout.FlexAlign.Center = 1 -> MarkupString.Layout.FlexAlign
+MarkupString.Layout.FlexAlign.End = 2 -> MarkupString.Layout.FlexAlign
+MarkupString.Layout.FlexAlign.Start = 0 -> MarkupString.Layout.FlexAlign
+MarkupString.Layout.FlexItem
+MarkupString.Layout.FlexItem.<Clone>$() -> MarkupString.Layout.FlexItem!
+MarkupString.Layout.FlexItem.Basis.get -> MarkupString.Layout.BlockSize
+MarkupString.Layout.FlexItem.Basis.init -> void
+MarkupString.Layout.FlexItem.Content.get -> MarkupString.Layout.LayoutNode!
+MarkupString.Layout.FlexItem.Content.init -> void
+MarkupString.Layout.FlexItem.Deconstruct(out MarkupString.Layout.LayoutNode! Content, out MarkupString.Layout.BlockSize Basis, out int Min, out int Grow) -> void
+MarkupString.Layout.FlexItem.Equals(MarkupString.Layout.FlexItem? other) -> bool
+MarkupString.Layout.FlexItem.FlexItem(MarkupString.Layout.LayoutNode! Content, MarkupString.Layout.BlockSize Basis = default(MarkupString.Layout.BlockSize), int Min = 1, int Grow = 1) -> void
+MarkupString.Layout.FlexItem.Grow.get -> int
+MarkupString.Layout.FlexItem.Grow.init -> void
+MarkupString.Layout.FlexItem.Min.get -> int
+MarkupString.Layout.FlexItem.Min.init -> void
+MarkupString.Layout.FlexJustify
+MarkupString.Layout.FlexJustify.Between = 3 -> MarkupString.Layout.FlexJustify
+MarkupString.Layout.FlexJustify.Center = 2 -> MarkupString.Layout.FlexJustify
+MarkupString.Layout.FlexJustify.End = 1 -> MarkupString.Layout.FlexJustify
+MarkupString.Layout.FlexJustify.Start = 0 -> MarkupString.Layout.FlexJustify
+MarkupString.Layout.FlexNode
+MarkupString.Layout.FlexNode.Deconstruct(out System.Collections.Immutable.ImmutableArray<MarkupString.Layout.FlexItem!> Items, out MarkupString.Layout.FlexOptions! Options) -> void
+MarkupString.Layout.FlexNode.Equals(MarkupString.Layout.FlexNode? other) -> bool
+MarkupString.Layout.FlexNode.FlexNode(System.Collections.Immutable.ImmutableArray<MarkupString.Layout.FlexItem!> Items, MarkupString.Layout.FlexOptions! Options) -> void
+MarkupString.Layout.FlexNode.Items.get -> System.Collections.Immutable.ImmutableArray<MarkupString.Layout.FlexItem!>
+MarkupString.Layout.FlexNode.Items.init -> void
+MarkupString.Layout.FlexNode.Options.get -> MarkupString.Layout.FlexOptions!
+MarkupString.Layout.FlexNode.Options.init -> void
+MarkupString.Layout.FlexOptions
+MarkupString.Layout.FlexOptions.<Clone>$() -> MarkupString.Layout.FlexOptions!
+MarkupString.Layout.FlexOptions.Align.get -> MarkupString.Layout.FlexAlign
+MarkupString.Layout.FlexOptions.Align.init -> void
+MarkupString.Layout.FlexOptions.Equals(MarkupString.Layout.FlexOptions? other) -> bool
+MarkupString.Layout.FlexOptions.FlexOptions() -> void
+MarkupString.Layout.FlexOptions.Gap.get -> int
+MarkupString.Layout.FlexOptions.Gap.init -> void
+MarkupString.Layout.FlexOptions.Justify.get -> MarkupString.Layout.FlexJustify
+MarkupString.Layout.FlexOptions.Justify.init -> void
+MarkupString.Layout.FlexOptions.Separator.get -> MarkupString.MarkupText?
+MarkupString.Layout.FlexOptions.Separator.init -> void
+MarkupString.Layout.FlexOptions.Vertical.get -> bool
+MarkupString.Layout.FlexOptions.Vertical.init -> void
+MarkupString.Layout.LayoutMarkup
+MarkupString.Layout.LayoutMarkup.Covers(System.ReadOnlySpan<char> text) -> bool
+MarkupString.Layout.LayoutMarkup.Equals(MarkupString.Layout.LayoutMarkup? other) -> bool
+MarkupString.Layout.LayoutMarkup.Fluid.get -> bool
+MarkupString.Layout.LayoutMarkup.Hash.get -> ulong
+MarkupString.Layout.LayoutMarkup.LayoutMarkup(MarkupString.Layout.LayoutNode! root, int width, bool fluid, int length, ulong hash) -> void
+MarkupString.Layout.LayoutMarkup.LayoutMarkup(MarkupString.Layout.LayoutNode! root, int width, bool fluid, System.ReadOnlySpan<char> text) -> void
+MarkupString.Layout.LayoutMarkup.Length.get -> int
+MarkupString.Layout.LayoutMarkup.Root.get -> MarkupString.Layout.LayoutNode!
+MarkupString.Layout.LayoutMarkup.Width.get -> int
+MarkupString.Layout.LayoutNode
+MarkupString.Layout.LayoutNode.LayoutNode(MarkupString.Layout.LayoutNode! original) -> void
+MarkupString.Layout.RuleNode
+MarkupString.Layout.RuleNode.Border.get -> MarkupString.Layout.BorderStyle!
+MarkupString.Layout.RuleNode.Border.init -> void
+MarkupString.Layout.RuleNode.Deconstruct(out MarkupString.MarkupText? Title, out MarkupString.Layout.BorderStyle! Border, out MarkupString.Layout.Alignment TitleAlignment) -> void
+MarkupString.Layout.RuleNode.Equals(MarkupString.Layout.RuleNode? other) -> bool
+MarkupString.Layout.RuleNode.RuleNode(MarkupString.MarkupText? Title, MarkupString.Layout.BorderStyle! Border, MarkupString.Layout.Alignment TitleAlignment = MarkupString.Layout.Alignment.Center) -> void
+MarkupString.Layout.RuleNode.Title.get -> MarkupString.MarkupText?
+MarkupString.Layout.RuleNode.Title.init -> void
+MarkupString.Layout.RuleNode.TitleAlignment.get -> MarkupString.Layout.Alignment
+MarkupString.Layout.RuleNode.TitleAlignment.init -> void
+MarkupString.Layout.StackNode
+MarkupString.Layout.StackNode.Children.get -> System.Collections.Immutable.ImmutableArray<MarkupString.Layout.LayoutNode!>
+MarkupString.Layout.StackNode.Children.init -> void
+MarkupString.Layout.StackNode.Deconstruct(out System.Collections.Immutable.ImmutableArray<MarkupString.Layout.LayoutNode!> Children) -> void
+MarkupString.Layout.StackNode.Equals(MarkupString.Layout.StackNode? other) -> bool
+MarkupString.Layout.StackNode.StackNode(System.Collections.Immutable.ImmutableArray<MarkupString.Layout.LayoutNode!> Children) -> void
+MarkupString.Layout.TextNode
+MarkupString.Layout.TextNode.Alignment.get -> MarkupString.Layout.Alignment
+MarkupString.Layout.TextNode.Alignment.init -> void
+MarkupString.Layout.TextNode.Content.get -> MarkupString.MarkupText!
+MarkupString.Layout.TextNode.Content.init -> void
+MarkupString.Layout.TextNode.Deconstruct(out MarkupString.MarkupText! Content, out MarkupString.Layout.Alignment Alignment) -> void
+MarkupString.Layout.TextNode.Equals(MarkupString.Layout.TextNode? other) -> bool
+MarkupString.Layout.TextNode.TextNode(MarkupString.MarkupText! Content, MarkupString.Layout.Alignment Alignment = MarkupString.Layout.Alignment.Left) -> void
+MarkupString.MarkupRegistry.FindBlockEmitter(System.Type! markupType, MarkupString.MarkupFormat! format) -> MarkupString.IBlockEmitter?
+MarkupString.MarkupRegistry.With(MarkupString.IBlockEmitter! emitter) -> MarkupString.MarkupRegistry!
 MarkupString.MarkupText.GetDisplayWidth(MarkupString.ControlCharacterWidth controls) -> int
+override MarkupString.Layout.BlockRenderOptions.Equals(object? obj) -> bool
+override MarkupString.Layout.BlockRenderOptions.GetHashCode() -> int
+override MarkupString.Layout.BlockRenderOptions.ToString() -> string!
+override MarkupString.Layout.BlockSize.GetHashCode() -> int
+override MarkupString.Layout.BlockSize.ToString() -> string!
+override MarkupString.Layout.BorderStyle.Equals(object? obj) -> bool
+override MarkupString.Layout.BorderStyle.GetHashCode() -> int
+override MarkupString.Layout.BorderStyle.ToString() -> string!
+override MarkupString.Layout.BoxNode.<Clone>$() -> MarkupString.Layout.BoxNode!
+override MarkupString.Layout.BoxNode.Equals(object? obj) -> bool
+override MarkupString.Layout.BoxNode.GetHashCode() -> int
+override MarkupString.Layout.BoxNode.ToString() -> string!
+override MarkupString.Layout.FigureNode.<Clone>$() -> MarkupString.Layout.FigureNode!
+override MarkupString.Layout.FigureNode.Equals(object? obj) -> bool
+override MarkupString.Layout.FigureNode.GetHashCode() -> int
+override MarkupString.Layout.FigureNode.ToString() -> string!
+override MarkupString.Layout.FlexItem.Equals(object? obj) -> bool
+override MarkupString.Layout.FlexItem.GetHashCode() -> int
+override MarkupString.Layout.FlexItem.ToString() -> string!
+override MarkupString.Layout.FlexNode.<Clone>$() -> MarkupString.Layout.FlexNode!
+override MarkupString.Layout.FlexNode.Equals(object? obj) -> bool
+override MarkupString.Layout.FlexNode.GetHashCode() -> int
+override MarkupString.Layout.FlexNode.ToString() -> string!
+override MarkupString.Layout.FlexOptions.Equals(object? obj) -> bool
+override MarkupString.Layout.FlexOptions.GetHashCode() -> int
+override MarkupString.Layout.FlexOptions.ToString() -> string!
+override MarkupString.Layout.LayoutMarkup.Equals(object? obj) -> bool
+override MarkupString.Layout.LayoutMarkup.GetHashCode() -> int
+override MarkupString.Layout.LayoutNode.Equals(object? obj) -> bool
+override MarkupString.Layout.LayoutNode.GetHashCode() -> int
+override MarkupString.Layout.LayoutNode.ToString() -> string!
+override MarkupString.Layout.RuleNode.<Clone>$() -> MarkupString.Layout.RuleNode!
+override MarkupString.Layout.RuleNode.Equals(object? obj) -> bool
+override MarkupString.Layout.RuleNode.GetHashCode() -> int
+override MarkupString.Layout.RuleNode.ToString() -> string!
+override MarkupString.Layout.StackNode.<Clone>$() -> MarkupString.Layout.StackNode!
+override MarkupString.Layout.StackNode.Equals(object? obj) -> bool
+override MarkupString.Layout.StackNode.GetHashCode() -> int
+override MarkupString.Layout.StackNode.ToString() -> string!
+override MarkupString.Layout.TextNode.<Clone>$() -> MarkupString.Layout.TextNode!
+override MarkupString.Layout.TextNode.Equals(object? obj) -> bool
+override MarkupString.Layout.TextNode.GetHashCode() -> int
+override MarkupString.Layout.TextNode.ToString() -> string!
+override sealed MarkupString.Layout.BoxNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
+override sealed MarkupString.Layout.FigureNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
+override sealed MarkupString.Layout.FlexNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
+override sealed MarkupString.Layout.RuleNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
+override sealed MarkupString.Layout.StackNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
+override sealed MarkupString.Layout.TextNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 static MarkupString.DisplayWidth.IndexAtWidth(System.ReadOnlySpan<char> text, int cells, MarkupString.ControlCharacterWidth controls) -> int
 static MarkupString.DisplayWidth.IndexFromWidthEnd(System.ReadOnlySpan<char> text, int cells, MarkupString.ControlCharacterWidth controls) -> int
 static MarkupString.DisplayWidth.Of(System.ReadOnlySpan<char> text, MarkupString.ControlCharacterWidth controls) -> int
 static MarkupString.DisplayWidth.OfRune(System.Text.Rune rune, MarkupString.ControlCharacterWidth controls) -> int
+static MarkupString.Layout.BlockLayout.AsNode(MarkupString.MarkupText! content, MarkupString.Layout.Alignment alignment = MarkupString.Layout.Alignment.Left) -> MarkupString.Layout.LayoutNode!
+static MarkupString.Layout.BlockLayout.Build(MarkupString.Layout.LayoutNode! root, int width, bool fluid = false, MarkupString.Layout.BlockRenderOptions? options = null) -> MarkupString.MarkupText!
+static MarkupString.Layout.BlockLayout.Lines(MarkupString.Layout.LayoutNode! node, int width, MarkupString.Layout.BlockRenderOptions? options = null) -> System.Collections.Generic.IReadOnlyList<MarkupString.MarkupText!>!
+static MarkupString.Layout.BlockLayout.Relayout(MarkupString.MarkupText! text, int width, MarkupString.Layout.BlockRenderOptions! options) -> MarkupString.MarkupText!
+static MarkupString.Layout.BlockRenderOptions.Default.get -> MarkupString.Layout.BlockRenderOptions!
+static MarkupString.Layout.BlockRenderOptions.operator !=(MarkupString.Layout.BlockRenderOptions? left, MarkupString.Layout.BlockRenderOptions? right) -> bool
+static MarkupString.Layout.BlockRenderOptions.operator ==(MarkupString.Layout.BlockRenderOptions? left, MarkupString.Layout.BlockRenderOptions? right) -> bool
+static MarkupString.Layout.BlockSize.Auto.get -> MarkupString.Layout.BlockSize
+static MarkupString.Layout.BlockSize.Cells(int cells) -> MarkupString.Layout.BlockSize
+static MarkupString.Layout.BlockSize.operator !=(MarkupString.Layout.BlockSize left, MarkupString.Layout.BlockSize right) -> bool
+static MarkupString.Layout.BlockSize.operator ==(MarkupString.Layout.BlockSize left, MarkupString.Layout.BlockSize right) -> bool
+static MarkupString.Layout.BlockSize.Percent(int percent) -> MarkupString.Layout.BlockSize
+static MarkupString.Layout.BlockSize.TryParse(System.ReadOnlySpan<char> text, out MarkupString.Layout.BlockSize size) -> bool
+static MarkupString.Layout.BorderStyle.Ascii.get -> MarkupString.Layout.BorderStyle!
+static MarkupString.Layout.BorderStyle.Double.get -> MarkupString.Layout.BorderStyle!
+static MarkupString.Layout.BorderStyle.Heavy.get -> MarkupString.Layout.BorderStyle!
+static MarkupString.Layout.BorderStyle.Mush.get -> MarkupString.Layout.BorderStyle!
+static MarkupString.Layout.BorderStyle.None.get -> MarkupString.Layout.BorderStyle!
+static MarkupString.Layout.BorderStyle.operator !=(MarkupString.Layout.BorderStyle? left, MarkupString.Layout.BorderStyle? right) -> bool
+static MarkupString.Layout.BorderStyle.operator ==(MarkupString.Layout.BorderStyle? left, MarkupString.Layout.BorderStyle? right) -> bool
+static MarkupString.Layout.BorderStyle.Preset(string! name) -> MarkupString.Layout.BorderStyle?
+static MarkupString.Layout.BorderStyle.Presets.get -> System.Collections.Generic.IReadOnlyList<MarkupString.Layout.BorderStyle!>!
+static MarkupString.Layout.BorderStyle.Rounded.get -> MarkupString.Layout.BorderStyle!
+static MarkupString.Layout.BorderStyle.Single.get -> MarkupString.Layout.BorderStyle!
+static MarkupString.Layout.BoxNode.operator !=(MarkupString.Layout.BoxNode? left, MarkupString.Layout.BoxNode? right) -> bool
+static MarkupString.Layout.BoxNode.operator ==(MarkupString.Layout.BoxNode? left, MarkupString.Layout.BoxNode? right) -> bool
+static MarkupString.Layout.FigureNode.operator !=(MarkupString.Layout.FigureNode? left, MarkupString.Layout.FigureNode? right) -> bool
+static MarkupString.Layout.FigureNode.operator ==(MarkupString.Layout.FigureNode? left, MarkupString.Layout.FigureNode? right) -> bool
+static MarkupString.Layout.FlexItem.operator !=(MarkupString.Layout.FlexItem? left, MarkupString.Layout.FlexItem? right) -> bool
+static MarkupString.Layout.FlexItem.operator ==(MarkupString.Layout.FlexItem? left, MarkupString.Layout.FlexItem? right) -> bool
+static MarkupString.Layout.FlexNode.operator !=(MarkupString.Layout.FlexNode? left, MarkupString.Layout.FlexNode? right) -> bool
+static MarkupString.Layout.FlexNode.operator ==(MarkupString.Layout.FlexNode? left, MarkupString.Layout.FlexNode? right) -> bool
+static MarkupString.Layout.FlexOptions.Default.get -> MarkupString.Layout.FlexOptions!
+static MarkupString.Layout.FlexOptions.operator !=(MarkupString.Layout.FlexOptions? left, MarkupString.Layout.FlexOptions? right) -> bool
+static MarkupString.Layout.FlexOptions.operator ==(MarkupString.Layout.FlexOptions? left, MarkupString.Layout.FlexOptions? right) -> bool
+static MarkupString.Layout.LayoutMarkup.Fingerprint(System.ReadOnlySpan<char> text) -> ulong
+static MarkupString.Layout.LayoutNode.operator !=(MarkupString.Layout.LayoutNode? left, MarkupString.Layout.LayoutNode? right) -> bool
+static MarkupString.Layout.LayoutNode.operator ==(MarkupString.Layout.LayoutNode? left, MarkupString.Layout.LayoutNode? right) -> bool
+static MarkupString.Layout.RuleNode.operator !=(MarkupString.Layout.RuleNode? left, MarkupString.Layout.RuleNode? right) -> bool
+static MarkupString.Layout.RuleNode.operator ==(MarkupString.Layout.RuleNode? left, MarkupString.Layout.RuleNode? right) -> bool
+static MarkupString.Layout.StackNode.operator !=(MarkupString.Layout.StackNode? left, MarkupString.Layout.StackNode? right) -> bool
+static MarkupString.Layout.StackNode.operator ==(MarkupString.Layout.StackNode? left, MarkupString.Layout.StackNode? right) -> bool
+static MarkupString.Layout.TextNode.operator !=(MarkupString.Layout.TextNode? left, MarkupString.Layout.TextNode? right) -> bool
+static MarkupString.Layout.TextNode.operator ==(MarkupString.Layout.TextNode? left, MarkupString.Layout.TextNode? right) -> bool
+virtual MarkupString.Layout.LayoutNode.EqualityContract.get -> System.Type!
+virtual MarkupString.Layout.LayoutNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
+virtual MarkupString.Layout.LayoutNode.PrintMembers(System.Text.StringBuilder! builder) -> bool
+~override MarkupString.Layout.BlockSize.Equals(object obj) -> bool
+static MarkupString.MarkupTextRenderer.RenderFragment(MarkupString.MarkupText! text, MarkupString.MarkupFormat! format, MarkupString.MarkupRegistry! registry, System.Buffers.IBufferWriter<char>! output) -> void

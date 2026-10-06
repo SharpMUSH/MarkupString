@@ -10,6 +10,24 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Block layout** (`MarkupString.Layout`): a tree of `BoxNode`, `RuleNode`, `FlexNode`, `TextNode`,
+  `StackNode` and `FigureNode` that `BlockLayout.Build` lays out as lines of text at a width and wraps in a
+  `LayoutMarkup` carrying the tree. A terminal gets the box art; HTML draws the tree as a `<fieldset>` box
+  with its title as the legend, dividers, a wrapping flex row sized in `ch`, and a picture floated beside
+  its text (`LayoutCss.Fixed` styles the classes). A figure's text art stands in for the picture in a
+  terminal, with the text beside it flowing round the art. `BorderStyle` has seven presets (`none`,
+  `ascii`, `mush`, `single`, `double`, `heavy`, `rounded`) and every piece can be replaced, coloured, or
+  made a pattern. `BlockLayout.Relayout` lays intact blocks out again for a reader: a fluid block at the
+  reader's width, any block in ASCII borders (`AsciiOnly`) or as its content in reading order for a screen
+  reader (`Linear`). `BlockLayout.AsNode` nests a whole block in a larger one.
+- **`IBlockMarkup` and `IBlockEmitter`**, the general mechanism behind it: a layer a format may draw from
+  its own description instead of the text. The renderer hands a block to its emitter only when the text
+  it covers is unchanged (a fingerprint check) and on lines of its own, so a block cut, edited or run into
+  other text renders as the text it now is. `MarkupRegistry.With(IBlockEmitter)`, `FindBlockEmitter`, and
+  `MarkupTextRenderer.RenderFragment` for an emitter writing nested text.
+- **`HtmlRegistration.WithLayoutImages(Func<string, bool>)`** holds the pictures layouts show in HTML to a
+  host's policy; a refused picture shows its text art or description.
+
 - **`AnsiColorDepth` and `MarkupRegistry.WithAnsiOutput(AnsiColorDepth, bool hyperlinks = true)`**, for
   writing colour a client can display. A server builds one registry per kind of client and renders each
   connection's output through it, so it never rewrites escape sequences after the fact. At `Xterm256` an RGB

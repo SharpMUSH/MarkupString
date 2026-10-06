@@ -254,3 +254,64 @@ the engine the columns you are left with.
 
 - [Text operations](text-operations.md) — slicing, padding, trimming, and the grapheme rules
   every operation obeys.
+
+## Blocks: boxes, rules, columns and pictures
+
+`TextLayout` assembles columns into rows. One level up, `BlockLayout` lays out a tree of blocks —
+the boxes, titled rules, side-by-side columns and pictures a game draws its `+finger` and `+sheet`
+screens with — and keeps the tree with the text, so a format that can draw structure does.
+
+```csharp
+var finger = new BoxNode(
+  new StackNode(
+  [
+    new FlexNode(
+    [
+      new FlexItem(new TextNode(MarkupText.Plain("Sex: Male\nSpecies: Human")), BlockSize.Cells(35)),
+      new FlexItem(new TextNode(MarkupText.Plain("Job: Dark Warrior\nOnline: 1h")), BlockSize.Cells(36)),
+    ], new FlexOptions { Separator = MarkupText.Plain(" | ") }),
+    new RuleNode(MarkupText.Plain("Quote"), BorderStyle.Mush),
+    new TextNode(MarkupText.Plain("Hooooo?")),
+  ]),
+  BorderStyle.Mush with { TitleOpen = MarkupText.Plain("<< "), TitleClose = MarkupText.Plain(" >>") },
+  MarkupText.Plain("Mannaz Byron"));
+
+var text = BlockLayout.Build(finger, 78);
+```
+
+```
++==============================<< Mannaz Byron >>=============================+
+| Sex: Male                           | Job: Dark Warrior                    |
+| Species: Human                      | Online: 1h                           |
++==================================< Quote >=================================+
+| Hooooo?                                                                    |
++============================================================================+
+```
+
+That is `text.ToPlainText()` and what every terminal format writes. `Render(MarkupFormat.Html)`
+draws the same tree as a `<fieldset>` with a legend, a divider, and a flex row whose items ask for
+35 and 36 `ch` and wrap onto rows of their own on a narrower page. Include `LayoutCss.Fixed`, or
+your own copy of its rules, on the page.
+
+| Node | Terminal | HTML |
+|---|---|---|
+| `BoxNode` | the frame, its title set into the top edge | `<fieldset>` and `<legend>` |
+| `RuleNode` | a line of the border's top edge with the title in it; inside a box, a divider meeting the sides | a line drawn in CSS |
+| `FlexNode` | items side by side at widths shared from `BlockSize` bases, stacked when one would fall under its `Min` | a wrapping flex row |
+| `FigureNode` | the text art, with `Beside` flowing round it | an `<img>` floated beside it |
+| `TextNode`, `StackNode` | wrapped text; children in order | the same, as blocks |
+
+**Borders.** `BorderStyle` has seven presets, found by name with `BorderStyle.Preset`. Every piece
+is a `MarkupText` — a corner, an edge, a side, a tee where a divider meets a side, the brackets
+round a title — so any of them can be replaced or coloured, and an edge is a fill pattern.
+
+**The text is the value.** A block is the text it was laid out as, with a `LayoutMarkup` over it.
+Slicing, editing and searching work on the text. The renderer draws the tree only when the stretch
+the layer covers is unchanged and on lines of its own; a cut or edited block renders as text.
+
+**Laying out again.** `BlockLayout.Relayout(text, width, options)` replaces each intact block with
+a fresh layout: a block built with `fluid: true` at the reader's width, and any block with ASCII
+borders (`AsciiOnly`) or as its content in reading order (`Linear`, for a screen reader).
+
+**Nesting.** `BlockLayout.AsNode(content)` returns the tree of a text that is one whole block, and
+a `TextNode` otherwise, so a builder that takes text as an argument nests a block it is given.

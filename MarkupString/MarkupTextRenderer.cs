@@ -134,6 +134,20 @@ public static class MarkupTextRenderer
 		framer?.WriteEpilogue(anyRunEmitted, output);
 	}
 
+	/// <summary>
+	/// Renders <paramref name="text"/> as a fragment of a larger output: its runs and text, without the
+	/// format's document or line framing. For an emitter writing text nested inside its own markup —
+	/// the cells of a block, say — which is already inside a framed document.
+	/// </summary>
+	public static void RenderFragment(MarkupText text, MarkupFormat format, MarkupRegistry registry, IBufferWriter<char> output)
+	{
+		ArgumentNullException.ThrowIfNull(text);
+		ArgumentNullException.ThrowIfNull(format);
+		ArgumentNullException.ThrowIfNull(registry);
+		ArgumentNullException.ThrowIfNull(output);
+		RenderBody(text, format, registry, output);
+	}
+
 	private static void WriteFramedLines(ReadOnlySpan<char> rendered, ILineFramer framer, IBufferWriter<char> output)
 	{
 		while (true)
@@ -159,6 +173,13 @@ public static class MarkupTextRenderer
 		{
 			var run = runs[i];
 			if (run.Start > position) EncodeText(content[position..run.Start], format.Encoding, output);
+			if (registry.HasBlockEmitters && TryRenderBlock(text, i, format, registry, output) is { } last)
+			{
+				anyRunEmitted = true;
+				position = runs[last].End;
+				i = last;
+				continue;
+			}
 			var context = new EmitContext
 			{
 				Format = format,
@@ -175,6 +196,28 @@ public static class MarkupTextRenderer
 		if (position < content.Length) EncodeText(content[position..], format.Encoding, output);
 
 		return anyRunEmitted;
+	}
+
+	/// <summary>
+	/// Hands the block that starts at run <paramref name="first"/> to its emitter, when the format has one
+	/// and the block is intact and on lines of its own, and returns the index of its last run; null when
+	/// the run is to be rendered as usual.
+	/// </summary>
+	private static int? TryRenderBlock(MarkupText text, int first, MarkupFormat format, MarkupRegistry registry, IBufferWriter<char> output)
+	{
+		var runs = text.Runs;
+		var markups = runs[first].Markups;
+		for (var m = markups.Count - 1; m >= 0; m--)
+		{
+			if (markups[m] is not IBlockMarkup block || registry.FindBlockEmitter(block.GetType(), format) is not { } emitter) continue;
+			if (first > 0 && runs[first - 1].End == runs[first].Start && Layout.BlockRegions.Contains(runs[first - 1].Markups, block)) return null;
+
+			var last = Layout.BlockRegions.Extent(runs, first, block);
+			var region = Layout.BlockRegions.Describe(text, runs[first].Start, runs[last].End, block);
+			if (!region.Intact || !region.Standalone) return null;
+			return emitter.TryEmit(block, text.Substring(region.Start, region.End - region.Start), registry, output) ? last : null;
+		}
+		return null;
 	}
 
 	/// <summary>Renders one run to <paramref name="output"/>. Returns whether an emitter actually wrote — a set

@@ -98,7 +98,7 @@ public static class MarkupTextSerializer
 		Write(writer, text, registry);
 	}
 
-	private static void Write(Utf8JsonWriter writer, MarkupText text, MarkupRegistry? registry)
+	internal static void Write(Utf8JsonWriter writer, MarkupText text, MarkupRegistry? registry)
 	{
 		// Text with no runs — the common case in a game database — takes neither a palette nor a
 		// cover, so it is written straight out rather than building the two collections the general
@@ -195,6 +195,11 @@ public static class MarkupTextSerializer
 		{
 			writer.WriteString("k", NeutralKind);
 		}
+		else if (markup is Layout.LayoutMarkup layout)
+		{
+			writer.WriteString("k", Layout.LayoutJson.Kind);
+			Layout.LayoutJson.Write(writer, layout, registry);
+		}
 		else
 		{
 			var codec = ElementCodecs.Find(markup.GetType())
@@ -256,7 +261,7 @@ public static class MarkupTextSerializer
 		return Read(document.RootElement, registry);
 	}
 
-	private static MarkupText Read(JsonElement root, MarkupRegistry? registry)
+	internal static MarkupText Read(JsonElement root, MarkupRegistry? registry)
 	{
 		// Every shape check below treats a malformed payload as a less marked-up one rather than
 		// throwing: this reads rows written by older builds and bytes off a bus, and losing colour on
@@ -345,6 +350,7 @@ public static class MarkupTextSerializer
 			: "ansi";
 
 		if (kind == NeutralKind) return NeutralMarkup.Instance;
+		if (kind == Layout.LayoutJson.Kind) return Layout.LayoutJson.Read(element, registry);
 		var codec = ElementCodecs.Find(kind) ?? (registry ?? MarkupRegistry.Default).FindCodec(kind);
 		return codec is null ? new UnknownMarkup(kind, element.GetRawText()) : codec.Read(element);
 	}

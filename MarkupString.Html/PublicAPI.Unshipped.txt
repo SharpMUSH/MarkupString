@@ -1,1 +1,4 @@
 #nullable enable
+MarkupString.Html.LayoutCss
+static MarkupString.Html.HtmlRegistration.WithLayoutImages(this MarkupString.MarkupRegistry! registry, System.Func<string!, bool>! allowImage) -> MarkupString.MarkupRegistry!
+static readonly MarkupString.Html.LayoutCss.Fixed -> string!
