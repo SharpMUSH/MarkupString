@@ -264,3 +264,147 @@ public sealed record TreeNode(ImmutableArray<TreeItem> Items, TreeGuide Guide) :
 /// <param name="Content">What the item shows.</param>
 /// <param name="Children">The items under it, or none.</param>
 public sealed record TreeItem(LayoutNode Content, ImmutableArray<TreeItem> Children = default);
+
+/// <summary>
+/// A bar showing <paramref name="Value"/> against <paramref name="Maximum"/> — hit points, a quest's
+/// progress — filling the width it is given, with its label before and the figures after.
+/// </summary>
+/// <param name="Value">How much there is.</param>
+/// <param name="Maximum">How much there could be; the bar is full at this.</param>
+/// <param name="Label">What it measures, or none.</param>
+/// <param name="Options">How it is drawn.</param>
+public sealed record GaugeNode(double Value, double Maximum, MarkupText? Label, GaugeOptions Options) : LayoutNode;
+
+/// <summary>How a <see cref="GaugeNode"/> is drawn.</summary>
+public sealed record GaugeOptions
+{
+	/// <summary>The default: <c>[█████░░░░░] 50%</c>.</summary>
+	public static GaugeOptions Default { get; } = new();
+
+	/// <summary>The filled part, repeated.</summary>
+	public MarkupText Filled { get; init; } = MarkupText.Plain("█");
+
+	/// <summary>The empty part, repeated.</summary>
+	public MarkupText Empty { get; init; } = MarkupText.Plain("░");
+
+	/// <summary>Before the bar.</summary>
+	public MarkupText Open { get; init; } = MarkupText.Plain("[");
+
+	/// <summary>After the bar.</summary>
+	public MarkupText Close { get; init; } = MarkupText.Plain("]");
+
+	/// <summary>The figures written after the bar.</summary>
+	public GaugeShow Show { get; init; } = GaugeShow.Percent;
+
+	/// <summary>The bar's own width in cells, or zero to fill what the label and figures leave.</summary>
+	public int BarWidth { get; init; }
+}
+
+/// <summary>The figures a <see cref="GaugeNode"/> writes after its bar.</summary>
+public enum GaugeShow
+{
+	/// <summary><c>50%</c>.</summary>
+	Percent,
+
+	/// <summary><c>6/12</c>.</summary>
+	Value,
+
+	/// <summary>Nothing.</summary>
+	None,
+}
+
+/// <summary>
+/// A list, each item after its marker — a bullet, a dash, a number — and wrapping under itself, not
+/// under the marker.
+/// </summary>
+/// <param name="Items">The items.</param>
+/// <param name="Options">The markers.</param>
+public sealed record BulletsNode(ImmutableArray<LayoutNode> Items, BulletOptions Options) : LayoutNode;
+
+/// <summary>How a <see cref="BulletsNode"/> marks its items.</summary>
+public sealed record BulletOptions
+{
+	/// <summary>The default: <c>•</c>.</summary>
+	public static BulletOptions Default { get; } = new();
+
+	/// <summary>What kind of marker.</summary>
+	public BulletStyle Style { get; init; } = BulletStyle.Bullet;
+
+	/// <summary>The marker for <see cref="BulletStyle.Custom"/>.</summary>
+	public MarkupText? Marker { get; init; }
+
+	/// <summary>The first number of a numbered list.</summary>
+	public int Start { get; init; } = 1;
+}
+
+/// <summary>The markers a <see cref="BulletsNode"/> can use.</summary>
+public enum BulletStyle
+{
+	/// <summary><c>•</c>, <c>*</c> in ASCII.</summary>
+	Bullet,
+
+	/// <summary><c>-</c>.</summary>
+	Dash,
+
+	/// <summary><c>*</c>.</summary>
+	Star,
+
+	/// <summary><c>1.</c>, <c>2.</c>, ...</summary>
+	Number,
+
+	/// <summary><c>a.</c>, <c>b.</c>, ...</summary>
+	Alpha,
+
+	/// <summary><c>i.</c>, <c>ii.</c>, ...</summary>
+	Roman,
+
+	/// <summary>No marker; the items indented.</summary>
+	None,
+
+	/// <summary><see cref="BulletOptions.Marker"/>.</summary>
+	Custom,
+}
+
+/// <summary>
+/// Short items in as many columns as fit, every column as wide as the widest item, filled down each
+/// column first — the way <c>ls</c> lists files, and a name-only who list wants.
+/// </summary>
+/// <param name="Items">The items.</param>
+/// <param name="Gap">Cells between two columns.</param>
+/// <param name="Across">Fill along each row first instead.</param>
+public sealed record GridNode(ImmutableArray<MarkupText> Items, int Gap = 2, bool Across = false) : LayoutNode;
+
+/// <summary>
+/// Rows under column headings. Columns grow to fit their widest cell; when the table is too wide, the
+/// columns that may wrap give way first, then the least important columns are left out, and when
+/// even one column will not fit each row becomes a card of labelled values.
+/// </summary>
+/// <param name="Columns">The columns, in order.</param>
+/// <param name="Rows">The rows, a cell per column; a short row is padded with empty cells.</param>
+/// <param name="Options">How it is drawn.</param>
+public sealed record TableNode(ImmutableArray<TableColumn> Columns, ImmutableArray<ImmutableArray<LayoutNode>> Rows, TableOptions Options) : LayoutNode;
+
+/// <summary>One column of a <see cref="TableNode"/>.</summary>
+/// <param name="Header">The heading.</param>
+/// <param name="Alignment">Where each cell's text sits.</param>
+/// <param name="Min">The fewest cells the column is drawn in before it is left out.</param>
+/// <param name="Max">The most cells it grows to, or zero for no limit.</param>
+/// <param name="Priority">How important it is: when the table is too wide the highest number is left out first. One is never left out while another column could be.</param>
+/// <param name="Wrap">Whether its cells may wrap onto more lines; a column that may not is cut instead.</param>
+public sealed record TableColumn(MarkupText Header, Alignment Alignment = Alignment.Left, int Min = 1, int Max = 0, int Priority = 1, bool Wrap = true);
+
+/// <summary>How a <see cref="TableNode"/> is drawn.</summary>
+public sealed record TableOptions
+{
+	/// <summary>The default: two cells between columns, the headings underlined.</summary>
+	public static TableOptions Default { get; } = new();
+
+	/// <summary>Cells between two columns, when there is no <see cref="Separator"/>.</summary>
+	public int Gap { get; init; } = 2;
+
+	/// <summary>Drawn between two columns on every line instead of the gap.</summary>
+	public MarkupText? Separator { get; init; }
+
+	/// <summary>The line under the headings, repeated; empty for none.</summary>
+	public MarkupText HeaderRule { get; init; } = MarkupText.Plain("-");
+}

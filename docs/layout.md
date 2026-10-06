@@ -301,6 +301,10 @@ your own copy of its rules, on the page.
 | `FigureNode` | the text art, with `Beside` flowing round it | an `<img>` floated beside it |
 | `FieldsNode` | labels in one column, values lined up in the next, a long value wrapping under itself | a `<dl>` laid out as a two-column grid |
 | `TreeNode` | items under their parents, joined by guide lines | nested `<ul>` with the guides drawn in CSS |
+| `GaugeNode` | a bar filled to its share of the width, with its figures | a `<meter>` |
+| `BulletsNode` | items with a bullet or number, wrapped lines hanging under the text | `<ul>` or `<ol>` |
+| `GridNode` | short items in as many columns as fit, down each column or across each row | a CSS multi-column or grid list |
+| `TableNode` | columns sized to their widest cell, wrapping and then leaving out columns when narrow | a `<table>` that hides low-priority columns on a narrow page |
 | `TextNode`, `StackNode` | wrapped text; children in order | the same, as blocks |
 
 **Labelled values.** `FieldsNode` is the `Sex: Male` / `Species: Human` part of a sheet: the label
@@ -339,6 +343,52 @@ Channels                  Channels
    └─ +admin                 `- +admin
 ```
 
+**Gauges.** `GaugeNode(value, maximum, label)` draws a bar. With no `BarWidth` the bar takes what the
+label and figures leave of the width. `GaugeOptions` sets the filled and empty pieces (`█`, `░`), the
+ends, and whether the figures read `50%`, `6/12` or nothing.
+
+```
+HP [██████░░░░░] 50%         at 20
+HP [######-----] 50%         AsciiOnly
+HP: 6 of 12 (50%)            Linear
+```
+
+**Lists.** `BulletsNode` marks each item with a bullet, a dash, a number, a letter or a roman numeral
+(`BulletStyle`), or a marker of your own, starting from `Start`. Numbers line up on their right, and a
+wrapped line hangs under the item's text.
+
+```
+• Be kind to          9. Nine
+  other players      10. Ten
+• No spam
+```
+
+**Columns of names.** `GridNode` is the `ls` layout for short items such as a `who` list: as many
+columns as the widest item allows, filled down each column, or across each row with `Across`.
+
+```
+Mannaz    Ilse      Bram
+Raya      Quill
+Tomas     Ottoline
+```
+
+**Tables.** `TableNode` takes `TableColumn`s (header, alignment, least and most width, priority,
+whether it wraps) and rows of cells. Each column asks for its widest cell. When the table is too
+wide, the columns that wrap give way, widest first, down to their least width; then the column with
+the highest `Priority` number is left out, and so on. A column that does not wrap is shown whole or
+not at all. When not even the most important column fits, each row becomes a card of labelled
+values. In HTML, columns of priority 2 and 3 carry `ms-p2` and `ms-p3`, which `LayoutCss.Fixed`
+hides on narrow pages.
+
+```
+At 30:                            At 18:
+Name    Idle  Doing               Name    Idle
+------------------------------    ------------
+Mannaz    0s  Hooooo?             Mannaz    0s
+Raya      5m  Writing a scene     Raya      5m
+              in the garden
+```
+
 **Borders.** `BorderStyle` has seven presets, found by name with `BorderStyle.Preset`. Every piece
 is a `MarkupText` — a corner, an edge, a side, a tee where a divider meets a side, the brackets
 round a title — so any of them can be replaced or coloured, and an edge is a fill pattern.
@@ -355,7 +405,8 @@ borders (`AsciiOnly`) or as its content in reading order (`Linear`, for a screen
 or heavy one `=`, an upright `|`, a corner or tee `+`. A double frame stays recognisably double, and
 colour on a piece is kept. A piece holding anything else (an emoji, a title bracket like `┤ `) takes
 the `ascii` preset's piece, as does any tree guide piece, so the last branch stays `` `- ``. A flex
-separator is translated the same way. Text inside a block is never changed. `Linear` drops borders
+separator is translated the same way, and so are gauge, bullet and table pieces (a `•` becomes `*`,
+a `█` `#`). Text inside a block is never changed. `Linear` drops borders
 and guides, reads fields as `Label: value` lines and indents tree levels with spaces.
 
 **Nesting.** `BlockLayout.AsNode(content)` returns the tree of a text that is one whole block, and

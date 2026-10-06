@@ -74,6 +74,33 @@ MarkupString.Layout.BoxNode.Title.get -> MarkupString.MarkupText?
 MarkupString.Layout.BoxNode.Title.init -> void
 MarkupString.Layout.BoxNode.TitleAlignment.get -> MarkupString.Layout.Alignment
 MarkupString.Layout.BoxNode.TitleAlignment.init -> void
+MarkupString.Layout.BulletOptions
+MarkupString.Layout.BulletOptions.<Clone>$() -> MarkupString.Layout.BulletOptions!
+MarkupString.Layout.BulletOptions.BulletOptions() -> void
+MarkupString.Layout.BulletOptions.Equals(MarkupString.Layout.BulletOptions? other) -> bool
+MarkupString.Layout.BulletOptions.Marker.get -> MarkupString.MarkupText?
+MarkupString.Layout.BulletOptions.Marker.init -> void
+MarkupString.Layout.BulletOptions.Start.get -> int
+MarkupString.Layout.BulletOptions.Start.init -> void
+MarkupString.Layout.BulletOptions.Style.get -> MarkupString.Layout.BulletStyle
+MarkupString.Layout.BulletOptions.Style.init -> void
+MarkupString.Layout.BulletsNode
+MarkupString.Layout.BulletsNode.BulletsNode(System.Collections.Immutable.ImmutableArray<MarkupString.Layout.LayoutNode!> Items, MarkupString.Layout.BulletOptions! Options) -> void
+MarkupString.Layout.BulletsNode.Deconstruct(out System.Collections.Immutable.ImmutableArray<MarkupString.Layout.LayoutNode!> Items, out MarkupString.Layout.BulletOptions! Options) -> void
+MarkupString.Layout.BulletsNode.Equals(MarkupString.Layout.BulletsNode? other) -> bool
+MarkupString.Layout.BulletsNode.Items.get -> System.Collections.Immutable.ImmutableArray<MarkupString.Layout.LayoutNode!>
+MarkupString.Layout.BulletsNode.Items.init -> void
+MarkupString.Layout.BulletsNode.Options.get -> MarkupString.Layout.BulletOptions!
+MarkupString.Layout.BulletsNode.Options.init -> void
+MarkupString.Layout.BulletStyle
+MarkupString.Layout.BulletStyle.Alpha = 4 -> MarkupString.Layout.BulletStyle
+MarkupString.Layout.BulletStyle.Bullet = 0 -> MarkupString.Layout.BulletStyle
+MarkupString.Layout.BulletStyle.Custom = 7 -> MarkupString.Layout.BulletStyle
+MarkupString.Layout.BulletStyle.Dash = 1 -> MarkupString.Layout.BulletStyle
+MarkupString.Layout.BulletStyle.None = 6 -> MarkupString.Layout.BulletStyle
+MarkupString.Layout.BulletStyle.Number = 3 -> MarkupString.Layout.BulletStyle
+MarkupString.Layout.BulletStyle.Roman = 5 -> MarkupString.Layout.BulletStyle
+MarkupString.Layout.BulletStyle.Star = 2 -> MarkupString.Layout.BulletStyle
 MarkupString.Layout.Field
 MarkupString.Layout.Field.<Clone>$() -> MarkupString.Layout.Field!
 MarkupString.Layout.Field.Deconstruct(out MarkupString.MarkupText! Label, out MarkupString.Layout.LayoutNode! Value) -> void
@@ -167,6 +194,48 @@ MarkupString.Layout.FlexOptions.Separator.get -> MarkupString.MarkupText?
 MarkupString.Layout.FlexOptions.Separator.init -> void
 MarkupString.Layout.FlexOptions.Vertical.get -> bool
 MarkupString.Layout.FlexOptions.Vertical.init -> void
+MarkupString.Layout.GaugeNode
+MarkupString.Layout.GaugeNode.Deconstruct(out double Value, out double Maximum, out MarkupString.MarkupText? Label, out MarkupString.Layout.GaugeOptions! Options) -> void
+MarkupString.Layout.GaugeNode.Equals(MarkupString.Layout.GaugeNode? other) -> bool
+MarkupString.Layout.GaugeNode.GaugeNode(double Value, double Maximum, MarkupString.MarkupText? Label, MarkupString.Layout.GaugeOptions! Options) -> void
+MarkupString.Layout.GaugeNode.Label.get -> MarkupString.MarkupText?
+MarkupString.Layout.GaugeNode.Label.init -> void
+MarkupString.Layout.GaugeNode.Maximum.get -> double
+MarkupString.Layout.GaugeNode.Maximum.init -> void
+MarkupString.Layout.GaugeNode.Options.get -> MarkupString.Layout.GaugeOptions!
+MarkupString.Layout.GaugeNode.Options.init -> void
+MarkupString.Layout.GaugeNode.Value.get -> double
+MarkupString.Layout.GaugeNode.Value.init -> void
+MarkupString.Layout.GaugeOptions
+MarkupString.Layout.GaugeOptions.<Clone>$() -> MarkupString.Layout.GaugeOptions!
+MarkupString.Layout.GaugeOptions.BarWidth.get -> int
+MarkupString.Layout.GaugeOptions.BarWidth.init -> void
+MarkupString.Layout.GaugeOptions.Close.get -> MarkupString.MarkupText!
+MarkupString.Layout.GaugeOptions.Close.init -> void
+MarkupString.Layout.GaugeOptions.Empty.get -> MarkupString.MarkupText!
+MarkupString.Layout.GaugeOptions.Empty.init -> void
+MarkupString.Layout.GaugeOptions.Equals(MarkupString.Layout.GaugeOptions? other) -> bool
+MarkupString.Layout.GaugeOptions.Filled.get -> MarkupString.MarkupText!
+MarkupString.Layout.GaugeOptions.Filled.init -> void
+MarkupString.Layout.GaugeOptions.GaugeOptions() -> void
+MarkupString.Layout.GaugeOptions.Open.get -> MarkupString.MarkupText!
+MarkupString.Layout.GaugeOptions.Open.init -> void
+MarkupString.Layout.GaugeOptions.Show.get -> MarkupString.Layout.GaugeShow
+MarkupString.Layout.GaugeOptions.Show.init -> void
+MarkupString.Layout.GaugeShow
+MarkupString.Layout.GaugeShow.None = 2 -> MarkupString.Layout.GaugeShow
+MarkupString.Layout.GaugeShow.Percent = 0 -> MarkupString.Layout.GaugeShow
+MarkupString.Layout.GaugeShow.Value = 1 -> MarkupString.Layout.GaugeShow
+MarkupString.Layout.GridNode
+MarkupString.Layout.GridNode.Across.get -> bool
+MarkupString.Layout.GridNode.Across.init -> void
+MarkupString.Layout.GridNode.Deconstruct(out System.Collections.Immutable.ImmutableArray<MarkupString.MarkupText!> Items, out int Gap, out bool Across) -> void
+MarkupString.Layout.GridNode.Equals(MarkupString.Layout.GridNode? other) -> bool
+MarkupString.Layout.GridNode.Gap.get -> int
+MarkupString.Layout.GridNode.Gap.init -> void
+MarkupString.Layout.GridNode.GridNode(System.Collections.Immutable.ImmutableArray<MarkupString.MarkupText!> Items, int Gap = 2, bool Across = false) -> void
+MarkupString.Layout.GridNode.Items.get -> System.Collections.Immutable.ImmutableArray<MarkupString.MarkupText!>
+MarkupString.Layout.GridNode.Items.init -> void
 MarkupString.Layout.LayoutMarkup
 MarkupString.Layout.LayoutMarkup.Covers(System.ReadOnlySpan<char> text) -> bool
 MarkupString.Layout.LayoutMarkup.Equals(MarkupString.Layout.LayoutMarkup? other) -> bool
@@ -196,6 +265,43 @@ MarkupString.Layout.StackNode.Children.init -> void
 MarkupString.Layout.StackNode.Deconstruct(out System.Collections.Immutable.ImmutableArray<MarkupString.Layout.LayoutNode!> Children) -> void
 MarkupString.Layout.StackNode.Equals(MarkupString.Layout.StackNode? other) -> bool
 MarkupString.Layout.StackNode.StackNode(System.Collections.Immutable.ImmutableArray<MarkupString.Layout.LayoutNode!> Children) -> void
+MarkupString.Layout.TableColumn
+MarkupString.Layout.TableColumn.<Clone>$() -> MarkupString.Layout.TableColumn!
+MarkupString.Layout.TableColumn.Alignment.get -> MarkupString.Layout.Alignment
+MarkupString.Layout.TableColumn.Alignment.init -> void
+MarkupString.Layout.TableColumn.Deconstruct(out MarkupString.MarkupText! Header, out MarkupString.Layout.Alignment Alignment, out int Min, out int Max, out int Priority, out bool Wrap) -> void
+MarkupString.Layout.TableColumn.Equals(MarkupString.Layout.TableColumn? other) -> bool
+MarkupString.Layout.TableColumn.Header.get -> MarkupString.MarkupText!
+MarkupString.Layout.TableColumn.Header.init -> void
+MarkupString.Layout.TableColumn.Max.get -> int
+MarkupString.Layout.TableColumn.Max.init -> void
+MarkupString.Layout.TableColumn.Min.get -> int
+MarkupString.Layout.TableColumn.Min.init -> void
+MarkupString.Layout.TableColumn.Priority.get -> int
+MarkupString.Layout.TableColumn.Priority.init -> void
+MarkupString.Layout.TableColumn.TableColumn(MarkupString.MarkupText! Header, MarkupString.Layout.Alignment Alignment = MarkupString.Layout.Alignment.Left, int Min = 1, int Max = 0, int Priority = 1, bool Wrap = true) -> void
+MarkupString.Layout.TableColumn.Wrap.get -> bool
+MarkupString.Layout.TableColumn.Wrap.init -> void
+MarkupString.Layout.TableNode
+MarkupString.Layout.TableNode.Columns.get -> System.Collections.Immutable.ImmutableArray<MarkupString.Layout.TableColumn!>
+MarkupString.Layout.TableNode.Columns.init -> void
+MarkupString.Layout.TableNode.Deconstruct(out System.Collections.Immutable.ImmutableArray<MarkupString.Layout.TableColumn!> Columns, out System.Collections.Immutable.ImmutableArray<System.Collections.Immutable.ImmutableArray<MarkupString.Layout.LayoutNode!>> Rows, out MarkupString.Layout.TableOptions! Options) -> void
+MarkupString.Layout.TableNode.Equals(MarkupString.Layout.TableNode? other) -> bool
+MarkupString.Layout.TableNode.Options.get -> MarkupString.Layout.TableOptions!
+MarkupString.Layout.TableNode.Options.init -> void
+MarkupString.Layout.TableNode.Rows.get -> System.Collections.Immutable.ImmutableArray<System.Collections.Immutable.ImmutableArray<MarkupString.Layout.LayoutNode!>>
+MarkupString.Layout.TableNode.Rows.init -> void
+MarkupString.Layout.TableNode.TableNode(System.Collections.Immutable.ImmutableArray<MarkupString.Layout.TableColumn!> Columns, System.Collections.Immutable.ImmutableArray<System.Collections.Immutable.ImmutableArray<MarkupString.Layout.LayoutNode!>> Rows, MarkupString.Layout.TableOptions! Options) -> void
+MarkupString.Layout.TableOptions
+MarkupString.Layout.TableOptions.<Clone>$() -> MarkupString.Layout.TableOptions!
+MarkupString.Layout.TableOptions.Equals(MarkupString.Layout.TableOptions? other) -> bool
+MarkupString.Layout.TableOptions.Gap.get -> int
+MarkupString.Layout.TableOptions.Gap.init -> void
+MarkupString.Layout.TableOptions.HeaderRule.get -> MarkupString.MarkupText!
+MarkupString.Layout.TableOptions.HeaderRule.init -> void
+MarkupString.Layout.TableOptions.Separator.get -> MarkupString.MarkupText?
+MarkupString.Layout.TableOptions.Separator.init -> void
+MarkupString.Layout.TableOptions.TableOptions() -> void
 MarkupString.Layout.TextNode
 MarkupString.Layout.TextNode.Alignment.get -> MarkupString.Layout.Alignment
 MarkupString.Layout.TextNode.Alignment.init -> void
@@ -252,6 +358,13 @@ override MarkupString.Layout.BoxNode.<Clone>$() -> MarkupString.Layout.BoxNode!
 override MarkupString.Layout.BoxNode.Equals(object? obj) -> bool
 override MarkupString.Layout.BoxNode.GetHashCode() -> int
 override MarkupString.Layout.BoxNode.ToString() -> string!
+override MarkupString.Layout.BulletOptions.Equals(object? obj) -> bool
+override MarkupString.Layout.BulletOptions.GetHashCode() -> int
+override MarkupString.Layout.BulletOptions.ToString() -> string!
+override MarkupString.Layout.BulletsNode.<Clone>$() -> MarkupString.Layout.BulletsNode!
+override MarkupString.Layout.BulletsNode.Equals(object? obj) -> bool
+override MarkupString.Layout.BulletsNode.GetHashCode() -> int
+override MarkupString.Layout.BulletsNode.ToString() -> string!
 override MarkupString.Layout.Field.Equals(object? obj) -> bool
 override MarkupString.Layout.Field.GetHashCode() -> int
 override MarkupString.Layout.Field.ToString() -> string!
@@ -276,6 +389,17 @@ override MarkupString.Layout.FlexNode.ToString() -> string!
 override MarkupString.Layout.FlexOptions.Equals(object? obj) -> bool
 override MarkupString.Layout.FlexOptions.GetHashCode() -> int
 override MarkupString.Layout.FlexOptions.ToString() -> string!
+override MarkupString.Layout.GaugeNode.<Clone>$() -> MarkupString.Layout.GaugeNode!
+override MarkupString.Layout.GaugeNode.Equals(object? obj) -> bool
+override MarkupString.Layout.GaugeNode.GetHashCode() -> int
+override MarkupString.Layout.GaugeNode.ToString() -> string!
+override MarkupString.Layout.GaugeOptions.Equals(object? obj) -> bool
+override MarkupString.Layout.GaugeOptions.GetHashCode() -> int
+override MarkupString.Layout.GaugeOptions.ToString() -> string!
+override MarkupString.Layout.GridNode.<Clone>$() -> MarkupString.Layout.GridNode!
+override MarkupString.Layout.GridNode.Equals(object? obj) -> bool
+override MarkupString.Layout.GridNode.GetHashCode() -> int
+override MarkupString.Layout.GridNode.ToString() -> string!
 override MarkupString.Layout.LayoutMarkup.Equals(object? obj) -> bool
 override MarkupString.Layout.LayoutMarkup.GetHashCode() -> int
 override MarkupString.Layout.LayoutNode.Equals(object? obj) -> bool
@@ -289,6 +413,16 @@ override MarkupString.Layout.StackNode.<Clone>$() -> MarkupString.Layout.StackNo
 override MarkupString.Layout.StackNode.Equals(object? obj) -> bool
 override MarkupString.Layout.StackNode.GetHashCode() -> int
 override MarkupString.Layout.StackNode.ToString() -> string!
+override MarkupString.Layout.TableColumn.Equals(object? obj) -> bool
+override MarkupString.Layout.TableColumn.GetHashCode() -> int
+override MarkupString.Layout.TableColumn.ToString() -> string!
+override MarkupString.Layout.TableNode.<Clone>$() -> MarkupString.Layout.TableNode!
+override MarkupString.Layout.TableNode.Equals(object? obj) -> bool
+override MarkupString.Layout.TableNode.GetHashCode() -> int
+override MarkupString.Layout.TableNode.ToString() -> string!
+override MarkupString.Layout.TableOptions.Equals(object? obj) -> bool
+override MarkupString.Layout.TableOptions.GetHashCode() -> int
+override MarkupString.Layout.TableOptions.ToString() -> string!
 override MarkupString.Layout.TextNode.<Clone>$() -> MarkupString.Layout.TextNode!
 override MarkupString.Layout.TextNode.Equals(object? obj) -> bool
 override MarkupString.Layout.TextNode.GetHashCode() -> int
@@ -304,11 +438,15 @@ override MarkupString.Layout.TreeNode.Equals(object? obj) -> bool
 override MarkupString.Layout.TreeNode.GetHashCode() -> int
 override MarkupString.Layout.TreeNode.ToString() -> string!
 override sealed MarkupString.Layout.BoxNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
+override sealed MarkupString.Layout.BulletsNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 override sealed MarkupString.Layout.FieldsNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 override sealed MarkupString.Layout.FigureNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 override sealed MarkupString.Layout.FlexNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
+override sealed MarkupString.Layout.GaugeNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
+override sealed MarkupString.Layout.GridNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 override sealed MarkupString.Layout.RuleNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 override sealed MarkupString.Layout.StackNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
+override sealed MarkupString.Layout.TableNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 override sealed MarkupString.Layout.TextNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 override sealed MarkupString.Layout.TreeNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 static MarkupString.DisplayWidth.IndexAtWidth(System.ReadOnlySpan<char> text, int cells, MarkupString.ControlCharacterWidth controls) -> int
@@ -341,6 +479,11 @@ static MarkupString.Layout.BorderStyle.Rounded.get -> MarkupString.Layout.Border
 static MarkupString.Layout.BorderStyle.Single.get -> MarkupString.Layout.BorderStyle!
 static MarkupString.Layout.BoxNode.operator !=(MarkupString.Layout.BoxNode? left, MarkupString.Layout.BoxNode? right) -> bool
 static MarkupString.Layout.BoxNode.operator ==(MarkupString.Layout.BoxNode? left, MarkupString.Layout.BoxNode? right) -> bool
+static MarkupString.Layout.BulletOptions.Default.get -> MarkupString.Layout.BulletOptions!
+static MarkupString.Layout.BulletOptions.operator !=(MarkupString.Layout.BulletOptions? left, MarkupString.Layout.BulletOptions? right) -> bool
+static MarkupString.Layout.BulletOptions.operator ==(MarkupString.Layout.BulletOptions? left, MarkupString.Layout.BulletOptions? right) -> bool
+static MarkupString.Layout.BulletsNode.operator !=(MarkupString.Layout.BulletsNode? left, MarkupString.Layout.BulletsNode? right) -> bool
+static MarkupString.Layout.BulletsNode.operator ==(MarkupString.Layout.BulletsNode? left, MarkupString.Layout.BulletsNode? right) -> bool
 static MarkupString.Layout.Field.operator !=(MarkupString.Layout.Field? left, MarkupString.Layout.Field? right) -> bool
 static MarkupString.Layout.Field.operator ==(MarkupString.Layout.Field? left, MarkupString.Layout.Field? right) -> bool
 static MarkupString.Layout.FieldsNode.operator !=(MarkupString.Layout.FieldsNode? left, MarkupString.Layout.FieldsNode? right) -> bool
@@ -357,6 +500,13 @@ static MarkupString.Layout.FlexNode.operator ==(MarkupString.Layout.FlexNode? le
 static MarkupString.Layout.FlexOptions.Default.get -> MarkupString.Layout.FlexOptions!
 static MarkupString.Layout.FlexOptions.operator !=(MarkupString.Layout.FlexOptions? left, MarkupString.Layout.FlexOptions? right) -> bool
 static MarkupString.Layout.FlexOptions.operator ==(MarkupString.Layout.FlexOptions? left, MarkupString.Layout.FlexOptions? right) -> bool
+static MarkupString.Layout.GaugeNode.operator !=(MarkupString.Layout.GaugeNode? left, MarkupString.Layout.GaugeNode? right) -> bool
+static MarkupString.Layout.GaugeNode.operator ==(MarkupString.Layout.GaugeNode? left, MarkupString.Layout.GaugeNode? right) -> bool
+static MarkupString.Layout.GaugeOptions.Default.get -> MarkupString.Layout.GaugeOptions!
+static MarkupString.Layout.GaugeOptions.operator !=(MarkupString.Layout.GaugeOptions? left, MarkupString.Layout.GaugeOptions? right) -> bool
+static MarkupString.Layout.GaugeOptions.operator ==(MarkupString.Layout.GaugeOptions? left, MarkupString.Layout.GaugeOptions? right) -> bool
+static MarkupString.Layout.GridNode.operator !=(MarkupString.Layout.GridNode? left, MarkupString.Layout.GridNode? right) -> bool
+static MarkupString.Layout.GridNode.operator ==(MarkupString.Layout.GridNode? left, MarkupString.Layout.GridNode? right) -> bool
 static MarkupString.Layout.LayoutMarkup.Fingerprint(System.ReadOnlySpan<char> text) -> ulong
 static MarkupString.Layout.LayoutNode.operator !=(MarkupString.Layout.LayoutNode? left, MarkupString.Layout.LayoutNode? right) -> bool
 static MarkupString.Layout.LayoutNode.operator ==(MarkupString.Layout.LayoutNode? left, MarkupString.Layout.LayoutNode? right) -> bool
@@ -364,6 +514,13 @@ static MarkupString.Layout.RuleNode.operator !=(MarkupString.Layout.RuleNode? le
 static MarkupString.Layout.RuleNode.operator ==(MarkupString.Layout.RuleNode? left, MarkupString.Layout.RuleNode? right) -> bool
 static MarkupString.Layout.StackNode.operator !=(MarkupString.Layout.StackNode? left, MarkupString.Layout.StackNode? right) -> bool
 static MarkupString.Layout.StackNode.operator ==(MarkupString.Layout.StackNode? left, MarkupString.Layout.StackNode? right) -> bool
+static MarkupString.Layout.TableColumn.operator !=(MarkupString.Layout.TableColumn? left, MarkupString.Layout.TableColumn? right) -> bool
+static MarkupString.Layout.TableColumn.operator ==(MarkupString.Layout.TableColumn? left, MarkupString.Layout.TableColumn? right) -> bool
+static MarkupString.Layout.TableNode.operator !=(MarkupString.Layout.TableNode? left, MarkupString.Layout.TableNode? right) -> bool
+static MarkupString.Layout.TableNode.operator ==(MarkupString.Layout.TableNode? left, MarkupString.Layout.TableNode? right) -> bool
+static MarkupString.Layout.TableOptions.Default.get -> MarkupString.Layout.TableOptions!
+static MarkupString.Layout.TableOptions.operator !=(MarkupString.Layout.TableOptions? left, MarkupString.Layout.TableOptions? right) -> bool
+static MarkupString.Layout.TableOptions.operator ==(MarkupString.Layout.TableOptions? left, MarkupString.Layout.TableOptions? right) -> bool
 static MarkupString.Layout.TextNode.operator !=(MarkupString.Layout.TextNode? left, MarkupString.Layout.TextNode? right) -> bool
 static MarkupString.Layout.TextNode.operator ==(MarkupString.Layout.TextNode? left, MarkupString.Layout.TextNode? right) -> bool
 static MarkupString.Layout.TreeGuide.Ascii.get -> MarkupString.Layout.TreeGuide!
