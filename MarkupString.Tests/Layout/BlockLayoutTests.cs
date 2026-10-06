@@ -325,6 +325,13 @@ public class BlockLayoutTests
 	}
 
 	[Test]
+	[Arguments(Alignment.Left, "=< T >========")]
+	[Arguments(Alignment.Right, "========< T >=")]
+	[Arguments(Alignment.Center, "=====< T >====")]
+	public async Task Rule_TitleToOneSide_StaysACellIn(Alignment alignment, string expected)
+		=> await Assert.That(BlockLayout.Build(new RuleNode(P("T"), BorderStyle.Mush, alignment), 14).ToPlainText()).IsEqualTo(expected);
+
+	[Test]
 	public async Task AsNode_AdoptsAWholeBlock()
 	{
 		var inner = BlockLayout.Build(new RuleNode(P("Inner"), BorderStyle.Ascii), 30);

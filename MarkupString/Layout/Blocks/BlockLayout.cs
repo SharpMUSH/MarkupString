@@ -522,10 +522,17 @@ public static class BlockLayout
 			? MarkupText.Concat([style.TitleOpen, title, style.TitleClose])
 			: MarkupText.Empty;
 		fill = fill.Length == 0 ? MarkupText.Space : fill;
-		if (alignment == Alignment.Center && middle.Length > 0 && middle.DisplayWidth < inner)
+		var aside = alignment is Alignment.Left or Alignment.Right;
+		if (middle.Length > 0 && middle.DisplayWidth + (aside ? 2 : 1) <= inner)
 		{
-			// The odd cell goes before the title, as a MUSH header has it: "+====< Title >===+".
-			var before = (inner - middle.DisplayWidth + 1) / 2;
+			// The odd cell goes before a centred title, as a MUSH header has it: "+====< Title >===+".
+			// A title to one side stays a cell in from the corner: "+=< Title >======+".
+			var before = alignment switch
+			{
+				Alignment.Left => 1,
+				Alignment.Right => inner - middle.DisplayWidth - 1,
+				_ => (inner - middle.DisplayWidth + 1) / 2,
+			};
 			// The fill is one pattern along the whole edge, so it reads on unbroken past the title.
 			var edge = Run(fill, inner);
 			var cut = DisplayWidth.IndexAtWidth(edge.Text, before);
