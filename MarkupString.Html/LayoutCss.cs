@@ -39,13 +39,13 @@ public static class LayoutCss
 		".ms-figure-art { margin: 0; font: inherit; white-space: pre; }\n" +
 		".ms-float-left > .ms-figure-image, .ms-float-left > .ms-figure-art { float: left; max-width: 50%; margin: 0 2ch 0.5em 0; }\n" +
 		".ms-float-right > .ms-figure-image, .ms-float-right > .ms-figure-art { float: right; max-width: 50%; margin: 0 0 0.5em 2ch; }\n" +
-		".ms-fields { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); column-gap: 1ch; margin: 0; }\n" +
+		".ms-fields { display: grid; grid-template-columns: minmax(min-content, max-content) minmax(0, 1fr); column-gap: 1ch; margin: 0; }\n" +
 		".ms-field { display: contents; }\n" +
 		".ms-field > dt { grid-column: 1; white-space: pre-wrap; overflow-wrap: anywhere; }\n" +
 		".ms-field > dd { grid-column: 2; margin: 0; min-width: 0; }\n" +
 		".ms-fields.ms-label-right > .ms-field > dt { text-align: right; }\n" +
 		".ms-fields.ms-leader > .ms-field > dt { display: flex; gap: 0.5ch; }\n" +
-		".ms-fields.ms-leader > .ms-field > dt::after { content: \"\"; flex: 1 1 2ch; border-bottom: 1px dotted currentColor; margin-bottom: 0.3em; }\n" +
+		".ms-fields.ms-leader > .ms-field > dt::after { content: \"\"; flex: 1 0 2ch; border-bottom: 1px dotted currentColor; margin-bottom: 0.3em; }\n" +
 		".ms-tree, .ms-tree ul { list-style: none; margin: 0; padding: 0; }\n" +
 		".ms-tree ul { margin-left: 1ch; }\n" +
 		".ms-tree ul > li { position: relative; padding-left: 3ch; border-left: 1px solid currentColor; }\n" +
