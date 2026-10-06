@@ -13,6 +13,14 @@ public readonly record struct AnsiStyle
 	/// <summary>Background colour, or <see langword="null"/> when this span sets none.</summary>
 	public AnsiColor? Background { get; init; }
 
+	/// <summary>
+	/// The foreground a client with only the sixteen standard colours is sent in place of
+	/// <see cref="Foreground"/>'s nearest: for a character a <see cref="ColorGradient"/> painted, the stop
+	/// it lies nearest, so a blend those clients cannot show falls back to bands of the colours it was
+	/// written with. Read only with <see cref="Foreground"/> set.
+	/// </summary>
+	public AnsiColor? StandardForeground { get; init; }
+
 	public bool Bold { get; init; }
 	public bool Faint { get; init; }
 	public bool Italic { get; init; }
@@ -108,6 +116,7 @@ public readonly record struct AnsiStyle
 		return new AnsiStyle
 		{
 			Foreground = inner.Foreground ?? inherited,
+			StandardForeground = inner.Foreground is not null ? inner.StandardForeground : outer.StandardForeground,
 			Background = inner.Background ?? outer.Background,
 			Bold = (outer.Bold || inner.Bold) && !inner.BoldOff,
 			Faint = outer.Faint || inner.Faint,
@@ -143,15 +152,17 @@ public readonly record struct AnsiStyle
 		AnsiColorDepth.Standard => this with
 		{
 			// A bright standard colour is written as bold, so one an off code dimmed must not come back as it.
-			Foreground = ToStandard(Foreground) is AnsiColor.Standard { Bright: true } bright && BoldOff
+			Foreground = ToStandard(StandardForeground ?? Foreground) is AnsiColor.Standard { Bright: true } bright && BoldOff
 				? new AnsiColor.Standard(bright.Index, false)
-				: ToStandard(Foreground),
+				: ToStandard(StandardForeground ?? Foreground),
+			StandardForeground = null,
 			Background = ToStandard(Background)
 		},
 		AnsiColorDepth.Attributes => this with
 		{
-			Bold = Bold || Foreground is AnsiColor.Standard { Bright: true },
+			Bold = Bold || (StandardForeground ?? Foreground) is AnsiColor.Standard { Bright: true },
 			Foreground = null,
+			StandardForeground = null,
 			Background = null
 		},
 		AnsiColorDepth.None => new AnsiStyle { LinkUrl = LinkUrl, LinkText = LinkText, LinkKind = LinkKind },

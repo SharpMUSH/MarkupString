@@ -11,9 +11,19 @@ public sealed record AnsiMarkup(AnsiStyle Style) : IColorMarkup, IAnsiStyleSourc
 	public RgbColor? Foreground => Style.Foreground?.ToRgb() is { } rgb ? new RgbColor(rgb.R, rgb.G, rgb.B) : null;
 
 	/// <inheritdoc/>
-	/// <remarks>Everything else about the style is kept.</remarks>
+	/// <remarks>
+	/// Everything else about the style is kept, and the colour this layer had is what a client with only
+	/// the sixteen standard colours is sent (<see cref="AnsiStyle.StandardForeground"/>).
+	/// </remarks>
 	public IColorMarkup WithForeground(RgbColor color) =>
-		this with { Style = Style with { Foreground = new AnsiColor.Rgb(color.R, color.G, color.B) } };
+		this with
+		{
+			Style = Style with
+			{
+				Foreground = new AnsiColor.Rgb(color.R, color.G, color.B),
+				StandardForeground = Style.StandardForeground ?? Style.Foreground,
+			}
+		};
 
 	/// <inheritdoc/>
 	/// <remarks>This layer is terminal formatting and nothing else, so it folds in every format.</remarks>

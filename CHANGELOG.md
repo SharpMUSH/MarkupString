@@ -10,6 +10,10 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Gradients fall back on sixteen-colour terminals.** A gradient-painted character carries the layer
+  of the stop nearest it, and `AnsiStyle.StandardForeground` keeps that stop's colour, so a client with
+  only the standard colours gets bands of the stops instead of each shade's nearest standard colour.
+  The ANSI codec writes it as `fs`.
 - **Block layout** (`MarkupString.Layout`): blocks that draw themselves — `Frame`, `Rule`, `Flex`,
   `TextBlock`, `Stack`, `Figure`, `Fields` (labelled values lined up in a column, as a `<dl>` in HTML),
   `Tree` (items under their parents with `TreeGuide` lines, as nested `<ul>`), `Gauge` (a bar, as

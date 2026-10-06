@@ -124,11 +124,49 @@ public class GradientTests
 	}
 
 	[Test]
-	public async Task Paint_KeepsTheRestOfTheStyle()
+	public async Task Paint_KeepsTheRestOfTheNearestStopsStyle()
 	{
 		var bold = AnsiMarkup.Create(foreground: new AnsiColor.Rgb(255, 0, 0), bold: true);
-		var painted = new ColorGradient([bold, Blue]).Paint(MarkupText.Plain("x"), 1);
+		var gradient = new ColorGradient([Blue, bold]);
 
-		await Assert.That(painted.Render(MarkupFormat.Ansi, Registry)).Contains("\u001b[1;38;2;0;0;255mx");
+		await Assert.That(gradient.Paint(MarkupText.Plain("x"), 1).Render(MarkupFormat.Ansi, Registry)).Contains("\u001b[1;38;2;255;0;0mx");
+		await Assert.That(gradient.Paint(MarkupText.Plain("x"), 0).Render(MarkupFormat.Ansi, Registry)).Contains("\u001b[38;2;0;0;255mx");
+	}
+
+	/// <summary>
+	/// A sixteen-colour client cannot show a blend, and the nearest standard colour of each blended
+	/// character jumps about; it is sent bands of the stops the gradient was written with instead.
+	/// </summary>
+	[Test]
+	public async Task SixteenColours_FallBackToBandsOfTheStops()
+	{
+		var red = AnsiMarkup.Create(foreground: new AnsiColor.Standard(1, true));
+		var blue = AnsiMarkup.Create(foreground: new AnsiColor.Standard(4, true));
+		var shaded = new ColorGradient([red, blue]).Shade(MarkupText.Plain("abcdef"));
+		var sixteen = MarkupRegistry.Empty.WithAnsiOutput(AnsiColorDepth.Standard);
+
+		var output = shaded.Render(MarkupFormat.Ansi, sixteen);
+
+		await Assert.That(output).IsEqualTo("\u001b[1;31mabc\u001b[34mdef\u001b[0m");
+	}
+
+	[Test]
+	public async Task The256ColourPalette_StillBlends()
+	{
+		var shaded = new ColorGradient([Red, Blue]).Shade(MarkupText.Plain("abcdef"));
+		var output = shaded.Render(MarkupFormat.Ansi, MarkupRegistry.Empty.WithAnsiOutput(AnsiColorDepth.Xterm256));
+
+		await Assert.That(output.Split("38;5;").Length - 1).IsEqualTo(6);
+	}
+
+	[Test]
+	public async Task TheFallback_SurvivesSerialization()
+	{
+		var shaded = new ColorGradient([AnsiMarkup.Create(foreground: new AnsiColor.Standard(2, false)), Blue]).Shade(MarkupText.Plain("ab"));
+		var json = MarkupTextSerializer.Serialize(shaded, Registry);
+		var read = MarkupTextSerializer.Deserialize(json, Registry);
+
+		await Assert.That(json).Contains("\"fs\":2");
+		await Assert.That(MarkupTextSerializer.Serialize(read, Registry)).IsEqualTo(json);
 	}
 }

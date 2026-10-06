@@ -407,6 +407,11 @@ block's text is clipped to a CSS `linear-gradient` in the same space (after a fa
 worked out here) and its borders are drawn in it; a browser cannot run colour along characters or
 words, so those run across.
 
+Each shaded character carries the layer of the stop it lies nearest. A blend needs 256 colours or
+more: a terminal limited to the sixteen standard colours (`AnsiColorDepth.Standard`) is sent that
+stop's own colour instead (`AnsiStyle.StandardForeground`), so red to blue shows as a red half and a
+blue half rather than the jumpy nearest-colour mix of every blended shade.
+
 **Lists.** `Bullets` marks each item with the theme's bullet, a dash, a number, a letter or a roman
 numeral (`BulletStyle`), or a marker of your own, starting from `Start`. Numbers line up on their
 right, and a wrapped line hangs under the item's text.

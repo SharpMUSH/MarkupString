@@ -8,7 +8,7 @@ namespace MarkupString.Ansi;
 /// <remarks>
 /// <para>
 /// Keys are two characters because a game database holds one of these objects per distinct style
-/// per attribute: <c>f</c>/<c>g</c> are the foreground and background, <c>lt</c>/<c>lu</c>/<c>lk</c>
+/// per attribute: <c>f</c>/<c>g</c> are the foreground and background, <c>fs</c> the foreground a sixteen-colour client is sent instead, <c>lt</c>/<c>lu</c>/<c>lk</c>
 /// the link's hint, target and kind, and the remaining flags (<c>bl bo cl fa in it ov un st</c>)
 /// are written as <c>1</c> only when set and read back by presence.
 /// </para>
@@ -37,6 +37,7 @@ public sealed class AnsiMarkupCodec : IMarkupCodec
 
 		WriteColor(writer, "f", style.Foreground);
 		WriteColor(writer, "g", style.Background);
+		WriteColor(writer, "fs", style.StandardForeground);
 
 		if (style.LinkText is { Length: > 0 }) writer.WriteString("lt", style.LinkText);
 		if (style.LinkUrl is { Length: > 0 }) writer.WriteString("lu", style.LinkUrl);
@@ -63,6 +64,7 @@ public sealed class AnsiMarkupCodec : IMarkupCodec
 		{
 			Foreground = ReadColor(element, "f"),
 			Background = ReadColor(element, "g"),
+			StandardForeground = ReadColor(element, "fs"),
 			LinkText = ReadString(element, "lt"),
 			LinkUrl = ReadString(element, "lu"),
 			LinkKind = element.TryGetProperty("lk", out var kind) && kind.ValueKind == JsonValueKind.Number
