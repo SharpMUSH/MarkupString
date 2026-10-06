@@ -305,4 +305,19 @@ public class BlockLayoutTests
 	[Arguments("wide")]
 	public async Task BlockSize_RefusesNonsense(string text) =>
 		await Assert.That(BlockSize.TryParse(text, out _)).IsFalse();
+
+	[Test]
+	public async Task Nodes_SplitsBlocksFromTheTextAroundThem()
+	{
+		var rule = BlockLayout.Build(new RuleNode(P("Quote"), BorderStyle.Mush), 20);
+		var body = MarkupText.Join(MarkupText.NewLine, [P("Intro"), rule, P("Hooooo?")]);
+
+		var nodes = BlockLayout.Nodes(body);
+
+		await Assert.That(nodes.Count).IsEqualTo(3);
+		await Assert.That(((TextNode)nodes[0]).Content.ToPlainText()).IsEqualTo("Intro");
+		await Assert.That(nodes[1]).IsTypeOf<RuleNode>();
+		await Assert.That(((TextNode)nodes[2]).Content.ToPlainText()).IsEqualTo("Hooooo?");
+		await Assert.That(BlockLayout.Nodes(MarkupText.Concat(P("x "), rule)).Single()).IsTypeOf<TextNode>();
+	}
 }
