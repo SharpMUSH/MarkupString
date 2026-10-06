@@ -7,6 +7,8 @@ MarkupString.Ansi.AnsiStyle.BoldOff.get -> bool
 MarkupString.Ansi.AnsiStyle.BoldOff.init -> void
 MarkupString.Ansi.AnsiStyle.InvertedOff.get -> bool
 MarkupString.Ansi.AnsiStyle.InvertedOff.init -> void
+MarkupString.Ansi.AnsiStyle.StandardForeground.get -> MarkupString.Ansi.AnsiColor?
+MarkupString.Ansi.AnsiStyle.StandardForeground.init -> void
 MarkupString.Ansi.AnsiStyle.UnderlinedOff.get -> bool
 MarkupString.Ansi.AnsiStyle.UnderlinedOff.init -> void
 static MarkupString.Ansi.AnsiCodeParser.Parse(string! codes, System.Func<string!, MarkupString.Ansi.AnsiColor?>! namedColor) -> MarkupString.Ansi.AnsiMarkup!

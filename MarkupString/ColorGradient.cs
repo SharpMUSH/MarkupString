@@ -68,7 +68,7 @@ public enum GradientFlow
 /// </summary>
 /// <param name="Stops">
 /// The colours, as colour layers (an ANSI colour, for one): each one's <see cref="IColorMarkup.Foreground"/>
-/// is the colour, and the first is the layer a shaded piece is drawn with. Stops without a known
+/// is the colour, and a shaded piece is drawn with the layer of the stop nearest it. Stops without a known
 /// colour are ignored.
 /// </param>
 /// <param name="Space">The space the colours are blended in.</param>
@@ -108,14 +108,19 @@ public sealed record ColorGradient(ImmutableArray<IColorMarkup> Stops, GradientS
 	}
 
 	/// <summary>
-	/// <paramref name="text"/> drawn in the colour at <paramref name="position"/>, with the first stop's
-	/// layer; the text unchanged when the gradient has no colour.
+	/// <paramref name="text"/> drawn in the colour at <paramref name="position"/>, with the layer of the stop
+	/// nearest it, so a format that cannot show the blend can fall back to that stop's own colour; the text
+	/// unchanged when the gradient has no colour.
 	/// </summary>
 	public MarkupText Paint(MarkupText text, double position)
 	{
 		ArgumentNullException.ThrowIfNull(text);
-		var template = Stops.IsDefault ? null : Stops.FirstOrDefault(stop => stop.Foreground is not null);
-		return template is null || text.Length == 0 ? text : MarkupText.Wrap(template.WithForeground(At(position)), text);
+		IColorMarkup[] stops = Stops.IsDefault ? [] : [.. Stops.Where(stop => stop.Foreground is not null)];
+		if (stops.Length == 0 || text.Length == 0) return text;
+		var nearest = stops.Length == 1 || !double.IsFinite(position)
+			? stops[0]
+			: stops[(int)Math.Round(Place(position) * (stops.Length - 1))];
+		return MarkupText.Wrap(nearest.WithForeground(At(position)), text);
 	}
 
 	/// <summary>
