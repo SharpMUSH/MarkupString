@@ -4,8 +4,17 @@ namespace MarkupString.Ansi;
 /// A markup layer carrying terminal formatting. Value-equal through <see cref="Style"/>, so two
 /// identically styled spans coalesce.
 /// </summary>
-public sealed record AnsiMarkup(AnsiStyle Style) : IMarkup, IAnsiStyleSource
+public sealed record AnsiMarkup(AnsiStyle Style) : IColorMarkup, IAnsiStyleSource
 {
+	/// <inheritdoc/>
+	/// <remarks>A palette colour is resolved to its usual RGB value; the terminal's default has none.</remarks>
+	public RgbColor? Foreground => Style.Foreground?.ToRgb() is { } rgb ? new RgbColor(rgb.R, rgb.G, rgb.B) : null;
+
+	/// <inheritdoc/>
+	/// <remarks>Everything else about the style is kept.</remarks>
+	public IColorMarkup WithForeground(RgbColor color) =>
+		this with { Style = Style with { Foreground = new AnsiColor.Rgb(color.R, color.G, color.B) } };
+
 	/// <inheritdoc/>
 	/// <remarks>This layer is terminal formatting and nothing else, so it folds in every format.</remarks>
 	public bool TryGetAnsiStyle(MarkupFormat format, out AnsiStyle style)

@@ -147,6 +147,8 @@ internal static class LayoutJson
 				if (!Same(gaugeOptions.Close, gaugeDefault.Close)) WriteText(writer, "c", gaugeOptions.Close, registry);
 				if (gaugeOptions.Show != GaugeShow.Percent) writer.WriteString("sh", gaugeOptions.Show.ToString().ToLowerInvariant());
 				if (gaugeOptions.BarWidth != 0) writer.WriteNumber("bw", gaugeOptions.BarWidth);
+				if (gaugeOptions.Gradient is { } gradient) WriteGradient(writer, "gr", gradient, registry);
+				if (gaugeOptions.Shade != GaugeShade.Cells) writer.WriteString("sd", gaugeOptions.Shade.ToString().ToLowerInvariant());
 				break;
 			case BulletsNode bullets:
 				writer.WriteString("t", "bullets");
@@ -291,6 +293,8 @@ internal static class LayoutJson
 						Close = Text(element, "c", registry) ?? gaugeDefault.Close,
 						Show = Enum.TryParse<GaugeShow>(String(element, "sh"), ignoreCase: true, out var show) ? show : GaugeShow.Percent,
 						BarWidth = Math.Clamp(Int(element, "bw") ?? 0, 0, 4096),
+						Gradient = ReadGradient(element, "gr", registry),
+						Shade = Enum.TryParse<GaugeShade>(String(element, "sd"), ignoreCase: true, out var shade) ? shade : GaugeShade.Cells,
 					});
 			case "bullets":
 				return new BulletsNode(Nodes(element, "it", registry), new BulletOptions
@@ -449,6 +453,32 @@ internal static class LayoutJson
 	{
 		writer.WritePropertyName(name);
 		MarkupTextSerializer.Write(writer, text, registry);
+	}
+
+	/// <summary>A gradient as its space and its stops, each stop a one-character text carrying the stop's layer.</summary>
+	private static void WriteGradient(Utf8JsonWriter writer, string name, ColorGradient gradient, MarkupRegistry? registry)
+	{
+		writer.WriteStartObject(name);
+		writer.WriteString("sp", gradient.Space.ToString().ToLowerInvariant());
+		writer.WriteStartArray("st");
+		foreach (var stop in gradient.Stops.IsDefault ? [] : gradient.Stops)
+			MarkupTextSerializer.Write(writer, MarkupText.Wrap(stop, "#"), registry);
+		writer.WriteEndArray();
+		writer.WriteEndObject();
+	}
+
+	private static ColorGradient? ReadGradient(JsonElement element, string name, MarkupRegistry? registry)
+	{
+		if (!element.TryGetProperty(name, out var value) || value.ValueKind != JsonValueKind.Object) return null;
+		var stops = value.TryGetProperty("st", out var list) && list.ValueKind == JsonValueKind.Array
+			? list.EnumerateArray()
+				.Where(stop => stop.ValueKind == JsonValueKind.Object)
+				.Select(stop => MarkupTextSerializer.Read(stop, registry))
+				.SelectMany(text => text.Runs.SelectMany(run => run.Markups).OfType<IColorMarkup>().Take(1))
+				.ToImmutableArray()
+			: [];
+		var space = Enum.TryParse<GradientSpace>(String(value, "sp"), ignoreCase: true, out var parsed) ? parsed : GradientSpace.Oklch;
+		return new ColorGradient(stops, space);
 	}
 
 	private static MarkupText? Text(JsonElement element, string name, MarkupRegistry? registry) =>

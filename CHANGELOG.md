@@ -23,6 +23,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   made a pattern. `BlockLayout.Relayout` lays intact blocks out again for a reader: a fluid block at the
   reader's width, any block in ASCII borders (`AsciiOnly`: each box-drawing character becomes its nearest ASCII one, so a double or heavy line keeps `=` and a light one `-`; a flex separator is translated too) or as its content in reading order for a screen
   reader (`Linear`). `BlockLayout.AsNode` nests a whole block in a larger one.
+- **`ColorGradient`**: colour stops blended in OKLCH (the default), Oklab or HSL, never sRGB, with
+  `At`, `Paint` and `ToCss`. A gauge shades its bar with one, by cell or by value. `IColorMarkup` is the
+  colour layer it shades with; `AnsiMarkup` implements it.
 - **`IBlockMarkup` and `IBlockEmitter`**, the general mechanism behind it: a layer a format may draw from
   its own description instead of the text. The renderer hands a block to its emitter only when the text
   it covers is unchanged (a fingerprint check) and on lines of its own, so a block cut, edited or run into
