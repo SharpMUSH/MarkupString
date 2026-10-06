@@ -377,7 +377,7 @@ whether it wraps) and rows of cells. Each column asks for its widest cell. When 
 wide, the columns that wrap give way, widest first, down to their least width; then the column with
 the highest `Priority` number is left out, and so on. A column that does not wrap is shown whole or
 not at all. When not even the most important column fits, each row becomes a card of labelled
-values. In HTML, columns of priority 2 and 3 carry `ms-p2` and `ms-p3`, which `LayoutCss.Fixed`
+values. In HTML, a column of priority 2 carries `ms-p2` and one of 3 or more `ms-p3`, which `LayoutCss.Fixed`
 hides on narrow pages.
 
 ```
