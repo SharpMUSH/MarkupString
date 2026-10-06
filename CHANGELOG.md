@@ -12,7 +12,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **Block layout** (`MarkupString.Layout`): a tree of `BoxNode`, `RuleNode`, `FlexNode`, `TextNode`,
   `StackNode`, `FigureNode`, `FieldsNode` (labelled values lined up in a column, as a `<dl>` in HTML) and
-  `TreeNode` (items under their parents with `TreeGuide` lines, as nested `<ul>`) that `BlockLayout.Build` lays out as lines of text at a width and wraps in a
+  `TreeNode` (items under their parents with `TreeGuide` lines, as nested `<ul>`), `GaugeNode` (a bar, as
+  `<meter>`), `BulletsNode` (bulleted or numbered items), `GridNode` (short items in as many columns as fit)
+  and `TableNode` (columns that wrap, then drop by priority, then turn rows into cards; a `<table>` in HTML) that `BlockLayout.Build` lays out as lines of text at a width and wraps in a
   `LayoutMarkup` carrying the tree. A terminal gets the box art; HTML draws the tree as a `<fieldset>` box
   with its title as the legend, dividers, a wrapping flex row sized in `ch`, and a picture floated beside
   its text (`LayoutCss.Fixed` styles the classes). A figure's text art stands in for the picture in a

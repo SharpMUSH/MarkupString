@@ -1,7 +1,7 @@
 namespace MarkupString.Html;
 
 /// <summary>
-/// The stylesheet for the classes the layout emitter writes: boxes, rules, flex rows, figures, fields and trees.
+/// The stylesheet for the classes the layout emitter writes: boxes, rules, flex rows, figures, fields, trees, gauges, lists, grids and tables.
 /// A page that shows rendered layouts includes it, or carries its own copy of these rules.
 /// </summary>
 /// <remarks>
@@ -54,5 +54,21 @@ public static class LayoutCss
 		".ms-tree.ms-guide-rounded ul > li:last-child::before { border-bottom-left-radius: 0.4em; }\n" +
 		".ms-tree.ms-guide-heavy ul > li, .ms-tree.ms-guide-heavy ul > li::before { border-width: 2px; }\n" +
 		".ms-tree.ms-guide-double ul > li, .ms-tree.ms-guide-double ul > li::before { border-left-style: double; border-left-width: 3px; }\n" +
-		".ms-tree.ms-guide-none ul > li, .ms-tree.ms-guide-none ul > li::before { border-color: transparent; }\n";
+		".ms-tree.ms-guide-none ul > li, .ms-tree.ms-guide-none ul > li::before { border-color: transparent; }\n" +
+		".ms-gauge { display: flex; align-items: center; gap: 1ch; }\n" +
+		".ms-gauge > meter { flex: 1 1 8ch; min-width: 4ch; }\n" +
+		".ms-bullets { margin: 0; padding-left: 3ch; }\n" +
+		".ms-bullet-dash { list-style-type: \"- \"; }\n" +
+		".ms-bullet-star { list-style-type: \"* \"; }\n" +
+		".ms-bullet-none, .ms-bullet-custom { list-style: none; }\n" +
+		".ms-bullet-custom > li > .ms-marker { display: inline-block; margin-left: -2ch; min-width: 2ch; }\n" +
+		".ms-grid { list-style: none; margin: 0; padding: 0; display: grid; }\n" +
+		".ms-grid.ms-down { display: block; }\n" +
+		".ms-grid > li { break-inside: avoid; white-space: pre-wrap; overflow-wrap: anywhere; }\n" +
+		".ms-table-wrap { max-width: 100%; overflow-x: auto; }\n" +
+		".ms-table { border-collapse: collapse; }\n" +
+		".ms-table th, .ms-table td { padding: 0 1ch; vertical-align: top; text-align: left; }\n" +
+		".ms-table th { border-bottom: 1px solid currentColor; }\n" +
+		"@media (max-width: 48em) { .ms-table .ms-p3 { display: none; } }\n" +
+		"@media (max-width: 32em) { .ms-table .ms-p2 { display: none; } }\n";
 }

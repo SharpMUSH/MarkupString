@@ -119,7 +119,7 @@ internal static class LayoutJson
 				writer.WriteEndArray();
 				var settings = fields.Options;
 				if (settings.LabelAlignment != Alignment.Left) writer.WriteString("a", Name(settings.LabelAlignment));
-				if (!settings.Separator.Equals(FieldsOptions.Default.Separator)) WriteText(writer, "s", settings.Separator, registry);
+				if (!Same(settings.Separator, FieldsOptions.Default.Separator)) WriteText(writer, "s", settings.Separator, registry);
 				if (settings.Leader is { } leader) WriteText(writer, "ld", leader, registry);
 				if (settings.Columns != 1) writer.WriteNumber("c", settings.Columns);
 				if (settings.Gap != FieldsOptions.Default.Gap) writer.WriteNumber("g", settings.Gap);
@@ -131,8 +131,75 @@ internal static class LayoutJson
 				writer.WriteString("n", tree.Guide.Name);
 				var preset = TreeGuide.Preset(tree.Guide.Name) ?? TreeGuide.None;
 				foreach (var (key, get) in GuidePieces)
-					if (!get(tree.Guide).Equals(get(preset))) WriteText(writer, key, get(tree.Guide), registry);
+					if (!Same(get(tree.Guide), get(preset))) WriteText(writer, key, get(tree.Guide), registry);
 				writer.WriteEndObject();
+				break;
+			case GaugeNode gauge:
+				writer.WriteString("t", "gauge");
+				writer.WriteNumber("v", gauge.Value);
+				writer.WriteNumber("m", gauge.Maximum);
+				if (gauge.Label is { } gaugeLabel) WriteText(writer, "k", gaugeLabel, registry);
+				var gaugeOptions = gauge.Options;
+				var gaugeDefault = GaugeOptions.Default;
+				if (!Same(gaugeOptions.Filled, gaugeDefault.Filled)) WriteText(writer, "f", gaugeOptions.Filled, registry);
+				if (!Same(gaugeOptions.Empty, gaugeDefault.Empty)) WriteText(writer, "e", gaugeOptions.Empty, registry);
+				if (!Same(gaugeOptions.Open, gaugeDefault.Open)) WriteText(writer, "o", gaugeOptions.Open, registry);
+				if (!Same(gaugeOptions.Close, gaugeDefault.Close)) WriteText(writer, "c", gaugeOptions.Close, registry);
+				if (gaugeOptions.Show != GaugeShow.Percent) writer.WriteString("sh", gaugeOptions.Show.ToString().ToLowerInvariant());
+				if (gaugeOptions.BarWidth != 0) writer.WriteNumber("bw", gaugeOptions.BarWidth);
+				break;
+			case BulletsNode bullets:
+				writer.WriteString("t", "bullets");
+				writer.WriteStartArray("it");
+				if (!bullets.Items.IsDefault)
+					foreach (var item in bullets.Items) WriteNode(writer, item, registry);
+				writer.WriteEndArray();
+				if (bullets.Options.Style != BulletStyle.Bullet) writer.WriteString("st", bullets.Options.Style.ToString().ToLowerInvariant());
+				if (bullets.Options.Marker is { } marker) WriteText(writer, "mk", marker, registry);
+				if (bullets.Options.Start != 1) writer.WriteNumber("s", bullets.Options.Start);
+				break;
+			case GridNode grid:
+				writer.WriteString("t", "grid");
+				writer.WriteStartArray("it");
+				if (!grid.Items.IsDefault)
+					foreach (var item in grid.Items) MarkupTextSerializer.Write(writer, item, registry);
+				writer.WriteEndArray();
+				if (grid.Gap != 2) writer.WriteNumber("g", grid.Gap);
+				if (grid.Across) writer.WriteBoolean("ac", true);
+				break;
+			case TableNode table:
+				writer.WriteString("t", "table");
+				writer.WriteStartArray("cols");
+				if (!table.Columns.IsDefault)
+				{
+					foreach (var column in table.Columns)
+					{
+						writer.WriteStartObject();
+						WriteText(writer, "h", column.Header, registry);
+						if (column.Alignment != Alignment.Left) writer.WriteString("a", Name(column.Alignment));
+						if (column.Min != 1) writer.WriteNumber("mn", column.Min);
+						if (column.Max != 0) writer.WriteNumber("mx", column.Max);
+						if (column.Priority != 1) writer.WriteNumber("p", column.Priority);
+						if (!column.Wrap) writer.WriteBoolean("nw", true);
+						writer.WriteEndObject();
+					}
+				}
+				writer.WriteEndArray();
+				writer.WriteStartArray("rows");
+				if (!table.Rows.IsDefault)
+				{
+					foreach (var row in table.Rows)
+					{
+						writer.WriteStartArray();
+						if (!row.IsDefault)
+							foreach (var cell in row) WriteNode(writer, cell, registry);
+						writer.WriteEndArray();
+					}
+				}
+				writer.WriteEndArray();
+				if (table.Options.Gap != TableOptions.Default.Gap) writer.WriteNumber("g", table.Options.Gap);
+				if (table.Options.Separator is { } tableSeparator) WriteText(writer, "s", tableSeparator, registry);
+				if (!Same(table.Options.HeaderRule, TableOptions.Default.HeaderRule)) WriteText(writer, "hr", table.Options.HeaderRule, registry);
 				break;
 			default:
 				writer.WriteString("t", "stack");
@@ -210,6 +277,67 @@ internal static class LayoutJson
 				});
 			case "tree":
 				return new TreeNode(ReadTreeItems(element, "it", registry, 0), ReadGuide(element, registry));
+			case "gauge":
+				var gaugeDefault = GaugeOptions.Default;
+				return new GaugeNode(
+					Double(element, "v") ?? 0,
+					Double(element, "m") ?? 0,
+					Text(element, "k", registry),
+					new GaugeOptions
+					{
+						Filled = Text(element, "f", registry) ?? gaugeDefault.Filled,
+						Empty = Text(element, "e", registry) ?? gaugeDefault.Empty,
+						Open = Text(element, "o", registry) ?? gaugeDefault.Open,
+						Close = Text(element, "c", registry) ?? gaugeDefault.Close,
+						Show = Enum.TryParse<GaugeShow>(String(element, "sh"), ignoreCase: true, out var show) ? show : GaugeShow.Percent,
+						BarWidth = Math.Clamp(Int(element, "bw") ?? 0, 0, 4096),
+					});
+			case "bullets":
+				return new BulletsNode(Nodes(element, "it", registry), new BulletOptions
+				{
+					Style = Enum.TryParse<BulletStyle>(String(element, "st"), ignoreCase: true, out var style) ? style : BulletStyle.Bullet,
+					Marker = Text(element, "mk", registry),
+					Start = Int(element, "s") ?? 1,
+				});
+			case "grid":
+				var gridItems = ImmutableArray.CreateBuilder<MarkupText>();
+				if (element.TryGetProperty("it", out var gridList) && gridList.ValueKind == JsonValueKind.Array)
+					foreach (var item in gridList.EnumerateArray())
+						if (item.ValueKind == JsonValueKind.Object) gridItems.Add(MarkupTextSerializer.Read(item, registry));
+				return new GridNode(gridItems.ToImmutable(), Math.Clamp(Int(element, "g") ?? 2, 0, 64), Bool(element, "ac"));
+			case "table":
+				var columns = ImmutableArray.CreateBuilder<TableColumn>();
+				if (element.TryGetProperty("cols", out var columnList) && columnList.ValueKind == JsonValueKind.Array)
+				{
+					foreach (var column in columnList.EnumerateArray())
+					{
+						if (column.ValueKind != JsonValueKind.Object) continue;
+						columns.Add(new TableColumn(
+							Text(column, "h", registry) ?? MarkupText.Empty,
+							Align(column, "a", Alignment.Left),
+							Int(column, "mn") ?? 1,
+							Int(column, "mx") ?? 0,
+							Int(column, "p") ?? 1,
+							!Bool(column, "nw")));
+					}
+				}
+				var rows = ImmutableArray.CreateBuilder<ImmutableArray<LayoutNode>>();
+				if (element.TryGetProperty("rows", out var rowList) && rowList.ValueKind == JsonValueKind.Array)
+				{
+					foreach (var row in rowList.EnumerateArray())
+					{
+						if (row.ValueKind != JsonValueKind.Array) continue;
+						var cells = ImmutableArray.CreateBuilder<LayoutNode>();
+						foreach (var cell in row.EnumerateArray()) cells.Add(ReadNode(cell, registry));
+						rows.Add(cells.ToImmutable());
+					}
+				}
+				return new TableNode(columns.ToImmutable(), rows.ToImmutable(), new TableOptions
+				{
+					Gap = Int(element, "g") ?? TableOptions.Default.Gap,
+					Separator = Text(element, "s", registry),
+					HeaderRule = Text(element, "hr", registry) ?? TableOptions.Default.HeaderRule,
+				});
 			default:
 				return Empty;
 		}
@@ -283,7 +411,7 @@ internal static class LayoutJson
 		writer.WriteString("n", border.Name);
 		var preset = BorderStyle.Preset(border.Name) ?? BorderStyle.None;
 		foreach (var (key, get) in Pieces)
-			if (!get(border).Equals(get(preset))) WriteText(writer, key, get(border), registry);
+			if (!Same(get(border), get(preset))) WriteText(writer, key, get(border), registry);
 		writer.WriteEndObject();
 	}
 
@@ -338,6 +466,20 @@ internal static class LayoutJson
 
 	private static int? Int(JsonElement element, string name) =>
 		element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number)
+			? number
+			: null;
+
+	/// <summary>
+	/// Whether <paramref name="piece"/> is the default it would be read back as: the same characters with
+	/// no markup. <see cref="MarkupText.Equals(MarkupText)"/> compares plain text only, so a coloured piece
+	/// would otherwise be taken for the default and its colour lost.
+	/// </summary>
+	private static bool Same(MarkupText piece, MarkupText fallback) =>
+		ReferenceEquals(piece, fallback)
+		|| (piece.Text == fallback.Text && piece.Runs.IsDefaultOrEmpty && fallback.Runs.IsDefaultOrEmpty);
+
+	private static double? Double(JsonElement element, string name) =>
+		element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetDouble(out var number) && double.IsFinite(number)
 			? number
 			: null;
 

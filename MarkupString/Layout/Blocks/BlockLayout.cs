@@ -150,7 +150,253 @@ public static class BlockLayout
 			case TreeNode tree:
 				DrawTree(tree, width, options, lines);
 				break;
+			case GaugeNode gauge:
+				DrawGauge(gauge, width, options, lines);
+				break;
+			case BulletsNode bullets:
+				DrawBullets(bullets, width, options, lines);
+				break;
+			case GridNode grid:
+				DrawGrid(grid, width, options, lines);
+				break;
+			case TableNode table:
+				DrawTable(table, width, options, lines);
+				break;
 		}
+	}
+
+	/// <summary>
+	/// <paramref name="piece"/> for this client: as it is, or for an ASCII-only one its box-drawing
+	/// characters translated, or <paramref name="fallback"/> when it holds anything else.
+	/// </summary>
+	private static MarkupText Shown(MarkupText piece, string fallback, BlockRenderOptions options) =>
+		!options.AsciiOnly ? piece : BorderStyle.AsciiText(piece) ?? MarkupText.Plain(fallback);
+
+	private static string Figure(double value) => value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+
+	private static void DrawGauge(GaugeNode gauge, int width, BlockRenderOptions options, List<MarkupText> lines)
+	{
+		var settings = gauge.Options;
+		var ratio = gauge.Maximum > 0 && double.IsFinite(gauge.Value) ? gauge.Value / gauge.Maximum : 0;
+		var figures = settings.Show switch
+		{
+			GaugeShow.Value => $"{Figure(gauge.Value)}/{Figure(gauge.Maximum)}",
+			GaugeShow.Percent => Figure(Math.Round(ratio * 100)) + "%",
+			_ => string.Empty,
+		};
+
+		if (options.Linear)
+		{
+			var spoken = $"{Figure(gauge.Value)} of {Figure(gauge.Maximum)}" + (settings.Show == GaugeShow.Percent ? $" ({figures})" : string.Empty);
+			lines.Add(gauge.Label is { Length: > 0 } named ? MarkupText.Concat([named, MarkupText.Plain(": " + spoken)]) : MarkupText.Plain(spoken));
+			return;
+		}
+
+		var open = Shown(settings.Open, "[", options);
+		var close = Shown(settings.Close, "]", options);
+		var filled = Shown(settings.Filled, "#", options);
+		var empty = Shown(settings.Empty, "-", options);
+		var label = gauge.Label is { Length: > 0 } text ? MarkupText.Concat([text, MarkupText.Space]) : MarkupText.Empty;
+		var after = figures.Length > 0 ? MarkupText.Plain(" " + figures) : MarkupText.Empty;
+
+		var room = width - label.DisplayWidth - open.DisplayWidth - close.DisplayWidth - after.DisplayWidth;
+		var bar = settings.BarWidth > 0 ? Math.Min(settings.BarWidth, Math.Max(1, room)) : Math.Max(1, room);
+		var full = (int)Math.Round(bar * Math.Clamp(ratio, 0, 1));
+		lines.Add(Fit(MarkupText.Concat([label, open, Run(filled, full), Run(empty, bar - full), close, after]), width));
+	}
+
+	private static void DrawBullets(BulletsNode bullets, int width, BlockRenderOptions options, List<MarkupText> lines)
+	{
+		var items = bullets.Items;
+		if (items.IsDefaultOrEmpty) return;
+		var settings = bullets.Options;
+		var markers = Enumerable.Range(0, items.Length).Select(i => Marker(settings, i, options)).ToArray();
+		var markerWidth = markers.Max(marker => marker.DisplayWidth);
+		var numbered = settings.Style is BulletStyle.Number or BulletStyle.Alpha or BulletStyle.Roman;
+		var gutter = markerWidth + (markerWidth > 0 ? 1 : 2);
+		var hang = MarkupText.Space.Repeat(gutter);
+
+		var drawn = new List<MarkupText>();
+		for (var i = 0; i < items.Length; i++)
+		{
+			drawn.Clear();
+			Draw(items[i], Math.Max(1, width - gutter), options, drawn);
+			if (drawn.Count == 0) drawn.Add(MarkupText.Empty);
+			var marker = markers[i].Pad(MarkupText.Space, markerWidth, numbered ? PadType.Left : PadType.Right, TruncationType.Truncate);
+			for (var row = 0; row < drawn.Count; row++)
+			{
+				var lead = row == 0 ? MarkupText.Concat([marker, MarkupText.Space.Repeat(gutter - markerWidth)]) : hang;
+				lines.Add(Fit(MarkupText.Concat([lead, drawn[row]]), width));
+			}
+		}
+	}
+
+	private static MarkupText Marker(BulletOptions settings, int index, BlockRenderOptions options)
+	{
+		var number = settings.Start + index;
+		return settings.Style switch
+		{
+			BulletStyle.Bullet => options.AsciiOnly ? MarkupText.Plain("*") : MarkupText.Plain("•"),
+			BulletStyle.Dash => MarkupText.Plain("-"),
+			BulletStyle.Star => MarkupText.Plain("*"),
+			BulletStyle.Number => MarkupText.Plain(number.ToString(System.Globalization.CultureInfo.InvariantCulture) + "."),
+			BulletStyle.Alpha => MarkupText.Plain(Letters(number) + "."),
+			BulletStyle.Roman => MarkupText.Plain(Roman(number) + "."),
+			BulletStyle.Custom when settings.Marker is { } marker => Shown(marker, "*", options),
+			_ => MarkupText.Empty,
+		};
+	}
+
+	/// <summary><c>a</c> to <c>z</c>, then <c>aa</c>, <c>ab</c>, ... as a spreadsheet names columns.</summary>
+	internal static string Letters(int number)
+	{
+		if (number < 1) return number.ToString(System.Globalization.CultureInfo.InvariantCulture);
+		var letters = string.Empty;
+		for (; number > 0; number = (number - 1) / 26) letters = (char)('a' + (number - 1) % 26) + letters;
+		return letters;
+	}
+
+	/// <summary>Lower-case Roman numerals, for 1 to 3999; other numbers as digits.</summary>
+	internal static string Roman(int number)
+	{
+		if (number is < 1 or > 3999) return number.ToString(System.Globalization.CultureInfo.InvariantCulture);
+		(int Value, string Numeral)[] table =
+			[(1000, "m"), (900, "cm"), (500, "d"), (400, "cd"), (100, "c"), (90, "xc"), (50, "l"), (40, "xl"), (10, "x"), (9, "ix"), (5, "v"), (4, "iv"), (1, "i")];
+		var numeral = new System.Text.StringBuilder();
+		foreach (var (value, text) in table)
+			for (; number >= value; number -= value) numeral.Append(text);
+		return numeral.ToString();
+	}
+
+	private static void DrawGrid(GridNode grid, int width, BlockRenderOptions options, List<MarkupText> lines)
+	{
+		var items = grid.Items;
+		if (items.IsDefaultOrEmpty) return;
+		if (options.Linear)
+		{
+			lines.AddRange(items);
+			return;
+		}
+
+		var gap = Math.Max(0, grid.Gap);
+		var cell = Math.Min(width, Math.Max(1, items.Max(item => item.DisplayWidth)));
+		var columns = Math.Max(1, (width + gap) / (cell + gap));
+		var rows = (items.Length + columns - 1) / columns;
+		columns = (items.Length + rows - 1) / rows;
+		var spacer = MarkupText.Space.Repeat(gap);
+		var parts = new List<MarkupText>(columns * 2);
+		for (var row = 0; row < rows; row++)
+		{
+			parts.Clear();
+			for (var column = 0; column < columns; column++)
+			{
+				var index = grid.Across ? row * columns + column : column * rows + row;
+				if (index >= items.Length) continue;
+				if (column > 0) parts.Add(spacer);
+				parts.Add(Fit(items[index], cell));
+			}
+			lines.Add(Fit(MarkupText.Concat(parts.ToArray().AsSpan()), width));
+		}
+	}
+
+	private static void DrawTable(TableNode table, int width, BlockRenderOptions options, List<MarkupText> lines)
+	{
+		var columns = table.Columns;
+		if (columns.IsDefaultOrEmpty) return;
+		var rows = table.Rows.IsDefault ? [] : table.Rows;
+		var settings = table.Options;
+
+		LayoutNode Cell(ImmutableArray<LayoutNode> row, int column) =>
+			!row.IsDefault && column < row.Length
+				? row[column] is TextNode text ? text with { Alignment = columns[column].Alignment } : row[column]
+				: new TextNode(MarkupText.Empty, columns[column].Alignment);
+
+		var widths = options.Linear ? null : TableWidths(table, width, Cell);
+		if (widths is null)
+		{
+			// Each row as a card of labelled values, the way a phone shows a table too wide for it.
+			for (var r = 0; r < rows.Length; r++)
+			{
+				if (r > 0 && !options.Linear) lines.Add(MarkupText.Empty);
+				// A card's values all start under their labels, whatever side their column kept them to.
+				var fields = Enumerable.Range(0, columns.Length).Select(c => new Field(columns[c].Header,
+					Cell(rows[r], c) is TextNode text ? text with { Alignment = Alignment.Left } : Cell(rows[r], c)));
+				DrawFields(new FieldsNode([.. fields], FieldsOptions.Default), width, options, lines);
+			}
+			return;
+		}
+
+		var shown = Enumerable.Range(0, columns.Length).Where(c => widths[c] > 0).ToArray();
+		var divider = settings.Separator is { } drawn ? Shown(drawn, " | ", options) : MarkupText.Space.Repeat(Math.Max(0, settings.Gap));
+		var tableWidth = shown.Sum(c => widths[c]) + divider.DisplayWidth * (shown.Length - 1);
+
+		MarkupText Join(IEnumerable<MarkupText> cells) =>
+			Fit(MarkupText.Join(divider, cells), width);
+
+		lines.Add(Join(shown.Select(c => Fit(columns[c].Header.FormatColumn(Column(widths[c], columns[c].Alignment))[0], widths[c]))));
+		if (settings.HeaderRule is { Length: > 0 } rule) lines.Add(Fit(Run(Shown(rule, "-", options), tableWidth), width));
+
+		var cellLines = new List<MarkupText>[columns.Length];
+		foreach (var row in rows)
+		{
+			var height = 1;
+			foreach (var c in shown)
+			{
+				cellLines[c] = [];
+				Draw(Cell(row, c), widths[c], options, cellLines[c]);
+				if (!columns[c].Wrap && cellLines[c].Count > 1) cellLines[c].RemoveRange(1, cellLines[c].Count - 1);
+				height = Math.Max(height, cellLines[c].Count);
+			}
+			for (var line = 0; line < height; line++)
+				lines.Add(Join(shown.Select(c => line < cellLines[c].Count ? Fit(cellLines[c][line], widths[c]) : MarkupText.Space.Repeat(widths[c]))));
+		}
+	}
+
+	/// <summary>
+	/// The width of each column, zero for one left out, or null when not even one column fits. Each
+	/// column asks for its widest cell; too wide, the columns that wrap give way, widest first, down to
+	/// their least widths, and then the least important column is left out. A column that does not wrap
+	/// never gives way: it is shown whole or not at all.
+	/// </summary>
+	private static int[]? TableWidths(TableNode table, int width, Func<ImmutableArray<LayoutNode>, int, LayoutNode> cell)
+	{
+		var columns = table.Columns;
+		var rows = table.Rows.IsDefault ? [] : table.Rows;
+		var gap = table.Options.Separator?.DisplayWidth ?? Math.Max(0, table.Options.Gap);
+
+		var natural = new int[columns.Length];
+		for (var c = 0; c < columns.Length; c++)
+		{
+			var widest = columns[c].Header.DisplayWidth;
+			foreach (var row in rows)
+				foreach (var line in Lines(cell(row, c) is TextNode text ? text with { Alignment = Alignment.Left } : cell(row, c), Math.Max(width, 1)))
+					widest = Math.Max(widest, line.Trim(TrimType.TrimEnd).DisplayWidth);
+			if (columns[c].Max > 0) widest = Math.Min(widest, columns[c].Max);
+			natural[c] = Math.Max(Math.Max(1, columns[c].Min), widest);
+		}
+
+		var active = Enumerable.Range(0, columns.Length).ToList();
+		while (active.Count > 0)
+		{
+			var widths = new int[columns.Length];
+			foreach (var c in active) widths[c] = natural[c];
+			var overflow = active.Sum(c => widths[c]) + gap * (active.Count - 1) - width;
+			while (overflow > 0)
+			{
+				var widest = active.Where(c => columns[c].Wrap && widths[c] > Math.Max(1, columns[c].Min))
+					.OrderByDescending(c => widths[c]).ThenByDescending(c => c).FirstOrDefault(-1);
+				if (widest < 0) break;
+				widths[widest]--;
+				overflow--;
+			}
+			if (overflow <= 0) return widths;
+
+			// Leave out the least important column, the rightmost of those tied.
+			var least = active.OrderByDescending(c => columns[c].Priority).ThenByDescending(c => c).First();
+			if (active.Count == 1) return null;
+			active.Remove(least);
+		}
+		return null;
 	}
 
 	/// <summary>The narrowest a value column may be before each label goes over its value instead.</summary>

@@ -91,6 +91,38 @@ internal sealed class LayoutHtmlEmitter(Func<string, bool>? allowImage = null) :
 				Fields(fields, registry, output);
 				break;
 
+			case GaugeNode gauge:
+				Gauge(gauge, registry, output);
+				break;
+
+			case BulletsNode bullets:
+				Bullets(bullets, registry, output);
+				break;
+
+			case GridNode grid:
+				output.Write("<ul class=\"ms-grid");
+				output.Write(grid.Across ? "\" style=\"grid-template-columns:repeat(auto-fill,minmax(" : " ms-down\" style=\"columns:");
+				var cell = grid.Items.IsDefaultOrEmpty ? 1 : Math.Max(1, grid.Items.Max(item => item.DisplayWidth));
+				output.Write(Number(cell));
+				output.Write(grid.Across ? "ch,1fr));column-gap:" : "ch;column-gap:");
+				output.Write(Number(Math.Max(0, grid.Gap)));
+				output.Write("ch\">");
+				if (!grid.Items.IsDefault)
+				{
+					foreach (var item in grid.Items)
+					{
+						output.Write("<li>");
+						Text(item, registry, output);
+						output.Write("</li>");
+					}
+				}
+				output.Write("</ul>");
+				break;
+
+			case TableNode table:
+				Table(table, registry, output);
+				break;
+
 			case TreeNode tree:
 				output.Write("<ul class=\"ms-tree ms-guide-");
 				output.Write(Css(tree.Guide.Name));
@@ -152,6 +184,136 @@ internal sealed class LayoutHtmlEmitter(Func<string, bool>? allowImage = null) :
 		}
 		output.Write("</dl>");
 	}
+
+	private void Gauge(GaugeNode gauge, MarkupRegistry registry, IBufferWriter<char> output)
+	{
+		var maximum = gauge.Maximum > 0 ? gauge.Maximum : 0;
+		var value = double.IsFinite(gauge.Value) ? Math.Clamp(gauge.Value, 0, maximum) : 0;
+		output.Write("<div class=\"ms-gauge\">");
+		if (gauge.Label is { Length: > 0 } label)
+		{
+			output.Write("<span class=\"ms-gauge-label\">");
+			Text(label, registry, output);
+			output.Write("</span>");
+		}
+		output.Write("<meter min=\"0\" max=\"");
+		output.Write(Decimal(maximum));
+		output.Write("\" value=\"");
+		output.Write(Decimal(value));
+		output.Write("\"");
+		if (gauge.Options.BarWidth > 0)
+		{
+			output.Write(" style=\"flex:0 1 ");
+			output.Write(Number(gauge.Options.BarWidth));
+			output.Write("ch\"");
+		}
+		output.Write("></meter>");
+		var figures = gauge.Options.Show switch
+		{
+			GaugeShow.Value => $"{Decimal(gauge.Value)}/{Decimal(gauge.Maximum)}",
+			GaugeShow.Percent => Decimal(Math.Round(gauge.Maximum > 0 ? gauge.Value / gauge.Maximum * 100 : 0)) + "%",
+			_ => null,
+		};
+		if (figures is not null)
+		{
+			output.Write("<span class=\"ms-gauge-value\">");
+			MarkupTextRenderer.EncodeText(figures, TextEncoding.Html, output);
+			output.Write("</span>");
+		}
+		output.Write("</div>");
+	}
+
+	private void Bullets(BulletsNode bullets, MarkupRegistry registry, IBufferWriter<char> output)
+	{
+		var settings = bullets.Options;
+		var ordered = settings.Style is BulletStyle.Number or BulletStyle.Alpha or BulletStyle.Roman;
+		output.Write(ordered ? "<ol" : "<ul");
+		output.Write(" class=\"ms-bullets ms-bullet-");
+		output.Write(settings.Style.ToString().ToLowerInvariant());
+		output.Write("\"");
+		if (ordered)
+		{
+			output.Write(" type=\"");
+			output.Write(settings.Style switch { BulletStyle.Alpha => "a", BulletStyle.Roman => "i", _ => "1" });
+			output.Write("\"");
+			if (settings.Start != 1)
+			{
+				output.Write(" start=\"");
+				output.Write(Number(settings.Start));
+				output.Write("\"");
+			}
+		}
+		output.Write(">");
+		if (!bullets.Items.IsDefault)
+		{
+			foreach (var item in bullets.Items)
+			{
+				output.Write("<li>");
+				if (settings.Style == BulletStyle.Custom && settings.Marker is { Length: > 0 } marker)
+				{
+					// A marker of the game's own is text, not CSS, so it keeps its colour and needs no escaping into a stylesheet.
+					output.Write("<span class=\"ms-marker\" aria-hidden=\"true\">");
+					Text(marker, registry, output);
+					output.Write("</span>");
+				}
+				Node(item, registry, output);
+				output.Write("</li>");
+			}
+		}
+		output.Write(ordered ? "</ol>" : "</ul>");
+	}
+
+	private void Table(TableNode table, MarkupRegistry registry, IBufferWriter<char> output)
+	{
+		var columns = table.Columns.IsDefault ? [] : table.Columns;
+		output.Write("<div class=\"ms-table-wrap\"><table class=\"ms-table\"><thead><tr>");
+		foreach (var column in columns)
+		{
+			output.Write("<th scope=\"col\"");
+			Cell(column, output);
+			output.Write(">");
+			Text(column.Header, registry, output);
+			output.Write("</th>");
+		}
+		output.Write("</tr></thead><tbody>");
+		if (!table.Rows.IsDefault)
+		{
+			foreach (var row in table.Rows)
+			{
+				output.Write("<tr>");
+				for (var c = 0; c < columns.Length; c++)
+				{
+					output.Write("<td");
+					Cell(columns[c], output);
+					output.Write(">");
+					if (!row.IsDefault && c < row.Length) Node(row[c], registry, output);
+					output.Write("</td>");
+				}
+				output.Write("</tr>");
+			}
+		}
+		output.Write("</tbody></table></div>");
+	}
+
+	/// <summary>A cell's alignment and, for a column that may be left out on a narrow page, its class.</summary>
+	private static void Cell(TableColumn column, IBufferWriter<char> output)
+	{
+		if (column.Priority >= 2)
+		{
+			output.Write(" class=\"ms-p");
+			output.Write(Number(Math.Min(column.Priority, 3)));
+			output.Write("\"");
+		}
+		if (column.Alignment is Alignment.Right or Alignment.Center)
+		{
+			output.Write(" style=\"text-align:");
+			output.Write(column.Alignment == Alignment.Right ? "right" : "center");
+			output.Write("\"");
+		}
+	}
+
+	private static string Decimal(double value) =>
+		double.IsFinite(value) ? value.ToString("0.##", CultureInfo.InvariantCulture) : "0";
 
 	private void TreeItems(ImmutableArray<TreeItem> items, MarkupRegistry registry, IBufferWriter<char> output)
 	{
