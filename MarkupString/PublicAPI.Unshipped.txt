@@ -74,6 +74,37 @@ MarkupString.Layout.BoxNode.Title.get -> MarkupString.MarkupText?
 MarkupString.Layout.BoxNode.Title.init -> void
 MarkupString.Layout.BoxNode.TitleAlignment.get -> MarkupString.Layout.Alignment
 MarkupString.Layout.BoxNode.TitleAlignment.init -> void
+MarkupString.Layout.Field
+MarkupString.Layout.Field.<Clone>$() -> MarkupString.Layout.Field!
+MarkupString.Layout.Field.Deconstruct(out MarkupString.MarkupText! Label, out MarkupString.Layout.LayoutNode! Value) -> void
+MarkupString.Layout.Field.Equals(MarkupString.Layout.Field? other) -> bool
+MarkupString.Layout.Field.Field(MarkupString.MarkupText! Label, MarkupString.Layout.LayoutNode! Value) -> void
+MarkupString.Layout.Field.Label.get -> MarkupString.MarkupText!
+MarkupString.Layout.Field.Label.init -> void
+MarkupString.Layout.Field.Value.get -> MarkupString.Layout.LayoutNode!
+MarkupString.Layout.Field.Value.init -> void
+MarkupString.Layout.FieldsNode
+MarkupString.Layout.FieldsNode.Deconstruct(out System.Collections.Immutable.ImmutableArray<MarkupString.Layout.Field!> Fields, out MarkupString.Layout.FieldsOptions! Options) -> void
+MarkupString.Layout.FieldsNode.Equals(MarkupString.Layout.FieldsNode? other) -> bool
+MarkupString.Layout.FieldsNode.Fields.get -> System.Collections.Immutable.ImmutableArray<MarkupString.Layout.Field!>
+MarkupString.Layout.FieldsNode.Fields.init -> void
+MarkupString.Layout.FieldsNode.FieldsNode(System.Collections.Immutable.ImmutableArray<MarkupString.Layout.Field!> Fields, MarkupString.Layout.FieldsOptions! Options) -> void
+MarkupString.Layout.FieldsNode.Options.get -> MarkupString.Layout.FieldsOptions!
+MarkupString.Layout.FieldsNode.Options.init -> void
+MarkupString.Layout.FieldsOptions
+MarkupString.Layout.FieldsOptions.<Clone>$() -> MarkupString.Layout.FieldsOptions!
+MarkupString.Layout.FieldsOptions.Columns.get -> int
+MarkupString.Layout.FieldsOptions.Columns.init -> void
+MarkupString.Layout.FieldsOptions.Equals(MarkupString.Layout.FieldsOptions? other) -> bool
+MarkupString.Layout.FieldsOptions.FieldsOptions() -> void
+MarkupString.Layout.FieldsOptions.Gap.get -> int
+MarkupString.Layout.FieldsOptions.Gap.init -> void
+MarkupString.Layout.FieldsOptions.LabelAlignment.get -> MarkupString.Layout.Alignment
+MarkupString.Layout.FieldsOptions.LabelAlignment.init -> void
+MarkupString.Layout.FieldsOptions.Leader.get -> MarkupString.MarkupText?
+MarkupString.Layout.FieldsOptions.Leader.init -> void
+MarkupString.Layout.FieldsOptions.Separator.get -> MarkupString.MarkupText!
+MarkupString.Layout.FieldsOptions.Separator.init -> void
 MarkupString.Layout.FigureFloat
 MarkupString.Layout.FigureFloat.Left = 1 -> MarkupString.Layout.FigureFloat
 MarkupString.Layout.FigureFloat.None = 0 -> MarkupString.Layout.FigureFloat
@@ -173,6 +204,39 @@ MarkupString.Layout.TextNode.Content.init -> void
 MarkupString.Layout.TextNode.Deconstruct(out MarkupString.MarkupText! Content, out MarkupString.Layout.Alignment Alignment) -> void
 MarkupString.Layout.TextNode.Equals(MarkupString.Layout.TextNode? other) -> bool
 MarkupString.Layout.TextNode.TextNode(MarkupString.MarkupText! Content, MarkupString.Layout.Alignment Alignment = MarkupString.Layout.Alignment.Left) -> void
+MarkupString.Layout.TreeGuide
+MarkupString.Layout.TreeGuide.<Clone>$() -> MarkupString.Layout.TreeGuide!
+MarkupString.Layout.TreeGuide.Blank.get -> MarkupString.MarkupText!
+MarkupString.Layout.TreeGuide.Blank.init -> void
+MarkupString.Layout.TreeGuide.Branch.get -> MarkupString.MarkupText!
+MarkupString.Layout.TreeGuide.Branch.init -> void
+MarkupString.Layout.TreeGuide.Equals(MarkupString.Layout.TreeGuide? other) -> bool
+MarkupString.Layout.TreeGuide.IsAscii.get -> bool
+MarkupString.Layout.TreeGuide.Last.get -> MarkupString.MarkupText!
+MarkupString.Layout.TreeGuide.Last.init -> void
+MarkupString.Layout.TreeGuide.Name.get -> string!
+MarkupString.Layout.TreeGuide.Name.init -> void
+MarkupString.Layout.TreeGuide.Pipe.get -> MarkupString.MarkupText!
+MarkupString.Layout.TreeGuide.Pipe.init -> void
+MarkupString.Layout.TreeGuide.ToAscii() -> MarkupString.Layout.TreeGuide!
+MarkupString.Layout.TreeGuide.TreeGuide() -> void
+MarkupString.Layout.TreeItem
+MarkupString.Layout.TreeItem.<Clone>$() -> MarkupString.Layout.TreeItem!
+MarkupString.Layout.TreeItem.Children.get -> System.Collections.Immutable.ImmutableArray<MarkupString.Layout.TreeItem!>
+MarkupString.Layout.TreeItem.Children.init -> void
+MarkupString.Layout.TreeItem.Content.get -> MarkupString.Layout.LayoutNode!
+MarkupString.Layout.TreeItem.Content.init -> void
+MarkupString.Layout.TreeItem.Deconstruct(out MarkupString.Layout.LayoutNode! Content, out System.Collections.Immutable.ImmutableArray<MarkupString.Layout.TreeItem!> Children) -> void
+MarkupString.Layout.TreeItem.Equals(MarkupString.Layout.TreeItem? other) -> bool
+MarkupString.Layout.TreeItem.TreeItem(MarkupString.Layout.LayoutNode! Content, System.Collections.Immutable.ImmutableArray<MarkupString.Layout.TreeItem!> Children = default(System.Collections.Immutable.ImmutableArray<MarkupString.Layout.TreeItem!>)) -> void
+MarkupString.Layout.TreeNode
+MarkupString.Layout.TreeNode.Deconstruct(out System.Collections.Immutable.ImmutableArray<MarkupString.Layout.TreeItem!> Items, out MarkupString.Layout.TreeGuide! Guide) -> void
+MarkupString.Layout.TreeNode.Equals(MarkupString.Layout.TreeNode? other) -> bool
+MarkupString.Layout.TreeNode.Guide.get -> MarkupString.Layout.TreeGuide!
+MarkupString.Layout.TreeNode.Guide.init -> void
+MarkupString.Layout.TreeNode.Items.get -> System.Collections.Immutable.ImmutableArray<MarkupString.Layout.TreeItem!>
+MarkupString.Layout.TreeNode.Items.init -> void
+MarkupString.Layout.TreeNode.TreeNode(System.Collections.Immutable.ImmutableArray<MarkupString.Layout.TreeItem!> Items, MarkupString.Layout.TreeGuide! Guide) -> void
 MarkupString.MarkupRegistry.FindBlockEmitter(System.Type! markupType, MarkupString.MarkupFormat! format) -> MarkupString.IBlockEmitter?
 MarkupString.MarkupRegistry.With(MarkupString.IBlockEmitter! emitter) -> MarkupString.MarkupRegistry!
 MarkupString.MarkupText.GetDisplayWidth(MarkupString.ControlCharacterWidth controls) -> int
@@ -188,6 +252,16 @@ override MarkupString.Layout.BoxNode.<Clone>$() -> MarkupString.Layout.BoxNode!
 override MarkupString.Layout.BoxNode.Equals(object? obj) -> bool
 override MarkupString.Layout.BoxNode.GetHashCode() -> int
 override MarkupString.Layout.BoxNode.ToString() -> string!
+override MarkupString.Layout.Field.Equals(object? obj) -> bool
+override MarkupString.Layout.Field.GetHashCode() -> int
+override MarkupString.Layout.Field.ToString() -> string!
+override MarkupString.Layout.FieldsNode.<Clone>$() -> MarkupString.Layout.FieldsNode!
+override MarkupString.Layout.FieldsNode.Equals(object? obj) -> bool
+override MarkupString.Layout.FieldsNode.GetHashCode() -> int
+override MarkupString.Layout.FieldsNode.ToString() -> string!
+override MarkupString.Layout.FieldsOptions.Equals(object? obj) -> bool
+override MarkupString.Layout.FieldsOptions.GetHashCode() -> int
+override MarkupString.Layout.FieldsOptions.ToString() -> string!
 override MarkupString.Layout.FigureNode.<Clone>$() -> MarkupString.Layout.FigureNode!
 override MarkupString.Layout.FigureNode.Equals(object? obj) -> bool
 override MarkupString.Layout.FigureNode.GetHashCode() -> int
@@ -219,12 +293,24 @@ override MarkupString.Layout.TextNode.<Clone>$() -> MarkupString.Layout.TextNode
 override MarkupString.Layout.TextNode.Equals(object? obj) -> bool
 override MarkupString.Layout.TextNode.GetHashCode() -> int
 override MarkupString.Layout.TextNode.ToString() -> string!
+override MarkupString.Layout.TreeGuide.Equals(object? obj) -> bool
+override MarkupString.Layout.TreeGuide.GetHashCode() -> int
+override MarkupString.Layout.TreeGuide.ToString() -> string!
+override MarkupString.Layout.TreeItem.Equals(object? obj) -> bool
+override MarkupString.Layout.TreeItem.GetHashCode() -> int
+override MarkupString.Layout.TreeItem.ToString() -> string!
+override MarkupString.Layout.TreeNode.<Clone>$() -> MarkupString.Layout.TreeNode!
+override MarkupString.Layout.TreeNode.Equals(object? obj) -> bool
+override MarkupString.Layout.TreeNode.GetHashCode() -> int
+override MarkupString.Layout.TreeNode.ToString() -> string!
 override sealed MarkupString.Layout.BoxNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
+override sealed MarkupString.Layout.FieldsNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 override sealed MarkupString.Layout.FigureNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 override sealed MarkupString.Layout.FlexNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 override sealed MarkupString.Layout.RuleNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 override sealed MarkupString.Layout.StackNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 override sealed MarkupString.Layout.TextNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
+override sealed MarkupString.Layout.TreeNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 static MarkupString.DisplayWidth.IndexAtWidth(System.ReadOnlySpan<char> text, int cells, MarkupString.ControlCharacterWidth controls) -> int
 static MarkupString.DisplayWidth.IndexFromWidthEnd(System.ReadOnlySpan<char> text, int cells, MarkupString.ControlCharacterWidth controls) -> int
 static MarkupString.DisplayWidth.Of(System.ReadOnlySpan<char> text, MarkupString.ControlCharacterWidth controls) -> int
@@ -255,6 +341,13 @@ static MarkupString.Layout.BorderStyle.Rounded.get -> MarkupString.Layout.Border
 static MarkupString.Layout.BorderStyle.Single.get -> MarkupString.Layout.BorderStyle!
 static MarkupString.Layout.BoxNode.operator !=(MarkupString.Layout.BoxNode? left, MarkupString.Layout.BoxNode? right) -> bool
 static MarkupString.Layout.BoxNode.operator ==(MarkupString.Layout.BoxNode? left, MarkupString.Layout.BoxNode? right) -> bool
+static MarkupString.Layout.Field.operator !=(MarkupString.Layout.Field? left, MarkupString.Layout.Field? right) -> bool
+static MarkupString.Layout.Field.operator ==(MarkupString.Layout.Field? left, MarkupString.Layout.Field? right) -> bool
+static MarkupString.Layout.FieldsNode.operator !=(MarkupString.Layout.FieldsNode? left, MarkupString.Layout.FieldsNode? right) -> bool
+static MarkupString.Layout.FieldsNode.operator ==(MarkupString.Layout.FieldsNode? left, MarkupString.Layout.FieldsNode? right) -> bool
+static MarkupString.Layout.FieldsOptions.Default.get -> MarkupString.Layout.FieldsOptions!
+static MarkupString.Layout.FieldsOptions.operator !=(MarkupString.Layout.FieldsOptions? left, MarkupString.Layout.FieldsOptions? right) -> bool
+static MarkupString.Layout.FieldsOptions.operator ==(MarkupString.Layout.FieldsOptions? left, MarkupString.Layout.FieldsOptions? right) -> bool
 static MarkupString.Layout.FigureNode.operator !=(MarkupString.Layout.FigureNode? left, MarkupString.Layout.FigureNode? right) -> bool
 static MarkupString.Layout.FigureNode.operator ==(MarkupString.Layout.FigureNode? left, MarkupString.Layout.FigureNode? right) -> bool
 static MarkupString.Layout.FlexItem.operator !=(MarkupString.Layout.FlexItem? left, MarkupString.Layout.FlexItem? right) -> bool
@@ -273,6 +366,20 @@ static MarkupString.Layout.StackNode.operator !=(MarkupString.Layout.StackNode? 
 static MarkupString.Layout.StackNode.operator ==(MarkupString.Layout.StackNode? left, MarkupString.Layout.StackNode? right) -> bool
 static MarkupString.Layout.TextNode.operator !=(MarkupString.Layout.TextNode? left, MarkupString.Layout.TextNode? right) -> bool
 static MarkupString.Layout.TextNode.operator ==(MarkupString.Layout.TextNode? left, MarkupString.Layout.TextNode? right) -> bool
+static MarkupString.Layout.TreeGuide.Ascii.get -> MarkupString.Layout.TreeGuide!
+static MarkupString.Layout.TreeGuide.Double.get -> MarkupString.Layout.TreeGuide!
+static MarkupString.Layout.TreeGuide.Heavy.get -> MarkupString.Layout.TreeGuide!
+static MarkupString.Layout.TreeGuide.Line.get -> MarkupString.Layout.TreeGuide!
+static MarkupString.Layout.TreeGuide.None.get -> MarkupString.Layout.TreeGuide!
+static MarkupString.Layout.TreeGuide.operator !=(MarkupString.Layout.TreeGuide? left, MarkupString.Layout.TreeGuide? right) -> bool
+static MarkupString.Layout.TreeGuide.operator ==(MarkupString.Layout.TreeGuide? left, MarkupString.Layout.TreeGuide? right) -> bool
+static MarkupString.Layout.TreeGuide.Preset(string! name) -> MarkupString.Layout.TreeGuide?
+static MarkupString.Layout.TreeGuide.Presets.get -> System.Collections.Generic.IReadOnlyList<MarkupString.Layout.TreeGuide!>!
+static MarkupString.Layout.TreeGuide.Rounded.get -> MarkupString.Layout.TreeGuide!
+static MarkupString.Layout.TreeItem.operator !=(MarkupString.Layout.TreeItem? left, MarkupString.Layout.TreeItem? right) -> bool
+static MarkupString.Layout.TreeItem.operator ==(MarkupString.Layout.TreeItem? left, MarkupString.Layout.TreeItem? right) -> bool
+static MarkupString.Layout.TreeNode.operator !=(MarkupString.Layout.TreeNode? left, MarkupString.Layout.TreeNode? right) -> bool
+static MarkupString.Layout.TreeNode.operator ==(MarkupString.Layout.TreeNode? left, MarkupString.Layout.TreeNode? right) -> bool
 virtual MarkupString.Layout.LayoutNode.EqualityContract.get -> System.Type!
 virtual MarkupString.Layout.LayoutNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 virtual MarkupString.Layout.LayoutNode.PrintMembers(System.Text.StringBuilder! builder) -> bool

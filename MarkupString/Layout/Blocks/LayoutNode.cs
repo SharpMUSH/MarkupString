@@ -211,3 +211,56 @@ public enum BlockSizeKind
 	/// <summary>A percentage of the width.</summary>
 	Percent,
 }
+
+/// <summary>
+/// Labelled values — <c>Sex: Male</c>, <c>Species: Human</c> — each label beside its value and the
+/// values lined up in one column, a value that wraps keeping to that column.
+/// </summary>
+/// <param name="Fields">The labels and values, in order.</param>
+/// <param name="Options">How they are laid out.</param>
+/// <remarks>
+/// Too narrow for a label beside its value, each label goes on a line of its own with its value
+/// indented under it. With <see cref="FieldsOptions.Columns"/> above one the fields are dealt into
+/// columns side by side, down each column first, and the columns stack when they do not fit.
+/// </remarks>
+public sealed record FieldsNode(ImmutableArray<Field> Fields, FieldsOptions Options) : LayoutNode;
+
+/// <summary>One label and its value in a <see cref="FieldsNode"/>.</summary>
+/// <param name="Label">The label; empty to carry on the value above.</param>
+/// <param name="Value">The value.</param>
+public sealed record Field(MarkupText Label, LayoutNode Value);
+
+/// <summary>How a <see cref="FieldsNode"/> lays out its fields.</summary>
+public sealed record FieldsOptions
+{
+	/// <summary>The default: labels on the left, <c>": "</c> after each, one column.</summary>
+	public static FieldsOptions Default { get; } = new();
+
+	/// <summary>Where a label sits in the label column: <see cref="Alignment.Left"/> or <see cref="Alignment.Right"/>.</summary>
+	public Alignment LabelAlignment { get; init; } = Alignment.Left;
+
+	/// <summary>Drawn after each label.</summary>
+	public MarkupText Separator { get; init; } = MarkupText.Plain(": ");
+
+	/// <summary>A pattern filling the label column after a short label — <c>.</c> draws <c>Name......: </c> — or none.</summary>
+	public MarkupText? Leader { get; init; }
+
+	/// <summary>How many columns the fields are dealt into.</summary>
+	public int Columns { get; init; } = 1;
+
+	/// <summary>Cells between two columns.</summary>
+	public int Gap { get; init; } = 3;
+}
+
+/// <summary>
+/// Items and the items under them, each level drawn under its parent with guide lines —
+/// <c>├─ </c>, <c>└─ </c> — joining them. The top level sits at the left edge with no guide.
+/// </summary>
+/// <param name="Items">The top-level items.</param>
+/// <param name="Guide">The characters the guide lines are drawn with.</param>
+public sealed record TreeNode(ImmutableArray<TreeItem> Items, TreeGuide Guide) : LayoutNode;
+
+/// <summary>One item of a <see cref="TreeNode"/> and the items under it.</summary>
+/// <param name="Content">What the item shows.</param>
+/// <param name="Children">The items under it, or none.</param>
+public sealed record TreeItem(LayoutNode Content, ImmutableArray<TreeItem> Children = default);
