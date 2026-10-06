@@ -1,7 +1,7 @@
 namespace MarkupString.Html;
 
 /// <summary>
-/// The stylesheet for the classes the layout emitter writes: boxes, rules, flex rows and figures.
+/// The stylesheet for the classes the layout emitter writes: boxes, rules, flex rows, figures, fields and trees.
 /// A page that shows rendered layouts includes it, or carries its own copy of these rules.
 /// </summary>
 /// <remarks>
@@ -38,5 +38,21 @@ public static class LayoutCss
 		".ms-figure-image { max-width: 100%; height: auto; }\n" +
 		".ms-figure-art { margin: 0; font: inherit; white-space: pre; }\n" +
 		".ms-float-left > .ms-figure-image, .ms-float-left > .ms-figure-art { float: left; max-width: 50%; margin: 0 2ch 0.5em 0; }\n" +
-		".ms-float-right > .ms-figure-image, .ms-float-right > .ms-figure-art { float: right; max-width: 50%; margin: 0 0 0.5em 2ch; }\n";
+		".ms-float-right > .ms-figure-image, .ms-float-right > .ms-figure-art { float: right; max-width: 50%; margin: 0 0 0.5em 2ch; }\n" +
+		".ms-fields { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); column-gap: 1ch; margin: 0; }\n" +
+		".ms-field { display: contents; }\n" +
+		".ms-field > dt { grid-column: 1; white-space: pre-wrap; overflow-wrap: anywhere; }\n" +
+		".ms-field > dd { grid-column: 2; margin: 0; min-width: 0; }\n" +
+		".ms-fields.ms-label-right > .ms-field > dt { text-align: right; }\n" +
+		".ms-fields.ms-leader > .ms-field > dt { display: flex; gap: 0.5ch; }\n" +
+		".ms-fields.ms-leader > .ms-field > dt::after { content: \"\"; flex: 1 1 2ch; border-bottom: 1px dotted currentColor; margin-bottom: 0.3em; }\n" +
+		".ms-tree, .ms-tree ul { list-style: none; margin: 0; padding: 0; }\n" +
+		".ms-tree ul { margin-left: 1ch; }\n" +
+		".ms-tree ul > li { position: relative; padding-left: 3ch; border-left: 1px solid currentColor; }\n" +
+		".ms-tree ul > li:last-child { border-left-color: transparent; }\n" +
+		".ms-tree ul > li::before { content: \"\"; position: absolute; left: -1px; top: 0; width: 2ch; height: 0.7em; border-left: 1px solid currentColor; border-bottom: 1px solid currentColor; }\n" +
+		".ms-tree.ms-guide-rounded ul > li:last-child::before { border-bottom-left-radius: 0.4em; }\n" +
+		".ms-tree.ms-guide-heavy ul > li, .ms-tree.ms-guide-heavy ul > li::before { border-width: 2px; }\n" +
+		".ms-tree.ms-guide-double ul > li, .ms-tree.ms-guide-double ul > li::before { border-left-style: double; border-left-width: 3px; }\n" +
+		".ms-tree.ms-guide-none ul > li, .ms-tree.ms-guide-none ul > li::before { border-color: transparent; }\n";
 }

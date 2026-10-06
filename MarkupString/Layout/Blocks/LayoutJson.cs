@@ -105,6 +105,35 @@ internal static class LayoutJson
 				}
 				if (figure.Gap != 2) writer.WriteNumber("g", figure.Gap);
 				break;
+			case FieldsNode fields:
+				writer.WriteString("t", "fields");
+				writer.WriteStartArray("f");
+				foreach (var field in fields.Fields)
+				{
+					writer.WriteStartObject();
+					WriteText(writer, "k", field.Label, registry);
+					writer.WritePropertyName("v");
+					WriteNode(writer, field.Value, registry);
+					writer.WriteEndObject();
+				}
+				writer.WriteEndArray();
+				var settings = fields.Options;
+				if (settings.LabelAlignment != Alignment.Left) writer.WriteString("a", Name(settings.LabelAlignment));
+				if (!settings.Separator.Equals(FieldsOptions.Default.Separator)) WriteText(writer, "s", settings.Separator, registry);
+				if (settings.Leader is { } leader) WriteText(writer, "ld", leader, registry);
+				if (settings.Columns != 1) writer.WriteNumber("c", settings.Columns);
+				if (settings.Gap != FieldsOptions.Default.Gap) writer.WriteNumber("g", settings.Gap);
+				break;
+			case TreeNode tree:
+				writer.WriteString("t", "tree");
+				WriteTreeItems(writer, "it", tree.Items, registry);
+				writer.WriteStartObject("gd");
+				writer.WriteString("n", tree.Guide.Name);
+				var preset = TreeGuide.Preset(tree.Guide.Name) ?? TreeGuide.None;
+				foreach (var (key, get) in GuidePieces)
+					if (!get(tree.Guide).Equals(get(preset))) WriteText(writer, key, get(tree.Guide), registry);
+				writer.WriteEndObject();
+				break;
 			default:
 				writer.WriteString("t", "stack");
 				break;
@@ -159,9 +188,85 @@ internal static class LayoutJson
 					Enum.TryParse<FigureFloat>(String(element, "f"), ignoreCase: true, out var side) ? side : FigureFloat.None,
 					element.TryGetProperty("bd", out var beside) ? ReadNode(beside, registry) : null,
 					Int(element, "g") ?? 2);
+			case "fields":
+				var fields = ImmutableArray.CreateBuilder<Field>();
+				if (element.TryGetProperty("f", out var pairs) && pairs.ValueKind == JsonValueKind.Array)
+				{
+					foreach (var pair in pairs.EnumerateArray())
+					{
+						if (pair.ValueKind != JsonValueKind.Object) continue;
+						fields.Add(new Field(
+							Text(pair, "k", registry) ?? MarkupText.Empty,
+							pair.TryGetProperty("v", out var value) ? ReadNode(value, registry) : Empty));
+					}
+				}
+				return new FieldsNode(fields.ToImmutable(), new FieldsOptions
+				{
+					LabelAlignment = Align(element, "a", Alignment.Left),
+					Separator = Text(element, "s", registry) ?? FieldsOptions.Default.Separator,
+					Leader = Text(element, "ld", registry),
+					Columns = Math.Clamp(Int(element, "c") ?? 1, 1, 64),
+					Gap = Int(element, "g") ?? FieldsOptions.Default.Gap,
+				});
+			case "tree":
+				return new TreeNode(ReadTreeItems(element, "it", registry, 0), ReadGuide(element, registry));
 			default:
 				return Empty;
 		}
+	}
+
+	/// <summary>How deep a tree read back may nest, so a hostile payload cannot exhaust the stack.</summary>
+	private const int MaxTreeDepth = 64;
+
+	private static void WriteTreeItems(Utf8JsonWriter writer, string name, ImmutableArray<TreeItem> items, MarkupRegistry? registry)
+	{
+		writer.WriteStartArray(name);
+		if (!items.IsDefault)
+		{
+			foreach (var item in items)
+			{
+				writer.WriteStartObject();
+				writer.WritePropertyName("c");
+				WriteNode(writer, item.Content, registry);
+				if (!item.Children.IsDefaultOrEmpty) WriteTreeItems(writer, "ch", item.Children, registry);
+				writer.WriteEndObject();
+			}
+		}
+		writer.WriteEndArray();
+	}
+
+	private static ImmutableArray<TreeItem> ReadTreeItems(JsonElement element, string name, MarkupRegistry? registry, int depth)
+	{
+		if (depth > MaxTreeDepth || !element.TryGetProperty(name, out var list) || list.ValueKind != JsonValueKind.Array) return [];
+		var items = ImmutableArray.CreateBuilder<TreeItem>();
+		foreach (var item in list.EnumerateArray())
+		{
+			if (item.ValueKind != JsonValueKind.Object) continue;
+			items.Add(new TreeItem(
+				item.TryGetProperty("c", out var content) ? ReadNode(content, registry) : Empty,
+				ReadTreeItems(item, "ch", registry, depth + 1)));
+		}
+		return items.ToImmutable();
+	}
+
+	private static readonly (string Key, Func<TreeGuide, MarkupText> Get)[] GuidePieces =
+	[
+		("b", g => g.Branch), ("l", g => g.Last), ("p", g => g.Pipe), ("e", g => g.Blank),
+	];
+
+	private static TreeGuide ReadGuide(JsonElement element, MarkupRegistry? registry)
+	{
+		if (!element.TryGetProperty("gd", out var guide) || guide.ValueKind != JsonValueKind.Object) return TreeGuide.Line;
+		var style = TreeGuide.Preset(String(guide, "n") ?? string.Empty) ?? TreeGuide.None;
+		MarkupText Piece(string key, MarkupText fallback) => Text(guide, key, registry) ?? fallback;
+		return style with
+		{
+			Name = String(guide, "n") ?? style.Name,
+			Branch = Piece("b", style.Branch),
+			Last = Piece("l", style.Last),
+			Pipe = Piece("p", style.Pipe),
+			Blank = Piece("e", style.Blank),
+		};
 	}
 
 	private static readonly (string Key, Func<BorderStyle, MarkupText> Get)[] Pieces =

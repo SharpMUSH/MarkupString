@@ -299,7 +299,45 @@ your own copy of its rules, on the page.
 | `RuleNode` | a line of the border's top edge with the title in it; inside a box, a divider meeting the sides | a line drawn in CSS |
 | `FlexNode` | items side by side at widths shared from `BlockSize` bases, stacked when one would fall under its `Min` | a wrapping flex row |
 | `FigureNode` | the text art, with `Beside` flowing round it | an `<img>` floated beside it |
+| `FieldsNode` | labels in one column, values lined up in the next, a long value wrapping under itself | a `<dl>` laid out as a two-column grid |
+| `TreeNode` | items under their parents, joined by guide lines | nested `<ul>` with the guides drawn in CSS |
 | `TextNode`, `StackNode` | wrapped text; children in order | the same, as blocks |
+
+**Labelled values.** `FieldsNode` is the `Sex: Male` / `Species: Human` part of a sheet: the label
+column is as wide as the longest label (at most half the width) and every value starts in the same
+column. `FieldsOptions` sets the separator (`": "`), right-aligned labels, a leader that fills from
+the label to the separator, and how many columns the fields are dealt into, down each column first.
+
+```
+Columns = 2, at 60:
+Sex:     Male                   Job:    Dark Warrior
+Species: Human                  Origin: Super Robot Wars AG
+
+LabelAlignment = Alignment.Right:
+    Sex: Male
+Species: Human
+
+Leader = MarkupText.Plain("."):
+Sex....: Male
+Species: Human
+```
+
+When the value column would be narrower than ten cells, each label goes on a line of its own with
+its value indented under it, and columns that do not fit stack.
+
+**Trees.** `TreeNode` draws each `TreeItem` with its children under it. The top level sits at the left
+edge; each level below gets a guide. `TreeGuide` has six presets (`line`, `rounded`, `heavy`,
+`double`, `ascii`, `none`), and its four pieces (branch, last branch, the pipe that carries a level on,
+and the blank where it has ended) can be replaced.
+
+```
+Channels                  Channels
+├─ Public                 |- Public
+│  ├─ +chat               |  |- +chat
+│  └─ +ooc                |  `- +ooc
+└─ Staff                  `- Staff
+   └─ +admin                 `- +admin
+```
 
 **Borders.** `BorderStyle` has seven presets, found by name with `BorderStyle.Preset`. Every piece
 is a `MarkupText` — a corner, an edge, a side, a tee where a divider meets a side, the brackets
@@ -312,6 +350,13 @@ the layer covers is unchanged and on lines of its own; a cut or edited block ren
 **Laying out again.** `BlockLayout.Relayout(text, width, options)` replaces each intact block with
 a fresh layout: a block built with `fluid: true` at the reader's width, and any block with ASCII
 borders (`AsciiOnly`) or as its content in reading order (`Linear`, for a screen reader).
+
+`AsciiOnly` translates each box-drawing character to its nearest ASCII one: a light line `-`, a double
+or heavy one `=`, an upright `|`, a corner or tee `+`. A double frame stays recognisably double, and
+colour on a piece is kept. A piece holding anything else (an emoji, a title bracket like `┤ `) takes
+the `ascii` preset's piece, as does any tree guide piece, so the last branch stays `` `- ``. A flex
+separator is translated the same way. Text inside a block is never changed. `Linear` drops borders
+and guides, reads fields as `Label: value` lines and indents tree levels with spaces.
 
 **Nesting.** `BlockLayout.AsNode(content)` returns the tree of a text that is one whole block, and
 a `TextNode` otherwise, so a builder that takes text as an argument nests a block it is given.

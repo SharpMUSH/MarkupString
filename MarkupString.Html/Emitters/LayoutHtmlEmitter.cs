@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Collections.Immutable;
 using System.Globalization;
 using MarkupString.Layout;
 
@@ -85,6 +86,87 @@ internal sealed class LayoutHtmlEmitter(Func<string, bool>? allowImage = null) :
 			case FigureNode figure:
 				Figure(figure, registry, output);
 				break;
+
+			case FieldsNode fields:
+				Fields(fields, registry, output);
+				break;
+
+			case TreeNode tree:
+				output.Write("<ul class=\"ms-tree ms-guide-");
+				output.Write(Css(tree.Guide.Name));
+				output.Write("\">");
+				TreeItems(tree.Items, registry, output);
+				output.Write("</ul>");
+				break;
+		}
+	}
+
+	private void Fields(FieldsNode fields, MarkupRegistry registry, IBufferWriter<char> output)
+	{
+		var all = fields.Fields.IsDefault ? [] : fields.Fields;
+		var options = fields.Options;
+		if (options.Columns > 1 && all.Length > 1)
+		{
+			// The same dealing as the terminal's, as a row that wraps: a column per item.
+			var per = (all.Length + Math.Min(options.Columns, all.Length) - 1) / Math.Min(options.Columns, all.Length);
+			output.Write("<div class=\"ms-flex\" style=\"column-gap:");
+			output.Write(Number(Math.Max(0, options.Gap)));
+			output.Write("ch\">");
+			foreach (var chunk in all.Chunk(per))
+			{
+				output.Write("<div class=\"ms-item\" style=\"flex:1 1 ");
+				output.Write(Number(chunk.Max(field => field.Label.DisplayWidth) + options.Separator.DisplayWidth + 10));
+				output.Write("ch\">");
+				FieldList(chunk, options, registry, output);
+				output.Write("</div>");
+			}
+			output.Write("</div>");
+			return;
+		}
+		FieldList(all.AsSpan(), options, registry, output);
+	}
+
+	/// <summary>
+	/// The fields as a definition list. The separator is kept after each label, trimmed, unless a
+	/// leader draws a dotted line to the value instead.
+	/// </summary>
+	private void FieldList(ReadOnlySpan<Field> fields, FieldsOptions options, MarkupRegistry registry, IBufferWriter<char> output)
+	{
+		var leader = options.Leader is { Length: > 0 };
+		output.Write("<dl class=\"ms-fields");
+		if (options.LabelAlignment == Alignment.Right) output.Write(" ms-label-right");
+		if (leader) output.Write(" ms-leader");
+		output.Write("\">");
+		var separator = options.Separator.Trim(TrimType.TrimEnd);
+		foreach (var field in fields)
+		{
+			output.Write("<div class=\"ms-field\"><dt>");
+			if (field.Label.Length > 0)
+			{
+				Text(field.Label, registry, output);
+				if (!leader) Text(separator, registry, output);
+			}
+			output.Write("</dt><dd>");
+			Node(field.Value, registry, output);
+			output.Write("</dd></div>");
+		}
+		output.Write("</dl>");
+	}
+
+	private void TreeItems(ImmutableArray<TreeItem> items, MarkupRegistry registry, IBufferWriter<char> output)
+	{
+		if (items.IsDefault) return;
+		foreach (var item in items)
+		{
+			output.Write("<li>");
+			Node(item.Content, registry, output);
+			if (!item.Children.IsDefaultOrEmpty)
+			{
+				output.Write("<ul>");
+				TreeItems(item.Children, registry, output);
+				output.Write("</ul>");
+			}
+			output.Write("</li>");
 		}
 	}
 

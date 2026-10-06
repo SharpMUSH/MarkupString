@@ -144,7 +144,151 @@ public static class BlockLayout
 			case FigureNode figure:
 				DrawFigure(figure, width, options, lines);
 				break;
+			case FieldsNode fields:
+				DrawFields(fields, width, options, lines);
+				break;
+			case TreeNode tree:
+				DrawTree(tree, width, options, lines);
+				break;
 		}
+	}
+
+	/// <summary>The narrowest a value column may be before each label goes over its value instead.</summary>
+	private const int MinFieldValue = 10;
+
+	private static void DrawFields(FieldsNode fields, int width, BlockRenderOptions options, List<MarkupText> lines)
+	{
+		var all = fields.Fields;
+		if (all.IsDefaultOrEmpty) return;
+		var settings = fields.Options;
+
+		if (settings.Columns > 1 && all.Length > 1 && !options.Linear)
+		{
+			// Dealt down each column first, the way a reader expects to go on reading.
+			var count = Math.Min(settings.Columns, all.Length);
+			var per = (all.Length + count - 1) / count;
+			var single = settings with { Columns = 1 };
+			var items = all.Chunk(per)
+				.Select(chunk => new FlexItem(new FieldsNode([.. chunk], single), BlockSize.Auto, MinWidth(chunk, single)))
+				.ToArray();
+			DrawFlex(new FlexNode([.. items], FlexOptions.Default with { Gap = Math.Max(0, settings.Gap) }), width, options, lines);
+			return;
+		}
+
+		var separator = settings.Separator;
+		if (options.Linear)
+		{
+			var value = new List<MarkupText>();
+			foreach (var field in all)
+			{
+				value.Clear();
+				Draw(field.Value, width, options, value);
+				var first = value.Count > 0 ? value[0] : MarkupText.Empty;
+				lines.Add(field.Label.Length == 0 ? first : MarkupText.Concat([field.Label, separator, first]));
+				for (var i = 1; i < value.Count; i++) lines.Add(value[i]);
+			}
+			return;
+		}
+
+		var labelWidth = Math.Min(all.Max(field => field.Label.DisplayWidth), Math.Max(1, width / 2));
+		var valueWidth = width - labelWidth - separator.DisplayWidth;
+		var drawn = new List<MarkupText>();
+		if (valueWidth < Math.Min(MinFieldValue, width))
+		{
+			// Too narrow to sit side by side: each label on its own line, its value indented under it.
+			var indent = MarkupText.Space.Repeat(Math.Min(2, width - 1));
+			foreach (var field in all)
+			{
+				if (field.Label.Length > 0)
+					lines.AddRange(MarkupText.Concat([field.Label, separator.Trim(TrimType.TrimEnd)]).FormatColumn(Column(width, Alignment.Left)));
+				drawn.Clear();
+				Draw(field.Value, width - indent.DisplayWidth, options, drawn);
+				foreach (var line in drawn) lines.Add(MarkupText.Concat([indent, line]));
+			}
+			return;
+		}
+
+		// Without a leader the separator rides on the label, "Sex:" then the gap to the value; with
+		// one, the leader fills from the label to the separator, "Sex.....: ".
+		var alignment = settings.LabelAlignment == Alignment.Right ? Alignment.Right : Alignment.Left;
+		var head = separator.Trim(TrimType.TrimEnd);
+		var leader = settings.Leader is { Length: > 0 } pattern ? pattern : null;
+		var labelColumn = labelWidth + separator.DisplayWidth;
+		var blankLabel = MarkupText.Space.Repeat(labelColumn);
+		foreach (var field in all)
+		{
+			var label = new List<MarkupText>();
+			if (field.Label.Length > 0 && leader is not null)
+			{
+				var rows = field.Label.FormatColumn(Column(labelWidth, alignment) with { Fill = leader });
+				for (var i = 0; i < rows.Length; i++)
+					label.Add(MarkupText.Concat([Fit(rows[i], labelWidth), i == 0 ? separator : MarkupText.Space.Repeat(separator.DisplayWidth)]));
+			}
+			else if (field.Label.Length > 0)
+			{
+				var rows = MarkupText.Concat([field.Label, head]).FormatColumn(Column(labelWidth + head.DisplayWidth, alignment));
+				foreach (var row in rows) label.Add(Fit(row, labelColumn));
+			}
+
+			drawn.Clear();
+			Draw(field.Value, valueWidth, options, drawn);
+			var height = Math.Max(Math.Max(label.Count, drawn.Count), 1);
+			for (var row = 0; row < height; row++)
+			{
+				lines.Add(MarkupText.Concat([
+					row < label.Count ? label[row] : blankLabel,
+					row < drawn.Count ? Fit(drawn[row], valueWidth) : MarkupText.Space.Repeat(valueWidth)]));
+			}
+		}
+	}
+
+	/// <summary>The fewest cells a column of <paramref name="fields"/> needs to keep its labels beside its values.</summary>
+	private static int MinWidth(IEnumerable<Field> fields, FieldsOptions options) =>
+		fields.Max(field => field.Label.DisplayWidth) + options.Separator.DisplayWidth + MinFieldValue;
+
+	private static void DrawTree(TreeNode tree, int width, BlockRenderOptions options, List<MarkupText> lines)
+	{
+		if (tree.Items.IsDefaultOrEmpty) return;
+		var guide = options.AsciiOnly ? tree.Guide.ToAscii() : tree.Guide;
+		foreach (var item in tree.Items) DrawTreeItem(item, MarkupText.Empty, null, guide, width, options, lines);
+	}
+
+	/// <summary>
+	/// One item at <paramref name="prefix"/>: its first line after the branch or last guide (none at the
+	/// top level), the rest after the guide that carries its level on, then its children one level in.
+	/// </summary>
+	private static void DrawTreeItem(TreeItem item, MarkupText prefix, bool? last, TreeGuide guide, int width, BlockRenderOptions options, List<MarkupText> lines)
+	{
+		if (options.Linear)
+		{
+			// A reader hears the levels as indentation, not as line drawing.
+			var depth = prefix.DisplayWidth + (last is null ? 0 : 2);
+			var spoken = MarkupText.Space.Repeat(depth);
+			var heard = new List<MarkupText>();
+			Draw(item.Content, Math.Max(1, width - depth), options, heard);
+			foreach (var line in heard) lines.Add(MarkupText.Concat([spoken, line]));
+			if (!item.Children.IsDefaultOrEmpty)
+				for (var i = 0; i < item.Children.Length; i++)
+					DrawTreeItem(item.Children[i], MarkupText.Space.Repeat(depth), i == item.Children.Length - 1, guide, width, options, lines);
+			return;
+		}
+
+		var head = last switch { null => MarkupText.Empty, true => guide.Last, false => guide.Branch };
+		var carry = last switch { null => MarkupText.Empty, true => guide.Blank, false => guide.Pipe };
+		var hasChildren = !item.Children.IsDefaultOrEmpty;
+		var lead = MarkupText.Concat([prefix, head]);
+		var content = new List<MarkupText>();
+		Draw(item.Content, Math.Max(1, width - lead.DisplayWidth), options, content);
+		for (var i = 0; i < content.Count; i++)
+		{
+			var line = MarkupText.Concat([i == 0 ? lead : MarkupText.Concat([prefix, carry]), content[i]]);
+			lines.Add(Fit(line, width));
+		}
+
+		if (!hasChildren) return;
+		var inner = MarkupText.Concat([prefix, carry]);
+		for (var i = 0; i < item.Children.Length; i++)
+			DrawTreeItem(item.Children[i], inner, i == item.Children.Length - 1, guide, width, options, lines);
 	}
 
 	private static void DrawText(TextNode text, int width, BlockRenderOptions options, List<MarkupText> lines)
