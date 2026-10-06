@@ -1,4 +1,6 @@
 #nullable enable
+MarkupString.Ansi.AnsiMarkup.Foreground.get -> MarkupString.RgbColor?
+MarkupString.Ansi.AnsiMarkup.WithForeground(MarkupString.RgbColor color) -> MarkupString.IColorMarkup!
 MarkupString.Ansi.AnsiStyle.BlinkOff.get -> bool
 MarkupString.Ansi.AnsiStyle.BlinkOff.init -> void
 MarkupString.Ansi.AnsiStyle.BoldOff.get -> bool

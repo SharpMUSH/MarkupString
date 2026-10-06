@@ -298,6 +298,22 @@ public sealed record GaugeOptions
 
 	/// <summary>The bar's own width in cells, or zero to fill what the label and figures leave.</summary>
 	public int BarWidth { get; init; }
+
+	/// <summary>Colours the filled part is shaded with, or <see langword="null"/> to draw it as <see cref="Filled"/> is.</summary>
+	public ColorGradient? Gradient { get; init; }
+
+	/// <summary>How <see cref="Gradient"/> shades the bar.</summary>
+	public GaugeShade Shade { get; init; } = GaugeShade.Cells;
+}
+
+/// <summary>How a <see cref="GaugeOptions.Gradient"/> shades a gauge.</summary>
+public enum GaugeShade
+{
+	/// <summary>Each cell takes the colour at its place along the whole bar, so a fuller bar reaches further along the gradient.</summary>
+	Cells,
+
+	/// <summary>The whole filled part takes the colour at the value's place: red when nearly empty, green when full.</summary>
+	Value,
 }
 
 /// <summary>The figures a <see cref="GaugeNode"/> writes after its bar.</summary>

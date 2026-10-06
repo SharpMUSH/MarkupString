@@ -1,14 +1,35 @@
 #nullable enable
 abstract MarkupString.Layout.LayoutNode.<Clone>$() -> MarkupString.Layout.LayoutNode!
+MarkupString.ColorGradient
+MarkupString.ColorGradient.<Clone>$() -> MarkupString.ColorGradient!
+MarkupString.ColorGradient.At(double position) -> MarkupString.RgbColor
+MarkupString.ColorGradient.ColorGradient(System.Collections.Immutable.ImmutableArray<MarkupString.IColorMarkup!> Stops, MarkupString.GradientSpace Space = MarkupString.GradientSpace.Oklch) -> void
+MarkupString.ColorGradient.Deconstruct(out System.Collections.Immutable.ImmutableArray<MarkupString.IColorMarkup!> Stops, out MarkupString.GradientSpace Space) -> void
+MarkupString.ColorGradient.Equals(MarkupString.ColorGradient? other) -> bool
+MarkupString.ColorGradient.IsEmpty.get -> bool
+MarkupString.ColorGradient.Paint(MarkupString.MarkupText! text, double position) -> MarkupString.MarkupText!
+MarkupString.ColorGradient.Space.get -> MarkupString.GradientSpace
+MarkupString.ColorGradient.Space.init -> void
+MarkupString.ColorGradient.Stops.get -> System.Collections.Immutable.ImmutableArray<MarkupString.IColorMarkup!>
+MarkupString.ColorGradient.Stops.init -> void
+MarkupString.ColorGradient.ToCss() -> string!
+MarkupString.ColorGradient.ToCss(int samples) -> string!
 MarkupString.ControlCharacterWidth
 MarkupString.ControlCharacterWidth.One = 1 -> MarkupString.ControlCharacterWidth
 MarkupString.ControlCharacterWidth.Zero = 0 -> MarkupString.ControlCharacterWidth
+MarkupString.GradientSpace
+MarkupString.GradientSpace.Hsl = 2 -> MarkupString.GradientSpace
+MarkupString.GradientSpace.Oklab = 1 -> MarkupString.GradientSpace
+MarkupString.GradientSpace.Oklch = 0 -> MarkupString.GradientSpace
 MarkupString.IBlockEmitter
 MarkupString.IBlockEmitter.Format.get -> MarkupString.MarkupFormat!
 MarkupString.IBlockEmitter.MarkupType.get -> System.Type!
 MarkupString.IBlockEmitter.TryEmit(MarkupString.IBlockMarkup! markup, MarkupString.MarkupText! region, MarkupString.MarkupRegistry! registry, System.Buffers.IBufferWriter<char>! output) -> bool
 MarkupString.IBlockMarkup
 MarkupString.IBlockMarkup.Covers(System.ReadOnlySpan<char> text) -> bool
+MarkupString.IColorMarkup
+MarkupString.IColorMarkup.Foreground.get -> MarkupString.RgbColor?
+MarkupString.IColorMarkup.WithForeground(MarkupString.RgbColor color) -> MarkupString.IColorMarkup!
 MarkupString.Layout.BlockLayout
 MarkupString.Layout.BlockRenderOptions
 MarkupString.Layout.BlockRenderOptions.<Clone>$() -> MarkupString.Layout.BlockRenderOptions!
@@ -218,10 +239,17 @@ MarkupString.Layout.GaugeOptions.Equals(MarkupString.Layout.GaugeOptions? other)
 MarkupString.Layout.GaugeOptions.Filled.get -> MarkupString.MarkupText!
 MarkupString.Layout.GaugeOptions.Filled.init -> void
 MarkupString.Layout.GaugeOptions.GaugeOptions() -> void
+MarkupString.Layout.GaugeOptions.Gradient.get -> MarkupString.ColorGradient?
+MarkupString.Layout.GaugeOptions.Gradient.init -> void
 MarkupString.Layout.GaugeOptions.Open.get -> MarkupString.MarkupText!
 MarkupString.Layout.GaugeOptions.Open.init -> void
+MarkupString.Layout.GaugeOptions.Shade.get -> MarkupString.Layout.GaugeShade
+MarkupString.Layout.GaugeOptions.Shade.init -> void
 MarkupString.Layout.GaugeOptions.Show.get -> MarkupString.Layout.GaugeShow
 MarkupString.Layout.GaugeOptions.Show.init -> void
+MarkupString.Layout.GaugeShade
+MarkupString.Layout.GaugeShade.Cells = 0 -> MarkupString.Layout.GaugeShade
+MarkupString.Layout.GaugeShade.Value = 1 -> MarkupString.Layout.GaugeShade
 MarkupString.Layout.GaugeShow
 MarkupString.Layout.GaugeShow.None = 2 -> MarkupString.Layout.GaugeShow
 MarkupString.Layout.GaugeShow.Percent = 0 -> MarkupString.Layout.GaugeShow
@@ -346,6 +374,21 @@ MarkupString.Layout.TreeNode.TreeNode(System.Collections.Immutable.ImmutableArra
 MarkupString.MarkupRegistry.FindBlockEmitter(System.Type! markupType, MarkupString.MarkupFormat! format) -> MarkupString.IBlockEmitter?
 MarkupString.MarkupRegistry.With(MarkupString.IBlockEmitter! emitter) -> MarkupString.MarkupRegistry!
 MarkupString.MarkupText.GetDisplayWidth(MarkupString.ControlCharacterWidth controls) -> int
+MarkupString.RgbColor
+MarkupString.RgbColor.B.get -> byte
+MarkupString.RgbColor.B.init -> void
+MarkupString.RgbColor.Deconstruct(out byte R, out byte G, out byte B) -> void
+MarkupString.RgbColor.Equals(MarkupString.RgbColor other) -> bool
+MarkupString.RgbColor.G.get -> byte
+MarkupString.RgbColor.G.init -> void
+MarkupString.RgbColor.R.get -> byte
+MarkupString.RgbColor.R.init -> void
+MarkupString.RgbColor.RgbColor() -> void
+MarkupString.RgbColor.RgbColor(byte R, byte G, byte B) -> void
+MarkupString.RgbColor.ToHex() -> string!
+override MarkupString.ColorGradient.Equals(object? obj) -> bool
+override MarkupString.ColorGradient.GetHashCode() -> int
+override MarkupString.ColorGradient.ToString() -> string!
 override MarkupString.Layout.BlockRenderOptions.Equals(object? obj) -> bool
 override MarkupString.Layout.BlockRenderOptions.GetHashCode() -> int
 override MarkupString.Layout.BlockRenderOptions.ToString() -> string!
@@ -437,6 +480,7 @@ override MarkupString.Layout.TreeNode.<Clone>$() -> MarkupString.Layout.TreeNode
 override MarkupString.Layout.TreeNode.Equals(object? obj) -> bool
 override MarkupString.Layout.TreeNode.GetHashCode() -> int
 override MarkupString.Layout.TreeNode.ToString() -> string!
+override MarkupString.RgbColor.GetHashCode() -> int
 override sealed MarkupString.Layout.BoxNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 override sealed MarkupString.Layout.BulletsNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 override sealed MarkupString.Layout.FieldsNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
@@ -449,6 +493,9 @@ override sealed MarkupString.Layout.StackNode.Equals(MarkupString.Layout.LayoutN
 override sealed MarkupString.Layout.TableNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 override sealed MarkupString.Layout.TextNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 override sealed MarkupString.Layout.TreeNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
+static MarkupString.ColorGradient.Blend(MarkupString.RgbColor from, MarkupString.RgbColor to, double t, MarkupString.GradientSpace space) -> MarkupString.RgbColor
+static MarkupString.ColorGradient.operator !=(MarkupString.ColorGradient? left, MarkupString.ColorGradient? right) -> bool
+static MarkupString.ColorGradient.operator ==(MarkupString.ColorGradient? left, MarkupString.ColorGradient? right) -> bool
 static MarkupString.DisplayWidth.IndexAtWidth(System.ReadOnlySpan<char> text, int cells, MarkupString.ControlCharacterWidth controls) -> int
 static MarkupString.DisplayWidth.IndexFromWidthEnd(System.ReadOnlySpan<char> text, int cells, MarkupString.ControlCharacterWidth controls) -> int
 static MarkupString.DisplayWidth.Of(System.ReadOnlySpan<char> text, MarkupString.ControlCharacterWidth controls) -> int
@@ -537,9 +584,13 @@ static MarkupString.Layout.TreeItem.operator !=(MarkupString.Layout.TreeItem? le
 static MarkupString.Layout.TreeItem.operator ==(MarkupString.Layout.TreeItem? left, MarkupString.Layout.TreeItem? right) -> bool
 static MarkupString.Layout.TreeNode.operator !=(MarkupString.Layout.TreeNode? left, MarkupString.Layout.TreeNode? right) -> bool
 static MarkupString.Layout.TreeNode.operator ==(MarkupString.Layout.TreeNode? left, MarkupString.Layout.TreeNode? right) -> bool
+static MarkupString.RgbColor.operator !=(MarkupString.RgbColor left, MarkupString.RgbColor right) -> bool
+static MarkupString.RgbColor.operator ==(MarkupString.RgbColor left, MarkupString.RgbColor right) -> bool
 virtual MarkupString.Layout.LayoutNode.EqualityContract.get -> System.Type!
 virtual MarkupString.Layout.LayoutNode.Equals(MarkupString.Layout.LayoutNode? other) -> bool
 virtual MarkupString.Layout.LayoutNode.PrintMembers(System.Text.StringBuilder! builder) -> bool
 ~override MarkupString.Layout.BlockSize.Equals(object obj) -> bool
 static MarkupString.MarkupTextRenderer.RenderFragment(MarkupString.MarkupText! text, MarkupString.MarkupFormat! format, MarkupString.MarkupRegistry! registry, System.Buffers.IBufferWriter<char>! output) -> void
 static MarkupString.Layout.BlockLayout.Nodes(MarkupString.MarkupText! content, MarkupString.Layout.Alignment alignment = MarkupString.Layout.Alignment.Left) -> System.Collections.Generic.IReadOnlyList<MarkupString.Layout.LayoutNode!>!
+~override MarkupString.RgbColor.Equals(object obj) -> bool
+~override MarkupString.RgbColor.ToString() -> string

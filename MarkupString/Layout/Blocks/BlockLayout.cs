@@ -202,7 +202,12 @@ public static class BlockLayout
 		var room = width - label.DisplayWidth - open.DisplayWidth - close.DisplayWidth - after.DisplayWidth;
 		var bar = settings.BarWidth > 0 ? Math.Min(settings.BarWidth, Math.Max(1, room)) : Math.Max(1, room);
 		var full = (int)Math.Round(bar * Math.Clamp(ratio, 0, 1));
-		lines.Add(Fit(MarkupText.Concat([label, open, Run(filled, full), Run(empty, bar - full), close, after]), width));
+		var fill = settings.Gradient is { IsEmpty: false } gradient
+			? settings.Shade == GaugeShade.Value
+				? gradient.Paint(Run(filled, full), Math.Clamp(ratio, 0, 1))
+				: Shaded(Run(filled, full), gradient, bar)
+			: Run(filled, full);
+		lines.Add(Fit(MarkupText.Concat([label, open, fill, Run(empty, bar - full), close, after]), width));
 	}
 
 	private static void DrawBullets(BulletsNode bullets, int width, BlockRenderOptions options, List<MarkupText> lines)
@@ -787,6 +792,19 @@ public static class BlockLayout
 		}
 		var format = new ColumnFormat { Width = inner, Alignment = alignment, Fill = fill };
 		return MarkupText.Concat([left, middle.FormatColumn(format)[0], right]);
+	}
+
+	/// <summary>Each character of <paramref name="text"/> in the colour at its cell's place along a bar <paramref name="bar"/> cells wide.</summary>
+	private static MarkupText Shaded(MarkupText text, ColorGradient gradient, int bar)
+	{
+		var cell = 0;
+		var pieces = new List<MarkupText>();
+		foreach (var character in text.EnumerateGraphemes())
+		{
+			pieces.Add(gradient.Paint(character, bar > 1 ? cell / (double)(bar - 1) : 0));
+			cell += Math.Max(1, character.DisplayWidth);
+		}
+		return MarkupText.Concat(pieces);
 	}
 
 	/// <summary><paramref name="width"/> cells of the pattern <paramref name="fill"/>.</summary>

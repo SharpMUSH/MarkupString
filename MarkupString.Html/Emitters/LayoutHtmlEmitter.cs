@@ -196,18 +196,25 @@ internal sealed class LayoutHtmlEmitter(Func<string, bool>? allowImage = null) :
 			Text(label, registry, output);
 			output.Write("</span>");
 		}
-		output.Write("<meter min=\"0\" max=\"");
-		output.Write(Decimal(maximum));
-		output.Write("\" value=\"");
-		output.Write(Decimal(value));
-		output.Write("\"");
-		if (gauge.Options.BarWidth > 0)
+		if (gauge.Options.Gradient is { IsEmpty: false } gradient)
 		{
-			output.Write(" style=\"flex:0 1 ");
-			output.Write(Number(gauge.Options.BarWidth));
-			output.Write("ch\"");
+			GaugeBar(gauge, gradient, maximum, value, output);
 		}
-		output.Write("></meter>");
+		else
+		{
+			output.Write("<meter min=\"0\" max=\"");
+			output.Write(Decimal(maximum));
+			output.Write("\" value=\"");
+			output.Write(Decimal(value));
+			output.Write("\"");
+			if (gauge.Options.BarWidth > 0)
+			{
+				output.Write(" style=\"flex:0 1 ");
+				output.Write(Number(gauge.Options.BarWidth));
+				output.Write("ch\"");
+			}
+			output.Write("></meter>");
+		}
 		var figures = gauge.Options.Show switch
 		{
 			GaugeShow.Value => $"{Decimal(gauge.Value)}/{Decimal(gauge.Maximum)}",
@@ -310,6 +317,46 @@ internal sealed class LayoutHtmlEmitter(Func<string, bool>? allowImage = null) :
 			output.Write(column.Alignment == Alignment.Right ? "right" : "center");
 			output.Write("\"");
 		}
+	}
+
+	/// <summary>
+	/// A shaded gauge: a bar with a filled part, since a <c>&lt;meter&gt;</c> cannot be given a gradient
+	/// from an inline style. Shaded by cell, the gradient spans the whole bar and the filled part shows
+	/// as much of it as the value reaches; shaded by value, the filled part is one colour.
+	/// </summary>
+	private static void GaugeBar(GaugeNode gauge, ColorGradient gradient, double maximum, double value, IBufferWriter<char> output)
+	{
+		var ratio = maximum > 0 ? value / maximum : 0;
+		output.Write("<div class=\"ms-gauge-bar\" role=\"meter\" aria-valuemin=\"0\" aria-valuemax=\"");
+		output.Write(Decimal(maximum));
+		output.Write("\" aria-valuenow=\"");
+		output.Write(Decimal(value));
+		output.Write("\"");
+		if (gauge.Options.BarWidth > 0)
+		{
+			output.Write(" style=\"flex:0 1 ");
+			output.Write(Number(gauge.Options.BarWidth));
+			output.Write("ch\"");
+		}
+		output.Write("><div class=\"ms-gauge-fill\" style=\"width:");
+		output.Write(Decimal(Math.Round(ratio * 100, 2)));
+		output.Write("%;");
+		if (gauge.Options.Shade == GaugeShade.Value)
+		{
+			output.Write("background-color:");
+			output.Write(gradient.At(ratio).ToHex());
+		}
+		else if (ratio > 0)
+		{
+			output.Write("background-image:");
+			output.Write(gradient.ToCss(9));
+			output.Write(";background-image:");
+			output.Write(gradient.ToCss());
+			output.Write(";background-size:");
+			output.Write(Decimal(Math.Round(100 / ratio, 2)));
+			output.Write("% 100%");
+		}
+		output.Write("\"></div></div>");
 	}
 
 	private static string Decimal(double value) =>

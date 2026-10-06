@@ -353,6 +353,16 @@ HP [######-----] 50%         AsciiOnly
 HP: 6 of 12 (50%)            Linear
 ```
 
+**Gradients.** `GaugeOptions.Gradient` shades the filled part with a `ColorGradient`: colour stops
+(any `IColorMarkup`, such as an `AnsiMarkup` with a foreground) blended in a `GradientSpace`.
+`Oklch`, the default, keeps the middle as bright and vivid as the ends, so red to green passes
+through yellow rather than sRGB's dark olive; `Oklab` blends straight across with no hue swing;
+`Hsl` gives the brighter, uneven rainbow sweep. With `GaugeShade.Cells` each cell takes the colour
+at its place along the whole bar; with `GaugeShade.Value` the filled part is one colour, the one at
+the value's place. In HTML the bar becomes a `div` whose fill is a CSS `linear-gradient` in the same
+space, after a fallback through nine colours worked out here. `ColorGradient.At`, `Paint` and
+`ToCss` are there for anything else that wants a gradient.
+
 **Lists.** `BulletsNode` marks each item with a bullet, a dash, a number, a letter or a roman numeral
 (`BulletStyle`), or a marker of your own, starting from `Start`. Numbers line up on their right, and a
 wrapped line hangs under the item's text.

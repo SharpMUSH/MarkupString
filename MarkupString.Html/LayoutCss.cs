@@ -57,6 +57,8 @@ public static class LayoutCss
 		".ms-tree.ms-guide-none ul > li, .ms-tree.ms-guide-none ul > li::before { border-color: transparent; }\n" +
 		".ms-gauge { display: flex; align-items: center; gap: 1ch; }\n" +
 		".ms-gauge > meter { flex: 1 1 8ch; min-width: 4ch; }\n" +
+		".ms-gauge-bar { flex: 1 1 8ch; min-width: 4ch; height: 1em; display: flex; border: 1px solid currentColor; box-sizing: border-box; }\n" +
+		".ms-gauge-fill { height: 100%; }\n" +
 		".ms-bullets { margin: 0; padding-left: 3ch; }\n" +
 		".ms-bullet-dash { list-style-type: \"- \"; }\n" +
 		".ms-bullet-star { list-style-type: \"* \"; }\n" +
