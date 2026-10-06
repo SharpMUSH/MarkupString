@@ -163,9 +163,43 @@ public class BlockLayoutTests
 		var ascii = BlockLayout.Relayout(text, 0, new BlockRenderOptions { AsciiOnly = true });
 
 		await Assert.That(ascii.ToPlainText()).IsEqualTo(
-			"+--< T >-+\n" +
+			"+==< T >=+\n" +
 			"| hi     |\n" +
-			"+--------+");
+			"+========+");
+	}
+
+	[Test]
+	[Arguments("single", "+---+")]
+	[Arguments("heavy", "+===+")]
+	[Arguments("rounded", "+---+")]
+	public async Task AsciiOnly_KeepsTheWeightOfTheLine(string preset, string top)
+	{
+		var text = BlockLayout.Build(new BoxNode(new TextNode(P("x")), BorderStyle.Preset(preset)!), 5);
+
+		var ascii = BlockLayout.Relayout(text, 0, new BlockRenderOptions { AsciiOnly = true });
+
+		await Assert.That(ascii.ToPlainText().Split('\n')[0]).IsEqualTo(top);
+	}
+
+	/// <summary>A piece that is not box drawing has no stand-in to guess at, so it takes the plain ASCII one.</summary>
+	[Test]
+	public async Task AsciiOnly_ReplacesAPieceItCannotTranslate()
+	{
+		var style = BorderStyle.Single with { Top = P("★") };
+		var text = BlockLayout.Build(new BoxNode(new TextNode(P("x")), style), 5);
+
+		await Assert.That(BlockLayout.Relayout(text, 0, new BlockRenderOptions { AsciiOnly = true }).ToPlainText().Split('\n')[0])
+			.IsEqualTo("+---+");
+	}
+
+	[Test]
+	public async Task AsciiOnly_TranslatesAFlexSeparator()
+	{
+		var flex = new FlexNode([new FlexItem(new TextNode(P("a")), BlockSize.Cells(3)), new FlexItem(new TextNode(P("b")), BlockSize.Cells(3))],
+			FlexOptions.Default with { Separator = P(" │ ") });
+		var text = BlockLayout.Build(flex, 9);
+
+		await Assert.That(BlockLayout.Relayout(text, 0, new BlockRenderOptions { AsciiOnly = true }).ToPlainText()).IsEqualTo("a   | b  ");
 	}
 
 	[Test]

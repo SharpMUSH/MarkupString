@@ -237,6 +237,9 @@ public static class BlockLayout
 			_ => (0, 0),
 		};
 
+		var divider = flex.Options.Separator is not { } drawn ? MarkupText.Space.Repeat(gap)
+			: options.AsciiOnly ? BorderStyle.AsciiText(drawn) ?? drawn
+			: drawn;
 		var parts = new List<MarkupText>(items.Length * 2 + 2);
 		for (var row = 0; row < height; row++)
 		{
@@ -247,7 +250,7 @@ public static class BlockLayout
 				if (i > 0)
 				{
 					if (between > 0) parts.Add(MarkupText.Space.Repeat(between));
-					parts.Add(flex.Options.Separator ?? MarkupText.Space.Repeat(gap));
+					parts.Add(divider);
 				}
 				var offset = flex.Options.Align switch
 				{

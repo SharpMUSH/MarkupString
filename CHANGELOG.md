@@ -18,7 +18,7 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   terminal, with the text beside it flowing round the art. `BorderStyle` has seven presets (`none`,
   `ascii`, `mush`, `single`, `double`, `heavy`, `rounded`) and every piece can be replaced, coloured, or
   made a pattern. `BlockLayout.Relayout` lays intact blocks out again for a reader: a fluid block at the
-  reader's width, any block in ASCII borders (`AsciiOnly`) or as its content in reading order for a screen
+  reader's width, any block in ASCII borders (`AsciiOnly`: each box-drawing character becomes its nearest ASCII one, so a double or heavy line keeps `=` and a light one `-`; a flex separator is translated too) or as its content in reading order for a screen
   reader (`Linear`). `BlockLayout.AsNode` nests a whole block in a larger one.
 - **`IBlockMarkup` and `IBlockEmitter`**, the general mechanism behind it: a layer a format may draw from
   its own description instead of the text. The renderer hands a block to its emitter only when the text
