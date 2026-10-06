@@ -28,6 +28,10 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **`HtmlRegistration.WithLayoutImages(Func<string, bool>)`** holds the pictures layouts show in HTML to a
   host's policy; a refused picture shows its text art or description.
 
+## 2.7.0 — 2026-10-02
+
+### Added
+
 - **`AnsiColorDepth` and `MarkupRegistry.WithAnsiOutput(AnsiColorDepth, bool hyperlinks = true)`**, for
   writing colour a client can display. A server builds one registry per kind of client and renders each
   connection's output through it, so it never rewrites escape sequences after the fact. At `Xterm256` an RGB
