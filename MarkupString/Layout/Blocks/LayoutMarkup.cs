@@ -5,28 +5,33 @@ namespace MarkupString.Layout;
 /// from, over the lines it was laid out as. A terminal writes the lines; HTML draws the tree.
 /// </summary>
 /// <remarks>
-/// <para>Two layers are equal when they were laid out at the same width over the same text, whatever
-/// their trees, so a block that spans several styled runs is one region to the renderer however it
-/// was read back.</para>
+/// <para>Two layers are equal when they are the same layout: one <see cref="Id"/>, laid out at the same
+/// width over the same text. A block that spans several styled runs is therefore one region to the
+/// renderer however it was read back, and two layouts built apart are two regions however alike they
+/// look, so neither ever stands in for the other.</para>
 /// </remarks>
 public sealed class LayoutMarkup : IBlockMarkup, IEquatable<LayoutMarkup>
 {
 	/// <summary>Creates the layer for <paramref name="root"/> laid out at <paramref name="width"/> as <paramref name="text"/>.</summary>
 	public LayoutMarkup(LayoutNode root, int width, bool fluid, ReadOnlySpan<char> text)
-		: this(root, width, fluid, text.Length, Fingerprint(text))
+		: this(root, width, fluid, text.Length, Fingerprint(text), NewId())
 	{
 	}
 
-	/// <summary>Creates the layer from a fingerprint already taken, as a reader does.</summary>
-	public LayoutMarkup(LayoutNode root, int width, bool fluid, int length, ulong hash)
+	/// <summary>Creates the layer from an identity and a fingerprint already taken, as a reader does.</summary>
+	public LayoutMarkup(LayoutNode root, int width, bool fluid, int length, ulong hash, ulong id)
 	{
 		ArgumentNullException.ThrowIfNull(root);
 		Root = root;
+		Id = id;
 		Width = width;
 		Fluid = fluid;
 		Length = length;
 		Hash = hash;
 	}
+
+	/// <summary>Which layout this is: chosen at random when it is built and kept when it is written and read back.</summary>
+	public ulong Id { get; }
 
 	/// <summary>The tree.</summary>
 	public LayoutNode Root { get; }
@@ -58,13 +63,15 @@ public sealed class LayoutMarkup : IBlockMarkup, IEquatable<LayoutMarkup>
 		return hash;
 	}
 
+	private static ulong NewId() => (ulong)Random.Shared.NextInt64(long.MinValue, long.MaxValue);
+
 	/// <inheritdoc/>
 	public bool Equals(LayoutMarkup? other) =>
-		other is not null && Width == other.Width && Fluid == other.Fluid && Length == other.Length && Hash == other.Hash;
+		other is not null && Id == other.Id && Width == other.Width && Fluid == other.Fluid && Length == other.Length && Hash == other.Hash;
 
 	/// <inheritdoc/>
 	public override bool Equals(object? obj) => obj is LayoutMarkup other && Equals(other);
 
 	/// <inheritdoc/>
-	public override int GetHashCode() => HashCode.Combine(Width, Fluid, Length, Hash);
+	public override int GetHashCode() => HashCode.Combine(Id, Width, Length, Hash);
 }

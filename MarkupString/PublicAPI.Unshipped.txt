@@ -141,7 +141,8 @@ MarkupString.Layout.LayoutMarkup.Covers(System.ReadOnlySpan<char> text) -> bool
 MarkupString.Layout.LayoutMarkup.Equals(MarkupString.Layout.LayoutMarkup? other) -> bool
 MarkupString.Layout.LayoutMarkup.Fluid.get -> bool
 MarkupString.Layout.LayoutMarkup.Hash.get -> ulong
-MarkupString.Layout.LayoutMarkup.LayoutMarkup(MarkupString.Layout.LayoutNode! root, int width, bool fluid, int length, ulong hash) -> void
+MarkupString.Layout.LayoutMarkup.LayoutMarkup(MarkupString.Layout.LayoutNode! root, int width, bool fluid, int length, ulong hash, ulong id) -> void
+MarkupString.Layout.LayoutMarkup.Id.get -> ulong
 MarkupString.Layout.LayoutMarkup.LayoutMarkup(MarkupString.Layout.LayoutNode! root, int width, bool fluid, System.ReadOnlySpan<char> text) -> void
 MarkupString.Layout.LayoutMarkup.Length.get -> int
 MarkupString.Layout.LayoutMarkup.Root.get -> MarkupString.Layout.LayoutNode!
