@@ -8,6 +8,14 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+
+- **A page narrow enough to hide columns gives up their shares without `!important`.** `LayoutCss`
+  hides a filling table's `<colgroup>` there instead of overriding each column's inline width, so a
+  site whose stylesheets forbid `!important` can carry the rule as written.
+
+## 2.11.0 — 2026-10-07
+
 ### Added
 
 - **Tables that fill their width.** `TableColumn.Grow` gives a column a share of the width a table has
