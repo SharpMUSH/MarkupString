@@ -25,6 +25,9 @@ public sealed record Figure(ImageMarkup Image, MarkupText Art) : Block
 			? null
 			: Art.Split("\n").Select(line => line.Text.EndsWith('\r') ? line.Substring(0, line.Length - 1) : line).ToArray();
 
+		// Art of line breaks alone has no cells to hold a picture, so it is no art.
+		if (art is not null && art.Max(line => line.DisplayWidth) == 0) art = null;
+
 		// The picture is on its rows whoever reads them: a terminal that has its pixels draws it in their cells,
 		// MXP or Pueblo writes it once, and everything else reads what the rows hold.
 		if (Image.Source.Length > 0)

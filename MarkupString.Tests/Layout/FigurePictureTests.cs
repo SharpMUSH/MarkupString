@@ -53,6 +53,17 @@ public class FigurePictureTests
 		await Assert.That(laid.ToPlainText().TrimEnd()).IsEqualTo("[A cat]");
 	}
 
+	[Test]
+	public async Task ArtOfLineBreaksAloneIsNoArt()
+	{
+		var laid = BlockLayout.Build(new Figure(Cat, MarkupText.Plain("\n\r\n")), 20);
+
+		var mxp = laid.Render(MarkupFormat.Mxp, Registry);
+
+		await Assert.That(mxp.TrimEnd()).IsEqualTo("<IMAGE cat.png URL=https://example.test/img/>");
+		await Assert.That(laid.ToPlainText().TrimEnd()).IsEqualTo("[A cat]");
+	}
+
 	/// <summary>The words beside a floated picture stay in the column they are in for a reader of the art.</summary>
 	[Test]
 	public async Task TextBesideAFloatedPictureStaysWhereItWas()
