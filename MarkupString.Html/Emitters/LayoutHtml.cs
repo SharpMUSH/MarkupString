@@ -440,13 +440,22 @@ internal static class LayoutHtml
 		html.Write("</tbody></table></div>");
 	}
 
-	/// <summary>A cell's alignment and, for a column that may be left out on a narrow page, its class.</summary>
+	/// <summary>
+	/// A cell's alignment and its classes: <c>ms-p2</c>/<c>ms-p3</c> for a column that may be left out on
+	/// a narrow page, <c>ms-nowrap</c> for one whose cells stay on one line.
+	/// </summary>
 	private static void Cell(TableColumn column, HtmlLayoutWriter html)
 	{
-		if (column.Priority >= 2)
+		if (column.Priority >= 2 || !column.Wrap)
 		{
-			html.Write(" class=\"ms-p");
-			html.Write(Number(Math.Min(column.Priority, 3)));
+			html.Write(" class=\"");
+			if (column.Priority >= 2)
+			{
+				html.Write("ms-p");
+				html.Write(Number(Math.Min(column.Priority, 3)));
+				if (!column.Wrap) html.Write(" ");
+			}
+			if (!column.Wrap) html.Write("ms-nowrap");
 			html.Write("\"");
 		}
 		if (column.Alignment is Alignment.Right or Alignment.Center)

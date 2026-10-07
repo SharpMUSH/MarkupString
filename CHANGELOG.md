@@ -77,6 +77,15 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   host's policy; a refused picture shows its text art or description. Only http, https and relative
   addresses are ever shown; `//host` addresses are not.
 
+### Fixed
+
+- **A table column that does not wrap stays on one line in HTML.** Its heading and cells carry
+  `ms-nowrap` (`LayoutCss.Fixed` keeps it and its text unwrapped), so a narrow page no longer breaks a short
+  value such as `Thu Oct 8` between its words.
+- **A table's columns make room for the separator an ASCII reader sees.** A separator with no ASCII
+  form is drawn as ` | `; the columns were sized for the separator as written, so the last column was
+  cut short.
+
 ## 2.7.0 — 2026-10-02
 
 ### Added
