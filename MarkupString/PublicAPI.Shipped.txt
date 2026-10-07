@@ -1583,3 +1583,6 @@ virtual MarkupString.Layout.LayoutCell.PrintMembers(System.Text.StringBuilder! b
 ~override MarkupString.Run.ToString() -> string
 ~override MarkupString.ThemeColor.Equals(object obj) -> bool
 ~override MarkupString.ThemeColor.ToString() -> string
+MarkupString.Layout.Table.ColumnWidths(MarkupString.Layout.LayoutContext! context, int width) -> System.Collections.Immutable.ImmutableArray<int>
+MarkupString.Layout.TableColumn.Grow.get -> int
+MarkupString.Layout.TableColumn.Grow.init -> void

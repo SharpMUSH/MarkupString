@@ -6,13 +6,17 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 2.11.2 — 2026-10-07
 
 ### Fixed
 
 - **A figure on its own takes the alignment around it.** In a centred or right-aligned block, a
   `Figure` drawn as text moves its art (or its `[description]`) to the centre or the right as one
   piece, so the lines of the art keep their spacing against each other. A floated figure is unchanged.
+
+## 2.11.1 — 2026-10-07
+
+### Fixed
 
 - **A page narrow enough to hide columns gives up their shares without `!important`.** `LayoutCss`
   hides a filling table's `<colgroup>` there instead of overriding each column's inline width, so a
