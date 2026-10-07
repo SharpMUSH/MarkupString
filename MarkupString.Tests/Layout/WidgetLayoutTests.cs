@@ -172,8 +172,52 @@ public class WidgetLayoutTests
 	{
 		var html = BlockLayout.Build(Who(), 60).Render(MarkupFormat.Html, Registry);
 
-		await Assert.That(html).Contains("<div class=\"ms-table-wrap\"><table class=\"ms-table\"><thead><tr><th scope=\"col\">Name</th><th scope=\"col\" class=\"ms-p2\" style=\"text-align:right\">Idle</th><th scope=\"col\" class=\"ms-p3\">Doing</th></tr></thead>");
+		await Assert.That(html).Contains("<div class=\"ms-table-wrap\"><table class=\"ms-table\"><thead><tr><th scope=\"col\">Name</th><th scope=\"col\" class=\"ms-p2 ms-nowrap\" style=\"text-align:right\">Idle</th><th scope=\"col\" class=\"ms-p3\">Doing</th></tr></thead>");
 		await Assert.That(html).DoesNotContain("-----");
+	}
+
+	[Test]
+	public async Task Table_InHtml_KeepsAColumnThatDoesNotWrapOnOneLine()
+	{
+		var html = BlockLayout.Build(Who(), 60).Render(MarkupFormat.Html, Registry);
+
+		await Assert.That(html).Contains("<th scope=\"col\" class=\"ms-p2 ms-nowrap\" style=\"text-align:right\">Idle</th>");
+		await Assert.That(html).Contains("<td class=\"ms-p2 ms-nowrap\" style=\"text-align:right\"><div class=\"ms-text\">0s</div></td>");
+		await Assert.That(html).Contains("<td><div class=\"ms-text\">Mannaz</div></td>");
+		await Assert.That(LayoutCss.Fixed).Contains(".ms-table .ms-nowrap, .ms-table .ms-nowrap .ms-text { white-space: pre; overflow-wrap: normal; }");
+	}
+
+	[Test]
+	public async Task Table_InHtml_NoWrapWithoutPriority_HasOnlyItsClass()
+	{
+		var table = new Table([new TableColumn(P("When")) { Wrap = false }], [[P("Thu Oct 8")]]);
+
+		await Assert.That(BlockLayout.Build(table, 60).Render(MarkupFormat.Html, Registry))
+			.Contains("<th scope=\"col\" class=\"ms-nowrap\">When</th></tr></thead><tbody><tr><td class=\"ms-nowrap\"><div class=\"ms-text\">Thu Oct 8</div></td>");
+	}
+
+	/// <summary>
+	/// The line under the headings spans the columns as drawn, gaps and separators included, whatever
+	/// the mode, never less than the widest row; a box round a narrower table is wider than its rule.
+	/// </summary>
+	[Test]
+	[Arguments(60, false, null)]
+	[Arguments(30, false, null)]
+	[Arguments(18, false, null)]
+	[Arguments(10, false, null)]
+	[Arguments(60, true, " │ ")]
+	[Arguments(30, true, " │ ")]
+	[Arguments(60, false, " │ ")]
+	[Arguments(30, true, "|")]
+	public async Task Table_HeaderRule_SpansTheWidestRow(int width, bool ascii, string? separator)
+	{
+		var table = Who() with { Separator = separator is null ? null : P(separator) };
+		var lines = BlockLayout.Lines(table, width, new LayoutContext { AsciiOnly = ascii }).Select(line => line.ToPlainText().TrimEnd()).ToArray();
+		var rule = lines[1];
+
+		await Assert.That(rule.Length).IsGreaterThan(0);
+		await Assert.That(rule.Distinct().Count()).IsEqualTo(1);
+		await Assert.That(rule.Length).IsGreaterThanOrEqualTo(lines.Where((_, i) => i != 1).Max(line => line.Length));
 	}
 
 	[Test]

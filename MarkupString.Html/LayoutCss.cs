@@ -74,6 +74,7 @@ public static class LayoutCss
 		".ms-table { border-collapse: collapse; }\n" +
 		".ms-table th, .ms-table td { padding: 0 1ch; vertical-align: top; text-align: left; }\n" +
 		".ms-table th { border-bottom: 1px solid currentColor; }\n" +
+		".ms-table .ms-nowrap, .ms-table .ms-nowrap .ms-text { white-space: pre; overflow-wrap: normal; }\n" +
 		"@media (max-width: 48em) { .ms-table .ms-p3 { display: none; } }\n" +
 		"@media (max-width: 32em) { .ms-table .ms-p2 { display: none; } }\n";
 }
