@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../MarkupString/MarkupString.csproj" />
+    <ProjectReference Include="../../MarkupString.Ansi/MarkupString.Ansi.csproj" />
+    <ProjectReference Include="../../MarkupString.Html/MarkupString.Html.csproj" />
+  </ItemGroup>
+</Project>

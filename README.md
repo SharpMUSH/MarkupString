@@ -1,137 +1,201 @@
-# MarkupString
+<p align="center">
+  <img src="docs/assets/markupstring-logo.png" width="360" alt="MarkupString logo: a terminal prompt, an M, and three styled text runs">
+</p>
 
-[![CI](https://github.com/SharpMUSH/MarkupString/actions/workflows/ci.yml/badge.svg)](https://github.com/SharpMUSH/MarkupString/actions/workflows/ci.yml)
-[![MarkupString](https://img.shields.io/nuget/v/MarkupString?label=MarkupString)](https://www.nuget.org/packages/MarkupString)
-[![MarkupString.Ansi](https://img.shields.io/nuget/v/MarkupString.Ansi?label=MarkupString.Ansi)](https://www.nuget.org/packages/MarkupString.Ansi)
-[![MarkupString.Html](https://img.shields.io/nuget/v/MarkupString.Html?label=MarkupString.Html)](https://www.nuget.org/packages/MarkupString.Html)
-[![MarkupString.Mxp](https://img.shields.io/nuget/v/MarkupString.Mxp?label=MarkupString.Mxp)](https://www.nuget.org/packages/MarkupString.Mxp)
-[![MarkupString.Pueblo](https://img.shields.io/nuget/v/MarkupString.Pueblo?label=MarkupString.Pueblo)](https://www.nuget.org/packages/MarkupString.Pueblo)
-[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+<h1 align="center">MarkupString</h1>
 
-**Immutable styled text for terminals and the web.** One value — a plain string plus layered
-markup runs over it — renders to ANSI, HTML, Pueblo, MXP, BBCode or plain text, and round-trips
-through JSON without losing a layer the reader does not understand.
+<p align="center">
+  <strong>Immutable, Unicode-aware styled text for terminals and the web.</strong><br>
+  Build once. Preserve every layer. Render anywhere.
+</p>
 
-```csharp
-var text = MarkupText.Concat(
-  MarkupText.Plain("Hello, "),
-  MarkupText.Wrap(AnsiCodeParser.Parse("hr"), "world"));
+<p align="center">
+  <a href="https://github.com/SharpMUSH/MarkupString/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/SharpMUSH/MarkupString/ci.yml?branch=main&amp;style=flat-square&amp;logo=githubactions&amp;logoColor=white&amp;label=build" alt="Build status"></a>
+  <a href="https://www.nuget.org/packages/MarkupString"><img src="https://img.shields.io/nuget/v/MarkupString?style=flat-square&amp;logo=nuget&amp;logoColor=white" alt="MarkupString NuGet version"></a>
+  <a href="https://www.nuget.org/packages/MarkupString"><img src="https://img.shields.io/nuget/dt/MarkupString?style=flat-square&amp;logo=nuget&amp;logoColor=white&amp;label=downloads" alt="NuGet downloads"></a>
+  <img src="https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&amp;logo=dotnet&amp;logoColor=white" alt="Requires .NET 10">
+  <img src="https://img.shields.io/badge/Native_AOT-ready-0F766E?style=flat-square" alt="Native AOT ready">
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/SharpMUSH/MarkupString?style=flat-square&amp;color=2563EB" alt="Apache-2.0 license"></a>
+</p>
 
-text.Render(MarkupFormat.Ansi);   // Hello, \e[1;31mworld\e[0m
-text.Render(MarkupFormat.Html);   // Hello, <span style="color: #ff5555">world</span>
-text.Render(MarkupFormat.Plain);  // Hello, world
+<p align="center">
+  <a href="#quick-start">Quick start</a> ·
+  <a href="#packages">Packages</a> ·
+  <a href="#unicode-aware-layout">Layout</a> ·
+  <a href="#documentation">Documentation</a> ·
+  <a href="#contributing">Contributing</a>
+</p>
+
+---
+
+`MarkupText` pairs a plain string with immutable, layered markup runs. The same value can render
+as ANSI, HTML, Pueblo, MXP, BBCode, or plain text—and round-trip through JSON without discarding
+markup a reader does not understand.
+
+```text
+                  ┌─ ANSI
+                  ├─ HTML
+plain text + runs ┼─ MXP / Pueblo
+                  ├─ BBCode
+                  └─ plain text
 ```
 
-Slicing, padding, wrapping, trimming and the rest of the string operations carry the markup with
-them, and measure in **display cells** — wide CJK, combining marks and emoji sequences count
-correctly, and no operation ever cuts a grapheme cluster in half. On top of them sits a column
-layout engine: wrap, justify, fill, and assemble columns into aligned rows.
+String operations preserve those runs. Layout uses terminal display cells, understands wide CJK,
+combining marks, and emoji sequences, and never cuts a grapheme cluster in half.
 
-## Install
+## One value, native output
+
+Choose the renderer at the boundary. The underlying `MarkupText` stays the same while each target
+gets the representation it understands best.
+
+### Box drawing becomes browser structure
+
+The ANSI renderer emits exact terminal cells and SGR colour. The HTML renderer turns that same
+block tree into responsive fieldsets, definitions, flex rows, rules, and meters.
+
+![The same MarkupString block rendered as ANSI box drawing and semantic HTML](docs/assets/showcase-box-drawing.png)
+
+### Images become useful terminal art
+
+A `Figure` sends text art and flowing copy to a terminal, then becomes a real image with alt text
+and naturally flowing content in HTML.
+
+![The same MarkupString figure rendered as ANSI terminal art and an HTML image](docs/assets/showcase-image-drawing.png)
+
+## Why MarkupString?
+
+- **One source of truth** — keep content and semantics together, then choose the output format at
+  the boundary.
+- **Immutable values** — slicing, editing, wrapping, padding, and composition return new values
+  while preserving markup.
+- **Unicode-correct layout** — distinguish UTF-16 length, grapheme count, and terminal display
+  width.
+- **Extensible formats** — add an `IMarkup`, emitter, and codec through an explicit registry; no
+  runtime discovery or reflection.
+- **Streaming output** — render directly to an `IBufferWriter<char>` when allocating a string is
+  unnecessary.
+- **Native AOT ready** — every package is trimming-safe and free of reflection and dynamic code.
+
+## Quick start
+
+Install the core model and the markup kinds you need:
 
 ```sh
 dotnet add package MarkupString
 dotnet add package MarkupString.Ansi
+```
+
+Register those kinds once at startup, build a value, and render it explicitly:
+
+```csharp
+using MarkupString;
+using MarkupString.Ansi;
+
+MarkupRegistry.Default = MarkupRegistry.Empty.WithAnsi();
+
+var greeting = MarkupText.Concat(
+[
+    MarkupText.Plain("Hello, "),
+    MarkupText.Wrap(AnsiCodeParser.Parse("hr"), "world"),
+    MarkupText.Plain("!")
+]);
+
+greeting.Render(MarkupFormat.Ansi);  // Hello, \e[1;31mworld\e[0m!
+greeting.Render(MarkupFormat.Html);  // Hello, <span ...>world</span>!
+greeting.Render(MarkupFormat.Plain); // Hello, world!
+greeting.ToString();                 // Hello, world! — always plain text
+```
+
+Need a buffer instead of a new string?
+
+```csharp
+greeting.RenderTo(MarkupFormat.Ansi, bufferWriter);
+```
+
+See [Getting started](docs/getting-started.md) for registry lifetime, direct style construction,
+parsing existing ANSI, and serialization.
+
+## Packages
+
+Choose only the markup kinds your application uses. The core package deliberately has no
+rendering opinions.
+
+| Package | Purpose |
+|---|---|
+| [`MarkupString`](https://www.nuget.org/packages/MarkupString) | `MarkupText`, runs, formats, registry and emitter contracts, JSON serialization, Unicode helpers, layout, and the shared sound/image/pane/gauge vocabulary. |
+| [`MarkupString.Ansi`](https://www.nuget.org/packages/MarkupString.Ansi) | ANSI colours and attributes, links, code and escape-sequence parsers, multi-format emitters, and the matching HTML stylesheet. |
+| [`MarkupString.Html`](https://www.nuget.org/packages/MarkupString.Html) | Checked raw HTML markup with configurable tag policies for trusted and untrusted input. |
+| [`MarkupString.Mxp`](https://www.nuget.org/packages/MarkupString.Mxp) | The shared vocabulary expressed as client-supported MXP elements. |
+| [`MarkupString.Pueblo`](https://www.nuget.org/packages/MarkupString.Pueblo) | The shared vocabulary expressed through Pueblo client extensions. |
+
+```sh
 dotnet add package MarkupString.Html
 dotnet add package MarkupString.Mxp
 dotnet add package MarkupString.Pueblo
 ```
 
-| Package | What it gives you |
-|---|---|
-| [`MarkupString`](https://www.nuget.org/packages/MarkupString) | The `MarkupText` type, runs, formats, the registry, the emitter/codec contracts, the JSON serializer, grapheme and display-width helpers, and the shared vocabulary — sounds, pictures, panes, gauges — that the format packages write. No rendering opinions. |
-| [`MarkupString.Ansi`](https://www.nuget.org/packages/MarkupString.Ansi) | Terminal styling: colours (16 / xterm-256 / truecolor), attributes, links; an `ansi()` code parser and an escape-sequence parser; emitters for ANSI, HTML, Pueblo, MXP and BBCode; and `AnsiCss`, the stylesheet for the `ms-*` classes the HTML emitters write. |
-| [`MarkupString.Html`](https://www.nuget.org/packages/MarkupString.Html) | Raw HTML tag markup — an anchor, a `<pre>`, a `<span class>` — with checked construction and tag policies for untrusted input; the shared vocabulary for a browser. |
-| [`MarkupString.Mxp`](https://www.nuget.org/packages/MarkupString.Mxp) | The shared vocabulary as MXP's elements, held to what the client said it supports. |
-| [`MarkupString.Pueblo`](https://www.nuget.org/packages/MarkupString.Pueblo) | The shared vocabulary in the Pueblo client's own extensions. |
+All packages share one version and are released together.
 
-The core package renders nothing on its own: emitters live in the kind packages, so a consumer
-that only needs one of them pays for one of them, and a kind of your own is a first-class peer
-rather than a fork.
+## Unicode-aware layout
 
-## Getting started
+MarkupString keeps three measurements separate because they answer different questions:
 
-```csharp
-using MarkupString;
-using MarkupString.Ansi;
-using MarkupString.Html;
-using MarkupString.Mxp;
-using MarkupString.Pueblo;
+| Measurement | Meaning | Example API |
+|---|---|---|
+| UTF-16 code units | Compatible with .NET string indexes and run offsets | `Length`, `Substring` |
+| Grapheme clusters | User-perceived characters that must stay intact | `GraphemeCount`, `EnumerateGraphemes` |
+| Display cells | Columns occupied in a terminal | `DisplayWidth`, `TruncateToWidth` |
 
-// Once, at startup. Set-once: a second, different registry throws.
-MarkupRegistry.Default = MarkupRegistry.Empty.WithAnsi().WithHtml().WithMxp().WithPueblo();
-
-// A command link: each format writes it in its own dialect — <A XCH_CMD> for Pueblo,
-// <SEND HREF> for MXP, a clickable anchor for HTML — and a terminal shows the text.
-var prompt = MarkupText.Wrap(
-  AnsiMarkup.Create(linkUrl: "north", linkKind: LinkKind.Command),
-  MarkupText.Wrap(AnsiCodeParser.Parse("hc"), "Go north"));
-
-Console.WriteLine(prompt.Render(MarkupFormat.Ansi));
-
-// A sound and a picture, said once. MXP gets <SOUND> and <IMAGE>, Pueblo its xch_ tags, a browser
-// <audio> and <img>, and a terminal the picture's description.
-var entrance = MarkupText.Concat([
-  MarkupText.Sound("door.wav"),
-  MarkupText.Image("gate.png", "An iron gate")]);
-```
-
-Columns, wrapping and justification come from the same value:
+That distinction powers grapheme-safe wrapping, truncation, padding, alignment, and multi-column
+layouts:
 
 ```csharp
-var body = new ColumnFormat { Width = 24, Wrap = WrapMode.Word, Alignment = Alignment.Paragraph };
+var format = new ColumnFormat
+{
+    Width = 24,
+    Wrap = WrapMode.Word,
+    Alignment = Alignment.Paragraph
+};
 
-TextLayout.Rows(
+var rows = TextLayout.Rows(
 [
-  new LayoutColumn(left, body),
-  new LayoutSeparator(MarkupText.Plain("  |  ")),
-  new LayoutColumn(right, body),
+    new LayoutColumn(left, format),
+    new LayoutSeparator(MarkupText.Plain("  │  ")),
+    new LayoutColumn(right, format)
 ], new LayoutOptions());
 ```
 
-`ToString()` is always the plain text — it is never format-specific. Rendering is explicit:
-`Render(MarkupFormat.Ansi)`, `RenderTo(format, bufferWriter)` when you have somewhere to write.
-
-## Documentation
-
-| Guide | |
-|---|---|
-| [Getting started](docs/getting-started.md) | Install, wire up the registry, build and render your first styled text. |
-| [Text operations](docs/text-operations.md) | Slicing, padding, alignment, splitting, splicing — and the grapheme and display-width rules they obey. |
-| [Layout](docs/layout.md) | Wrapping, justification, fills as patterns, and assembling columns into rows. |
-| [Formats and rendering](docs/formats.md) | The six built-in formats, what each emits, the shared vocabulary, how Pueblo and MXP differ, framers and line framers, untrusted tags, custom formats. |
-| [Custom markup kinds](docs/custom-markup.md) | Write your own `IMarkup`, emitters and codec; compose with the kinds already registered. |
-| [Serialization](docs/serialization.md) | The JSON wire format, forward compatibility, `UnknownMarkup`. |
-| [Releasing](docs/releasing.md) | How a version is cut and published (maintainers). |
+Read [Text operations](docs/text-operations.md) for slicing and grapheme rules, then
+[Layout](docs/layout.md) for wrapping, justification, fills, and column assembly.
 
 ## Design
 
-- **Runs, not a tree.** Text is a `string`; markup is an `ImmutableArray<Run>` of coalesced,
-  non-overlapping ranges, each holding a stack of layers. Identically marked neighbours merge,
-  overlapping runs are rejected at construction, and a slice is a clip of that array. This is the
-  model behind `NSAttributedString`, Swift's `AttributedString` and VS Code's line tokens.
-- **An explicit registry, not reflection.** Emitters are keyed on `(markup type, format)` in a
-  `FrozenDictionary` built by `WithAnsi()`/`WithHtml()`/`With(...)`. Nothing is discovered at
-  runtime, so nothing breaks under trimming, and adding a kind is a call, not a convention.
-- **Diffed output.** ANSI transitions are written as the difference between the previous run's
-  style and this one's, so nested styling does not restate what is already in effect and no run
-  pays for a reset it does not need.
-- **Unicode-correct by construction.** Extractions snap inward to cluster boundaries, edits snap
-  outward; padding and alignment measure in cells, not code units.
-- **AOT and trimming clean.** Every package is `IsAotCompatible` with no reflection and no
-  dynamic code, and CI publishes a native binary with every assembly rooted, failing on any
-  `IL2xxx`/`IL3xxx` warning.
+MarkupString stores text as a `string` and markup as coalesced, non-overlapping runs. Each run owns
+an ordered stack of layers; a slice clips the run array instead of rebuilding a markup tree.
+
+Emitters are registered explicitly by `(markup type, format)`. ANSI output writes only the
+difference between adjacent styles, while unknown serialized markup remains available for a
+future reader that understands it.
+
+The result is a small model with predictable composition, format-independent operations, and no
+reflection hidden behind convenience APIs.
+
+## Documentation
+
+| Guide | Covers |
+|---|---|
+| [Getting started](docs/getting-started.md) | Installation, registry setup, building, rendering, parsing, and storage. |
+| [Text operations](docs/text-operations.md) | Slicing, editing, searching, padding, alignment, and Unicode measurement. |
+| [Layout](docs/layout.md) | Wrapping, justification, patterned fills, and multi-column rows. |
+| [Formats and rendering](docs/formats.md) | Built-in formats, shared vocabulary, framers, untrusted tags, and custom formats. |
+| [Custom markup kinds](docs/custom-markup.md) | Implementing an `IMarkup`, emitter, and codec. |
+| [Serialization](docs/serialization.md) | JSON wire format, forward compatibility, and `UnknownMarkup`. |
+| [Releasing](docs/releasing.md) | Versioning and publishing for maintainers. |
 
 ## Requirements
 
-.NET 10 or later.
-
-## Versioning
-
-Semantic versioning, driven by [MinVer](https://github.com/adamralph/minver): the tag `v1.2.3`
-builds `1.2.3`, and any other commit builds the next patch as a `-preview.0.N` prerelease. The
-packages share one version and are released together. Public API changes are tracked in
-`PublicAPI.Shipped.txt` / `PublicAPI.Unshipped.txt` and enforced at build time.
+- .NET 10 or later
+- Any runtime supported by .NET, including Native AOT deployments
 
 ## Contributing
 
@@ -140,48 +204,11 @@ dotnet build MarkupString.slnx
 dotnet run --project MarkupString.Tests
 ```
 
-The build fails with `FORMAT001` if C# no longer matches `.editorconfig`; the error text carries
-the `dotnet format whitespace --folder <dir>` command that fixes it (run it until it reports no
-changes — the formatter needs two passes to converge).
+The build enforces the repository's formatting rules and public API compatibility. Versions follow
+[Semantic Versioning](https://semver.org/) through [MinVer](https://github.com/adamralph/minver): a
+`v1.2.3` tag builds `1.2.3`; other commits produce preview versions.
 
-### Text measurement units
+## License
 
-`MarkupText.Length`, run offsets, `Substring`, and search results use UTF-16 code units.
-A Unicode scalar is one code point (one or two UTF-16 units); use .NET `EnumerateRunes()`
-on `Text` when scalar iteration is intended. `GraphemeCount` counts extended grapheme
-clusters, while `DisplayWidth` measures terminal columns. For `界e\u0301😀` these values
-are respectively 5 UTF-16 units, 4 scalars, 3 clusters, and 5 columns.
-
-```csharp
-var clusters = text.EnumerateGraphemes(); // lazy IEnumerable<MarkupText>
-var second = text.SubstringGraphemes(1, 1);
-var tail = text.SubstringGraphemes(1);
-foreach (var range in Graphemes.Enumerate(text.Text))
-{
-    // range contains UTF-16 offsets, suitable for indexing the original text
-}
-```
-
-Grapheme indexes are zero-based. Negative starts clamp to zero, nonpositive counts
-return empty, and ranges past the end clamp to the available clusters. Extraction
-preserves every ANSI, HTML, and custom markup layer, even when a run boundary occurs
-inside a cluster. It never renders into a particular format. Enumeration keeps constant
-traversal storage, a compiler-generated iterator object, and the yielded cluster text
-and clipped runs; the core
-`Graphemes.Enumerate` range enumerator and `Graphemes.Count` allocate no boundary array.
-
-Segmentation follows the running .NET `StringInfo` Unicode rules. Text is never Unicode
-normalized: composed and decomposed spellings retain their original UTF-16 content.
-Malformed UTF-16 is retained unchanged; segmentation follows `StringInfo` behavior for
-unpaired surrogates. Scalar enumeration through .NET `EnumerateRunes()` instead reports
-replacement runes for malformed sequences. MarkupString does not repair or reject them.
-Existing UTF-16 slicing and display-width policies remain unchanged. Snapping walks back
-to a proven boundary with no maximum cluster length, including long combining, ZWJ,
-and regional-indicator sequences. Adjacent supplementary symbols use a constant-time
-boundary check. Regional-indicator pairing requires preceding context, so repeated random
-UTF-16 snapping within an uninterrupted flag sequence can rescan that sequence; use forward
-grapheme enumeration for linear segmentation when traversing all clusters.
-
-## Licence
-
-Apache-2.0. Extracted from and used by [SharpMUSH](https://github.com/SharpMUSH/SharpMUSH).
+[Apache-2.0](LICENSE). MarkupString was extracted from and is used by
+[SharpMUSH](https://github.com/SharpMUSH/SharpMUSH).
