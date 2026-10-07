@@ -1,1 +1,13 @@
 #nullable enable
+MarkupString.ThemeLook.BottomLeft.get -> string?
+MarkupString.ThemeLook.BottomLeft.init -> void
+MarkupString.ThemeLook.BottomRight.get -> string?
+MarkupString.ThemeLook.BottomRight.init -> void
+MarkupString.ThemeLook.Edge.get -> string?
+MarkupString.ThemeLook.Edge.init -> void
+MarkupString.ThemeLook.Side.get -> string?
+MarkupString.ThemeLook.Side.init -> void
+MarkupString.ThemeLook.TopLeft.get -> string?
+MarkupString.ThemeLook.TopLeft.init -> void
+MarkupString.ThemeLook.TopRight.get -> string?
+MarkupString.ThemeLook.TopRight.init -> void

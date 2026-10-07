@@ -39,7 +39,7 @@ public sealed record Fields(ImmutableArray<Field> Items) : Block
 	public bool Striped { get; init; }
 
 	/// <summary>The separator drawn under <paramref name="context"/>.</summary>
-	internal MarkupText SeparatorIn(LayoutContext context) => Separator ?? context.Theme.Piece(theme => theme.FieldSeparator);
+	internal MarkupText SeparatorIn(LayoutContext context) => context.Glyph(Separator ?? context.Theme.Piece(theme => theme.FieldSeparator), ": ");
 
 	/// <summary>The fewest cells it needs to keep each label beside its value.</summary>
 	public override BlockMeasure Measure(LayoutContext context, int width)

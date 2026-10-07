@@ -236,7 +236,7 @@ public class ThemeTests
 		var theme = ThemePalette.Preset("nord")!.ToLayoutTheme();
 		var box = P("hi").ToBlock().Bordered();
 
-		await Assert.That(BlockLayout.Build(box.Themed(theme), 10).Render(MarkupFormat.Html, Registry)).Contains("<div class=\"ms-themed\" style=\"--ms-border:#81a1c1;--ms-title:#b48ead;");
+		await Assert.That(BlockLayout.Build(box.Themed(theme), 30).Render(MarkupFormat.Html, Registry)).Contains("<div class=\"ms-themed\" style=\"--ms-border:#81a1c1;--ms-title:#b48ead;");
 		await Assert.That(BlockLayout.Build(box.ThemedUnder(theme), 10).Render(MarkupFormat.Html, Registry)).Contains("--ms-border-default:#81a1c1;");
 		await Assert.That(LayoutCss.Fixed).Contains("border: 1px solid var(--ms-border, var(--ms-border-default, currentColor))");
 	}
@@ -354,7 +354,7 @@ public class ThemeTests
 	public async Task EachGenre_HasALookAndColoursThatStandOut()
 	{
 		await Assert.That(ThemePalette.Genres.Select(genre => genre.Name))
-			.IsEquivalentTo(["adult", "fantasy", "historical", "horror", "modern", "mystery", "romance", "science-fiction", "spiritual"]);
+			.IsEquivalentTo(["passion", "fantasy", "historical", "horror", "modern", "mystery", "romance", "science-fiction", "spiritual"]);
 		foreach (var genre in ThemePalette.Genres)
 		{
 			await Assert.That(genre.Look).IsNotNull();
@@ -371,7 +371,7 @@ public class ThemeTests
 		var text = BlockLayout.Build(sheet.Themed(theme), 20).ToPlainText();
 		var ascii = BlockLayout.Build(sheet.Themed(theme), 20, context: new LayoutContext { AsciiOnly = true }).ToPlainText();
 
-		await Assert.That(text).StartsWith("╔════╡ ❖ Kit ❖ ╞═══╗");
+		await Assert.That(text).StartsWith("❖════╡ ❧ Kit ☙ ╞═══❖");
 		await Assert.That(text).Contains("❧ Sword");
 		await Assert.That(text).Contains("╞███░░░╡");
 		await Assert.That(ascii).StartsWith("+======< Kit >=====+");
@@ -388,15 +388,36 @@ public class ThemeTests
 
 		await Assert.That(changed!.Look!.Bullet).IsEqualTo("+");
 		await Assert.That(changed.Look.Border).IsEqualTo("rounded");
-		await Assert.That(changed.Look.TitleOpen).IsEqualTo("╡ ❖ ");
+		await Assert.That(changed.Look.TitleOpen).IsEqualTo("╡ ❧ ");
 		await Assert.That(plain!.Look).IsNull();
 		await Assert.That(read).IsEqualTo(ThemePalette.Preset("horror"));
+	}
+
+	[Test]
+	public async Task ALooksCornersAndEdges_DrawAndFallBackToAscii()
+	{
+		ThemePalette.TryParse("""{"look":{"border":"single","corners":["◇","◇","◇","◇"],"edge":"┄","side":"┆","separator":" · "}}""", out var palette, out _);
+		var theme = palette!.ToLayoutTheme();
+		var box = new Fields([new Field(P("A"), P("b").ToBlock())]).Bordered();
+		var text = BlockLayout.Build(box.Themed(theme), 30).ToPlainText();
+		var ascii = BlockLayout.Build(box.Themed(theme), 30, context: new LayoutContext { AsciiOnly = true }).ToPlainText();
+
+		await Assert.That(text).IsEqualTo("◇┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄◇\n┆ A · b                      ┆\n◇┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄◇");
+		await Assert.That(ascii).IsEqualTo("+----------------------------+\n| A: b                       |\n+----------------------------+");
 	}
 
 	[Test]
 	[Arguments("""{"look":{"border":"wavy"}}""", "border is one of none, ascii, mush, single, double, heavy, rounded")]
 	[Arguments("""{"look":{"gauge":["[","#"]}}""", "gauge is [open, filled, empty, close]")]
 	[Arguments("""{"look":{"sparkle":"*"}}""", "a look has no 'sparkle'")]
+	[Arguments("""{"look":{"bullet":"\u001b[31m*"}}""", "bullet is text")]
+	[Arguments("""{"look":{"bullet":"\u0301"}}""", "bullet is text")]
+	[Arguments("""{"look":{"rule":"\ud800"}}""", "not JSON or a theme name")]
+	[Arguments("""{"look":{"title":["\n","x"]}}""", "title is [open, close]")]
+	[Arguments("""{"look":{"corners":["+","+","+","++"]}}""", "corners is [top-left, top-right, bottom-left, bottom-right], each one column wide")]
+	[Arguments("""{"look":{"corners":["界","+","+","+"]}}""", "corners is [top-left, top-right, bottom-left, bottom-right], each one column wide")]
+	[Arguments("""{"look":{"side":"||"}}""", "side is one column wide")]
+	[Arguments("""{"look":{"edge":"\t"}}""", "edge is text")]
 	public async Task ABadLook_SaysWhy(string json, string error)
 	{
 		await Assert.That(ThemePalette.TryParse(json, out _, out var message)).IsFalse();
