@@ -281,6 +281,181 @@ public class TerminalFeatureTests
 	}
 
 	[Test]
+	public async Task InlineImagesSendAMovingPictureAsALoopingGif()
+	{
+		var red = RedBlue(2, 2).Rgba.ToArray();
+		var blue = (byte[])red.Clone();
+		(blue[0], blue[2]) = (0, 255); // the top left pixel blue, the bottom row see-through
+		Array.Clear(blue, 8, 8);
+		var picture = new TerminalPicture("moving", 2, 2,
+			[new TerminalPictureFrame(red, TimeSpan.FromMilliseconds(100)), new TerminalPictureFrame(blue, TimeSpan.FromMilliseconds(250))]);
+		var options = new AnsiOutputOptions(Features: TerminalFeatures.InlineImages) { Pictures = new Source(picture) };
+
+		var output = RenderString(Laid(new Figure(Cat, MarkupText.Empty), 10, new PictureCells(4, 2)), options);
+		var gif = Convert.FromBase64String(Regex.Match(output, ":([A-Za-z0-9+/=]+)\u0007").Groups[1].Value);
+		var decoded = GifReader.Read(gif);
+
+		await Assert.That(output).Contains($"size={gif.Length};width=4;height=2;");
+		await Assert.That(decoded.Loops).IsTrue();
+		await Assert.That(decoded.Frames.Select(f => f.Centiseconds)).IsEquivalentTo(new[] { 10, 25 });
+		await Assert.That(decoded.Frames[0].Rgba.SequenceEqual(Quantized(red))).IsTrue();
+		await Assert.That(decoded.Frames[1].Rgba.SequenceEqual(Quantized(blue))).IsTrue();
+	}
+
+	/// <summary>
+	/// A picture of fewer than 256 colours comes back from the GIF exactly, each colour being its own palette entry:
+	/// big and noisy enough that the LZW table fills, grows its code size to twelve bits and is cleared.
+	/// </summary>
+	[Test]
+	public async Task AMovingPictureOfFewColoursRoundTripsThroughTheGif()
+	{
+		var random = new Random(11);
+		var colours = Enumerable.Range(0, 200).Select(_ => (R: Centre(random), G: Centre(random), B: Centre(random))).Distinct().ToArray();
+		byte[] Noise()
+		{
+			var rgba = new byte[128 * 128 * 4];
+			for (var i = 0; i < rgba.Length; i += 4)
+			{
+				var (r, g, b) = colours[random.Next(colours.Length)];
+				(rgba[i], rgba[i + 1], rgba[i + 2], rgba[i + 3]) = (r, g, b, 255);
+			}
+			return rgba;
+		}
+
+		var frames = new[] { Noise(), Noise(), Noise() };
+		var picture = new TerminalPicture("noise", 128, 128, [.. frames.Select(f => new TerminalPictureFrame(f, TimeSpan.FromMilliseconds(40)))]);
+		var options = new AnsiOutputOptions(Features: TerminalFeatures.InlineImages) { Pictures = new Source(picture), CellWidth = 16, CellHeight = 32 };
+
+		var output = RenderString(Laid(new Figure(Cat, MarkupText.Empty), 20, new PictureCells(8, 4)), options);
+		var decoded = GifReader.Read(Convert.FromBase64String(Regex.Match(output, ":([A-Za-z0-9+/=]+)\u0007").Groups[1].Value));
+
+		await Assert.That(decoded.Width).IsEqualTo(128);
+		await Assert.That(decoded.Frames.Count).IsEqualTo(3);
+		for (var i = 0; i < frames.Length; i++)
+			await Assert.That(decoded.Frames[i].Rgba.SequenceEqual(frames[i])).IsTrue();
+	}
+
+	private static byte Centre(Random random) => (byte)(random.Next(32) * 8 + 4);
+
+	/// <summary>
+	/// Each channel moved to the middle of its five-bit bin, as the GIF's palette has it, and a pixel less than half
+	/// opaque cleared.
+	/// </summary>
+	private static byte[] Quantized(byte[] rgba) =>
+		[.. rgba.Select((value, i) => rgba[i - i % 4 + 3] < 128 ? (byte)0 : i % 4 == 3 ? (byte)255 : (byte)((value >> 3) * 8 + 4))];
+
+	/// <summary>Just enough of a GIF decoder to read back what the writer makes: a global palette and whole frames.</summary>
+	private static class GifReader
+	{
+		public sealed record Frame(int Centiseconds, byte[] Rgba);
+
+		public sealed record Gif(int Width, int Height, bool Loops, List<Frame> Frames);
+
+		public static Gif Read(byte[] gif)
+		{
+			if (Encoding.ASCII.GetString(gif, 0, 6) != "GIF89a") throw new InvalidDataException("not a GIF89a");
+			var width = gif[6] | gif[7] << 8;
+			var height = gif[8] | gif[9] << 8;
+			var packed = gif[10];
+			var tableSize = (packed & 0x80) != 0 ? 1 << ((packed & 7) + 1) : 0;
+			var palette = gif.AsSpan(13, tableSize * 3).ToArray();
+			var at = 13 + tableSize * 3;
+			var loops = false;
+			var delay = 0;
+			int? transparent = null;
+			var frames = new List<Frame>();
+			while (true)
+			{
+				switch (gif[at++])
+				{
+					case 0x21:
+						var label = gif[at++];
+						var block = SubBlocks(gif, ref at);
+						if (label == 0xFF && Encoding.ASCII.GetString(block, 0, 11) == "NETSCAPE2.0") loops = true;
+						if (label == 0xF9)
+						{
+							delay = block[1] | block[2] << 8;
+							transparent = (block[0] & 1) != 0 ? block[3] : null;
+						}
+						break;
+					case 0x2C:
+						if (gif[at + 8] != 0) throw new InvalidDataException("local tables and interlacing are not read");
+						at += 9;
+						var minimumCodeSize = gif[at++];
+						var indices = Lzw(SubBlocks(gif, ref at), minimumCodeSize, width * height);
+						var rgba = new byte[width * height * 4];
+						for (var p = 0; p < indices.Length; p++)
+						{
+							if (indices[p] == transparent) continue;
+							rgba[p * 4] = palette[indices[p] * 3];
+							rgba[p * 4 + 1] = palette[indices[p] * 3 + 1];
+							rgba[p * 4 + 2] = palette[indices[p] * 3 + 2];
+							rgba[p * 4 + 3] = 255;
+						}
+						frames.Add(new Frame(delay, rgba));
+						break;
+					case 0x3B:
+						return new Gif(width, height, loops, frames);
+					default:
+						throw new InvalidDataException($"unexpected block at {at - 1}");
+				}
+			}
+		}
+
+		private static byte[] SubBlocks(byte[] gif, ref int at)
+		{
+			var data = new List<byte>();
+			for (int length; (length = gif[at++]) > 0; at += length) data.AddRange(gif.AsSpan(at, length));
+			return [.. data];
+		}
+
+		private static byte[] Lzw(byte[] data, int minimumCodeSize, int pixels)
+		{
+			var clear = 1 << minimumCodeSize;
+			var end = clear + 1;
+			var table = new List<byte[]>();
+			void Reset()
+			{
+				table.Clear();
+				for (var i = 0; i < clear; i++) table.Add([(byte)i]);
+				table.Add([]);
+				table.Add([]);
+			}
+
+			Reset();
+			var codeSize = minimumCodeSize + 1;
+			var output = new List<byte>(pixels);
+			byte[]? previous = null;
+			int bit = 0;
+			while (true)
+			{
+				var code = 0;
+				for (var i = 0; i < codeSize; i++, bit++) code |= (data[bit >> 3] >> (bit & 7) & 1) << i;
+				if (code == clear)
+				{
+					Reset();
+					codeSize = minimumCodeSize + 1;
+					previous = null;
+					continue;
+				}
+
+				if (code == end) break;
+				byte[] entry;
+				if (code < table.Count) entry = table[code];
+				else if (code == table.Count && previous is not null) entry = [.. previous, previous[0]];
+				else throw new InvalidDataException($"code {code} past the table ({table.Count})");
+				output.AddRange(entry);
+				if (previous is not null && table.Count < 4096) table.Add([.. previous, entry[0]]);
+				if (table.Count == 1 << codeSize && codeSize < 12) codeSize++;
+				previous = entry;
+			}
+
+			if (output.Count != pixels) throw new InvalidDataException($"{output.Count} pixels, not {pixels}");
+			return [.. output];
+		}
+	}
+
+	[Test]
 	public async Task SixelIsTheCellsSizeInWholeBands()
 	{
 		var options = new AnsiOutputOptions(Features: TerminalFeatures.Sixel) { Pictures = new Source(RedBlue()), CellWidth = 8, CellHeight = 16 };

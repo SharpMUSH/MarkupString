@@ -257,14 +257,20 @@ internal static class TerminalPictureWriter
 
 	private readonly record struct OverlayKey(TerminalFeatures Method, int Columns, int Rows, int CellWidth, int CellHeight);
 
-	/// <summary>An iTerm2 inline image, a PNG sized in cells, its shape kept.</summary>
+	/// <summary>
+	/// An iTerm2 inline image sized in cells, its shape kept: a PNG, or for a moving picture a looping GIF of its
+	/// frames, which the terminal plays itself.
+	/// </summary>
 	private static string EncodeInlineImage(TerminalPicture picture, OverlayKey key)
 	{
 		var (width, height) = PictureScaler.FitWithin(picture.Width, picture.Height,
 			key.Columns * key.CellWidth, key.Rows * key.CellHeight, upscale: false);
-		var png = PngWriter.Encode(PictureScaler.Scale(picture.Rgba.Span, picture.Width, picture.Height, width, height), width, height);
+		byte[] Scale(ReadOnlyMemory<byte> rgba) => PictureScaler.Scale(rgba.Span, picture.Width, picture.Height, width, height);
+		var file = picture.Frames.Count > 0
+			? GifWriter.Encode([.. picture.Frames.Select(frame => new TerminalPictureFrame(Scale(frame.Rgba), frame.Duration))], width, height)
+			: PngWriter.Encode(Scale(picture.Rgba), width, height);
 		return string.Create(CultureInfo.InvariantCulture,
-			$"{Esc}]1337;File=inline=1;size={png.Length};width={key.Columns};height={key.Rows};preserveAspectRatio=1:{Convert.ToBase64String(png)}\a");
+			$"{Esc}]1337;File=inline=1;size={file.Length};width={key.Columns};height={key.Rows};preserveAspectRatio=1:{Convert.ToBase64String(file)}\a");
 	}
 
 	/// <summary>
