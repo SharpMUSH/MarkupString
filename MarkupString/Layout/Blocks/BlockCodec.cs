@@ -239,6 +239,7 @@ public sealed class BlockWriter
 		if (theme.HeaderRuleColor is { } cr) Markup("cr", cr);
 		if (theme.GaugeFilledColor is { } cf) Markup("cf", cf);
 		if (theme.GaugeEmptyColor is { } ce) Markup("ce", ce);
+		if (theme.StripeColor is { } cz) Markup("cz", cz);
 		_json.WriteEndObject();
 	}
 
@@ -440,6 +441,7 @@ public sealed class BlockReader
 			HeaderRuleColor = inner.Markup("cr"),
 			GaugeFilledColor = inner.Markup("cf"),
 			GaugeEmptyColor = inner.Markup("ce"),
+			StripeColor = inner.Markup("cz"),
 		};
 	}
 

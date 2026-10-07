@@ -32,6 +32,12 @@ public sealed record Fields(ImmutableArray<Field> Items) : Block
 	/// <summary>Cells between two columns.</summary>
 	public int Gap { get; init; } = 3;
 
+	/// <summary>
+	/// Whether every second field is laid on the theme's <see cref="LayoutTheme.StripeColor"/>, across the
+	/// label and the value. Dealt into columns, each column is striped on its own.
+	/// </summary>
+	public bool Striped { get; init; }
+
 	/// <summary>The separator drawn under <paramref name="context"/>.</summary>
 	internal MarkupText SeparatorIn(LayoutContext context) => Separator ?? context.Theme.Piece(theme => theme.FieldSeparator);
 
@@ -67,11 +73,14 @@ public sealed record Fields(ImmutableArray<Field> Items) : Block
 		{
 			// Too narrow to sit side by side: each label on its own line, its value indented under it.
 			var indent = BlockText.Blank(Math.Min(2, width - 1));
-			foreach (var field in Items)
+			for (var index = 0; index < Items.Length; index++)
 			{
+				var field = Items[index];
+				var first = lines.Count;
 				if (field.Label.Length > 0)
 					lines.AddRange(MarkupText.Concat([context.Paint(theme => theme.LabelColor, field.Label), separator.Trim(TrimType.TrimEnd)]).FormatColumn(BlockText.Column(width, Alignment.Left)));
-				foreach (var line in context.Lines(field.Value, width - indent.DisplayWidth)) lines.Add(MarkupText.Concat([indent, line]));
+				foreach (var line in context.Lines(field.Value, width - indent.DisplayWidth)) lines.Add(Striped ? BlockText.Fit(MarkupText.Concat([indent, line]), width) : MarkupText.Concat([indent, line]));
+				if (Striped) context.Stripe(lines, first, index);
 			}
 			return;
 		}
@@ -83,8 +92,10 @@ public sealed record Fields(ImmutableArray<Field> Items) : Block
 		var leader = Leader is { Length: > 0 } pattern ? pattern : null;
 		var labelColumn = labelWidth + separator.DisplayWidth;
 		var blankLabel = BlockText.Blank(labelColumn);
-		foreach (var field in Items)
+		for (var index = 0; index < Items.Length; index++)
 		{
+			var field = Items[index];
+			var first = lines.Count;
 			var label = new List<MarkupText>();
 			if (field.Label.Length > 0 && leader is not null)
 			{
@@ -106,6 +117,7 @@ public sealed record Fields(ImmutableArray<Field> Items) : Block
 					row < label.Count ? label[row] : blankLabel,
 					row < drawn.Count ? BlockText.Fit(drawn[row], valueWidth) : BlockText.Blank(valueWidth)]));
 			}
+			if (Striped) context.Stripe(lines, first, index);
 		}
 	}
 

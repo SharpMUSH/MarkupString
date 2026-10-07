@@ -137,6 +137,18 @@ public sealed record LayoutContext
 		return part(Theme) is { } markup && text.Length > 0 ? MarkupText.Wrap(markup, text) : text;
 	}
 
+	/// <summary>
+	/// The lines from <paramref name="first"/> on, a row of a striped table or list, laid on the theme's
+	/// stripe colour when <paramref name="row"/> is odd (the second, the fourth, ...). Colour a cell sets
+	/// itself wins.
+	/// </summary>
+	internal void Stripe(IList<MarkupText> lines, int first, int row)
+	{
+		if (row % 2 == 0 || Theme.StripeColor is not { } markup) return;
+		for (var i = first; i < lines.Count; i++)
+			if (lines[i].Length > 0) lines[i] = MarkupText.Wrap(markup, lines[i]);
+	}
+
 	/// <summary><paramref name="style"/> with every piece in the theme's border colour.</summary>
 	internal BorderStyle Paint(BorderStyle style)
 	{
@@ -257,11 +269,17 @@ public sealed record LayoutTheme
 	/// <summary>The colour of a gauge's empty part.</summary>
 	public IMarkup? GaugeEmptyColor { get; init; }
 
+	/// <summary>
+	/// What is laid under every second row of a table or list that is striped
+	/// (<see cref="Table.Striped"/>, <see cref="Fields.Striped"/>): a background colour.
+	/// </summary>
+	public IMarkup? StripeColor { get; init; }
+
 	/// <summary>Whether it sets any colour.</summary>
 	public bool HasColor =>
 		BorderColor is not null || TitleColor is not null || HeadingColor is not null || LabelColor is not null
 		|| SeparatorColor is not null || BulletColor is not null || GuideColor is not null || HeaderRuleColor is not null
-		|| GaugeFilledColor is not null || GaugeEmptyColor is not null;
+		|| GaugeFilledColor is not null || GaugeEmptyColor is not null || StripeColor is not null;
 
 	/// <summary>This theme over <paramref name="below"/>: what this sets, and what it leaves unset from there.</summary>
 	public LayoutTheme Over(LayoutTheme below)
@@ -288,6 +306,7 @@ public sealed record LayoutTheme
 			HeaderRuleColor = HeaderRuleColor ?? below.HeaderRuleColor,
 			GaugeFilledColor = GaugeFilledColor ?? below.GaugeFilledColor,
 			GaugeEmptyColor = GaugeEmptyColor ?? below.GaugeEmptyColor,
+			StripeColor = StripeColor ?? below.StripeColor,
 		};
 	}
 

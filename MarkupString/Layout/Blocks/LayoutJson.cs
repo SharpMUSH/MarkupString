@@ -141,6 +141,7 @@ internal static class LayoutJson
 				w.Text("ld", b.Leader);
 				w.Int("c", b.Columns, 1);
 				w.Int("g", b.Gap, 3);
+				w.Bool("sp", b.Striped);
 			},
 			r => new Fields(r.Array("f", fr => new Field(fr.Text("k") ?? MarkupText.Empty, fr.Block("v") ?? new Stack([]))))
 			{
@@ -149,6 +150,7 @@ internal static class LayoutJson
 				Leader = r.Text("ld"),
 				Columns = r.Int("c", 1, 1, 64),
 				Gap = r.Int("g", 3, 0, 64),
+				Striped = r.Bool("sp"),
 			}),
 		BlockCodec.Create<Tree>("tree",
 			(b, w) =>
@@ -217,6 +219,7 @@ internal static class LayoutJson
 				w.Int("g", b.Gap, 2);
 				w.Text("s", b.Separator);
 				w.Text("hr", b.HeaderRule);
+				w.Bool("sp", b.Striped);
 			},
 			r => new Table(
 				r.Array("cols", cr => new TableColumn(cr.Text("h") ?? MarkupText.Empty)
@@ -232,6 +235,7 @@ internal static class LayoutJson
 				Gap = r.Int("g", 2, 0, 64),
 				Separator = r.Text("s"),
 				HeaderRule = r.Text("hr"),
+				Striped = r.Bool("sp"),
 			}),
 		BlockCodec.Create<Aligned>("aligned",
 			(b, w) =>

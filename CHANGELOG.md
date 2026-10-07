@@ -22,6 +22,12 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   sixteen-colour client gets instead, picked by hue rather than RGB distance (`ColorMath.StandardSlot`).
   `ColorMath` has contrast, OKLCH conversion and hue rotation. `Themed.Fallback` (`ThemedUnder`) puts a
   theme under the one it is drawn in, for a game's default under a reader's own.
+- **Striped rows.** `Table.Striped` and `Fields.Striped` lay every second row, all its lines and the
+  full width, on the theme's `StripeColor`, a background; a cell's own background still wins. Palettes
+  gained a `surface` role for it (base16's `base01`, or a step off the background when generated), and
+  `ToTheme` now asks for each colour as text, bold text or a background (`ThemePaint`). In HTML the
+  table and list get `ms-striped` and the colour is `--ms-stripe`, a faint grey when unset.
+  `IColorMarkup.Background` reports a layer's background.
 - **Gradients fall back on sixteen-colour terminals.** A gradient-painted character carries the layer
   of the stop nearest it, and `AnsiStyle.StandardForeground` keeps that stop's colour, so a client with
   only the standard colours gets bands of the stops instead of each shade's nearest standard colour.

@@ -478,13 +478,14 @@ text between them.
 
 A `LayoutTheme` sets the colour of each part as well as its characters: `BorderColor`, `TitleColor`,
 `HeadingColor`, `LabelColor`, `SeparatorColor`, `BulletColor`, `GuideColor`, `HeaderRuleColor`,
-`GaugeFilledColor` and `GaugeEmptyColor`. Each is a markup layer, so a title can be bold as well as
+`GaugeFilledColor`, `GaugeEmptyColor` and `StripeColor`. Each is a markup layer, so a title can be bold as well as
 coloured, and colour a piece sets itself still wins. Nothing is coloured by default.
 
-A `ThemePalette` names ten colours by what they are for (`ThemeRole`: background, foreground,
-primary, secondary, tertiary, muted, success, warning, error, info), and `ToTheme` maps them onto
-the parts: borders and gauge bars primary, titles secondary and bold, labels secondary, bullets
-tertiary, headings primary and bold, guides and separators muted. The ANSI package does the painting:
+A `ThemePalette` names eleven colours by what they are for (`ThemeRole`: background, surface,
+foreground, primary, secondary, tertiary, muted, success, warning, error, info), and `ToTheme` maps
+them onto the parts: borders and gauge bars primary, titles secondary and bold, labels secondary,
+bullets tertiary, headings primary and bold, guides and separators muted, stripes on the surface. The
+ANSI package does the painting:
 
 ```csharp
 var sheet = character.Bordered(MarkupText.Plain("Ann")).Themed(ThemePalette.Preset("nord")!.ToLayoutTheme());
@@ -517,6 +518,18 @@ Four ways to make one:
 In HTML a themed block writes its colours as custom properties (`--ms-border`, `--ms-title`,
 `--ms-label`, ...), which `LayoutCss` reads, so a page that sets them themes every layout on it. A
 fallback theme (`ThemedUnder`) writes the `-default` form, under what the page sets.
+
+### Striped rows
+
+A wide table is easier to read across when every second row has a background of its own. Set
+`Striped` on a `Table` or `Fields`, and every second row, all of its lines and the whole width, is laid
+on the theme's `StripeColor`. A cell's own background still wins. With no stripe colour nothing is
+coloured; in HTML the table or list gets `ms-striped` and `LayoutCss` uses `--ms-stripe`, a faint grey
+when unset. A table drawn as cards, and a reading-order layout, are not striped.
+
+```csharp
+var roster = new Table(columns, rows) { Striped = true }.Themed(ThemePalette.Preset("nord")!.ToLayoutTheme());
+```
 
 ### A block of your own
 

@@ -19,6 +19,9 @@ public interface IColorMarkup : IMarkup
 	/// <summary>The foreground this layer sets, or <see langword="null"/> when it sets none or only the terminal knows it.</summary>
 	RgbColor? Foreground { get; }
 
+	/// <summary>The background this layer sets, or <see langword="null"/> when it sets none or only the terminal knows it.</summary>
+	RgbColor? Background => null;
+
 	/// <summary>The same layer with its foreground replaced.</summary>
 	IColorMarkup WithForeground(RgbColor color);
 }

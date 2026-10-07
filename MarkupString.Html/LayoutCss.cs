@@ -7,7 +7,8 @@ namespace MarkupString.Html;
 /// <remarks>
 /// Borders and rules take <c>currentColor</c>, so they follow the colour of the text around them, unless
 /// a theme sets a part's colour: <c>--ms-border</c>, <c>--ms-title</c>, <c>--ms-heading</c>, <c>--ms-label</c>,
-/// <c>--ms-separator</c>, <c>--ms-bullet</c>, <c>--ms-guide</c>, <c>--ms-header-rule</c>, <c>--ms-gauge</c>. A page
+/// <c>--ms-separator</c>, <c>--ms-bullet</c>, <c>--ms-guide</c>, <c>--ms-header-rule</c>, <c>--ms-gauge</c>, <c>--ms-gauge-empty</c>, and <c>--ms-stripe</c>, the background of every
+/// second row of a striped table or list (a faint grey when unset). A page
 /// sets these to theme every layout on it; a layout's own theme sets them on its block, and a game's
 /// default theme sets the <c>-default</c> form of each, under what the page sets.
 /// Everything is sized in <c>ch</c>, the width of a cell in the terminal font the layout was laid out
@@ -51,6 +52,9 @@ public static class LayoutCss
 		".ms-fields.ms-label-right > .ms-field > dt { text-align: right; }\n" +
 		".ms-fields.ms-leader > .ms-field > dt { display: flex; gap: 0.5ch; }\n" +
 		".ms-fields.ms-leader > .ms-field > dt::after { content: \"\"; flex: 1 0 2ch; border-bottom: 1px dotted currentColor; margin-bottom: 0.3em; }\n" +
+		".ms-fields.ms-striped { column-gap: 0; }\n" +
+		".ms-fields.ms-striped > .ms-field > dt { padding-right: 1ch; }\n" +
+		".ms-fields.ms-striped > .ms-field:nth-child(even) > * { background: var(--ms-stripe, var(--ms-stripe-default, rgba(127, 127, 127, 0.12))); }\n" +
 		".ms-tree, .ms-tree ul { list-style: none; margin: 0; padding: 0; }\n" +
 		".ms-tree ul { margin-left: 1ch; }\n" +
 		".ms-tree ul > li { position: relative; padding-left: 3ch; border-left: 1px solid var(--ms-guide, var(--ms-guide-default, currentColor)); }\n" +
@@ -80,6 +84,7 @@ public static class LayoutCss
 		".ms-table { border-collapse: collapse; }\n" +
 		".ms-table th, .ms-table td { padding: 0 1ch; vertical-align: top; text-align: left; }\n" +
 		".ms-table th { border-bottom: 1px solid var(--ms-header-rule, var(--ms-header-rule-default, currentColor)); color: var(--ms-heading, var(--ms-heading-default, inherit)); }\n" +
+		".ms-table.ms-striped > tbody > tr:nth-child(even) { background: var(--ms-stripe, var(--ms-stripe-default, rgba(127, 127, 127, 0.12))); }\n" +
 		"@media (max-width: 48em) { .ms-table .ms-p3 { display: none; } }\n" +
 		"@media (max-width: 32em) { .ms-table .ms-p2 { display: none; } }\n";
 }

@@ -20,6 +20,12 @@ public sealed record Table(ImmutableArray<TableColumn> Columns, ImmutableArray<I
 	/// <summary>The line under the headings, repeated; empty for none; unset, the theme's (<c>-</c>).</summary>
 	public MarkupText? HeaderRule { get; init; }
 
+	/// <summary>
+	/// Whether every second row is laid on the theme's <see cref="LayoutTheme.StripeColor"/>, to help the
+	/// eye along a wide row. Not when the rows are drawn as cards.
+	/// </summary>
+	public bool Striped { get; init; }
+
 	private ImmutableArray<ImmutableArray<Block>> AllRows => Rows.IsDefault ? [] : Rows;
 
 	private static readonly Block Blank = new TextBlock(MarkupText.Empty);
@@ -48,8 +54,10 @@ public sealed record Table(ImmutableArray<TableColumn> Columns, ImmutableArray<I
 		if (rule.Length > 0) lines.Add(BlockText.Fit(context.Paint(theme => theme.HeaderRuleColor, BlockText.Run(context.Glyph(rule, "-"), tableWidth)), width));
 
 		var cellLines = new List<MarkupText>[Columns.Length];
+		var index = 0;
 		foreach (var row in AllRows)
 		{
+			var first = lines.Count;
 			var height = 1;
 			foreach (var c in shown)
 			{
@@ -59,6 +67,8 @@ public sealed record Table(ImmutableArray<TableColumn> Columns, ImmutableArray<I
 			}
 			for (var line = 0; line < height; line++)
 				lines.Add(Join(shown.Select(c => line < cellLines[c].Count ? BlockText.Fit(cellLines[c][line], widths[c]) : BlockText.Blank(widths[c]))));
+			if (Striped) context.Stripe(lines, first, index);
+			index++;
 		}
 	}
 

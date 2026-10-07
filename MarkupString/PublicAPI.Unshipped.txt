@@ -833,20 +833,10 @@ MarkupString.ThemePalette.Name.get -> string!
 MarkupString.ThemePalette.Name.init -> void
 MarkupString.ThemePalette.ThemePalette() -> void
 MarkupString.ThemePalette.ToJson() -> string!
-MarkupString.ThemePalette.ToTheme(System.Func<MarkupString.ThemeColor, bool, MarkupString.IMarkup!>! paint) -> MarkupString.Layout.LayoutTheme!
 MarkupString.ThemePalette.With(MarkupString.ThemeRole role, MarkupString.ThemeColor? color) -> MarkupString.ThemePalette!
 MarkupString.ThemePalette.this[MarkupString.ThemeRole role].get -> MarkupString.ThemeColor?
 MarkupString.ThemeRole
 MarkupString.ThemeRole.Background = 0 -> MarkupString.ThemeRole
-MarkupString.ThemeRole.Error = 8 -> MarkupString.ThemeRole
-MarkupString.ThemeRole.Foreground = 1 -> MarkupString.ThemeRole
-MarkupString.ThemeRole.Info = 9 -> MarkupString.ThemeRole
-MarkupString.ThemeRole.Muted = 5 -> MarkupString.ThemeRole
-MarkupString.ThemeRole.Primary = 2 -> MarkupString.ThemeRole
-MarkupString.ThemeRole.Secondary = 3 -> MarkupString.ThemeRole
-MarkupString.ThemeRole.Success = 6 -> MarkupString.ThemeRole
-MarkupString.ThemeRole.Tertiary = 4 -> MarkupString.ThemeRole
-MarkupString.ThemeRole.Warning = 7 -> MarkupString.ThemeRole
 override MarkupString.ContrastShortfall.GetHashCode() -> int
 override MarkupString.OklchColor.GetHashCode() -> int
 override MarkupString.ThemeColor.GetHashCode() -> int
@@ -889,3 +879,25 @@ static MarkupString.ThemePalette.operator ==(MarkupString.ThemePalette? left, Ma
 ~override MarkupString.OklchColor.ToString() -> string
 ~override MarkupString.ThemeColor.Equals(object obj) -> bool
 ~override MarkupString.ThemeColor.ToString() -> string
+MarkupString.IColorMarkup.Background.get -> MarkupString.RgbColor?
+MarkupString.Layout.Fields.Striped.get -> bool
+MarkupString.Layout.Fields.Striped.init -> void
+MarkupString.Layout.LayoutTheme.StripeColor.get -> MarkupString.IMarkup?
+MarkupString.Layout.LayoutTheme.StripeColor.init -> void
+MarkupString.Layout.Table.Striped.get -> bool
+MarkupString.Layout.Table.Striped.init -> void
+MarkupString.ThemePaint
+MarkupString.ThemePaint.Background = 2 -> MarkupString.ThemePaint
+MarkupString.ThemePaint.Bold = 1 -> MarkupString.ThemePaint
+MarkupString.ThemePaint.Text = 0 -> MarkupString.ThemePaint
+MarkupString.ThemePalette.ToTheme(System.Func<MarkupString.ThemeColor, MarkupString.ThemePaint, MarkupString.IMarkup!>! paint) -> MarkupString.Layout.LayoutTheme!
+MarkupString.ThemeRole.Error = 9 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Foreground = 2 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Info = 10 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Muted = 6 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Primary = 3 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Secondary = 4 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Success = 7 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Surface = 1 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Tertiary = 5 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Warning = 8 -> MarkupString.ThemeRole

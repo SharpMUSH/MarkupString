@@ -44,6 +44,9 @@ public enum ThemeRole
 	/// <summary>What the others are measured against. Never painted in a terminal.</summary>
 	Background,
 
+	/// <summary>A background a little off <see cref="Background"/>, laid under every second row of a striped table or list.</summary>
+	Surface,
+
 	/// <summary>Body text, measured against the background.</summary>
 	Foreground,
 
@@ -70,6 +73,19 @@ public enum ThemeRole
 
 	/// <summary>Things to know.</summary>
 	Info,
+}
+
+/// <summary>How <see cref="ThemePalette.ToTheme"/> asks for a colour to be painted.</summary>
+public enum ThemePaint
+{
+	/// <summary>As the colour of text and lines.</summary>
+	Text,
+
+	/// <summary>As the colour of bold text.</summary>
+	Bold,
+
+	/// <summary>As the background behind text.</summary>
+	Background,
 }
 
 /// <summary>How <see cref="ThemePalette.Generate"/> picks the accents' hues from the seed's.</summary>
@@ -135,14 +151,15 @@ public sealed record ThemePalette
 	/// <summary>The contrast a role should have with the background: 3 for lines, 4.5 for text.</summary>
 	public static double Required(ThemeRole role) => role switch
 	{
-		ThemeRole.Background => 1,
+		ThemeRole.Background or ThemeRole.Surface => 1,
 		ThemeRole.Primary or ThemeRole.Muted => 3,
 		_ => 4.5,
 	};
 
 	/// <summary>
 	/// The roles set whose contrast with the background is under <see cref="Required"/>. A standard colour
-	/// alone, or a standard background, looks however the reader's client makes it, so it is not measured.
+	/// alone, or a standard background, looks however the reader's client makes it, so it is not measured;
+	/// nor is the surface, which is a background too.
 	/// </summary>
 	public IReadOnlyList<ContrastShortfall> Check()
 	{
@@ -151,7 +168,7 @@ public sealed record ThemePalette
 		if (this[ThemeRole.Background] is { Rgb: null }) return shortfalls;
 		foreach (var role in Enum.GetValues<ThemeRole>())
 		{
-			if (role == ThemeRole.Background || this[role] is not { Rgb: not null } color) continue;
+			if (role is ThemeRole.Background or ThemeRole.Surface || this[role] is not { Rgb: not null } color) continue;
 			var ratio = ColorMath.Contrast(color.Resolved, background);
 			if (ratio < Required(role)) shortfalls.Add(new ContrastShortfall(role, ratio, Required(role)));
 		}
@@ -161,18 +178,19 @@ public sealed record ThemePalette
 	/// <summary>
 	/// The palette as the colours of a layout's parts: borders in the primary colour, titles in the
 	/// secondary one and bold, labels secondary, bullets tertiary, headings primary and bold, gauge bars
-	/// primary, and guides, separators, the rule under headings and a gauge's empty part muted.
+	/// primary, guides, separators, the rule under headings and a gauge's empty part muted, and the
+	/// stripes of a striped table or list on the surface.
 	/// </summary>
-	/// <param name="paint">Makes the markup a format draws a colour with, bold or not: an ANSI colour, say.</param>
-	public LayoutTheme ToTheme(Func<ThemeColor, bool, IMarkup> paint)
+	/// <param name="paint">Makes the markup a format draws a colour with, as text, bold text or a background: an ANSI colour, say.</param>
+	public LayoutTheme ToTheme(Func<ThemeColor, ThemePaint, IMarkup> paint)
 	{
 		ArgumentNullException.ThrowIfNull(paint);
-		IMarkup? Part(ThemeRole role, bool bold = false) => this[role] is { } color ? paint(color, bold) : null;
+		IMarkup? Part(ThemeRole role, ThemePaint how = ThemePaint.Text) => this[role] is { } color ? paint(color, how) : null;
 		return new LayoutTheme
 		{
 			BorderColor = Part(ThemeRole.Primary),
-			TitleColor = Part(ThemeRole.Secondary, bold: true),
-			HeadingColor = Part(ThemeRole.Primary, bold: true),
+			TitleColor = Part(ThemeRole.Secondary, ThemePaint.Bold),
+			HeadingColor = Part(ThemeRole.Primary, ThemePaint.Bold),
 			LabelColor = Part(ThemeRole.Secondary),
 			BulletColor = Part(ThemeRole.Tertiary),
 			GaugeFilledColor = Part(ThemeRole.Primary),
@@ -180,6 +198,7 @@ public sealed record ThemePalette
 			SeparatorColor = Part(ThemeRole.Muted),
 			HeaderRuleColor = Part(ThemeRole.Muted),
 			GaugeEmptyColor = Part(ThemeRole.Muted),
+			StripeColor = Part(ThemeRole.Surface, ThemePaint.Background),
 		};
 	}
 
@@ -250,6 +269,7 @@ public sealed record ThemePalette
 			Colors = ImmutableDictionary.CreateRange(new Dictionary<ThemeRole, ThemeColor>
 			{
 				[ThemeRole.Background] = At(0x0, 0),
+				[ThemeRole.Surface] = At(0x1, ColorMath.Luminance(colors[0]) < 0.18 ? 8 : 7),
 				[ThemeRole.Foreground] = At(0x5, 7),
 				[ThemeRole.Muted] = At(0x3, 8),
 				[ThemeRole.Primary] = At(0xD, 4),
@@ -286,6 +306,7 @@ public sealed record ThemePalette
 		var text = 4.5 + 2.5 * level;
 
 		var background = ColorMath.FromOklch(new OklchColor(dark ? 0.18 : 0.98, Math.Min(chroma, 0.02), hue));
+		var surface = ColorMath.FromOklch(new OklchColor(dark ? 0.245 : 0.93, Math.Min(chroma, 0.025), hue));
 		var foreground = ColorMath.WithContrast(ColorMath.FromOklch(new OklchColor(dark ? 0.9 : 0.25, Math.Min(chroma, 0.015), hue)), background, Math.Max(text, 7));
 
 		ThemeColor Accent(double turn, double lightness, double share, double ratio) =>
@@ -320,6 +341,7 @@ public sealed record ThemePalette
 			Colors = ImmutableDictionary.CreateRange(new Dictionary<ThemeRole, ThemeColor>
 			{
 				[ThemeRole.Background] = new(background, dark ? 0 : 15),
+				[ThemeRole.Surface] = new(surface, dark ? 8 : 7),
 				[ThemeRole.Foreground] = new(foreground, dark ? 7 : 0),
 				[ThemeRole.Primary] = Accent(0, 0.72, 1, lines),
 				[ThemeRole.Secondary] = Accent(second, mono ? 0.86 : 0.8, mono ? 0.5 : 1, text),

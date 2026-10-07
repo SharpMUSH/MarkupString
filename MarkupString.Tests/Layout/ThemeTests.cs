@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using MarkupString.Ansi;
 using MarkupString.Html;
 using MarkupString.Layout;
@@ -70,7 +71,7 @@ public class ThemeTests
 	{
 		var palette = ThemePalette.Generate(Hex("#5e81ac"), ThemeHarmony.Triadic, ThemeMode.Light, contrast: 1);
 
-		foreach (var role in Enum.GetValues<ThemeRole>().Where(role => role != ThemeRole.Background))
+		foreach (var role in Enum.GetValues<ThemeRole>().Where(role => role is not (ThemeRole.Background or ThemeRole.Surface)))
 			await Assert.That(ColorMath.Contrast(palette[role]!.Value.Resolved, palette.BackgroundColor)).IsGreaterThanOrEqualTo(7);
 	}
 
@@ -136,7 +137,7 @@ public class ThemeTests
 	[Arguments("\"nowhere\"", "no theme named 'nowhere'")]
 	[Arguments("""{"seed":"blue"}""", "seed is a colour like #7aa2f7")]
 	[Arguments("""{"seed":"#123456","preset":"nord"}""", "use one of preset, base16 and seed")]
-	[Arguments("""{"colors":{"accent":"#fff"}}""", "'accent' is not a role; the roles are background, foreground, primary, secondary, tertiary, muted, success, warning, error, info")]
+	[Arguments("""{"colors":{"accent":"#fff"}}""", "'accent' is not a role; the roles are background, surface, foreground, primary, secondary, tertiary, muted, success, warning, error, info")]
 	[Arguments("""{"colors":{"primary":16}}""", "'16' is not a colour: use #rrggbb, a standard colour 0 to 15, or {\"rgb\":..,\"slot\":..}")]
 	[Arguments("""{"border":"red"}""", "a theme has no 'border'")]
 	public async Task Json_SaysWhatIsWrong(string json, string error)
@@ -238,5 +239,114 @@ public class ThemeTests
 		await Assert.That(BlockLayout.Build(box.Themed(theme), 10).Render(MarkupFormat.Html, Registry)).Contains("<div class=\"ms-themed\" style=\"--ms-border:#81a1c1;--ms-title:#b48ead;");
 		await Assert.That(BlockLayout.Build(box.ThemedUnder(theme), 10).Render(MarkupFormat.Html, Registry)).Contains("--ms-border-default:#81a1c1;");
 		await Assert.That(LayoutCss.Fixed).Contains("border: 1px solid var(--ms-border, var(--ms-border-default, currentColor))");
+	}
+
+	/// <summary>Nord's surface, <c>#3b4252</c>, as a truecolour background.</summary>
+	private const string NordStripe = "\u001b[48;2;59;66;82m";
+
+	private static Table Rows(params string[] names) =>
+		new([new TableColumn(P("Name")), new TableColumn(P("Note"))], [.. names.Select(name => (ImmutableArray<Block>)[P(name).ToBlock(), P("x").ToBlock()])]);
+
+	[Test]
+	public async Task AStripedTable_LaysEverySecondRowOnTheSurface()
+	{
+		var theme = ThemePalette.Preset("nord")!.ToLayoutTheme();
+		var lines = BlockLayout.Build((Rows("one", "two", "three", "four") with { Striped = true }).Themed(theme), 20)
+			.Render(MarkupFormat.Ansi, Registry).Split('\n');
+
+		// The headings and the rule, then a line a row.
+		await Assert.That(lines[2]).DoesNotContain("48;2;");
+		await Assert.That(lines[3]).Contains(NordStripe + "two ");
+		await Assert.That(lines[4]).DoesNotContain("48;2;");
+		await Assert.That(lines[5]).Contains(NordStripe + "four");
+	}
+
+	[Test]
+	public async Task AStripe_RunsTheWholeWidthOfEveryLineOfItsRow()
+	{
+		var theme = new LayoutTheme { StripeColor = new AnsiMarkup(new AnsiStyle { Background = new AnsiColor.Rgb(1, 2, 3) }) };
+		var table = new Table([new TableColumn(P("A")), new TableColumn(P("B"))],
+			[[P("a").ToBlock(), P("b").ToBlock()], [P("c").ToBlock(), P("long words wrap here").ToBlock()]])
+		{ Striped = true };
+		var text = BlockLayout.Build(table.Themed(theme), 14);
+		var lines = text.Render(MarkupFormat.Ansi, Registry).Split('\n');
+		var plain = text.ToPlainText().Split('\n');
+
+		await Assert.That(lines.Length).IsGreaterThan(4);
+		foreach (var line in lines.Skip(3)) await Assert.That(line).StartsWith("\u001b[48;2;1;2;3m");
+		foreach (var line in plain.Skip(3)) await Assert.That(line.Length).IsEqualTo(14);
+	}
+
+	[Test]
+	public async Task StripedFields_StripeEachSecondField()
+	{
+		var theme = ThemePalette.Preset("nord")!.ToLayoutTheme();
+		var fields = new Fields([new Field(P("Name"), P("Ann").ToBlock()), new Field(P("Race"), P("Elf").ToBlock()), new Field(P("Rank"), P("3").ToBlock())]) { Striped = true };
+		var lines = BlockLayout.Build(fields.Themed(theme), 20).Render(MarkupFormat.Ansi, Registry).Split('\n');
+
+		await Assert.That(lines[0]).DoesNotContain("48;2;");
+		await Assert.That(lines[1]).Contains("48;2;59;66;82mRace");
+		await Assert.That(lines[1]).Contains(NordStripe + " Elf");
+		await Assert.That(lines[2]).DoesNotContain("48;2;");
+	}
+
+	[Test]
+	public async Task AStripe_LeavesTheTextAndACellsOwnBackgroundAlone()
+	{
+		var theme = ThemePalette.Preset("nord")!.ToLayoutTheme();
+		var own = MarkupText.Wrap(new AnsiMarkup(new AnsiStyle { Background = new AnsiColor.Rgb(200, 0, 0) }), "two");
+		var table = new Table([new TableColumn(P("Name"))], [[P("one").ToBlock()], [own.ToBlock()]]);
+		var plain = BlockLayout.Build(table, 20).ToPlainText();
+		var striped = BlockLayout.Build((table with { Striped = true }).Themed(theme), 20);
+
+		await Assert.That(striped.ToPlainText()).IsEqualTo(plain);
+		await Assert.That(striped.Render(MarkupFormat.Ansi, Registry)).Contains("48;2;200;0;0mtwo");
+	}
+
+	[Test]
+	public async Task Striped_WithNoStripeColour_ColoursNothing()
+	{
+		var table = Rows("one", "two");
+
+		await Assert.That(BlockLayout.Build(table with { Striped = true }, 20).Render(MarkupFormat.Ansi, Registry))
+			.IsEqualTo(BlockLayout.Build(table, 20).Render(MarkupFormat.Ansi, Registry));
+	}
+
+	[Test]
+	public async Task Stripes_SurviveTheSerializerAndRelayout()
+	{
+		var theme = ThemePalette.Preset("nord")!.ToLayoutTheme();
+		var built = BlockLayout.Build((Rows("one", "two") with { Striped = true }).ThemedUnder(theme), 20, fluid: true);
+		var read = MarkupTextSerializer.Deserialize(MarkupTextSerializer.Serialize(built, Registry), Registry);
+		var relaid = BlockLayout.Relayout(read, 30, LayoutContext.Default);
+
+		await Assert.That(relaid.Render(MarkupFormat.Ansi, Registry)).Contains(NordStripe + "two");
+	}
+
+	[Test]
+	public async Task Html_StripesWithAClassAndTheSurfaceAsAProperty()
+	{
+		var theme = ThemePalette.Preset("nord")!.ToLayoutTheme();
+		var html = BlockLayout.Build((Rows("one", "two") with { Striped = true }).Themed(theme), 20).Render(MarkupFormat.Html, Registry);
+		var fields = BlockLayout.Build(new Fields([new Field(P("A"), P("b").ToBlock())]) { Striped = true }, 20).Render(MarkupFormat.Html, Registry);
+
+		await Assert.That(html).Contains("--ms-stripe:#3b4252;");
+		await Assert.That(html).Contains("<table class=\"ms-table ms-striped\">");
+		await Assert.That(fields).Contains("<dl class=\"ms-fields ms-striped\">");
+		await Assert.That(LayoutCss.Fixed).Contains("var(--ms-stripe, var(--ms-stripe-default, rgba(127, 127, 127, 0.12)))");
+	}
+
+	[Test]
+	public async Task TheSurface_IsABackgroundNearTheBackground()
+	{
+		var generated = ThemePalette.Generate(Hex("#7aa2f7"));
+		var light = ThemePalette.Generate(Hex("#7aa2f7"), mode: ThemeMode.Light);
+
+		await Assert.That(ThemePalette.Preset("nord")![ThemeRole.Surface]!.Value.Rgb).IsEqualTo(Hex("#3b4252"));
+		await Assert.That(ColorMath.Contrast(generated[ThemeRole.Surface]!.Value.Resolved, generated.BackgroundColor)).IsBetween(1.1, 1.6);
+		await Assert.That(ColorMath.Contrast(light[ThemeRole.Surface]!.Value.Resolved, light.BackgroundColor)).IsBetween(1.1, 1.6);
+		await Assert.That(ColorMath.Contrast(generated[ThemeRole.Foreground]!.Value.Resolved, generated[ThemeRole.Surface]!.Value.Resolved)).IsGreaterThanOrEqualTo(4.5);
+		await Assert.That(ThemePalette.Terminal[ThemeRole.Surface]).IsNull();
+		await Assert.That(generated.ToLayoutTheme().StripeColor).IsEqualTo(new AnsiMarkup(new AnsiStyle { Background = new AnsiColor.Rgb(generated[ThemeRole.Surface]!.Value.Rgb!.Value.R, generated[ThemeRole.Surface]!.Value.Rgb!.Value.G, generated[ThemeRole.Surface]!.Value.Rgb!.Value.B) }));
 	}
 }

@@ -237,6 +237,7 @@ internal static class LayoutHtml
 		html.Write("<dl class=\"ms-fields");
 		if (fields.LabelAlignment == Alignment.Right) html.Write(" ms-label-right");
 		if (leader) html.Write(" ms-leader");
+		if (fields.Striped) html.Write(" ms-striped");
 		html.Write("\">");
 		var head = separator.Trim(TrimType.TrimEnd);
 		foreach (var field in items)
@@ -411,7 +412,9 @@ internal static class LayoutHtml
 	private static void Table(Table table, HtmlLayoutWriter html)
 	{
 		var columns = table.Columns.IsDefault ? [] : table.Columns;
-		html.Write("<div class=\"ms-table-wrap\"><table class=\"ms-table\"><thead><tr>");
+		html.Write("<div class=\"ms-table-wrap\"><table class=\"ms-table");
+		if (table.Striped) html.Write(" ms-striped");
+		html.Write("\"><thead><tr>");
 		foreach (var column in columns)
 		{
 			html.Write("<th scope=\"col\"");
@@ -493,6 +496,7 @@ internal static class LayoutHtml
 		("--ms-header-rule", theme => theme.HeaderRuleColor),
 		("--ms-gauge", theme => theme.GaugeFilledColor),
 		("--ms-gauge-empty", theme => theme.GaugeEmptyColor),
+		("--ms-stripe", theme => theme.StripeColor),
 	];
 
 	/// <summary>
@@ -502,7 +506,13 @@ internal static class LayoutHtml
 	private static void Themed(Themed themed, HtmlLayoutWriter html)
 	{
 		var colors = ThemeProperties
-			.Select(entry => (entry.Property, Color: entry.Part(themed.Theme) is IColorMarkup { Foreground: { } rgb } ? rgb.ToHex() : null))
+			.Select(entry => (entry.Property, Color: (entry.Part(themed.Theme) as IColorMarkup) switch
+			{
+				// The stripe is a background; every other part is a colour of text or lines.
+				{ Background: { } back } when entry.Property == "--ms-stripe" => back.ToHex(),
+				{ Foreground: { } fore } when entry.Property != "--ms-stripe" => fore.ToHex(),
+				_ => null,
+			}))
 			.Where(entry => entry.Color is not null)
 			.ToArray();
 		if (colors.Length == 0)
