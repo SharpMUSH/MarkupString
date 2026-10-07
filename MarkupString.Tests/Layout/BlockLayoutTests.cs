@@ -257,6 +257,28 @@ public class BlockLayoutTests
 			"all night long.         ");
 	}
 
+	/// <summary>A figure on its own takes the alignment around it, its art moving as one piece.</summary>
+	[Test]
+	[Arguments(Alignment.Left, "/\\_/\\       \n( o.o )     \n > ^ <      ")]
+	[Arguments(Alignment.Center, "  /\\_/\\     \n  ( o.o )   \n   > ^ <    ")]
+	[Arguments(Alignment.Right, "     /\\_/\\  \n     ( o.o )\n      > ^ < ")]
+	public async Task Figure_OnItsOwn_TakesTheAlignmentAroundIt(Alignment alignment, string expected)
+	{
+		var figure = new Figure(new ImageMarkup("cat.png", "A cat"), P("/\\_/\\\n( o.o )\n > ^ <"));
+
+		var lines = BlockLayout.Lines(figure.Aligned(alignment), 12).Select(l => l.ToPlainText());
+
+		await Assert.That(string.Join("\n", lines)).IsEqualTo(expected);
+	}
+
+	[Test]
+	public async Task Figure_WithNoArt_CentresItsDescription()
+	{
+		var figure = new Figure(new ImageMarkup("cat.png", "A cat"), MarkupText.Empty);
+
+		await Assert.That(BlockLayout.Lines(figure.Aligned(Alignment.Center), 11)[0].ToPlainText().TrimEnd()).IsEqualTo("  [A cat]");
+	}
+
 	[Test]
 	public async Task Figure_InHtml_FloatsThePicture()
 	{

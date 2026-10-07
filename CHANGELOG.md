@@ -10,6 +10,10 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A figure on its own takes the alignment around it.** In a centred or right-aligned block, a
+  `Figure` drawn as text moves its art (or its `[description]`) to the centre or the right as one
+  piece, so the lines of the art keep their spacing against each other. A floated figure is unchanged.
+
 - **A page narrow enough to hide columns gives up their shares without `!important`.** `LayoutCss`
   hides a filling table's `<colgroup>` there instead of overriding each column's inline width, so a
   site whose stylesheets forbid `!important` can carry the rule as written.
