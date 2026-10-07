@@ -38,7 +38,7 @@ public static class LayoutCss
 		".ms-border-none.ms-rule::before, .ms-border-none.ms-rule::after { border-top: none; }\n" +
 		".ms-flex { display: flex; flex-wrap: wrap; }\n" +
 		".ms-flex.ms-vertical { flex-direction: column; }\n" +
-		".ms-item { min-width: 0; }\n" +
+		".ms-item { min-width: 0; box-sizing: border-box; }\n" +
 		".ms-flex.ms-divided > .ms-item + .ms-item { border-left: 1px solid var(--ms-separator, var(--ms-separator-default, currentColor)); padding-left: 1ch; }\n" +
 		".ms-figure { display: flow-root; }\n" +
 		".ms-figure-image { max-width: 100%; height: auto; }\n" +
