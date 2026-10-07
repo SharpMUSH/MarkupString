@@ -4,7 +4,7 @@ using System.Text;
 namespace MarkupString.Ansi;
 
 /// <summary>
-/// Draws one row of a picture's cells (<see cref="PictureCellsMarkup"/>) in a terminal, in whichever way
+/// Draws one row of a figure's picture (<see cref="PictureRow"/>) in a terminal, in whichever way
 /// <see cref="AnsiOutputOptions.Features"/> says the client draws pictures.
 /// </summary>
 /// <remarks>
@@ -64,7 +64,7 @@ internal static class TerminalPictureWriter
 		: TerminalFeatures.None;
 
 	/// <summary>Whether <paramref name="cells"/> can be drawn by <paramref name="method"/> at all.</summary>
-	internal static bool CanDraw(TerminalFeatures method, PictureCellsMarkup cells) =>
+	internal static bool CanDraw(TerminalFeatures method, PictureRow cells) =>
 		cells.Columns > 0 && cells.Rows > 0 && cells.Row >= 0 && cells.Row < cells.Rows
 		&& (method != TerminalFeatures.KittyGraphics || (cells.Columns <= Diacritics.Length && cells.Rows <= Diacritics.Length));
 
@@ -84,7 +84,7 @@ internal static class TerminalPictureWriter
 	/// </param>
 	internal static void Write(
 		TerminalFeatures method,
-		PictureCellsMarkup cells,
+		PictureRow cells,
 		TerminalPicture picture,
 		in AnsiStyle effective,
 		AnsiOutputOptions options,
@@ -111,7 +111,7 @@ internal static class TerminalPictureWriter
 	/// its size in cells, since each size is its own virtual placement. 24 bits, so it fits a truecolor
 	/// foreground; never zero, which Kitty reads as no id.
 	/// </summary>
-	internal static uint KittyId(TerminalPicture picture, PictureCellsMarkup cells)
+	internal static uint KittyId(TerminalPicture picture, PictureRow cells)
 	{
 		var hash = 2166136261u;
 		foreach (var c in picture.Key) hash = (hash ^ c) * 16777619u;
@@ -121,7 +121,7 @@ internal static class TerminalPictureWriter
 		return id == 0 ? 1 : id;
 	}
 
-	private static void WriteKitty(PictureCellsMarkup cells, TerminalPicture picture, in AnsiStyle effective, AnsiOutputOptions options,
+	private static void WriteKitty(PictureRow cells, TerminalPicture picture, in AnsiStyle effective, AnsiOutputOptions options,
 		IBufferWriter<char> output, IBufferWriter<char> ahead)
 	{
 		var id = KittyId(picture, cells);
@@ -243,7 +243,7 @@ internal static class TerminalPictureWriter
 	/// down past the picture), comes back up, and draws the picture between a cursor save and restore. Every row
 	/// then steps over the picture's cells (<c>CSI n C</c>) rather than writing spaces that would erase it.
 	/// </summary>
-	private static void WriteOverlay(TerminalFeatures method, PictureCellsMarkup cells, TerminalPicture picture, AnsiOutputOptions options,
+	private static void WriteOverlay(TerminalFeatures method, PictureRow cells, TerminalPicture picture, AnsiOutputOptions options,
 		IBufferWriter<char> output, IBufferWriter<char> ahead)
 	{
 		if (cells.Row == 0)
@@ -330,7 +330,7 @@ internal static class TerminalPictureWriter
 	/// foreground of <c>▀</c>, the lower its background. A transparent half shows the run's own background.
 	/// Every row of the picture is made at once and kept, since the rows are drawn one after another.
 	/// </summary>
-	private static void WriteBlockArt(PictureCellsMarkup cells, TerminalPicture picture, in AnsiStyle effective, AnsiColorDepth depth, IBufferWriter<char> output)
+	private static void WriteBlockArt(PictureRow cells, TerminalPicture picture, in AnsiStyle effective, AnsiColorDepth depth, IBufferWriter<char> output)
 	{
 		var rows = PictureEncodings.GetOrAdd(picture, new BlockKey(cells.Columns, cells.Rows, depth, effective), EncodeBlockArt);
 		output.Write(rows[cells.Row]);

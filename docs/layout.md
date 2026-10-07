@@ -312,7 +312,7 @@ your own copy of its rules, on the page.
 | `Frame` (`.Bordered(title, border)`) | the frame, its title set into the top edge | `<fieldset>` and `<legend>` |
 | `Rule` | a line of the border's top edge with the title in it; inside a frame, a divider meeting the sides | a line drawn in CSS |
 | `Flex` | items side by side at widths shared from their `Sized` bases, stacked when one would fall under its `Min` | a wrapping flex row |
-| `Figure` | the text art, with `Beside` flowing round it | an `<img>` floated beside it |
+| `Figure` | the text art, with `Beside` flowing round it; MXP and Pueblo write the picture on its first row and keep its cells blank | an `<img>` floated beside it |
 | `Fields` | labels in one column, values lined up in the next, a long value wrapping under itself | a `<dl>` laid out as a two-column grid |
 | `Tree` | items under their parents, joined by guide lines | nested `<ul>` with the guides drawn in CSS |
 | `Gauge` | a bar filled to its share of the width, with its figures | a `<meter>` |

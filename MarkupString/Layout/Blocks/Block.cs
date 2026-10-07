@@ -86,7 +86,7 @@ public sealed record LayoutContext
 	/// For a reader whose client draws pictures in its cells, the cells a picture would take at most
 	/// the given number of columns, or null for one it will not be drawing; null for a reader whose
 	/// client draws none. A <see cref="Figure"/> the answer is not null for reserves those cells, marked
-	/// with <see cref="PictureCellsMarkup"/>, and keeps its text art in them for a client the picture
+	/// with the picture (<see cref="ImageMarkup.Row"/>), and keeps its text art in them for a client the picture
 	/// does not reach after all.
 	/// </summary>
 	public Func<ImageMarkup, int, PictureCells?>? Pictures { get; init; }

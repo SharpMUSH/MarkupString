@@ -73,9 +73,9 @@ fully. `TerminalFeatures` says what its terminal reads beyond colour:
 | `MovingPictures` | a moving picture played, through Kitty frames or an iTerm2 GIF, rather than its first frame |
 
 Pictures are drawn into the cells a `Figure` reserves when it is laid out for such a reader
-(`LayoutContext.Pictures`, which answers the cells a picture takes). Each row is marked with
-`PictureCellsMarkup` over the figure's text art, so a box, a flex row or a table around it lines up
-whichever way it ends up drawn. The pixels come from the host's `ITerminalPictureSource`: this package
+(`LayoutContext.Pictures`, which answers the cells a picture takes). Each row is marked with the
+figure's `ImageMarkup`, its `Row` saying which row of the picture it is, over the figure's text art, so a
+box, a flex row or a table around it lines up whichever way it ends up drawn. The pixels come from the host's `ITerminalPictureSource`: this package
 neither fetches nor decodes a file. Without the pixels, or without the feature, the row is its art.
 
 - **Kitty** sends the picture once per connection (`a=T,U=1`, a PNG in 4096-byte chunks, `q=2` so

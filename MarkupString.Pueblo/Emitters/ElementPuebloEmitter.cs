@@ -63,12 +63,18 @@ internal sealed class ElementPuebloEmitter(Type markupType) : IMarkupEmitter
 				return;
 
 			case ImageMarkup image:
-				Tag(output, "img",
-					("src", image.Source),
-					("alt", image.Description ?? string.Empty),
-					("width", image.Width?.ToString(CultureInfo.InvariantCulture)),
-					("height", image.Height?.ToString(CultureInfo.InvariantCulture)),
-					("align", image.Align?.ToString().ToLowerInvariant()));
+				if (image.StartsPicture(context))
+				{
+					Tag(output, "img",
+						("src", image.Source),
+						("alt", image.Description ?? string.Empty),
+						("width", image.Width?.ToString(CultureInfo.InvariantCulture)),
+						("height", image.Height?.ToString(CultureInfo.InvariantCulture)),
+						("align", image.Align?.ToString().ToLowerInvariant()));
+				}
+
+				// A figure's rows keep their cells, so what is beside the picture stays where it was.
+				if (image.Row is not null) output.Write(new string(' ', DisplayWidth.Of(body)));
 				return;
 
 			case PreformattedMarkup:

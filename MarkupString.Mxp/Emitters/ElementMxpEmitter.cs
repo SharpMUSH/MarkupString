@@ -60,13 +60,19 @@ internal sealed class ElementMxpEmitter(Type markupType, Func<string, bool>? sup
 						return;
 					}
 
-					var (file, directory) = Split(image.Source);
-					tag.Open("IMAGE").Positional(file)
-						.Named("URL", directory)
-						.Named("W", image.Width)
-						.Named("H", image.Height)
-						.Named("ALIGN", image.Align?.ToString().ToUpperInvariant())
-						.Close();
+					if (image.StartsPicture(context))
+					{
+						var (file, directory) = Split(image.Source);
+						tag.Open("IMAGE").Positional(file)
+							.Named("URL", directory)
+							.Named("W", image.Width)
+							.Named("H", image.Height)
+							.Named("ALIGN", image.Align?.ToString().ToUpperInvariant())
+							.Close();
+					}
+
+					// A figure's rows keep their cells, so what is beside the picture stays where it was.
+					if (image.Row is not null) output.Write(new string(' ', DisplayWidth.Of(body)));
 					return;
 				}
 

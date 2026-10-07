@@ -44,13 +44,24 @@ internal static class ElementCodecs
 				if (m.Width is { } width) w.WriteNumber("w", width);
 				if (m.Height is { } height) w.WriteNumber("h", height);
 				if (m.Align is { } align) w.WriteString("a", align.ToString().ToLowerInvariant());
+				if (m.Row is { } row)
+				{
+					w.WriteNumber("r", row.Row);
+					w.WriteNumber("rs", row.Rows);
+					w.WriteNumber("c", row.Columns);
+				}
 			},
 			static e => new ImageMarkup(
 				String(e, "s") ?? string.Empty,
 				String(e, "d"),
 				Int(e, "w"),
 				Int(e, "h"),
-				Enum.TryParse<ImageAlign>(String(e, "a"), ignoreCase: true, out var align) ? align : null)),
+				Enum.TryParse<ImageAlign>(String(e, "a"), ignoreCase: true, out var align) ? align : null)
+			{
+				Row = Int(e, "r") is { } row && Int(e, "rs") is { } rows && Int(e, "c") is { } columns
+					? new PictureRow(row, rows, columns)
+					: null,
+			}),
 		new Codec<PaneMarkup>("pane",
 			static (w, m) =>
 			{
