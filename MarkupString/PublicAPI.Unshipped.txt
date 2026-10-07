@@ -901,3 +901,41 @@ MarkupString.ThemeRole.Success = 7 -> MarkupString.ThemeRole
 MarkupString.ThemeRole.Surface = 1 -> MarkupString.ThemeRole
 MarkupString.ThemeRole.Tertiary = 5 -> MarkupString.ThemeRole
 MarkupString.ThemeRole.Warning = 8 -> MarkupString.ThemeRole
+MarkupString.ThemeLook
+MarkupString.ThemeLook.<Clone>$() -> MarkupString.ThemeLook!
+MarkupString.ThemeLook.Border.get -> string?
+MarkupString.ThemeLook.Border.init -> void
+MarkupString.ThemeLook.Bullet.get -> string?
+MarkupString.ThemeLook.Bullet.init -> void
+MarkupString.ThemeLook.Equals(MarkupString.ThemeLook? other) -> bool
+MarkupString.ThemeLook.GaugeClose.get -> string?
+MarkupString.ThemeLook.GaugeClose.init -> void
+MarkupString.ThemeLook.GaugeEmpty.get -> string?
+MarkupString.ThemeLook.GaugeEmpty.init -> void
+MarkupString.ThemeLook.GaugeFilled.get -> string?
+MarkupString.ThemeLook.GaugeFilled.init -> void
+MarkupString.ThemeLook.GaugeOpen.get -> string?
+MarkupString.ThemeLook.GaugeOpen.init -> void
+MarkupString.ThemeLook.Guide.get -> string?
+MarkupString.ThemeLook.Guide.init -> void
+MarkupString.ThemeLook.Over(MarkupString.ThemeLook? below) -> MarkupString.ThemeLook!
+MarkupString.ThemeLook.Rule.get -> string?
+MarkupString.ThemeLook.Rule.init -> void
+MarkupString.ThemeLook.Separator.get -> string?
+MarkupString.ThemeLook.Separator.init -> void
+MarkupString.ThemeLook.ThemeLook() -> void
+MarkupString.ThemeLook.TitleClose.get -> string?
+MarkupString.ThemeLook.TitleClose.init -> void
+MarkupString.ThemeLook.TitleOpen.get -> string?
+MarkupString.ThemeLook.TitleOpen.init -> void
+MarkupString.ThemeLook.ToTheme() -> MarkupString.Layout.LayoutTheme!
+MarkupString.ThemeLook.Write(System.Text.Json.Utf8JsonWriter! json) -> void
+MarkupString.ThemePalette.Look.get -> MarkupString.ThemeLook?
+MarkupString.ThemePalette.Look.init -> void
+override MarkupString.ThemeLook.Equals(object? obj) -> bool
+override MarkupString.ThemeLook.GetHashCode() -> int
+override MarkupString.ThemeLook.ToString() -> string!
+static MarkupString.ThemeLook.TryRead(System.Text.Json.JsonElement element, out MarkupString.ThemeLook? look, out string? error) -> bool
+static MarkupString.ThemeLook.operator !=(MarkupString.ThemeLook? left, MarkupString.ThemeLook? right) -> bool
+static MarkupString.ThemeLook.operator ==(MarkupString.ThemeLook? left, MarkupString.ThemeLook? right) -> bool
+static MarkupString.ThemePalette.Genres.get -> System.Collections.Generic.IReadOnlyList<MarkupString.ThemePalette!>!

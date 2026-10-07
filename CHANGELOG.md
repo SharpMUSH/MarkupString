@@ -22,6 +22,13 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   sixteen-colour client gets instead, picked by hue rather than RGB distance (`ColorMath.StandardSlot`).
   `ColorMath` has contrast, OKLCH conversion and hue rotation. `Themed.Fallback` (`ThemedUnder`) puts a
   theme under the one it is drawn in, for a game's default under a reader's own.
+- **Genre themes with a look of their own.** `ThemeLook` holds the shapes a theme draws with beside
+  its colours: a border preset, ornaments round a title, the tree guide, the bullet, a gauge's pieces,
+  the field separator and the header rule. `ThemePalette.Look` carries one into `ToTheme`, and JSON
+  reads and writes it as `look`. `ThemePalette.Genres` has a preset for each MSSP genre (`adult`,
+  `fantasy`, `historical`, `horror`, `modern`, `mystery`, `romance`, `science-fiction`, `spiritual`),
+  each generated from a fitting colour and given its own look; an ASCII-only reader gets the ASCII
+  form of each piece.
 - **Striped rows.** `Table.Striped` and `Fields.Striped` lay every second row, all its lines and the
   full width, on the theme's `StripeColor`, a background; a cell's own background still wins. Palettes
   gained a `surface` role for it (base16's `base01`, or a step off the background when generated), and

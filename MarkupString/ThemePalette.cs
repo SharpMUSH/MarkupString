@@ -134,6 +134,9 @@ public sealed record ThemePalette
 	/// <summary>Whether it is made for a dark background or a light one.</summary>
 	public ThemeMode Mode { get; init; } = ThemeMode.Dark;
 
+	/// <summary>The shapes it draws with beside its colours, or <see langword="null"/> for the layout's own.</summary>
+	public ThemeLook? Look { get; init; }
+
 	/// <summary>The colours set, by role.</summary>
 	public ImmutableDictionary<ThemeRole, ThemeColor> Colors { get; init; } = ImmutableDictionary<ThemeRole, ThemeColor>.Empty;
 
@@ -186,7 +189,7 @@ public sealed record ThemePalette
 	{
 		ArgumentNullException.ThrowIfNull(paint);
 		IMarkup? Part(ThemeRole role, ThemePaint how = ThemePaint.Text) => this[role] is { } color ? paint(color, how) : null;
-		return new LayoutTheme
+		return (Look?.ToTheme() ?? new LayoutTheme()) with
 		{
 			BorderColor = Part(ThemeRole.Primary),
 			TitleColor = Part(ThemeRole.Secondary, ThemePaint.Bold),
@@ -224,10 +227,71 @@ public sealed record ThemePalette
 		}),
 	};
 
-	/// <summary>Every preset: <see cref="Terminal"/> and well-known schemes.</summary>
+	/// <summary>
+	/// A theme for each genre MSSP names: adult, fantasy, historical, horror, modern, mystery, romance,
+	/// science-fiction and spiritual. Each is made from a colour that suits it (<see cref="Generate"/>)
+	/// and has its own border, title ornaments, bullet, guides and gauge (<see cref="Look"/>).
+	/// </summary>
+	public static IReadOnlyList<ThemePalette> Genres { get; } =
+	[
+		Genre("adult", "#b0306a", ThemeHarmony.Analogous, new ThemeLook
+		{
+			Border = "heavy", TitleOpen = "┫ ◈ ", TitleClose = " ◈ ┣", Guide = "heavy", Bullet = "◈",
+			GaugeOpen = "[", GaugeFilled = "◆", GaugeEmpty = "◇", GaugeClose = "]", Rule = "━",
+		}),
+		Genre("fantasy", "#c9a227", ThemeHarmony.Analogous, new ThemeLook
+		{
+			Border = "double", TitleOpen = "╡ ❖ ", TitleClose = " ❖ ╞", Guide = "double", Bullet = "❧",
+			GaugeOpen = "╞", GaugeFilled = "█", GaugeEmpty = "░", GaugeClose = "╡", Rule = "═",
+		}),
+		Genre("historical", "#a0784a", ThemeHarmony.Monochrome, new ThemeLook
+		{
+			Border = "double", TitleOpen = "╡ § ", TitleClose = " § ╞", Guide = "line", Bullet = "§",
+			Separator = " - ", Rule = "═",
+		}),
+		Genre("horror", "#b01e28", ThemeHarmony.Monochrome, new ThemeLook
+		{
+			Border = "heavy", TitleOpen = "┫ † ", TitleClose = " † ┣", Guide = "heavy", Bullet = "†",
+			GaugeOpen = "┫", GaugeFilled = "▓", GaugeEmpty = "░", GaugeClose = "┣", Rule = "━",
+		}),
+		Genre("modern", "#4a90d9", ThemeHarmony.Analogous, new ThemeLook
+		{
+			Border = "rounded", Guide = "rounded", Bullet = "•",
+			GaugeOpen = "▕", GaugeFilled = "█", GaugeEmpty = "░", GaugeClose = "▏", Rule = "─",
+		}),
+		Genre("mystery", "#6a4c9c", ThemeHarmony.Split, new ThemeLook
+		{
+			Border = "single", TitleOpen = "┤ ◆ ", TitleClose = " ◆ ├", Guide = "line", Bullet = "◇",
+			Separator = " .. ", Rule = "┄",
+		}),
+		Genre("romance", "#d6577c", ThemeHarmony.Analogous, new ThemeLook
+		{
+			Border = "rounded", TitleOpen = "┤ ♥ ", TitleClose = " ♥ ├", Guide = "rounded", Bullet = "♥",
+			GaugeOpen = "(", GaugeFilled = "♥", GaugeEmpty = "♡", GaugeClose = ")", Rule = "─",
+		}),
+		Genre("science-fiction", "#00c8ff", ThemeHarmony.Complementary, new ThemeLook
+		{
+			Border = "heavy", TitleOpen = "┫▐ ", TitleClose = " ▌┣", Guide = "heavy", Bullet = "▸",
+			GaugeOpen = "▕", GaugeFilled = "▰", GaugeEmpty = "▱", GaugeClose = "▏", Separator = " > ", Rule = "━",
+		}),
+		Genre("spiritual", "#9b7fd1", ThemeHarmony.Triadic, new ThemeLook
+		{
+			Border = "double", TitleOpen = "╡ ✧ ", TitleClose = " ✧ ╞", Guide = "rounded", Bullet = "✧",
+			GaugeOpen = "(", GaugeFilled = "●", GaugeEmpty = "○", GaugeClose = ")", Rule = "═",
+		}),
+	];
+
+	private static ThemePalette Genre(string name, string seed, ThemeHarmony harmony, ThemeLook look) =>
+		Generate(ColorMath.TryParseHex(seed, out var rgb) ? rgb : default, harmony) with { Name = name, Look = look };
+
+	/// <summary>
+	/// Every preset: <see cref="Terminal"/>; one for each MSSP genre, each with a look of its own as well as
+	/// colours (<see cref="Genres"/>); and well-known schemes.
+	/// </summary>
 	public static IReadOnlyList<ThemePalette> Presets { get; } =
 	[
 		Terminal,
+		.. Genres,
 		Base16("catppuccin-mocha", "1e1e2e 181825 313244 45475a 585b70 cdd6f4 f5e0dc b4befe f38ba8 fab387 f9e2af a6e3a1 94e2d5 89b4fa cba6f7 f2cdcd"),
 		Base16("catppuccin-latte", "eff1f5 e6e9ef ccd0da bcc0cc acb0be 4c4f69 dc8a78 7287fd d20f39 fe640b df8e1d 40a02b 179299 1e66f5 8839ef dd7878"),
 		Base16("dracula", "282a36 21222c 44475a 6272a4 bfbfbf f8f8f2 f8f8f2 ffffff ff5555 ffb86c f1fa8c 50fa7b 8be9fd bd93f9 ff79c6 ff79c6"),
@@ -482,6 +546,13 @@ public sealed record ThemePalette
 			result = result with { Name = nameValue.GetString()! };
 		}
 
+		if (element.TryGetProperty("look", out var lookValue))
+		{
+			if (lookValue.ValueKind == JsonValueKind.Null) result = result with { Look = null };
+			else if (!ThemeLook.TryRead(lookValue, out var look, out error)) return false;
+			else result = result with { Look = look!.Over(result.Look) };
+		}
+
 		if (element.TryGetProperty("colors", out var colorsValue))
 		{
 			if (colorsValue.ValueKind != JsonValueKind.Object)
@@ -508,7 +579,7 @@ public sealed record ThemePalette
 
 		foreach (var property in element.EnumerateObject())
 		{
-			if (property.Name is "preset" or "base16" or "seed" or "harmony" or "contrast" or "mode" or "name" or "colors") continue;
+			if (property.Name is "preset" or "base16" or "seed" or "harmony" or "contrast" or "mode" or "name" or "colors" or "look") continue;
 			error = $"a theme has no '{property.Name}'";
 			return false;
 		}
@@ -577,6 +648,11 @@ public sealed record ThemePalette
 				json.WriteEndObject();
 			}
 			json.WriteEndObject();
+			if (Look is not null)
+			{
+				json.WritePropertyName("look");
+				Look.Write(json);
+			}
 			json.WriteEndObject();
 		}
 		return System.Text.Encoding.UTF8.GetString(stream.ToArray());
@@ -585,7 +661,7 @@ public sealed record ThemePalette
 	/// <inheritdoc/>
 	public bool Equals(ThemePalette? other) =>
 		other is not null && Name == other.Name && Mode == other.Mode && Colors.Count == other.Colors.Count
-		&& Colors.All(pair => other.Colors.TryGetValue(pair.Key, out var color) && color == pair.Value);
+		&& Look == other.Look && Colors.All(pair => other.Colors.TryGetValue(pair.Key, out var color) && color == pair.Value);
 
 	/// <inheritdoc/>
 	public override int GetHashCode()
@@ -593,6 +669,7 @@ public sealed record ThemePalette
 		var hash = new HashCode();
 		hash.Add(Name);
 		hash.Add(Mode);
+		hash.Add(Look);
 		foreach (var pair in Colors.OrderBy(pair => pair.Key))
 		{
 			hash.Add(pair.Key);

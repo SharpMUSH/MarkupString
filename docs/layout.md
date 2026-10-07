@@ -499,7 +499,9 @@ colours.
 
 Four ways to make one:
 
-- **Presets**: `terminal`, `catppuccin-mocha`, `catppuccin-latte`, `dracula`, `gruvbox-dark`, `nord`,
+- **Presets**: `terminal`; one for each MSSP genre, `adult`, `fantasy`, `historical`, `horror`,
+  `modern`, `mystery`, `romance`, `science-fiction` and `spiritual` (`ThemePalette.Genres`), each with
+  a look of its own (below); and `catppuccin-mocha`, `catppuccin-latte`, `dracula`, `gruvbox-dark`, `nord`,
   `solarized-dark`, `solarized-light`, `tokyo-night` (`ThemePalette.Preset(name)`).
 - **base16**: `ThemePalette.FromBase16(name, colors)` takes any of the hundreds of base16 schemes,
   mapped by base16's own guide (`base0D` primary, `base03` muted, `base08` error, ...).
@@ -511,6 +513,13 @@ Four ways to make one:
 - **JSON**: `ThemePalette.TryParse` reads a preset's name, or an object with one of `preset`,
   `base16` or `seed` (with `harmony`, `contrast`), and `mode`, `name` and `colors` to set roles:
   `{"preset":"nord","colors":{"primary":"#bf616a","muted":8}}`. `ToJson` writes one back.
+
+A theme is more than its colours. `ThemePalette.Look`, a `ThemeLook`, sets the shapes too: a border
+preset and the ornaments round a title (`"╡ ❖ "`, `" ❖ ╞"`), the tree guide, the bullet, a gauge's
+pieces, the field separator and the rule under table headings. In JSON it is `look`:
+`{"preset":"nord","look":{"border":"double","title":["╡ ","  ╞"],"bullet":"❧","gauge":["[","█","░","]"]}}`.
+A look given with a preset changes only what it names; `"look":null` drops the preset's. A reader
+whose client has only ASCII gets the ASCII form of each piece.
 
 `palette.Check()` lists the roles whose contrast with the background is under what they need, and
 `ColorMath` has the pieces: `Contrast`, `WithContrast`, `ToOklch`/`FromOklch`, `Rotate`.

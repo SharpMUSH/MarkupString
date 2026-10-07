@@ -349,4 +349,57 @@ public class ThemeTests
 		await Assert.That(ThemePalette.Terminal[ThemeRole.Surface]).IsNull();
 		await Assert.That(generated.ToLayoutTheme().StripeColor).IsEqualTo(new AnsiMarkup(new AnsiStyle { Background = new AnsiColor.Rgb(generated[ThemeRole.Surface]!.Value.Rgb!.Value.R, generated[ThemeRole.Surface]!.Value.Rgb!.Value.G, generated[ThemeRole.Surface]!.Value.Rgb!.Value.B) }));
 	}
+
+	[Test]
+	public async Task EachGenre_HasALookAndColoursThatStandOut()
+	{
+		await Assert.That(ThemePalette.Genres.Select(genre => genre.Name))
+			.IsEquivalentTo(["adult", "fantasy", "historical", "horror", "modern", "mystery", "romance", "science-fiction", "spiritual"]);
+		foreach (var genre in ThemePalette.Genres)
+		{
+			await Assert.That(genre.Look).IsNotNull();
+			await Assert.That(genre.Check()).IsEmpty();
+			await Assert.That(ThemePalette.Preset(genre.Name)).IsEqualTo(genre);
+		}
+	}
+
+	[Test]
+	public async Task AGenre_DrawsWithItsOwnShapes()
+	{
+		var theme = ThemePalette.Preset("fantasy")!.ToLayoutTheme();
+		var sheet = new Stack([new Bullets([P("Sword").ToBlock()]), new Gauge(3, 6) { BarWidth = 6, Show = GaugeShow.None }]).Bordered(P("Kit"));
+		var text = BlockLayout.Build(sheet.Themed(theme), 20).ToPlainText();
+		var ascii = BlockLayout.Build(sheet.Themed(theme), 20, context: new LayoutContext { AsciiOnly = true }).ToPlainText();
+
+		await Assert.That(text).StartsWith("╔════╡ ❖ Kit ❖ ╞═══╗");
+		await Assert.That(text).Contains("❧ Sword");
+		await Assert.That(text).Contains("╞███░░░╡");
+		await Assert.That(ascii).StartsWith("+======< Kit >=====+");
+		await Assert.That(ascii).Contains("* Sword");
+		await Assert.That(ascii).Contains("+###---+");
+	}
+
+	[Test]
+	public async Task ALook_IsReadAndWrittenAsJson()
+	{
+		ThemePalette.TryParse("""{"preset":"fantasy","look":{"bullet":"+","border":"rounded"}}""", out var changed, out _);
+		ThemePalette.TryParse("""{"preset":"fantasy","look":null}""", out var plain, out _);
+		ThemePalette.TryParse(ThemePalette.Preset("horror")!.ToJson(), out var read, out _);
+
+		await Assert.That(changed!.Look!.Bullet).IsEqualTo("+");
+		await Assert.That(changed.Look.Border).IsEqualTo("rounded");
+		await Assert.That(changed.Look.TitleOpen).IsEqualTo("╡ ❖ ");
+		await Assert.That(plain!.Look).IsNull();
+		await Assert.That(read).IsEqualTo(ThemePalette.Preset("horror"));
+	}
+
+	[Test]
+	[Arguments("""{"look":{"border":"wavy"}}""", "border is one of none, ascii, mush, single, double, heavy, rounded")]
+	[Arguments("""{"look":{"gauge":["[","#"]}}""", "gauge is [open, filled, empty, close]")]
+	[Arguments("""{"look":{"sparkle":"*"}}""", "a look has no 'sparkle'")]
+	public async Task ABadLook_SaysWhy(string json, string error)
+	{
+		await Assert.That(ThemePalette.TryParse(json, out _, out var message)).IsFalse();
+		await Assert.That(message).IsEqualTo(error);
+	}
 }
