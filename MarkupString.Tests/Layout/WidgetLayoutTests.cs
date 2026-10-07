@@ -243,7 +243,7 @@ public class WidgetLayoutTests
 		await Assert.That(BlockLayout.Build(Who(), 60).Render(MarkupFormat.Html, Registry)).DoesNotContain("<colgroup>")
 			.Because("a table that does not fill is as wide as its cells");
 		await Assert.That(LayoutCss.Fixed).Contains(".ms-table.ms-fill { width: 100%; }");
-		await Assert.That(LayoutCss.Fixed).Contains(".ms-table.ms-fill > colgroup > col { width: auto !important; }")
+		await Assert.That(LayoutCss.Fixed).Contains(".ms-table.ms-fill > colgroup { display: none; }")
 			.Because("on a page narrow enough to hide columns, their shares are given up");
 	}
 

@@ -87,6 +87,6 @@ public static class LayoutCss
 		".ms-table th { border-bottom: 1px solid var(--ms-header-rule, var(--ms-header-rule-default, currentColor)); color: var(--ms-heading, var(--ms-heading-default, inherit)); }\n" +
 		".ms-table.ms-striped > tbody > tr:nth-child(even) { background: var(--ms-stripe, var(--ms-stripe-default, rgba(127, 127, 127, 0.12))); }\n" +
 		".ms-table .ms-nowrap, .ms-table .ms-nowrap .ms-text { white-space: pre; overflow-wrap: normal; }\n" +
-		"@media (max-width: 48em) { .ms-table .ms-p3 { display: none; } .ms-table.ms-fill > colgroup > col { width: auto !important; } }\n" +
+		"@media (max-width: 48em) { .ms-table .ms-p3 { display: none; } .ms-table.ms-fill > colgroup { display: none; } }\n" +
 		"@media (max-width: 32em) { .ms-table .ms-p2 { display: none; } }\n";
 }
