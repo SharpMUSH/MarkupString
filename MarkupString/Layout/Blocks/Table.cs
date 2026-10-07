@@ -5,7 +5,8 @@ namespace MarkupString.Layout;
 /// <summary>
 /// Rows under column headings. Columns grow to fit their widest cell; when the table is too wide, the
 /// columns that may wrap give way first, then the least important columns are left out, and when
-/// even one column will not fit each row becomes a card of labelled values.
+/// even one column will not fit each row becomes a card of labelled values. When it is narrower than
+/// its width, the columns that <see cref="TableColumn.Grow"/> share what is left, so the table fills it.
 /// </summary>
 /// <param name="Columns">The columns, in order.</param>
 /// <param name="Rows">The rows, a cell per column; a short row is padded with empty cells. A cell's text takes its column's alignment unless it sets its own.</param>
@@ -94,6 +95,35 @@ public sealed record Table(ImmutableArray<TableColumn> Columns, ImmutableArray<I
 	}
 
 	/// <summary>
+	/// The width each column is drawn at in <paramref name="width"/> cells, zero for one left out; empty
+	/// when the rows are drawn as cards instead. A format that lays the table out itself, such as HTML,
+	/// reads its proportions here.
+	/// </summary>
+	public ImmutableArray<int> ColumnWidths(LayoutContext context, int width)
+	{
+		if (Columns.IsDefaultOrEmpty) return [];
+		var divider = Separator is { } drawn ? context.Glyph(drawn, " | ").DisplayWidth : Gap;
+		return Widths(context, width, divider) is { } widths ? [.. widths] : [];
+	}
+
+	/// <summary>
+	/// <paramref name="spare"/> cells shared among the shown columns that grow, by their
+	/// <see cref="TableColumn.Grow"/> shares; the cells a share rounds away go to the first of them.
+	/// None grows past its <see cref="TableColumn.Max"/>.
+	/// </summary>
+	private int[] Spread(int[] widths, List<int> shown, int spare)
+	{
+		var growing = shown.Where(c => Columns[c].Grow > 0).ToList();
+		var shares = growing.Sum(c => Columns[c].Grow);
+		if (spare <= 0 || shares == 0) return widths;
+		var added = growing.ToDictionary(c => c, c => spare * Columns[c].Grow / shares);
+		added[growing[0]] += spare - added.Values.Sum();
+		foreach (var c in growing)
+			widths[c] = Columns[c].Max > 0 ? Math.Min(widths[c] + added[c], Math.Max(widths[c], Columns[c].Max)) : widths[c] + added[c];
+		return widths;
+	}
+
+	/// <summary>
 	/// The width of each column, zero for one left out, or null when not even one column fits. Each
 	/// column asks for its widest cell; too wide, the columns that wrap give way, widest first, down to
 	/// their least widths, and then the least important column is left out. A column that does not wrap
@@ -124,7 +154,7 @@ public sealed record Table(ImmutableArray<TableColumn> Columns, ImmutableArray<I
 				widths[widest]--;
 				overflow--;
 			}
-			if (overflow <= 0) return widths;
+			if (overflow <= 0) return Spread(widths, active, -overflow);
 
 			// Leave out the least important column, the rightmost of those tied.
 			if (active.Count == 1) return null;
@@ -152,4 +182,10 @@ public sealed record TableColumn(MarkupText Header)
 
 	/// <summary>Whether its cells may wrap onto more lines; a column that may not is shown whole or left out.</summary>
 	public bool Wrap { get; init; } = true;
+
+	/// <summary>
+	/// Its share of the width the table has left over once every column fits, or zero for none. A
+	/// table with a column that grows fills its width; one without stays as wide as its cells.
+	/// </summary>
+	public int Grow { get; init; }
 }

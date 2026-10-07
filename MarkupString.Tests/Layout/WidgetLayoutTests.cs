@@ -196,6 +196,68 @@ public class WidgetLayoutTests
 			.Contains("<th scope=\"col\" class=\"ms-nowrap\">When</th></tr></thead><tbody><tr><td class=\"ms-nowrap\"><div class=\"ms-text\">Thu Oct 8</div></td>");
 	}
 
+	private static Table Growing(int nameShare, int doingShare) => Who() with
+	{
+		Columns =
+		[
+			new TableColumn(P("Name")) { Min = 6, Grow = nameShare },
+			new TableColumn(P("Idle")) { Alignment = Alignment.Right, Priority = 2, Wrap = false },
+			new TableColumn(P("Doing")) { Min = 8, Priority = 3, Grow = doingShare },
+		],
+	};
+
+	[Test]
+	public async Task Table_AColumnThatGrows_FillsTheWidth()
+	{
+		var lines = BlockLayout.Build(Growing(0, 1), 60).ToPlainText().Split('\n');
+
+		await Assert.That(lines[1]).IsEqualTo(new string('-', 60)).Because("the heading rule spans the table, which now spans its width");
+		await Assert.That(lines[0].TrimEnd()).IsEqualTo("Name    Idle  Doing");
+		await Assert.That(lines[3].TrimEnd()).IsEqualTo("Raya      5m  Writing a scene in the garden");
+	}
+
+	[Test]
+	public async Task Table_GrowingColumns_ShareTheSpareWidthByShare()
+		// 43 cells as drawn leaves 17 at 60: Name gets 17/4 = 4 and the cell the shares round away (11 wide, then the gap), Doing 12.
+		=> await Assert.That(Lines(Growing(1, 3), 60)[0]).IsEqualTo("Name" + new string(' ', 9) + "Idle  Doing");
+
+	[Test]
+	public async Task Table_AGrowingColumn_StopsAtItsMax()
+	{
+		var table = Growing(0, 1) with { Columns = [.. Growing(0, 1).Columns.SetItem(2, Growing(0, 1).Columns[2] with { Max = 35 })] };
+
+		await Assert.That(Lines(table, 60)[1]).IsEqualTo(new string('-', 49)).Because("Doing grows from 29 to its 35 and no further");
+	}
+
+	[Test]
+	public async Task Table_TooWide_GrowsNothing()
+		=> await Assert.That(Lines(Growing(1, 3), 30)).IsEquivalentTo(Lines(Who(), 30));
+
+	[Test]
+	public async Task Table_InHtml_AGrowingTableFillsThePage()
+	{
+		var html = BlockLayout.Build(Growing(1, 3), 60).Render(MarkupFormat.Html, Registry);
+
+		// Drawn as text at 60 the columns are 11, 4 and 41 cells; the page gets them as shares of 56.
+		await Assert.That(html).Contains("<table class=\"ms-table ms-fill\"><colgroup><col style=\"width:20%\"><col style=\"width:7%\"><col style=\"width:73%\"></colgroup><thead><tr><th scope=\"col\">Name</th><th scope=\"col\" class=\"ms-p2 ms-nowrap\" style=\"text-align:right\">Idle</th><th scope=\"col\" class=\"ms-p3\">Doing</th>");
+		await Assert.That(BlockLayout.Build(Who(), 60).Render(MarkupFormat.Html, Registry)).DoesNotContain("<colgroup>")
+			.Because("a table that does not fill is as wide as its cells");
+		await Assert.That(LayoutCss.Fixed).Contains(".ms-table.ms-fill { width: 100%; }");
+		await Assert.That(LayoutCss.Fixed).Contains(".ms-table.ms-fill > colgroup > col { width: auto !important; }")
+			.Because("on a page narrow enough to hide columns, their shares are given up");
+	}
+
+	[Test]
+	public async Task Table_Grow_SurvivesTheSerializer()
+	{
+		var text = BlockLayout.Build(Growing(1, 3), 60, fluid: true);
+
+		var read = MarkupTextSerializer.Deserialize(MarkupTextSerializer.Serialize(text, Registry), Registry);
+
+		await Assert.That(BlockLayout.Relayout(read, 70, LayoutContext.Default).ToPlainText())
+			.IsEqualTo(BlockLayout.Build(Growing(1, 3), 70).ToPlainText());
+	}
+
 	/// <summary>
 	/// The line under the headings spans the columns as drawn, gaps and separators included, whatever
 	/// the mode, never less than the widest row; a box round a narrower table is wider than its rule.

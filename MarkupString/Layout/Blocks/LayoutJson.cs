@@ -214,6 +214,7 @@ internal static class LayoutJson
 					cw.Int("mx", column.Max);
 					cw.Int("p", column.Priority, 1);
 					cw.Bool("nw", !column.Wrap);
+					cw.Int("gr", column.Grow);
 				});
 				w.Array("rows", b.Rows.IsDefault ? [] : b.Rows, (row, rw) => rw.Blocks("c", row.IsDefault ? [] : row));
 				w.Int("g", b.Gap, 2);
@@ -229,6 +230,7 @@ internal static class LayoutJson
 					Max = cr.Int("mx", 0, 0, 4096),
 					Priority = cr.Int("p", 1, 1, 1000),
 					Wrap = !cr.Bool("nw"),
+					Grow = cr.Int("gr", 0, 0, 1000),
 				}),
 				r.Array("rows", rr => rr.Blocks("c")))
 			{

@@ -6,6 +6,16 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- **Tables that fill their width.** `TableColumn.Grow` gives a column a share of the width a table has
+  left once every column fits; a table with a growing column fills its width, and its heading rule
+  with it. HTML writes such a table as `ms-fill` (`width: 100%` in `LayoutCss`) with a `<colgroup>`
+  giving each column its share of the width as the text layout draws it
+  (`Table.ColumnWidths`), so a narrower page squeezes every column alike. The serializer keeps it (`gr`).
+
 ## 2.10.0 — 2026-10-07
 
 ### Added

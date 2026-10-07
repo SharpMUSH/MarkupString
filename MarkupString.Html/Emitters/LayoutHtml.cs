@@ -412,9 +412,13 @@ internal static class LayoutHtml
 	private static void Table(Table table, HtmlLayoutWriter html)
 	{
 		var columns = table.Columns.IsDefault ? [] : table.Columns;
+		var fills = columns.Any(column => column.Grow > 0);
 		html.Write("<div class=\"ms-table-wrap\"><table class=\"ms-table");
 		if (table.Striped) html.Write(" ms-striped");
-		html.Write("\"><thead><tr>");
+		if (fills) html.Write(" ms-fill");
+		html.Write("\">");
+		if (fills) Proportions(table.ColumnWidths(html.Context, html.Width), html);
+		html.Write("<thead><tr>");
 		foreach (var column in columns)
 		{
 			html.Write("<th scope=\"col\"");
@@ -464,6 +468,32 @@ internal static class LayoutHtml
 			html.Write(column.Alignment == Alignment.Right ? "right" : "center");
 			html.Write("\"");
 		}
+	}
+
+	/// <summary>
+	/// A filling table's columns as shares of the page's width, in the proportions the text layout
+	/// draws them at, so the growing columns take the room and the rest keep theirs; a narrower page
+	/// squeezes them all alike. A column the text layout leaves out, or a table it draws as cards,
+	/// gets no share. Where a narrow page hides the less important columns, <see cref="LayoutCss"/> lets
+	/// the rest share the width as the browser sees fit, so a hidden column's share is not left empty.
+	/// </summary>
+	private static void Proportions(ImmutableArray<int> widths, HtmlLayoutWriter html)
+	{
+		var total = widths.Sum();
+		if (total == 0) return;
+		html.Write("<colgroup>");
+		foreach (var width in widths)
+		{
+			if (width == 0)
+			{
+				html.Write("<col>");
+				continue;
+			}
+			html.Write("<col style=\"width:");
+			html.Write(Number((int)Math.Round(width * 100.0 / total)));
+			html.Write("%\">");
+		}
+		html.Write("</colgroup>");
 	}
 
 	/// <summary>

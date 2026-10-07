@@ -1,1 +1,4 @@
 #nullable enable
+MarkupString.Layout.Table.ColumnWidths(MarkupString.Layout.LayoutContext! context, int width) -> System.Collections.Immutable.ImmutableArray<int>
+MarkupString.Layout.TableColumn.Grow.get -> int
+MarkupString.Layout.TableColumn.Grow.init -> void
