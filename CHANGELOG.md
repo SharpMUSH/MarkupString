@@ -28,6 +28,14 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     RGB when the picture is opaque, filtered Up, at zlib level 2; sixel reads each band once and writes a
     colour only over the columns it reaches.
 
+### Fixed
+
+- **A box round a picture fits it in HTML.** The `<img>` of a `Figure` sat on the text baseline,
+  leaving a band the height of a descender below it, and the box's side padding left gaps left and
+  right but none above. The picture now aligns to the top of its line, and a box whose body is only a
+  picture on a line of its own (`ms-box-picture`) has no padding and is no wider than the picture.
+  A `Frame`'s `Padding` reaches the HTML as `--ms-pad` (it was always `1ch`).
+
 ## 2.11.2 — 2026-10-07
 
 ### Fixed

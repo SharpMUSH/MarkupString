@@ -68,7 +68,17 @@ internal static class LayoutHtml
 	{
 		html.Write("<fieldset class=\"ms-box ms-border-");
 		html.Write(Css(BorderOf(frame.Border, html).Name));
-		html.Write("\">");
+		// A box round nothing but a picture fits it: no padding, and no wider than the picture.
+		if (frame.Body is Figure { Float: FigureFloat.None, Beside: null } figure && html.AllowsImage(figure.Image.Source))
+			html.Write(" ms-box-picture");
+		html.Write("\"");
+		if (frame.Padding != 1)
+		{
+			html.Write(" style=\"--ms-pad:");
+			html.Write(Number(Math.Max(0, frame.Padding)));
+			html.Write("ch\"");
+		}
+		html.Write(">");
 		if (frame.Title is { Length: > 0 } title)
 		{
 			html.Write("<legend class=\"ms-box-title\"");
