@@ -27,38 +27,48 @@ internal static class PictureScaler
 			return result;
 		}
 
+		// Each output column's span of source columns, worked out once rather than for every row.
+		var spans = new int[width + 1];
+		for (var x = 0; x <= width; x++) spans[x] = (int)((long)x * sourceWidth / width);
+
 		for (var y = 0; y < height; y++)
 		{
 			var y0 = (int)((long)y * sourceHeight / height);
 			var y1 = Math.Max(y0 + 1, (int)((long)(y + 1) * sourceHeight / height));
 			for (var x = 0; x < width; x++)
 			{
-				var x0 = (int)((long)x * sourceWidth / width);
-				var x1 = Math.Max(x0 + 1, (int)((long)(x + 1) * sourceWidth / width));
-				long r = 0, g = 0, b = 0, a = 0, count = 0;
+				var x0 = spans[x];
+				var x1 = Math.Max(x0 + 1, spans[x + 1]);
+				var o = (y * width + x) * 4;
+
+				// Enlarging, or a reduction small enough that a pixel covers one source pixel: a copy.
+				if (y1 - y0 == 1 && x1 - x0 == 1)
+				{
+					source.Slice((y0 * sourceWidth + x0) * 4, 4).CopyTo(result.AsSpan(o, 4));
+					continue;
+				}
+
+				long r = 0, g = 0, b = 0, a = 0;
 				for (var sy = y0; sy < y1; sy++)
 				{
-					var row = sy * sourceWidth * 4;
-					for (var sx = x0; sx < x1; sx++)
+					var row = source.Slice((sy * sourceWidth + x0) * 4, (x1 - x0) * 4);
+					for (var i = 0; i < row.Length; i += 4)
 					{
-						var i = row + sx * 4;
-						var alpha = source[i + 3];
-						r += source[i] * alpha;
-						g += source[i + 1] * alpha;
-						b += source[i + 2] * alpha;
+						var alpha = row[i + 3];
+						r += row[i] * alpha;
+						g += row[i + 1] * alpha;
+						b += row[i + 2] * alpha;
 						a += alpha;
-						count++;
 					}
 				}
 
-				var o = (y * width + x) * 4;
 				if (a > 0)
 				{
 					result[o] = (byte)(r / a);
 					result[o + 1] = (byte)(g / a);
 					result[o + 2] = (byte)(b / a);
 				}
-				result[o + 3] = (byte)(a / count);
+				result[o + 3] = (byte)(a / ((long)(y1 - y0) * (x1 - x0)));
 			}
 		}
 

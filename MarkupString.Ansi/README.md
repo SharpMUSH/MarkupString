@@ -77,8 +77,8 @@ Pictures are drawn into the cells a `Figure` reserves when it is laid out for su
 whichever way it ends up drawn. The pixels come from the host's `ITerminalPictureSource`: this package
 neither fetches nor decodes a file. Without the pixels, or without the feature, the row is its art.
 
-- **Kitty** sends the picture once per connection (`a=T,U=1`, zlib-compressed RGBA in 4096-byte
-  chunks, `q=2` so nothing comes back as input) and writes each cell as `U+10EEEE` with row and column
+- **Kitty** sends the picture once per connection (`a=T,U=1`, a PNG in 4096-byte chunks, `q=2` so
+  nothing comes back as input) and writes each cell as `U+10EEEE` with row and column
   diacritics, the image id as a truecolor foreground. Placeholders are text: they wrap, scroll and are
   erased like it. `MarkTransmitted` is how the source says whether the terminal already has it.
 - **iTerm2 and sixel** are pixels over the screen. On the picture's first row the cursor makes room
@@ -86,6 +86,11 @@ neither fetches nor decodes a file. Without the pixels, or without the feature, 
   then steps over its cells with `CSI n C`, so no text is written over it. Sixel is the cells' size in
   pixels (`CellWidth` × `CellHeight`, 10 × 20 unless the host knows better).
 - **Half blocks** letterbox the picture into two pixels a cell, at the client's colour depth.
+
+Each encoding (the PNG, the Kitty transmission, the sixels, the half-block rows) is made once per
+picture and size and kept with the `TerminalPicture`, for as long as the host keeps the picture: every
+other connection shown it at that size is sent a copy. So a host should hand out one
+`TerminalPicture` per picture rather than a new one per render.
 
 None of these is sent on a guess: a MUD client that is not a terminal emulator may print them.
 

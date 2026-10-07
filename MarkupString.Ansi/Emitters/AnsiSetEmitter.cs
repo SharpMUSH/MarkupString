@@ -51,7 +51,7 @@ public sealed class AnsiSetEmitter(AnsiOutputOptions options) : IMarkupSetEmitte
 			// The run that starts the row draws all of it; the others in the same row draw nothing, so the row is
 			// as many cells as the text it stands over.
 			if (context.StartsRegion(picture.Cells))
-				TerminalPictureWriter.Write(_pictureMethod, picture.Cells, picture.Pixels, effective, _options, core);
+				TerminalPictureWriter.Write(_pictureMethod, picture.Cells, picture.Pixels, effective, _options, core, output);
 		}
 		else
 		{

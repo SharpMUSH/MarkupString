@@ -23,6 +23,10 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     `KittyGraphics` (Unicode placeholders, the picture sent once per connection), `InlineImages`
     (iTerm2), `Sixel`, or `BlockArt` (half blocks), and as the art otherwise. The rows are the same
     width either way, so a box or a flex row around the figure stays aligned.
+  - Each encoding is made once per picture and size and kept with the `TerminalPicture`, so a picture
+    shown to many connections is resized and compressed once. PNGs (iTerm2, and Kitty's `f=100`) are
+    RGB when the picture is opaque, filtered Up, at zlib level 2; sixel reads each band once and writes a
+    colour only over the columns it reaches.
 
 ## 2.11.2 — 2026-10-07
 

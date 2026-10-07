@@ -149,7 +149,7 @@ public class TerminalFeatureTests
 		var second = RenderString(laid, options);
 
 		await Assert.That(Regex.Matches(first, "a=T,U=1").Count).IsEqualTo(1);
-		await Assert.That(first).Contains("c=4,r=2,o=z,q=2");
+		await Assert.That(first).Contains("f=100,c=4,r=2,q=2");
 		await Assert.That(second).DoesNotContain("a=T");
 		await Assert.That(Regex.Matches(second, Placeholder).Count).IsEqualTo(8);
 		await Assert.That(source.Sent.Count).IsEqualTo(1);
@@ -210,7 +210,7 @@ public class TerminalFeatureTests
 		await Assert.That(chunks[^1].Groups[1].Value).IsEqualTo("m=0,q=2");
 		await Assert.That(chunks.SkipLast(1).Skip(1).All(c => c.Groups[1].Value == "m=1,q=2")).IsTrue();
 		var payload = Convert.FromBase64String(string.Concat(chunks.Select(c => c.Groups[2].Value)));
-		await Assert.That(payload[0]).IsEqualTo((byte)0x78); // a zlib header
+		await Assert.That(payload.Take(4)).IsEquivalentTo(new byte[] { 0x89, 0x50, 0x4E, 0x47 }); // a PNG
 	}
 
 	// ── iTerm2 and sixel ────────────────────────────────────────────────────────
@@ -239,7 +239,7 @@ public class TerminalFeatureTests
 		var options = new AnsiOutputOptions(Features: TerminalFeatures.Sixel) { Pictures = new Source(RedBlue()), CellWidth = 8, CellHeight = 16 };
 
 		var output = RenderString(Laid(new Figure(Cat, MarkupText.Empty), 10, new PictureCells(2, 2)), options);
-		var sixel = Regex.Match(output, $"{Esc}P0;1;0q\"1;1;(\\d+);(\\d+)(.*?){Esc}\\\\").Groups;
+		var sixel = Regex.Match(output, $"{Esc}P0;[01];0q\"1;1;(\\d+);(\\d+)(.*?){Esc}\\\\").Groups;
 
 		await Assert.That(sixel[1].Value).IsEqualTo("16");
 		await Assert.That(sixel[2].Value).IsEqualTo("30");
@@ -247,6 +247,147 @@ public class TerminalFeatureTests
 		await Assert.That(sixel[3].Value).Contains("#180;2;100;0;0");
 		await Assert.That(sixel[3].Value).Contains("#5;2;0;0;100");
 		await Assert.That(Regex.Matches(sixel[3].Value, "-").Count).IsEqualTo(4);
+	}
+
+	/// <summary>
+	/// Decoding the sixels gives back every pixel's cube colour, and leaves the transparent ones unset: the
+	/// band is read once and each colour written only over the columns it reaches, which this pins down.
+	/// </summary>
+	[Test]
+	public async Task SixelDecodesBackToThePicture()
+	{
+		const int width = 16, height = 12;
+		var rgba = new byte[width * height * 4];
+		var expected = new int[width * height];
+		for (var y = 0; y < height; y++)
+			for (var x = 0; x < width; x++)
+			{
+				var i = y * width + x;
+				var o = i * 4;
+				if ((x + y) % 7 == 0)
+				{
+					expected[i] = -1;
+					continue;
+				}
+
+				// A colour in one corner only, one band-wide stripe, and a checker elsewhere.
+				var (r, g, b) = x < 3 && y < 3 ? (0, 255, 0) : y == 7 ? (255, 255, 0) : (x + y) % 2 == 0 ? (255, 0, 0) : (0, 0, 255);
+				(rgba[o], rgba[o + 1], rgba[o + 2], rgba[o + 3]) = ((byte)r, (byte)g, (byte)b, 255);
+				expected[i] = r / 51 * 36 + g / 51 * 6 + b / 51;
+			}
+
+		var options = new AnsiOutputOptions(Features: TerminalFeatures.Sixel)
+		{
+			Pictures = new Source(new TerminalPicture("sixel-roundtrip", width, height, rgba)),
+			CellWidth = 8,
+			CellHeight = 12
+		};
+		var output = RenderString(Laid(new Figure(Cat, MarkupText.Empty), 10, new PictureCells(2, 1)), options);
+		var body = Regex.Match(output, $"{Esc}P0;1;0q\"1;1;16;12(.*?){Esc}\\\\").Groups[1].Value;
+
+		await Assert.That(Decode(body, width, height)).IsEquivalentTo(expected);
+	}
+
+	/// <summary>The palette entry each pixel of <paramref name="body"/> sets, -1 for none.</summary>
+	private static int[] Decode(string body, int width, int height)
+	{
+		var pixels = Enumerable.Repeat(-1, width * height).ToArray();
+		var colour = 0;
+		var x = 0;
+		var top = 0;
+		for (var i = 0; i < body.Length;)
+		{
+			var c = body[i];
+			if (c == '#')
+			{
+				var match = Regex.Match(body[(i + 1)..], "^(\\d+)(;2;\\d+;\\d+;\\d+)?");
+				colour = int.Parse(match.Groups[1].Value);
+				i += 1 + match.Length;
+				continue;
+			}
+
+			var repeat = 1;
+			if (c == '!')
+			{
+				var match = Regex.Match(body[(i + 1)..], "^\\d+");
+				repeat = int.Parse(match.Value);
+				i += 1 + match.Length;
+				c = body[i];
+			}
+
+			i++;
+			if (c == '$') { x = 0; continue; }
+			if (c == '-') { x = 0; top += 6; continue; }
+			for (var n = 0; n < repeat; n++, x++)
+				for (var bit = 0; bit < 6; bit++)
+					if (((c - '?') & (1 << bit)) != 0) pixels[(top + bit) * width + x] = colour;
+		}
+
+		return pixels;
+	}
+
+	/// <summary>
+	/// The PNG inflates and unfilters back to the picture's pixels: RGB with no alpha when every pixel is
+	/// opaque, RGBA when any is not, rows after the first filtered Up.
+	/// </summary>
+	[Test]
+	[Arguments(true)]
+	[Arguments(false)]
+	public async Task ThePngDecodesBackToThePicture(bool opaque)
+	{
+		const int width = 7, height = 5;
+		var rgba = new byte[width * height * 4];
+		for (var i = 0; i < rgba.Length; i++) rgba[i] = (byte)(i * 37 % 251);
+		for (var i = 3; i < rgba.Length; i += 4) rgba[i] = opaque ? (byte)255 : (byte)(i % 256);
+		var options = new AnsiOutputOptions(Features: TerminalFeatures.InlineImages)
+		{
+			Pictures = new Source(new TerminalPicture($"png-{opaque}", width, height, rgba))
+		};
+
+		var output = RenderString(Laid(new Figure(Cat, MarkupText.Empty), 10, new PictureCells(4, 2)), options);
+		var png = Convert.FromBase64String(Regex.Match(output, ":([A-Za-z0-9+/=]+)\u0007").Groups[1].Value);
+
+		var channels = png[25] == 2 ? 3 : 4;
+		await Assert.That(png[25]).IsEqualTo(opaque ? (byte)2 : (byte)6);
+		var idatLength = System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(33));
+		using var inflate = new System.IO.Compression.ZLibStream(new MemoryStream(png, 41, idatLength), System.IO.Compression.CompressionMode.Decompress);
+		using var raw = new MemoryStream();
+		inflate.CopyTo(raw);
+		var data = raw.ToArray();
+
+		var stride = width * channels;
+		var decoded = new byte[width * height * 4];
+		var previous = new byte[stride];
+		for (var y = 0; y < height; y++)
+		{
+			var filter = data[y * (stride + 1)];
+			var row = data.AsSpan(y * (stride + 1) + 1, stride).ToArray();
+			if (filter == 2) for (var i = 0; i < stride; i++) row[i] += previous[i];
+			for (var x = 0; x < width; x++)
+				for (var c = 0; c < 4; c++)
+					decoded[(y * width + x) * 4 + c] = c < channels ? row[x * channels + c] : (byte)255;
+			previous = row;
+		}
+
+		await Assert.That(decoded).IsEquivalentTo(rgba);
+	}
+
+	/// <summary>A picture is encoded once for every connection shown it at one size: each is sent the same.</summary>
+	[Test]
+	public async Task EveryConnectionShownAPictureIsSentTheSameEncoding()
+	{
+		var picture = RedBlue(32, 32);
+		var laid = Laid(new Figure(Cat, MarkupText.Empty), 10, new PictureCells(4, 2));
+		var bigger = Laid(new Figure(Cat, MarkupText.Empty), 10, new PictureCells(6, 3));
+
+		foreach (var feature in new[] { TerminalFeatures.KittyGraphics, TerminalFeatures.InlineImages, TerminalFeatures.Sixel, TerminalFeatures.BlockArt })
+		{
+			string Send(MarkupText text) =>
+				RenderString(text, new AnsiOutputOptions(Features: feature) { Pictures = new Source(picture) });
+
+			await Assert.That(Send(laid)).IsEqualTo(Send(laid)).Because($"{feature} for a second connection");
+			await Assert.That(Send(bigger)).IsNotEqualTo(Send(laid)).Because($"{feature} at another size");
+		}
 	}
 
 	// ── Half blocks ─────────────────────────────────────────────────────────────
