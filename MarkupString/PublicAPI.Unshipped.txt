@@ -939,3 +939,10 @@ static MarkupString.ThemeLook.TryRead(System.Text.Json.JsonElement element, out 
 static MarkupString.ThemeLook.operator !=(MarkupString.ThemeLook? left, MarkupString.ThemeLook? right) -> bool
 static MarkupString.ThemeLook.operator ==(MarkupString.ThemeLook? left, MarkupString.ThemeLook? right) -> bool
 static MarkupString.ThemePalette.Genres.get -> System.Collections.Generic.IReadOnlyList<MarkupString.ThemePalette!>!
+MarkupString.ThemePalette.Contrast.get -> double
+MarkupString.ThemePalette.Contrast.init -> void
+MarkupString.ThemePalette.Harmony.get -> MarkupString.ThemeHarmony
+MarkupString.ThemePalette.Harmony.init -> void
+MarkupString.ThemePalette.InMode(MarkupString.ThemeMode mode) -> MarkupString.ThemePalette!
+MarkupString.ThemePalette.Seed.get -> MarkupString.RgbColor?
+MarkupString.ThemePalette.Seed.init -> void

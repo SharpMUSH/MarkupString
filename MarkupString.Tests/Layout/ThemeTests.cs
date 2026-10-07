@@ -402,4 +402,30 @@ public class ThemeTests
 		await Assert.That(ThemePalette.TryParse(json, out _, out var message)).IsFalse();
 		await Assert.That(message).IsEqualTo(error);
 	}
+
+	[Test]
+	public async Task AGeneratedTheme_IsMadeAgainForALightBackground()
+	{
+		var fantasy = ThemePalette.Preset("fantasy")!;
+		var light = fantasy.InMode(ThemeMode.Light);
+		ThemePalette.TryParse("""{"preset":"fantasy","mode":"light"}""", out var read, out _);
+
+		await Assert.That(light.Mode).IsEqualTo(ThemeMode.Light);
+		await Assert.That(light.Look).IsEqualTo(fantasy.Look);
+		await Assert.That(light.Name).IsEqualTo("fantasy");
+		await Assert.That(light.Check()).IsEmpty();
+		await Assert.That(ColorMath.Luminance(light.BackgroundColor)).IsGreaterThan(0.8);
+		await Assert.That(read).IsEqualTo(light);
+		await Assert.That(ThemePalette.Preset("nord")!.InMode(ThemeMode.Light)[ThemeRole.Primary]).IsEqualTo(ThemePalette.Preset("nord")![ThemeRole.Primary]);
+	}
+
+	[Test]
+	public async Task AGeneratedTheme_KeepsItsSeedThroughJson()
+	{
+		var palette = ThemePalette.Generate(Hex("#d08770"), ThemeHarmony.Split, ThemeMode.Dark, 0.5);
+		ThemePalette.TryParse(palette.ToJson(), out var read, out _);
+
+		await Assert.That(read).IsEqualTo(palette);
+		await Assert.That(read!.InMode(ThemeMode.Light)).IsEqualTo(ThemePalette.Generate(Hex("#d08770"), ThemeHarmony.Split, ThemeMode.Light, 0.5));
+	}
 }

@@ -134,6 +134,27 @@ public sealed record ThemePalette
 	/// <summary>Whether it is made for a dark background or a light one.</summary>
 	public ThemeMode Mode { get; init; } = ThemeMode.Dark;
 
+	/// <summary>
+	/// The colour it was generated from (<see cref="Generate"/>), or <see langword="null"/> for one that was
+	/// not. A generated palette is made again from it for the other mode (<see cref="InMode"/>).
+	/// </summary>
+	public RgbColor? Seed { get; init; }
+
+	/// <summary>How its accents' hues were picked from <see cref="Seed"/>.</summary>
+	public ThemeHarmony Harmony { get; init; } = ThemeHarmony.Analogous;
+
+	/// <summary>How far above the minimum contrast it was generated, 0 to 1.</summary>
+	public double Contrast { get; init; }
+
+	/// <summary>
+	/// This palette for <paramref name="mode"/>: a generated one made again from its seed for that
+	/// background, keeping its name and look; any other marked with the mode and otherwise unchanged.
+	/// </summary>
+	public ThemePalette InMode(ThemeMode mode) =>
+		mode == Mode ? this
+		: Seed is { } seed ? Generate(seed, Harmony, mode, Contrast) with { Name = Name, Look = Look }
+		: this with { Mode = mode };
+
 	/// <summary>The shapes it draws with beside its colours, or <see langword="null"/> for the layout's own.</summary>
 	public ThemeLook? Look { get; init; }
 
@@ -401,6 +422,9 @@ public sealed record ThemePalette
 		return new ThemePalette
 		{
 			Name = "generated",
+			Seed = seed,
+			Harmony = harmony,
+			Contrast = level,
 			Mode = mode,
 			Colors = ImmutableDictionary.CreateRange(new Dictionary<ThemeRole, ThemeColor>
 			{
@@ -535,7 +559,7 @@ public sealed record ThemePalette
 			result = Generate(seed, harmony, mode ?? ThemeMode.Dark, level);
 		}
 
-		if (mode is { } chosen) result = result with { Mode = chosen };
+		if (mode is { } chosen) result = result.InMode(chosen);
 		if (element.TryGetProperty("name", out var nameValue))
 		{
 			if (nameValue.ValueKind != JsonValueKind.String)
@@ -648,6 +672,12 @@ public sealed record ThemePalette
 				json.WriteEndObject();
 			}
 			json.WriteEndObject();
+			if (Seed is { } seed)
+			{
+				json.WriteString("seed", seed.ToHex());
+				json.WriteString("harmony", Harmony.ToString().ToLowerInvariant());
+				if (Contrast > 0) json.WriteNumber("contrast", Contrast);
+			}
 			if (Look is not null)
 			{
 				json.WritePropertyName("look");
@@ -660,7 +690,8 @@ public sealed record ThemePalette
 
 	/// <inheritdoc/>
 	public bool Equals(ThemePalette? other) =>
-		other is not null && Name == other.Name && Mode == other.Mode && Colors.Count == other.Colors.Count
+		other is not null && Name == other.Name && Mode == other.Mode && Seed == other.Seed && Harmony == other.Harmony
+		&& Contrast.Equals(other.Contrast) && Colors.Count == other.Colors.Count
 		&& Look == other.Look && Colors.All(pair => other.Colors.TryGetValue(pair.Key, out var color) && color == pair.Value);
 
 	/// <inheritdoc/>
@@ -670,6 +701,7 @@ public sealed record ThemePalette
 		hash.Add(Name);
 		hash.Add(Mode);
 		hash.Add(Look);
+		hash.Add(Seed);
 		foreach (var pair in Colors.OrderBy(pair => pair.Key))
 		{
 			hash.Add(pair.Key);

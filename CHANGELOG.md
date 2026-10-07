@@ -29,6 +29,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `fantasy`, `historical`, `horror`, `modern`, `mystery`, `romance`, `science-fiction`, `spiritual`),
   each generated from a fitting colour and given its own look; an ASCII-only reader gets the ASCII
   form of each piece.
+- **Light and dark from one theme.** A generated palette keeps its seed, harmony and contrast
+  (`ThemePalette.Seed`, written to JSON as `seed`), so `InMode` makes it again for the other
+  background, and `{"preset":"fantasy","mode":"light"}` is fantasy for a light client.
 - **Striped rows.** `Table.Striped` and `Fields.Striped` lay every second row, all its lines and the
   full width, on the theme's `StripeColor`, a background; a cell's own background still wins. Palettes
   gained a `surface` role for it (base16's `base01`, or a step off the background when generated), and
