@@ -408,7 +408,7 @@ public class TerminalFeatureTests
 		await Assert.That(sequences[0]).Contains($"size={gif.Length};");
 		await Assert.That(GifReader.Read(gif).Frames.Count).IsEqualTo(4);
 
-		var still = Render(TerminalProfile.Konsole);
+		var still = Render(TerminalProfile.ITerm2 with { MultipartInlineImages = false });
 		await Assert.That(still).DoesNotContain("MultipartFile");
 		var png = Convert.FromBase64String(Regex.Match(still, ":([A-Za-z0-9+/=]+)\u0007").Groups[1].Value);
 		await Assert.That(png.Take(4)).IsEquivalentTo(new byte[] { 0x89, 0x50, 0x4E, 0x47 });

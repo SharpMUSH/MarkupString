@@ -70,6 +70,7 @@ fully. `TerminalFeatures` says what its terminal reads beyond colour:
 | `InlineImages` | a picture as an iTerm2 inline image (`ESC ] 1337 ; File=…`) |
 | `Sixel` | a picture as sixel graphics |
 | `BlockArt` | a picture as coloured `▀`/`▄` half blocks, plain text any UTF-8 colour terminal shows |
+| `MovingPictures` | a moving picture played, through Kitty frames or an iTerm2 GIF, rather than its first frame |
 
 Pictures are drawn into the cells a `Figure` reserves when it is laid out for such a reader
 (`LayoutContext.Pictures`, which answers the cells a picture takes). Each row is marked with
@@ -83,9 +84,10 @@ neither fetches nor decodes a file. Without the pixels, or without the feature, 
   erased like it. `MarkTransmitted` is how the source says whether the terminal already has it.
   A moving picture (a `TerminalPicture` made from `TerminalPictureFrame`s) sends its later frames
   after the first (`a=f,X=1`, each with its duration as `z`), sets the first frame's duration, and
-  starts it looping (`a=a,s=3,v=1`); the terminal plays it with nothing more sent. Every other way
-  of drawing shows its first frame.
-- **iTerm2 and sixel** are pixels over the screen. On the picture's first row the cursor makes room
+  starts it looping (`a=a,s=3,v=1`); the terminal plays it with nothing more sent. Only a client with
+  `MovingPictures` is sent the frames.
+- **iTerm2 and sixel** are pixels over the screen. A moving picture is sent to iTerm2, given
+  `MovingPictures`, as a looping GIF. On the picture's first row the cursor makes room
   below (`ESC D` per row), comes back up, and draws the picture between `ESC 7` and `ESC 8`; every row
   then steps over its cells with `CSI n C`, so no text is written over it. Sixel is the cells' size in
   pixels (`CellWidth` × `CellHeight`, 10 × 20 unless the host knows better; 0, which a terminal
@@ -99,6 +101,40 @@ other connection shown it at that size is sent a copy. So a host should hand out
 `TerminalPicture` per picture rather than a new one per render.
 
 None of these is sent on a guess: a MUD client that is not a terminal emulator may print them.
+
+### Terminals by name
+
+`TerminalProfile` names the terminals this package knows and what each can be sent. A host identifies
+the client's terminal from what it reports (`TerminalProfile.Identify("kitty(0.35.2)")`, a telnet
+terminal type or an XTVERSION reply) or from the player (`TerminalProfile.Find("wezterm")`), and sends it
+only what the player turned on:
+
+```csharp
+var options = AnsiOutputOptions.For(TerminalProfile.WezTerm, chosenByPlayer) with { Pictures = source };
+```
+
+| Terminal | Links | Kitty (placeholders) | iTerm2 images | Sixel | Moving pictures |
+|---|---|---|---|---|---|
+| kitty | yes | yes | | | Kitty frames |
+| Ghostty | yes | yes | | | |
+| WezTerm | yes | | yes | yes | GIF |
+| iTerm2 | yes | | yes, in parts past 1 MiB | yes | GIF |
+| Konsole | yes | | yes | yes | |
+| foot | yes | | | yes | |
+| xterm | | | | yes (`-ti vt340`) | |
+| Windows Terminal | yes | | | yes | |
+| mintty | yes | | yes | yes | |
+| VS Code | yes | | yes (with images on) | yes | |
+| Contour | yes | | | yes | |
+| Rio | yes | yes | yes | yes | |
+| mlterm | | | yes | yes | |
+| Alacritty, VTE, tmux | yes | | | | |
+
+Every one draws half blocks. A cell is empty where the terminal lacks the feature or it could not be
+confirmed: several terminals read Kitty graphics without the Unicode placeholders this package writes
+(WezTerm, Konsole, Contour, VS Code), Ghostty does not yet animate them in a release, and iTerm2's own
+Kitty support is unannounced, so it is drawn for with its own protocol. Windows Terminal and Alacritty do
+not answer XTVERSION, so only a player can name them.
 
 ## Styling the HTML output
 

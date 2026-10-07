@@ -28,6 +28,20 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     RGB when the picture is opaque, filtered Up, at zlib level 2; sixel reads each band once and writes a
     colour only over the columns it reaches.
 
+- **Moving pictures.** A `TerminalPicture` made from `TerminalPictureFrame`s plays for a client with
+  `MovingPictures` as well as a way of drawing it: Kitty is sent each frame (`a=f,X=1`) and starts the
+  loop itself (`a=a,s=3,v=1`), and iTerm2 is sent a looping GIF (one global palette by median cut, no
+  dithering, so nothing shimmers between frames). Everywhere else, and without `MovingPictures`, it is
+  its first frame. A frame of 10 ms or less is shown for 100 ms, as browsers do.
+- **Terminals by name.** `TerminalProfile` lists the terminals this package knows (kitty, Ghostty,
+  WezTerm, iTerm2, Konsole, foot, xterm, Windows Terminal, mintty, VS Code, Contour, Rio, mlterm,
+  Alacritty, VTE and tmux): what each can be sent, read from its own source and release notes, and how.
+  `Identify` reads one from a terminal type or an XTVERSION reply, `Find` from the id a player gives.
+  `AnsiOutputOptions.For(terminal, chosen)` sends a terminal only what the player turned on of what it
+  can do, and `AnsiOutputOptions.Terminal` carries how it wants it: an iTerm2 inline image longer than
+  the terminal takes in one sequence (a mebibyte, for iTerm2) is sent in parts where it reads them
+  (`MultipartFile`), and a moving one is sent still where it does not.
+
 ## 2.11.2 — 2026-10-07
 
 ### Fixed

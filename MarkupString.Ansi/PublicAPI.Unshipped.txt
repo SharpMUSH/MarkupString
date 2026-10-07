@@ -91,6 +91,9 @@ static MarkupString.Ansi.TerminalProfile.Kitty.get -> MarkupString.Ansi.Terminal
 static MarkupString.Ansi.TerminalProfile.Known.get -> System.Collections.Generic.IReadOnlyList<MarkupString.Ansi.TerminalProfile!>!
 static MarkupString.Ansi.TerminalProfile.Konsole.get -> MarkupString.Ansi.TerminalProfile!
 static MarkupString.Ansi.TerminalProfile.Mintty.get -> MarkupString.Ansi.TerminalProfile!
+static MarkupString.Ansi.TerminalProfile.Mlterm.get -> MarkupString.Ansi.TerminalProfile!
+static MarkupString.Ansi.TerminalProfile.Rio.get -> MarkupString.Ansi.TerminalProfile!
+static MarkupString.Ansi.TerminalProfile.Tmux.get -> MarkupString.Ansi.TerminalProfile!
 static MarkupString.Ansi.TerminalProfile.VsCode.get -> MarkupString.Ansi.TerminalProfile!
 static MarkupString.Ansi.TerminalProfile.Vte.get -> MarkupString.Ansi.TerminalProfile!
 static MarkupString.Ansi.TerminalProfile.WezTerm.get -> MarkupString.Ansi.TerminalProfile!

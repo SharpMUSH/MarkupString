@@ -11,6 +11,9 @@ public class TerminalProfileTests
 	[Arguments("ghostty 1.1.0", "ghostty")]
 	[Arguments("XTerm(390)", "xterm")]
 	[Arguments("foot(1.16.2)", "foot")]
+	[Arguments("VTE(8000)", "vte")]
+	[Arguments("tmux 3.5a", "tmux")]
+	[Arguments("Konsole 26.08.1", "konsole")]
 	public async Task ATerminalIsKnownByWhatItReports(string reported, string id) =>
 		await Assert.That(TerminalProfile.Identify(reported)?.Id).IsEqualTo(id);
 
