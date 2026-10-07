@@ -43,7 +43,8 @@ public static class LayoutCss
 		".ms-flex.ms-divided > .ms-item + .ms-item { border-left: 1px solid var(--ms-separator, var(--ms-separator-default, currentColor)); padding-left: 1ch; }\n" +
 		".ms-figure { display: flow-root; }\n" +
 		".ms-figure-image { max-width: 100%; height: auto; vertical-align: top; }\n" +
-		".ms-box:not(.ms-border-none) > .ms-float-none > .ms-figure-image { margin-block: var(--ms-pad, 1ch); }\n" +
+		".ms-box.ms-box-picture { padding: 0; width: fit-content; max-width: 100%; box-sizing: border-box; }\n" +
+		".ms-box-picture .ms-figure-image { display: block; }\n" +
 		".ms-figure-art { margin: 0; font: inherit; white-space: pre; }\n" +
 		".ms-float-left > .ms-figure-image, .ms-float-left > .ms-figure-art { float: left; max-width: 50%; margin: 0 2ch 0.5em 0; }\n" +
 		".ms-float-right > .ms-figure-image, .ms-float-right > .ms-figure-art { float: right; max-width: 50%; margin: 0 0 0.5em 2ch; }\n" +
