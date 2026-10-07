@@ -220,6 +220,20 @@ public class WidgetLayoutTests
 		await Assert.That(rule.Length).IsGreaterThanOrEqualTo(lines.Where((_, i) => i != 1).Max(line => line.Length));
 	}
 
+	/// <summary>A separator with no ASCII form is drawn as " | " for an ASCII reader, and the columns make room for it.</summary>
+	[Test]
+	public async Task Table_SeparatorWithoutAnAsciiForm_FitsAnAsciiReader()
+		=> await Assert.That(Lines(Who() with { Separator = P("•") }, 24, Ascii)).IsEquivalentTo(new[]
+		{
+			"Name   | Idle | Doing",
+			"------------------------",
+			"Mannaz |   0s | Hooooo?",
+			"Raya   |   5m | Writing",
+			"       |      | a scene",
+			"       |      | in the",
+			"       |      | garden",
+		});
+
 	[Test]
 	public async Task Widgets_SurviveTheSerializer()
 	{
