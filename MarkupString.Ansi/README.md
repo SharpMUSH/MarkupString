@@ -81,6 +81,10 @@ neither fetches nor decodes a file. Without the pixels, or without the feature, 
   nothing comes back as input) and writes each cell as `U+10EEEE` with row and column
   diacritics, the image id as a truecolor foreground. Placeholders are text: they wrap, scroll and are
   erased like it. `MarkTransmitted` is how the source says whether the terminal already has it.
+  A moving picture (a `TerminalPicture` made from `TerminalPictureFrame`s) sends its later frames
+  after the first (`a=f,X=1`, each with its duration as `z`), sets the first frame's duration, and
+  starts it looping (`a=a,s=3,v=1`); the terminal plays it with nothing more sent. Every other way
+  of drawing shows its first frame.
 - **iTerm2 and sixel** are pixels over the screen. On the picture's first row the cursor makes room
   below (`ESC D` per row), comes back up, and draws the picture between `ESC 7` and `ESC 8`; every row
   then steps over its cells with `CSI n C`, so no text is written over it. Sixel is the cells' size in
