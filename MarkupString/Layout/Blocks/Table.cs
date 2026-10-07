@@ -31,14 +31,15 @@ public sealed record Table(ImmutableArray<TableColumn> Columns, ImmutableArray<I
 	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines)
 	{
 		if (Columns.IsDefaultOrEmpty) return;
-		if (Widths(context, width) is not { } widths)
+		// Measured as drawn: an ASCII reader's separator may be the wider " | " stand-in.
+		var divider = Separator is { } drawn ? context.Glyph(drawn, " | ") : BlockText.Blank(Gap);
+		if (Widths(context, width, divider.DisplayWidth) is not { } widths)
 		{
 			DrawCards(context, width, lines);
 			return;
 		}
 
 		var shown = Enumerable.Range(0, Columns.Length).Where(c => widths[c] > 0).ToArray();
-		var divider = Separator is { } drawn ? context.Glyph(drawn, " | ") : BlockText.Blank(Gap);
 		var tableWidth = shown.Sum(c => widths[c]) + divider.DisplayWidth * (shown.Length - 1);
 
 		MarkupText Join(IEnumerable<MarkupText> cells) => BlockText.Fit(MarkupText.Join(divider, cells), width);
@@ -88,9 +89,8 @@ public sealed record Table(ImmutableArray<TableColumn> Columns, ImmutableArray<I
 	/// their least widths, and then the least important column is left out. A column that does not wrap
 	/// never gives way: it is shown whole or not at all.
 	/// </summary>
-	private int[]? Widths(LayoutContext context, int width)
+	private int[]? Widths(LayoutContext context, int width, int gap)
 	{
-		var gap = Separator?.DisplayWidth ?? Math.Max(0, Gap);
 		var natural = new int[Columns.Length];
 		for (var c = 0; c < Columns.Length; c++)
 		{
