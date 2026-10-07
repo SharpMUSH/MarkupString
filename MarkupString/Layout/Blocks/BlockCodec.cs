@@ -229,6 +229,16 @@ public sealed class BlockWriter
 		Text("bu", theme.Bullet);
 		Text("fs", theme.FieldSeparator);
 		Text("hr", theme.HeaderRule);
+		if (theme.BorderColor is { } cb) Markup("cb", cb);
+		if (theme.TitleColor is { } ct) Markup("ct", ct);
+		if (theme.HeadingColor is { } ch) Markup("ch", ch);
+		if (theme.LabelColor is { } cl) Markup("cl", cl);
+		if (theme.SeparatorColor is { } cs) Markup("cs", cs);
+		if (theme.BulletColor is { } cu) Markup("cu", cu);
+		if (theme.GuideColor is { } cg) Markup("cg", cg);
+		if (theme.HeaderRuleColor is { } cr) Markup("cr", cr);
+		if (theme.GaugeFilledColor is { } cf) Markup("cf", cf);
+		if (theme.GaugeEmptyColor is { } ce) Markup("ce", ce);
 		_json.WriteEndObject();
 	}
 
@@ -420,6 +430,16 @@ public sealed class BlockReader
 			Bullet = inner.Text("bu"),
 			FieldSeparator = inner.Text("fs"),
 			HeaderRule = inner.Text("hr"),
+			BorderColor = inner.Markup("cb"),
+			TitleColor = inner.Markup("ct"),
+			HeadingColor = inner.Markup("ch"),
+			LabelColor = inner.Markup("cl"),
+			SeparatorColor = inner.Markup("cs"),
+			BulletColor = inner.Markup("cu"),
+			GuideColor = inner.Markup("cg"),
+			HeaderRuleColor = inner.Markup("cr"),
+			GaugeFilledColor = inner.Markup("cf"),
+			GaugeEmptyColor = inner.Markup("ce"),
 		};
 	}
 

@@ -47,7 +47,7 @@ internal static class LayoutHtml
 		}),
 		Of<Shaded>(Shaded),
 		Of<Colored>(Colored),
-		Of<Themed>((themed, html) => html.Block(themed.Content, html.Context with { Theme = themed.Theme.Over(html.Context.Theme) })),
+		Of<Themed>(Themed),
 	];
 
 	private static void Text(TextBlock text, HtmlLayoutWriter html)
@@ -477,6 +477,51 @@ internal static class LayoutHtml
 		html.Write(shaded.Gradient.ToCss(direction));
 		html.Write("\">");
 		html.Block(shaded.Content);
+		html.Write("</div>");
+	}
+
+	/// <summary>The CSS custom property each part's colour is written to, and read from by <see cref="LayoutCss"/>.</summary>
+	private static readonly (string Property, Func<LayoutTheme, IMarkup?> Part)[] ThemeProperties =
+	[
+		("--ms-border", theme => theme.BorderColor),
+		("--ms-title", theme => theme.TitleColor),
+		("--ms-heading", theme => theme.HeadingColor),
+		("--ms-label", theme => theme.LabelColor),
+		("--ms-separator", theme => theme.SeparatorColor),
+		("--ms-bullet", theme => theme.BulletColor),
+		("--ms-guide", theme => theme.GuideColor),
+		("--ms-header-rule", theme => theme.HeaderRuleColor),
+		("--ms-gauge", theme => theme.GaugeFilledColor),
+		("--ms-gauge-empty", theme => theme.GaugeEmptyColor),
+	];
+
+	/// <summary>
+	/// A themed block. The colours it sets are written as custom properties, so a page can set the same
+	/// ones to theme every layout; a fallback theme writes them as <c>-default</c>, under any the page sets.
+	/// </summary>
+	private static void Themed(Themed themed, HtmlLayoutWriter html)
+	{
+		var colors = ThemeProperties
+			.Select(entry => (entry.Property, Color: entry.Part(themed.Theme) is IColorMarkup { Foreground: { } rgb } ? rgb.ToHex() : null))
+			.Where(entry => entry.Color is not null)
+			.ToArray();
+		if (colors.Length == 0)
+		{
+			html.Block(themed.Content, html.Context with { Theme = themed.Within(html.Context.Theme) });
+			return;
+		}
+
+		html.Write("<div class=\"ms-themed\" style=\"");
+		foreach (var (property, color) in colors)
+		{
+			html.Write(property);
+			if (themed.Fallback) html.Write("-default");
+			html.Write(":");
+			html.Write(color!);
+			html.Write(";");
+		}
+		html.Write("\">");
+		html.Block(themed.Content, html.Context with { Theme = themed.Within(html.Context.Theme) });
 		html.Write("</div>");
 	}
 

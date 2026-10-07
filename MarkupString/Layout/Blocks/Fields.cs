@@ -60,7 +60,7 @@ public sealed record Fields(ImmutableArray<Field> Items) : Block
 			return;
 		}
 
-		var separator = SeparatorIn(context);
+		var separator = context.Paint(theme => theme.SeparatorColor, SeparatorIn(context));
 		var labelWidth = Math.Min(Items.Max(field => field.Label.DisplayWidth), Math.Max(1, width / 2));
 		var valueWidth = width - labelWidth - separator.DisplayWidth;
 		if (valueWidth < Math.Min(MinValue, width))
@@ -70,7 +70,7 @@ public sealed record Fields(ImmutableArray<Field> Items) : Block
 			foreach (var field in Items)
 			{
 				if (field.Label.Length > 0)
-					lines.AddRange(MarkupText.Concat([field.Label, separator.Trim(TrimType.TrimEnd)]).FormatColumn(BlockText.Column(width, Alignment.Left)));
+					lines.AddRange(MarkupText.Concat([context.Paint(theme => theme.LabelColor, field.Label), separator.Trim(TrimType.TrimEnd)]).FormatColumn(BlockText.Column(width, Alignment.Left)));
 				foreach (var line in context.Lines(field.Value, width - indent.DisplayWidth)) lines.Add(MarkupText.Concat([indent, line]));
 			}
 			return;
@@ -88,13 +88,13 @@ public sealed record Fields(ImmutableArray<Field> Items) : Block
 			var label = new List<MarkupText>();
 			if (field.Label.Length > 0 && leader is not null)
 			{
-				var rows = field.Label.FormatColumn(BlockText.Column(labelWidth, alignment) with { Fill = leader });
+				var rows = context.Paint(theme => theme.LabelColor, field.Label).FormatColumn(BlockText.Column(labelWidth, alignment) with { Fill = context.Paint(theme => theme.SeparatorColor, leader) });
 				for (var i = 0; i < rows.Length; i++)
 					label.Add(MarkupText.Concat([BlockText.Fit(rows[i], labelWidth), i == 0 ? separator : BlockText.Blank(separator.DisplayWidth)]));
 			}
 			else if (field.Label.Length > 0)
 			{
-				var rows = MarkupText.Concat([field.Label, head]).FormatColumn(BlockText.Column(labelWidth + head.DisplayWidth, alignment));
+				var rows = MarkupText.Concat([context.Paint(theme => theme.LabelColor, field.Label), head]).FormatColumn(BlockText.Column(labelWidth + head.DisplayWidth, alignment));
 				foreach (var row in rows) label.Add(BlockText.Fit(row, labelColumn));
 			}
 

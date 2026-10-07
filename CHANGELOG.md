@@ -10,6 +10,18 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- **Themes with colour.** `LayoutTheme` colours each part of a layout (`BorderColor`, `TitleColor`,
+  `HeadingColor`, `LabelColor`, `SeparatorColor`, `BulletColor`, `GuideColor`, `HeaderRuleColor`,
+  `GaugeFilledColor`, `GaugeEmptyColor`), kept through the serializer and written in HTML as custom
+  properties (`--ms-border`, ...) that `LayoutCss` reads. `ThemePalette` names ten colours by role and
+  maps them onto the parts (`ToTheme`; `AnsiTheme.ToLayoutTheme` in the ANSI package). Palettes come
+  from presets (`terminal`, catppuccin, dracula, gruvbox, nord, solarized, tokyo-night), from base16
+  schemes, from JSON, or from one colour (`ThemePalette.Generate`): accent hues by harmony
+  (monochrome, analogous, complementary, split, triadic, tetradic), each made lighter or darker until
+  it meets a WCAG contrast ratio against the background. Every colour carries the standard colour a
+  sixteen-colour client gets instead, picked by hue rather than RGB distance (`ColorMath.StandardSlot`).
+  `ColorMath` has contrast, OKLCH conversion and hue rotation. `Themed.Fallback` (`ThemedUnder`) puts a
+  theme under the one it is drawn in, for a game's default under a reader's own.
 - **Gradients fall back on sixteen-colour terminals.** A gradient-painted character carries the layer
   of the stop nearest it, and `AnsiStyle.StandardForeground` keeps that stop's colour, so a client with
   only the standard colours gets bands of the stops instead of each shade's nearest standard colour.

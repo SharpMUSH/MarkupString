@@ -13,8 +13,9 @@ public sealed record Rule(MarkupText? Title = null) : Block
 	/// <inheritdoc/>
 	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines)
 	{
-		var style = context.Border(Border);
-		lines.Add(BlockText.Edge(MarkupText.Empty, style.Top, MarkupText.Empty, Title, TitleAlignment, style, width));
+		var style = context.Paint(context.Border(Border));
+		var title = Title is null ? null : context.Paint(theme => theme.TitleColor, Title);
+		lines.Add(BlockText.Edge(MarkupText.Empty, style.Top, MarkupText.Empty, title, TitleAlignment, style, width));
 	}
 
 	/// <inheritdoc/>
@@ -46,13 +47,13 @@ public sealed record Frame(Block Body) : Block
 	/// <inheritdoc/>
 	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines)
 	{
-		var style = context.Border(Border);
+		var style = context.Paint(context.Border(Border));
 		var none = style.Name == BorderStyle.None.Name;
 		var padding = BlockText.Blank(Padding);
 		var inner = Math.Max(1, width - style.Left.DisplayWidth - style.Right.DisplayWidth - padding.DisplayWidth * 2);
 
 		if (!none || Title is { Length: > 0 })
-			lines.Add(BlockText.Edge(style.TopLeft, style.Top, style.TopRight, Title, TitleAlignment, style, width));
+			lines.Add(BlockText.Edge(style.TopLeft, style.Top, style.TopRight, Title is null ? null : context.Paint(theme => theme.TitleColor, Title), TitleAlignment, style, width));
 
 		var body = new List<MarkupText>();
 		foreach (var child in Parts)
@@ -60,8 +61,9 @@ public sealed record Frame(Block Body) : Block
 			if (child is Rule rule)
 			{
 				if (none && rule.Title is not { Length: > 0 }) continue;
-				var ruleStyle = context.Border(rule.Border ?? Border);
-				lines.Add(BlockText.Edge(style.TeeLeft, ruleStyle.Top, style.TeeRight, rule.Title, rule.TitleAlignment, ruleStyle, width));
+				var ruleStyle = context.Paint(context.Border(rule.Border ?? Border));
+				var ruleTitle = rule.Title is null ? null : context.Paint(theme => theme.TitleColor, rule.Title);
+				lines.Add(BlockText.Edge(style.TeeLeft, ruleStyle.Top, style.TeeRight, ruleTitle, rule.TitleAlignment, ruleStyle, width));
 				continue;
 			}
 

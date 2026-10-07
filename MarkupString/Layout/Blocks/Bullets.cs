@@ -25,7 +25,7 @@ public sealed record Bullets(ImmutableArray<Block> Items) : Block
 	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines)
 	{
 		if (Items.IsDefaultOrEmpty) return;
-		var markers = Enumerable.Range(0, Items.Length).Select(i => MarkerAt(i, context)).ToArray();
+		var markers = Enumerable.Range(0, Items.Length).Select(i => context.Paint(theme => theme.BulletColor, MarkerAt(i, context))).ToArray();
 		var markerWidth = markers.Max(marker => marker.DisplayWidth);
 		var gutter = markerWidth + (markerWidth > 0 ? 1 : 2);
 		var hang = BlockText.Blank(gutter);

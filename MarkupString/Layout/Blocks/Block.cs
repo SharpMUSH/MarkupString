@@ -123,14 +123,61 @@ public sealed record LayoutContext
 		guide ??= Theme.Guide ?? TreeGuide.Line;
 		return AsciiOnly ? guide.ToAscii() : guide;
 	}
+
+	/// <summary>
+	/// <paramref name="text"/> in the theme's colour for <paramref name="part"/>, or as it is when the theme
+	/// sets none. Colour the text sets itself wins.
+	/// </summary>
+	/// <param name="part">The part's colour: <c>theme =&gt; theme.BorderColor</c>.</param>
+	/// <param name="text">The piece.</param>
+	public MarkupText Paint(Func<LayoutTheme, IMarkup?> part, MarkupText text)
+	{
+		ArgumentNullException.ThrowIfNull(part);
+		ArgumentNullException.ThrowIfNull(text);
+		return part(Theme) is { } markup && text.Length > 0 ? MarkupText.Wrap(markup, text) : text;
+	}
+
+	/// <summary><paramref name="style"/> with every piece in the theme's border colour.</summary>
+	internal BorderStyle Paint(BorderStyle style)
+	{
+		if (Theme.BorderColor is not { } markup) return style;
+		MarkupText Piece(MarkupText piece) => piece.Length > 0 ? MarkupText.Wrap(markup, piece) : piece;
+		return style with
+		{
+			TopLeft = Piece(style.TopLeft),
+			Top = Piece(style.Top),
+			TopRight = Piece(style.TopRight),
+			Left = Piece(style.Left),
+			Right = Piece(style.Right),
+			BottomLeft = Piece(style.BottomLeft),
+			Bottom = Piece(style.Bottom),
+			BottomRight = Piece(style.BottomRight),
+			TeeLeft = Piece(style.TeeLeft),
+			TeeRight = Piece(style.TeeRight),
+			TitleOpen = Piece(style.TitleOpen),
+			TitleClose = Piece(style.TitleClose),
+		};
+	}
+
+	/// <summary><paramref name="guide"/> with every piece in the theme's guide colour.</summary>
+	internal TreeGuide Paint(TreeGuide guide)
+	{
+		if (Theme.GuideColor is not { } markup) return guide;
+		MarkupText Piece(MarkupText piece) => piece.Length > 0 ? MarkupText.Wrap(markup, piece) : piece;
+		return guide with { Branch = Piece(guide.Branch), Last = Piece(guide.Last), Pipe = Piece(guide.Pipe), Blank = Piece(guide.Blank) };
+	}
 }
 
 /// <summary>
-/// The look of a layout: its borders, tree guides, gauge pieces, bullet and field separator. Each
-/// is <see langword="null"/> until set, and an unset one comes from the theme around it, and in the end
-/// from <see cref="Defaults"/>.
+/// The look of a layout: its borders, tree guides, gauge pieces, bullet and field separator, and the
+/// colour of each part. Each is <see langword="null"/> until set, and an unset one comes from the theme
+/// around it, and in the end from <see cref="Defaults"/>, which colours nothing.
 /// </summary>
-/// <remarks>Apply one to part of a tree with <see cref="BlockExtensions.Themed"/>: <c>sheet.Themed(new() { Border = BorderStyle.Heavy })</c>.</remarks>
+/// <remarks>
+/// <para>Apply one to part of a tree with <see cref="BlockExtensions.Themed"/>: <c>sheet.Themed(new() { Border = BorderStyle.Heavy })</c>.</para>
+/// <para>The colours are markup layers, so a part can be bold as well as coloured. A palette makes a whole
+/// set of them at once (<see cref="ThemePalette.ToTheme"/>). Colour a piece sets itself wins over its part's.</para>
+/// </remarks>
 public sealed record LayoutTheme
 {
 	/// <summary>A theme that sets nothing, so everything comes from <see cref="Defaults"/>.</summary>
@@ -180,6 +227,42 @@ public sealed record LayoutTheme
 	/// <summary>The line under a table's headings, repeated; empty for none.</summary>
 	public MarkupText? HeaderRule { get; init; }
 
+	/// <summary>The colour of boxes, rules and the brackets round a gauge.</summary>
+	public IMarkup? BorderColor { get; init; }
+
+	/// <summary>The colour of a title set into a box's edge or a rule.</summary>
+	public IMarkup? TitleColor { get; init; }
+
+	/// <summary>The colour of a table's headings.</summary>
+	public IMarkup? HeadingColor { get; init; }
+
+	/// <summary>The colour of a field's label.</summary>
+	public IMarkup? LabelColor { get; init; }
+
+	/// <summary>The colour of the separator after a label, and between table columns.</summary>
+	public IMarkup? SeparatorColor { get; init; }
+
+	/// <summary>The colour of a list's markers.</summary>
+	public IMarkup? BulletColor { get; init; }
+
+	/// <summary>The colour of tree guide lines.</summary>
+	public IMarkup? GuideColor { get; init; }
+
+	/// <summary>The colour of the line under a table's headings.</summary>
+	public IMarkup? HeaderRuleColor { get; init; }
+
+	/// <summary>The colour of a gauge's filled part, when it has no gradient.</summary>
+	public IMarkup? GaugeFilledColor { get; init; }
+
+	/// <summary>The colour of a gauge's empty part.</summary>
+	public IMarkup? GaugeEmptyColor { get; init; }
+
+	/// <summary>Whether it sets any colour.</summary>
+	public bool HasColor =>
+		BorderColor is not null || TitleColor is not null || HeadingColor is not null || LabelColor is not null
+		|| SeparatorColor is not null || BulletColor is not null || GuideColor is not null || HeaderRuleColor is not null
+		|| GaugeFilledColor is not null || GaugeEmptyColor is not null;
+
 	/// <summary>This theme over <paramref name="below"/>: what this sets, and what it leaves unset from there.</summary>
 	public LayoutTheme Over(LayoutTheme below)
 	{
@@ -195,6 +278,16 @@ public sealed record LayoutTheme
 			Bullet = Bullet ?? below.Bullet,
 			FieldSeparator = FieldSeparator ?? below.FieldSeparator,
 			HeaderRule = HeaderRule ?? below.HeaderRule,
+			BorderColor = BorderColor ?? below.BorderColor,
+			TitleColor = TitleColor ?? below.TitleColor,
+			HeadingColor = HeadingColor ?? below.HeadingColor,
+			LabelColor = LabelColor ?? below.LabelColor,
+			SeparatorColor = SeparatorColor ?? below.SeparatorColor,
+			BulletColor = BulletColor ?? below.BulletColor,
+			GuideColor = GuideColor ?? below.GuideColor,
+			HeaderRuleColor = HeaderRuleColor ?? below.HeaderRuleColor,
+			GaugeFilledColor = GaugeFilledColor ?? below.GaugeFilledColor,
+			GaugeEmptyColor = GaugeEmptyColor ?? below.GaugeEmptyColor,
 		};
 	}
 

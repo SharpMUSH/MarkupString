@@ -26,3 +26,6 @@ MarkupString.Ansi.AnsiStyle.AtDepth(MarkupString.Ansi.AnsiColorDepth depth) -> M
 static MarkupString.Ansi.AnsiCodeWriter.Write(in MarkupString.Ansi.AnsiStyle style) -> string!
 static MarkupString.Ansi.AnsiCodeWriter.WriteColor(MarkupString.Ansi.AnsiColor? color, bool background) -> string!
 static MarkupString.Ansi.AnsiRegistration.WithAnsiOutput(this MarkupString.MarkupRegistry! registry, MarkupString.Ansi.AnsiColorDepth colorDepth, bool hyperlinks = true) -> MarkupString.MarkupRegistry!
+MarkupString.Ansi.AnsiTheme
+static MarkupString.Ansi.AnsiTheme.Paint(MarkupString.ThemeColor color, bool bold = false) -> MarkupString.Ansi.AnsiMarkup!
+static MarkupString.Ansi.AnsiTheme.ToLayoutTheme(this MarkupString.ThemePalette! palette) -> MarkupString.Layout.LayoutTheme!

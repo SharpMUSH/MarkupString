@@ -16,7 +16,7 @@ public sealed record Tree(ImmutableArray<TreeItem> Items) : Block
 	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines)
 	{
 		if (Items.IsDefaultOrEmpty) return;
-		var guide = context.Guide(Guide);
+		var guide = context.Paint(context.Guide(Guide));
 		foreach (var item in Items) DrawItem(item, MarkupText.Empty, null, guide, context, width, lines);
 	}
 

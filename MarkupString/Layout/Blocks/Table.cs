@@ -38,14 +38,14 @@ public sealed record Table(ImmutableArray<TableColumn> Columns, ImmutableArray<I
 		}
 
 		var shown = Enumerable.Range(0, Columns.Length).Where(c => widths[c] > 0).ToArray();
-		var divider = Separator is { } drawn ? context.Glyph(drawn, " | ") : BlockText.Blank(Gap);
+		var divider = Separator is { } drawn ? context.Paint(theme => theme.SeparatorColor, context.Glyph(drawn, " | ")) : BlockText.Blank(Gap);
 		var tableWidth = shown.Sum(c => widths[c]) + divider.DisplayWidth * (shown.Length - 1);
 
 		MarkupText Join(IEnumerable<MarkupText> cells) => BlockText.Fit(MarkupText.Join(divider, cells), width);
 
-		lines.Add(Join(shown.Select(c => BlockText.Fit(Columns[c].Header.FormatColumn(BlockText.Column(widths[c], Columns[c].Alignment))[0], widths[c]))));
+		lines.Add(Join(shown.Select(c => BlockText.Fit(context.Paint(theme => theme.HeadingColor, Columns[c].Header).FormatColumn(BlockText.Column(widths[c], Columns[c].Alignment))[0], widths[c]))));
 		var rule = HeaderRule ?? context.Theme.Piece(theme => theme.HeaderRule);
-		if (rule.Length > 0) lines.Add(BlockText.Fit(BlockText.Run(context.Glyph(rule, "-"), tableWidth), width));
+		if (rule.Length > 0) lines.Add(BlockText.Fit(context.Paint(theme => theme.HeaderRuleColor, BlockText.Run(context.Glyph(rule, "-"), tableWidth)), width));
 
 		var cellLines = new List<MarkupText>[Columns.Length];
 		foreach (var row in AllRows)

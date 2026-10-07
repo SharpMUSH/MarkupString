@@ -260,8 +260,9 @@ internal static class LayoutJson
 			{
 				w.Block("c", b.Content);
 				w.Theme("th", b.Theme);
+				w.Bool("fb", b.Fallback);
 			},
-			r => new Themed(r.Block("c") ?? new Stack([]), r.Theme("th"))),
+			r => new Themed(r.Block("c") ?? new Stack([]), r.Theme("th")) { Fallback = r.Bool("fb") }),
 	];
 
 	private static readonly FrozenDictionary<string, BlockCodec> ByKind = BuiltIns.ToFrozenDictionary(codec => codec.Kind, StringComparer.Ordinal);

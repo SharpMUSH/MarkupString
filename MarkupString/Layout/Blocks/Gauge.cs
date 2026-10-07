@@ -49,8 +49,8 @@ public sealed record Gauge(double Value, double Maximum) : Block
 	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines)
 	{
 		var theme = context.Theme;
-		var open = context.Glyph(Open ?? theme.Piece(t => t.GaugeOpen), "[");
-		var close = context.Glyph(Close ?? theme.Piece(t => t.GaugeClose), "]");
+		var open = context.Paint(t => t.BorderColor, context.Glyph(Open ?? theme.Piece(t => t.GaugeOpen), "["));
+		var close = context.Paint(t => t.BorderColor, context.Glyph(Close ?? theme.Piece(t => t.GaugeClose), "]"));
 		var filled = context.Glyph(Filled ?? theme.Piece(t => t.GaugeFilled), "#");
 		var empty = context.Glyph(Empty ?? theme.Piece(t => t.GaugeEmpty), "-");
 		var label = Label is { Length: > 0 } text ? MarkupText.Concat([text, MarkupText.Space]) : MarkupText.Empty;
@@ -63,7 +63,9 @@ public sealed record Gauge(double Value, double Maximum) : Block
 		var fill = BlockText.Run(filled, full);
 		if (Gradient is { IsEmpty: false } gradient)
 			fill = Shade == GaugeShade.Value ? gradient.Paint(fill, Ratio) : gradient.ShadeLines([fill], GradientFlow.Across, bar)[0];
-		lines.Add(BlockText.Fit(MarkupText.Concat([label, open, fill, BlockText.Run(empty, bar - full), close, after]), width));
+		else fill = context.Paint(t => t.GaugeFilledColor, fill);
+		var rest = context.Paint(t => t.GaugeEmptyColor, BlockText.Run(empty, bar - full));
+		lines.Add(BlockText.Fit(MarkupText.Concat([label, open, fill, rest, close, after]), width));
 	}
 
 	/// <inheritdoc/>
