@@ -963,8 +963,14 @@ MarkupString.ThemeLook
 MarkupString.ThemeLook.<Clone>$() -> MarkupString.ThemeLook!
 MarkupString.ThemeLook.Border.get -> string?
 MarkupString.ThemeLook.Border.init -> void
+MarkupString.ThemeLook.BottomLeft.get -> string?
+MarkupString.ThemeLook.BottomLeft.init -> void
+MarkupString.ThemeLook.BottomRight.get -> string?
+MarkupString.ThemeLook.BottomRight.init -> void
 MarkupString.ThemeLook.Bullet.get -> string?
 MarkupString.ThemeLook.Bullet.init -> void
+MarkupString.ThemeLook.Edge.get -> string?
+MarkupString.ThemeLook.Edge.init -> void
 MarkupString.ThemeLook.Equals(MarkupString.ThemeLook? other) -> bool
 MarkupString.ThemeLook.GaugeClose.get -> string?
 MarkupString.ThemeLook.GaugeClose.init -> void
@@ -981,12 +987,18 @@ MarkupString.ThemeLook.Rule.get -> string?
 MarkupString.ThemeLook.Rule.init -> void
 MarkupString.ThemeLook.Separator.get -> string?
 MarkupString.ThemeLook.Separator.init -> void
+MarkupString.ThemeLook.Side.get -> string?
+MarkupString.ThemeLook.Side.init -> void
 MarkupString.ThemeLook.ThemeLook() -> void
 MarkupString.ThemeLook.TitleClose.get -> string?
 MarkupString.ThemeLook.TitleClose.init -> void
 MarkupString.ThemeLook.TitleOpen.get -> string?
 MarkupString.ThemeLook.TitleOpen.init -> void
 MarkupString.ThemeLook.ToTheme() -> MarkupString.Layout.LayoutTheme!
+MarkupString.ThemeLook.TopLeft.get -> string?
+MarkupString.ThemeLook.TopLeft.init -> void
+MarkupString.ThemeLook.TopRight.get -> string?
+MarkupString.ThemeLook.TopRight.init -> void
 MarkupString.ThemeLook.Write(System.Text.Json.Utf8JsonWriter! json) -> void
 MarkupString.ThemeMode
 MarkupString.ThemeMode.Dark = 0 -> MarkupString.ThemeMode
