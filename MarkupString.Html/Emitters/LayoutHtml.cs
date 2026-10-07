@@ -107,11 +107,14 @@ internal static class LayoutHtml
 
 	private static void Flex(Flex flex, HtmlLayoutWriter html)
 	{
+		var items = flex.Items.IsDefault ? [] : flex.Items;
+		var spacing = flex.Separator is { } separator ? separator.DisplayWidth : Math.Max(0, flex.Gap);
+		var reserved = flex.Vertical ? 0 : spacing * Math.Max(0, items.Length - 1);
 		html.Write("<div class=\"ms-flex");
 		if (flex.Separator is not null) html.Write(" ms-divided");
 		if (flex.Vertical) html.Write(" ms-vertical");
 		html.Write("\" style=\"column-gap:");
-		html.Write(Number(flex.Separator is { } separator ? separator.DisplayWidth : Math.Max(0, flex.Gap)));
+		html.Write(Number(spacing));
 		html.Write("ch");
 		if (flex.Justify != FlexJustify.Start)
 		{
@@ -130,7 +133,7 @@ internal static class LayoutHtml
 		}
 		html.Write("\">");
 
-		foreach (var block in flex.Items.IsDefault ? [] : flex.Items)
+		foreach (var block in items)
 		{
 			// Each item asks for its terminal width and grows to fill its row, so items that do not fit
 			// side by side wrap onto rows of their own. Spare width is left alone only when the layout
@@ -145,6 +148,8 @@ internal static class LayoutHtml
 			html.Write(item.Basis.Kind switch
 			{
 				BlockSizeKind.Cells => Number(item.Basis.Value) + "ch",
+				BlockSizeKind.Percent when reserved > 0 && item.Basis.Value > 0 =>
+					"calc(" + Number(item.Basis.Value) + "% - " + Decimal(reserved * item.Basis.Value / 100.0) + "ch)",
 				BlockSizeKind.Percent => Number(item.Basis.Value) + "%",
 				_ => item.Min > 1 ? Number(item.Min) + "ch" : "0",
 			});
