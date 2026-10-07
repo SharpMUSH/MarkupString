@@ -6,7 +6,7 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 2.9.0 — 2026-10-07
 
 ### Added
 
@@ -38,6 +38,20 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `ToTheme` now asks for each colour as text, bold text or a background (`ThemePaint`). In HTML the
   table and list get `ms-striped` and the colour is `--ms-stripe`, a faint grey when unset.
   `IColorMarkup.Background` reports a layer's background.
+
+### Fixed
+
+- **A table column that does not wrap stays on one line in HTML.** Its heading and cells carry
+  `ms-nowrap` (`LayoutCss.Fixed` keeps it and its text unwrapped), so a narrow page no longer breaks a short
+  value such as `Thu Oct 8` between its words.
+- **A table's columns make room for the separator an ASCII reader sees.** A separator with no ASCII
+  form is drawn as ` | `; the columns were sized for the separator as written, so the last column was
+  cut short.
+
+## 2.8.0 — 2026-10-06
+
+### Added
+
 - **Gradients fall back on sixteen-colour terminals.** A gradient-painted character carries the layer
   of the stop nearest it, and `AnsiStyle.StandardForeground` keeps that stop's colour, so a client with
   only the standard colours gets bands of the stops instead of each shade's nearest standard colour.
@@ -76,15 +90,6 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **`HtmlRegistration.WithLayoutImages(Func<string, bool>)`** holds the pictures layouts show in HTML to a
   host's policy; a refused picture shows its text art or description. Only http, https and relative
   addresses are ever shown; `//host` addresses are not.
-
-### Fixed
-
-- **A table column that does not wrap stays on one line in HTML.** Its heading and cells carry
-  `ms-nowrap` (`LayoutCss.Fixed` keeps it and its text unwrapped), so a narrow page no longer breaks a short
-  value such as `Thu Oct 8` between its words.
-- **A table's columns make room for the separator an ASCII reader sees.** A separator with no ASCII
-  form is drawn as ` | `; the columns were sized for the separator as written, so the last column was
-  cut short.
 
 ## 2.7.0 — 2026-10-02
 
