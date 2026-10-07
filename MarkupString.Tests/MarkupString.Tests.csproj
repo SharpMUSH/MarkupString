@@ -9,11 +9,11 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CsCheck" Version="4.9.1" />
-    <PackageReference Include="TUnit" Version="1.70.1" />
+    <PackageReference Include="TUnit" Version="1.72.16" />
     <!-- Verify.TUnit carries a floor on TUnit.Core. Bump the two together: if NuGet lifts
          TUnit.Core past the TUnit.Engine this project asks for, the split versions fault at
          startup with MissingFieldException rather than failing to restore. -->
-    <PackageReference Include="Verify.TUnit" Version="33.1.5" />
+    <PackageReference Include="Verify.TUnit" Version="33.3.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MarkupString\MarkupString.csproj" />
