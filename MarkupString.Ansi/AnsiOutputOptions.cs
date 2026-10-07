@@ -21,4 +21,21 @@ public sealed record AnsiOutputOptions(
 
 	/// <summary>The height of the terminal's character cell in pixels, for a picture drawn in pixels (sixel). 20 when unknown, as is a value below 1.</summary>
 	public int CellHeight { get; init => field = value > 0 ? value : 20; } = 20;
+
+	/// <summary>
+	/// The client's terminal, when it is known, for how it wants what it is sent (how long an inline image may be,
+	/// and whether one is sent in parts). Without one, an inline image is held to iTerm2's limit and sent whole.
+	/// It sends nothing <see cref="Features"/> does not name.
+	/// </summary>
+	public TerminalProfile? Terminal { get; init; }
+
+	/// <summary>
+	/// What a client using <paramref name="terminal"/> is sent: of what it can do, only what the player turned on
+	/// (<paramref name="chosen"/>).
+	/// </summary>
+	public static AnsiOutputOptions For(TerminalProfile terminal, TerminalFeatures chosen, AnsiColorDepth colorDepth = AnsiColorDepth.TrueColor)
+	{
+		ArgumentNullException.ThrowIfNull(terminal);
+		return new AnsiOutputOptions(colorDepth, terminal.Allow(chosen)) { Terminal = terminal };
+	}
 }

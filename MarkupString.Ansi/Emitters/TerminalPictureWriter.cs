@@ -126,7 +126,8 @@ internal static class TerminalPictureWriter
 	{
 		var id = KittyId(picture, cells);
 		if (options.Pictures?.MarkTransmitted(id) != false)
-			ahead.Write(PictureEncodings.GetOrAdd(picture, new KittyKey(id, cells.Columns, cells.Rows, options.CellWidth, options.CellHeight), EncodeKitty));
+			ahead.Write(PictureEncodings.GetOrAdd(picture,
+				new KittyKey(id, cells.Columns, cells.Rows, options.CellWidth, options.CellHeight, Moving(picture, options)), EncodeKitty));
 
 		// The image id is the placeholder's foreground. It is written at truecolor whatever the client's depth:
 		// it is not a colour anyone sees, and a terminal that reads Kitty graphics reads 24-bit SGR.
@@ -147,7 +148,11 @@ internal static class TerminalPictureWriter
 		SgrWriter.Transition(placeholder, effective, output);
 	}
 
-	private readonly record struct KittyKey(uint Id, int Columns, int Rows, int CellWidth, int CellHeight);
+	private readonly record struct KittyKey(uint Id, int Columns, int Rows, int CellWidth, int CellHeight, bool Moving);
+
+	/// <summary>Whether <paramref name="picture"/> is sent moving: it has frames, and the client asked for them.</summary>
+	private static bool Moving(TerminalPicture picture, AnsiOutputOptions options) =>
+		picture.Frames.Count > 1 && (options.Features & TerminalFeatures.MovingPictures) != 0;
 
 	/// <summary>
 	/// The picture as a Kitty image with a virtual placement of the cells' size, sent quietly (<c>q=2</c>) so
@@ -175,17 +180,17 @@ internal static class TerminalPictureWriter
 		AppendKittyChunks(text, picture.Rgba.Span, picture, width, height,
 			string.Create(CultureInfo.InvariantCulture, $"a=T,U=1,i={key.Id},f=100,c={key.Columns},r={key.Rows},q=2"), "");
 
-		if (picture.Frames.Count > 1)
+		if (key.Moving)
 		{
 			for (var frame = 1; frame < picture.Frames.Count; frame++)
 			{
 				AppendKittyChunks(text, picture.Frames[frame].Rgba.Span, picture, width, height,
-					string.Create(CultureInfo.InvariantCulture, $"a=f,i={key.Id},f=100,X=1,z={KittyGap(picture.Frames[frame].Duration)},q=2"),
+					string.Create(CultureInfo.InvariantCulture, $"a=f,i={key.Id},f=100,X=1,z={KittyGap(picture.Frames[frame])},q=2"),
 					"a=f,");
 			}
 
 			text.Append(CultureInfo.InvariantCulture,
-				$"{Esc}_Ga=a,i={key.Id},r=1,z={KittyGap(picture.Frames[0].Duration)},q=2{StringTerminator}");
+				$"{Esc}_Ga=a,i={key.Id},r=1,z={KittyGap(picture.Frames[0])},q=2{StringTerminator}");
 			text.Append(CultureInfo.InvariantCulture, $"{Esc}_Ga=a,i={key.Id},s=3,v=1,q=2{StringTerminator}");
 		}
 
@@ -193,10 +198,10 @@ internal static class TerminalPictureWriter
 	}
 
 	/// <summary>
-	/// A frame's duration as Kitty's gap in milliseconds: at least one, since Kitty ignores a zero gap and
-	/// reads a negative one as no gap at all.
+	/// How long a frame is shown, as Kitty's gap in milliseconds: never zero, which Kitty ignores, nor negative,
+	/// which it reads as a frame not shown at all.
 	/// </summary>
-	private static int KittyGap(TimeSpan duration) => (int)Math.Clamp(duration.TotalMilliseconds, 1, int.MaxValue);
+	private static int KittyGap(TerminalPictureFrame frame) => (int)Math.Clamp(frame.Shown.TotalMilliseconds, 1, int.MaxValue);
 
 	/// <summary>
 	/// <paramref name="rgba"/> scaled to <paramref name="width"/> × <paramref name="height"/>, as a PNG in base64
@@ -246,7 +251,9 @@ internal static class TerminalPictureWriter
 			for (var row = 0; row < cells.Rows; row++) ahead.Write(Esc + "D");
 			ahead.Write($"{Esc}[{cells.Rows}A");
 			ahead.Write(Esc + "7");
-			var key = new OverlayKey(method, cells.Columns, cells.Rows, options.CellWidth, options.CellHeight);
+			var key = new OverlayKey(method, cells.Columns, cells.Rows, options.CellWidth, options.CellHeight,
+				Moving(picture, options), options.Terminal?.InlineImageLimit ?? TerminalProfile.ITerm2.InlineImageLimit,
+				options.Terminal?.MultipartInlineImages ?? false);
 			ahead.Write(PictureEncodings.GetOrAdd(picture, key,
 				static (picture, key) => key.Method == TerminalFeatures.InlineImages ? EncodeInlineImage(picture, key) : EncodeSixel(picture, key)));
 			ahead.Write(Esc + "8");
@@ -255,16 +262,56 @@ internal static class TerminalPictureWriter
 		output.Write($"{Esc}[{cells.Columns}C");
 	}
 
-	private readonly record struct OverlayKey(TerminalFeatures Method, int Columns, int Rows, int CellWidth, int CellHeight);
+	private readonly record struct OverlayKey(TerminalFeatures Method, int Columns, int Rows, int CellWidth, int CellHeight,
+		bool Moving, int Limit, bool Multipart);
 
-	/// <summary>An iTerm2 inline image, a PNG sized in cells, its shape kept.</summary>
+	/// <summary>
+	/// An iTerm2 inline image sized in cells, its shape kept: a PNG, or for a moving picture a looping GIF of its
+	/// frames, which the terminal plays itself.
+	/// </summary>
+	/// <remarks>
+	/// iTerm2 refuses a sequence longer than a mebibyte (<see cref="TerminalProfile.InlineImageLimit"/>). A file
+	/// that would make one longer is sent in parts (<c>MultipartFile</c>, <c>FilePart</c>, <c>FileEnd</c>) to a
+	/// terminal that reads them; to one that does not, a moving picture too big for one sequence is sent still.
+	/// </remarks>
 	private static string EncodeInlineImage(TerminalPicture picture, OverlayKey key)
 	{
 		var (width, height) = PictureScaler.FitWithin(picture.Width, picture.Height,
 			key.Columns * key.CellWidth, key.Rows * key.CellHeight, upscale: false);
-		var png = PngWriter.Encode(PictureScaler.Scale(picture.Rgba.Span, picture.Width, picture.Height, width, height), width, height);
-		return string.Create(CultureInfo.InvariantCulture,
-			$"{Esc}]1337;File=inline=1;size={png.Length};width={key.Columns};height={key.Rows};preserveAspectRatio=1:{Convert.ToBase64String(png)}\a");
+		byte[] Scale(ReadOnlyMemory<byte> rgba) => PictureScaler.Scale(rgba.Span, picture.Width, picture.Height, width, height);
+		string Arguments(byte[] file) => string.Create(CultureInfo.InvariantCulture,
+			$"inline=1;size={file.Length};width={key.Columns};height={key.Rows};preserveAspectRatio=1");
+
+		if (key.Moving)
+		{
+			var gif = GifWriter.Encode([.. picture.Frames.Select(frame => new TerminalPictureFrame(Scale(frame.Rgba), frame.Duration))], width, height);
+			if (InlineImage(Arguments(gif), Convert.ToBase64String(gif), key) is { } moving) return moving;
+		}
+
+		var png = PngWriter.Encode(Scale(picture.Rgba), width, height);
+		var payload = Convert.ToBase64String(png);
+		return InlineImage(Arguments(png), payload, key) ?? $"{Esc}]1337;File={Arguments(png)}:{payload}\a";
+	}
+
+	/// <summary>
+	/// The file as one sequence, or in parts when one would be over <see cref="OverlayKey.Limit"/> and the terminal
+	/// reads parts; null when it can be neither.
+	/// </summary>
+	private static string? InlineImage(string arguments, string payload, OverlayKey key)
+	{
+		var single = $"{Esc}]1337;File={arguments}:{payload}\a";
+		if (key.Limit <= 0 || single.Length <= key.Limit) return single;
+		if (!key.Multipart) return null;
+
+		// Each part is its own sequence, under the limit too; base64 in whole quanta of four.
+		var part = (key.Limit - 32) / 4 * 4;
+		if (part <= 0) return null;
+		var text = new StringBuilder(payload.Length + payload.Length / part * 32 + 128);
+		text.Append(Esc).Append("]1337;MultipartFile=").Append(arguments).Append('\a');
+		for (var offset = 0; offset < payload.Length; offset += part)
+			text.Append(Esc).Append("]1337;FilePart=").Append(payload, offset, Math.Min(part, payload.Length - offset)).Append('\a');
+		text.Append(Esc).Append("]1337;FileEnd\a");
+		return text.ToString();
 	}
 
 	/// <summary>

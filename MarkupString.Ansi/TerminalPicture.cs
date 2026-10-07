@@ -81,8 +81,18 @@ public sealed class TerminalPicture
 
 /// <summary>One frame of a moving picture: the whole picture as it is shown, and for how long.</summary>
 /// <param name="Rgba">The pixels: RGBA, row by row from the top left.</param>
-/// <param name="Duration">How long the frame is shown before the next.</param>
-public readonly record struct TerminalPictureFrame(ReadOnlyMemory<byte> Rgba, TimeSpan Duration);
+/// <param name="Duration">
+/// How long the frame is shown before the next. 10 milliseconds or less is shown for 100, as browsers do: a GIF
+/// saved with no delay, or one too short to see, was made to be played that way.
+/// </param>
+public readonly record struct TerminalPictureFrame(ReadOnlyMemory<byte> Rgba, TimeSpan Duration)
+{
+	private static readonly TimeSpan Shortest = TimeSpan.FromMilliseconds(10);
+	private static readonly TimeSpan Unset = TimeSpan.FromMilliseconds(100);
+
+	/// <summary>How long the frame is actually shown.</summary>
+	internal TimeSpan Shown => Duration <= Shortest ? Unset : Duration;
+}
 
 /// <summary>
 /// Where a terminal render finds a picture's pixels, and what it knows about the one connection it is
