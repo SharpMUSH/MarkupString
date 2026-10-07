@@ -82,6 +82,7 @@ public static class LayoutCss
 		".ms-shaded :is(.ms-box, .ms-gauge-bar), .ms-shaded :is(.ms-rule, .ms-divider)::before, .ms-shaded :is(.ms-rule, .ms-divider)::after { border-image: var(--ms-shade) 1; }\n" +
 		".ms-table-wrap { max-width: 100%; overflow-x: auto; }\n" +
 		".ms-table { border-collapse: collapse; }\n" +
+		".ms-table.ms-fill { width: 100%; }\n" +
 		".ms-table th, .ms-table td { padding: 0 1ch; vertical-align: top; text-align: left; }\n" +
 		".ms-table th { border-bottom: 1px solid var(--ms-header-rule, var(--ms-header-rule-default, currentColor)); color: var(--ms-heading, var(--ms-heading-default, inherit)); }\n" +
 		".ms-table.ms-striped > tbody > tr:nth-child(even) { background: var(--ms-stripe, var(--ms-stripe-default, rgba(127, 127, 127, 0.12))); }\n" +

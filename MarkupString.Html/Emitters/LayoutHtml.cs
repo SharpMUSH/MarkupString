@@ -412,13 +412,16 @@ internal static class LayoutHtml
 	private static void Table(Table table, HtmlLayoutWriter html)
 	{
 		var columns = table.Columns.IsDefault ? [] : table.Columns;
+		var shares = columns.Sum(column => column.Grow);
 		html.Write("<div class=\"ms-table-wrap\"><table class=\"ms-table");
 		if (table.Striped) html.Write(" ms-striped");
+		if (shares > 0) html.Write(" ms-fill");
 		html.Write("\"><thead><tr>");
 		foreach (var column in columns)
 		{
 			html.Write("<th scope=\"col\"");
-			Cell(column, html);
+			// A filling table is the page's width; the growing headings take what the others leave, by share.
+			Cell(column, html, shares > 0 && column.Grow > 0 ? column.Grow * 100 / shares : 0);
 			html.Write(">");
 			html.Text(column.Header);
 			html.Write("</th>");
@@ -430,7 +433,7 @@ internal static class LayoutHtml
 			for (var c = 0; c < columns.Length; c++)
 			{
 				html.Write("<td");
-				Cell(columns[c], html);
+				Cell(columns[c], html, 0);
 				html.Write(">");
 				if (!row.IsDefault && c < row.Length) html.Block(row[c]);
 				html.Write("</td>");
@@ -442,9 +445,10 @@ internal static class LayoutHtml
 
 	/// <summary>
 	/// A cell's alignment and its classes: <c>ms-p2</c>/<c>ms-p3</c> for a column that may be left out on
-	/// a narrow page, <c>ms-nowrap</c> for one whose cells stay on one line.
+	/// a narrow page, <c>ms-nowrap</c> for one whose cells stay on one line; on a heading, the
+	/// <paramref name="percent"/> of a filling table's width its column grows into.
 	/// </summary>
-	private static void Cell(TableColumn column, HtmlLayoutWriter html)
+	private static void Cell(TableColumn column, HtmlLayoutWriter html, int percent)
 	{
 		if (column.Priority >= 2 || !column.Wrap)
 		{
@@ -458,12 +462,22 @@ internal static class LayoutHtml
 			if (!column.Wrap) html.Write("ms-nowrap");
 			html.Write("\"");
 		}
-		if (column.Alignment is Alignment.Right or Alignment.Center)
+		var aligned = column.Alignment is Alignment.Right or Alignment.Center;
+		if (!aligned && percent == 0) return;
+		html.Write(" style=\"");
+		if (aligned)
 		{
-			html.Write(" style=\"text-align:");
+			html.Write("text-align:");
 			html.Write(column.Alignment == Alignment.Right ? "right" : "center");
-			html.Write("\"");
 		}
+		if (percent > 0)
+		{
+			if (aligned) html.Write(";");
+			html.Write("width:");
+			html.Write(Number(percent));
+			html.Write("%");
+		}
+		html.Write("\"");
 	}
 
 	/// <summary>

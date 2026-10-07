@@ -946,3 +946,5 @@ MarkupString.ThemePalette.Harmony.init -> void
 MarkupString.ThemePalette.InMode(MarkupString.ThemeMode mode) -> MarkupString.ThemePalette!
 MarkupString.ThemePalette.Seed.get -> MarkupString.RgbColor?
 MarkupString.ThemePalette.Seed.init -> void
+MarkupString.Layout.TableColumn.Grow.get -> int
+MarkupString.Layout.TableColumn.Grow.init -> void
