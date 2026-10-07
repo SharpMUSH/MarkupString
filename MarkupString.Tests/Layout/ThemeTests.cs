@@ -354,7 +354,7 @@ public class ThemeTests
 	public async Task EachGenre_HasALookAndColoursThatStandOut()
 	{
 		await Assert.That(ThemePalette.Genres.Select(genre => genre.Name))
-			.IsEquivalentTo(["passion", "fantasy", "historical", "horror", "modern", "mystery", "romance", "science-fiction", "spiritual"]);
+			.IsEquivalentTo(["fantasy", "historical", "horror", "modern", "mystery", "romance", "science-fiction", "spiritual"]);
 		foreach (var genre in ThemePalette.Genres)
 		{
 			await Assert.That(genre.Look).IsNotNull();

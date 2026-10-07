@@ -499,9 +499,9 @@ colours.
 
 Four ways to make one:
 
-- **Presets**: `terminal`; one for each MSSP genre, `passion` (MSSP's Adult), `fantasy`, `historical`, `horror`,
-  `modern`, `mystery`, `romance`, `science-fiction` and `spiritual` (`ThemePalette.Genres`), each with
-  a look of its own (below); and `catppuccin-mocha`, `catppuccin-latte`, `dracula`, `gruvbox-dark`, `nord`,
+- **Presets**: `terminal`; one for each MSSP genre, `fantasy`, `historical`, `horror`, `modern`,
+  `mystery`, `romance` (MSSP's Adult as well), `science-fiction` and `spiritual`
+  (`ThemePalette.Genres`), each with a look of its own (below); and `catppuccin-mocha`, `catppuccin-latte`, `dracula`, `gruvbox-dark`, `nord`,
   `solarized-dark`, `solarized-light`, `tokyo-night` (`ThemePalette.Preset(name)`).
 - **base16**: `ThemePalette.FromBase16(name, colors)` takes any of the hundreds of base16 schemes,
   mapped by base16's own guide (`base0D` primary, `base03` muted, `base08` error, ...).

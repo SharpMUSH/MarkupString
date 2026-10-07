@@ -249,19 +249,13 @@ public sealed record ThemePalette
 	};
 
 	/// <summary>
-	/// A theme for each genre MSSP names: passion (MSSP's Adult), fantasy, historical, horror, modern,
-	/// mystery, romance, science-fiction and spiritual. Each is made from a colour that suits it
+	/// A theme for each genre MSSP names: fantasy, historical, horror, modern, mystery, romance (which
+	/// serves MSSP's Adult as well), science-fiction and spiritual. Each is made from a colour that suits it
 	/// (<see cref="Generate"/>) and has its own corners, edges, title ornaments, bullet, guides and gauge
 	/// (<see cref="Look"/>), so a box says which genre it is before its text does.
 	/// </summary>
 	public static IReadOnlyList<ThemePalette> Genres { get; } =
 	[
-		Genre("passion", "#8c1c3c", ThemeHarmony.Analogous, new ThemeLook
-		{
-			Border = "double", TopLeft = "❦", TopRight = "❦", BottomLeft = "❦", BottomRight = "❦",
-			TitleOpen = "╡ ❦ ", TitleClose = " ❦ ╞", Guide = "double", Bullet = "❦",
-			GaugeOpen = "❨", GaugeFilled = "◆", GaugeEmpty = "◇", GaugeClose = "❩", Separator = " ~ ", Rule = "═",
-		}),
 		Genre("fantasy", "#c9a227", ThemeHarmony.Analogous, new ThemeLook
 		{
 			Border = "double", TopLeft = "❖", TopRight = "❖", BottomLeft = "❖", BottomRight = "❖",

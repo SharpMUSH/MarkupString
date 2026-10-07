@@ -20,7 +20,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **The genre themes are told apart by their frames.** Each has corners and edges of its own: fantasy
   `❖` corners and fleurons round its titles, horror a cracked heavy line between daggers, mystery dashed
   lines with `◇` corners, science-fiction `▛▜▙▟` brackets, spiritual a dotted line between stars, and
-  so on. `adult` is now `passion` (still MSSP's Adult), in wine on double lines with `❦`.
+  so on.
+
+### Removed
+
+- **The `adult` genre theme.** `romance` serves MSSP's Adult as well.
 
 ### Fixed
 
