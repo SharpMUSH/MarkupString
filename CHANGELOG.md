@@ -6,6 +6,24 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- **Terminal features beyond colour.** `AnsiOutputOptions` describes one client: its colour depth,
+  its `TerminalFeatures`, and where pictures' pixels come from (`ITerminalPictureSource`).
+  `WithAnsiOutput(options)` builds its registry; the `(depth, hyperlinks)` overload is that with
+  `Hyperlinks` or `None`.
+  - `CommandLinks` writes a command link as an MSLP link (`ESC ] 68 ; 1 ; SEND ; …`), which a client
+    advertising MTTS's MSLP bit sends back when clicked. A command holding a control character is
+    written as its text.
+  - **Pictures in a figure's cells.** A `Figure` laid out under `LayoutContext.Pictures` reserves the
+    cells its picture takes (its art's, or `PictureCells` for one with none) and marks each row with
+    `PictureCellsMarkup`. In `MarkupFormat.Ansi` such a row is drawn as the picture for a client with
+    `KittyGraphics` (Unicode placeholders, the picture sent once per connection), `InlineImages`
+    (iTerm2), `Sixel`, or `BlockArt` (half blocks), and as the art otherwise. The rows are the same
+    width either way, so a box or a flex row around the figure stays aligned.
+
 ## 2.11.2 — 2026-10-07
 
 ### Fixed

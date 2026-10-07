@@ -82,6 +82,15 @@ public sealed record LayoutContext
 	/// <summary>Where text with no alignment of its own sits: a table column's, or one set with <see cref="BlockExtensions.Aligned"/>.</summary>
 	public Alignment TextAlignment { get; init; } = Alignment.Left;
 
+	/// <summary>
+	/// For a reader whose client draws pictures in its cells, the cells a picture would take at most
+	/// the given number of columns, or null for one it will not be drawing; null for a reader whose
+	/// client draws none. A <see cref="Figure"/> the answer is not null for reserves those cells, marked
+	/// with <see cref="PictureCellsMarkup"/>, and keeps its text art in them for a client the picture
+	/// does not reach after all.
+	/// </summary>
+	public Func<ImageMarkup, int, PictureCells?>? Pictures { get; init; }
+
 	/// <summary>Draws <paramref name="block"/> at <paramref name="width"/> cells, for this reader.</summary>
 	public void Draw(Block block, int width, IList<MarkupText> lines)
 	{
@@ -312,4 +321,27 @@ public sealed record LayoutTheme
 
 	/// <summary>The theme's piece, or the default's.</summary>
 	internal MarkupText Piece(Func<LayoutTheme, MarkupText?> piece) => piece(this) ?? piece(Defaults)!;
+}
+
+/// <summary>The cells a picture covers in a laid-out block.</summary>
+/// <param name="Columns">How many cells wide.</param>
+/// <param name="Rows">How many lines tall.</param>
+public readonly record struct PictureCells(int Columns, int Rows)
+{
+	/// <summary>
+	/// The cells a picture of <paramref name="width"/> by <paramref name="height"/> pixels takes when
+	/// drawn <paramref name="columns"/> cells wide, on a terminal whose cell is
+	/// <paramref name="cellWidth"/> by <paramref name="cellHeight"/> pixels: the rows that keep its shape,
+	/// at least one.
+	/// </summary>
+	public static PictureCells Fit(int width, int height, int columns, int cellWidth = 10, int cellHeight = 20)
+	{
+		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(width);
+		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(height);
+		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(columns);
+		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cellWidth);
+		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(cellHeight);
+		var rows = (int)Math.Round((double)height * columns * cellWidth / ((double)width * cellHeight), MidpointRounding.AwayFromZero);
+		return new PictureCells(columns, Math.Max(1, rows));
+	}
 }

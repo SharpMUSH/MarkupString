@@ -57,6 +57,38 @@ A client that cannot show every colour gets its own registry:
 `None` with no SGR. It covers `Ansi`, `Pueblo` and `Mxp`. Pass `hyperlinks: false` for a terminal that
 prints OSC 8 instead of reading it.
 
+### Terminal features: links and pictures
+
+`WithAnsiOutput(new AnsiOutputOptions(depth, features) { Pictures = source })` describes one client
+fully. `TerminalFeatures` says what its terminal reads beyond colour:
+
+| Feature | Written as |
+|---|---|
+| `Hyperlinks` | a URL link as OSC 8 (`ESC ] 8 ; ; url ST`) |
+| `CommandLinks` | a command link as MSLP (`ESC ] 68 ; 1 ; SEND ; command BEL`, then the underlined text) |
+| `KittyGraphics` | a picture through the Kitty graphics protocol, with Unicode placeholders |
+| `InlineImages` | a picture as an iTerm2 inline image (`ESC ] 1337 ; File=…`) |
+| `Sixel` | a picture as sixel graphics |
+| `BlockArt` | a picture as coloured `▀`/`▄` half blocks, plain text any UTF-8 colour terminal shows |
+
+Pictures are drawn into the cells a `Figure` reserves when it is laid out for such a reader
+(`LayoutContext.Pictures`, which answers the cells a picture takes). Each row is marked with
+`PictureCellsMarkup` over the figure's text art, so a box, a flex row or a table around it lines up
+whichever way it ends up drawn. The pixels come from the host's `ITerminalPictureSource`: this package
+neither fetches nor decodes a file. Without the pixels, or without the feature, the row is its art.
+
+- **Kitty** sends the picture once per connection (`a=T,U=1`, zlib-compressed RGBA in 4096-byte
+  chunks, `q=2` so nothing comes back as input) and writes each cell as `U+10EEEE` with row and column
+  diacritics, the image id as a truecolor foreground. Placeholders are text: they wrap, scroll and are
+  erased like it. `MarkTransmitted` is how the source says whether the terminal already has it.
+- **iTerm2 and sixel** are pixels over the screen. On the picture's first row the cursor makes room
+  below (`ESC D` per row), comes back up, and draws the picture between `ESC 7` and `ESC 8`; every row
+  then steps over its cells with `CSI n C`, so no text is written over it. Sixel is the cells' size in
+  pixels (`CellWidth` × `CellHeight`, 10 × 20 unless the host knows better).
+- **Half blocks** letterbox the picture into two pixels a cell, at the client's colour depth.
+
+None of these is sent on a guess: a MUD client that is not a terminal emulator may print them.
+
 ## Styling the HTML output
 
 The HTML-family emitters write `ms-*` classes for the attributes with a fixed rendering (bold,
