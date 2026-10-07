@@ -140,14 +140,18 @@ public sealed record ThemePalette
 		_ => 4.5,
 	};
 
-	/// <summary>The roles set whose contrast with the background is under <see cref="Required"/>.</summary>
+	/// <summary>
+	/// The roles set whose contrast with the background is under <see cref="Required"/>. A standard colour
+	/// alone, or a standard background, looks however the reader's client makes it, so it is not measured.
+	/// </summary>
 	public IReadOnlyList<ContrastShortfall> Check()
 	{
 		var background = BackgroundColor;
 		var shortfalls = new List<ContrastShortfall>();
+		if (this[ThemeRole.Background] is { Rgb: null }) return shortfalls;
 		foreach (var role in Enum.GetValues<ThemeRole>())
 		{
-			if (role == ThemeRole.Background || this[role] is not { } color) continue;
+			if (role == ThemeRole.Background || this[role] is not { Rgb: not null } color) continue;
 			var ratio = ColorMath.Contrast(color.Resolved, background);
 			if (ratio < Required(role)) shortfalls.Add(new ContrastShortfall(role, ratio, Required(role)));
 		}

@@ -94,6 +94,13 @@ public class ThemeTests
 	}
 
 	[Test]
+	public async Task Check_LeavesStandardColoursToTheClient()
+	{
+		await Assert.That(ThemePalette.Terminal.Check()).IsEmpty();
+		await Assert.That(ThemePalette.Preset("nord")!.Check().Select(shortfall => shortfall.Role)).Contains(ThemeRole.Muted);
+	}
+
+	[Test]
 	public async Task Base16_MapsByItsOwnGuide()
 	{
 		var nord = ThemePalette.Preset("NORD")!;
