@@ -408,6 +408,9 @@ public class TerminalFeatureTests
 		await Assert.That(sequences[0]).Contains($"size={gif.Length};");
 		await Assert.That(GifReader.Read(gif).Frames.Count).IsEqualTo(4);
 
+		// A limit too small to hold a part's own framing is no reason to fail: the picture is sent still.
+		await Assert.That(Render(TerminalProfile.ITerm2 with { InlineImageLimit = 10 })).DoesNotContain("MultipartFile");
+
 		var still = Render(TerminalProfile.ITerm2 with { MultipartInlineImages = false });
 		await Assert.That(still).DoesNotContain("MultipartFile");
 		var png = Convert.FromBase64String(Regex.Match(still, ":([A-Za-z0-9+/=]+)\u0007").Groups[1].Value);

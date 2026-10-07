@@ -305,6 +305,7 @@ internal static class TerminalPictureWriter
 
 		// Each part is its own sequence, under the limit too; base64 in whole quanta of four.
 		var part = (key.Limit - 32) / 4 * 4;
+		if (part <= 0) return null;
 		var text = new StringBuilder(payload.Length + payload.Length / part * 32 + 128);
 		text.Append(Esc).Append("]1337;MultipartFile=").Append(arguments).Append('\a');
 		for (var offset = 0; offset < payload.Length; offset += part)
