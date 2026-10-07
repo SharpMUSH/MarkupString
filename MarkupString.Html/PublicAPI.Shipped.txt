@@ -1,4 +1,5 @@
 #nullable enable
+MarkupString.Html.BlockHtmlRenderer<T>
 MarkupString.Html.HtmlAttribute
 MarkupString.Html.HtmlAttribute.Deconstruct(out string! Name, out string! Value) -> void
 MarkupString.Html.HtmlAttribute.Equals(MarkupString.Html.HtmlAttribute other) -> bool
@@ -11,6 +12,18 @@ MarkupString.Html.HtmlAttribute.Value.init -> void
 MarkupString.Html.HtmlAttributeViolation
 MarkupString.Html.HtmlAttributeViolation.DropAllAttributes = 1 -> MarkupString.Html.HtmlAttributeViolation
 MarkupString.Html.HtmlAttributeViolation.DropAttribute = 0 -> MarkupString.Html.HtmlAttributeViolation
+MarkupString.Html.HtmlLayoutWriter
+MarkupString.Html.HtmlLayoutWriter.AllowsImage(string! source) -> bool
+MarkupString.Html.HtmlLayoutWriter.AsText(MarkupString.Layout.Block! block) -> void
+MarkupString.Html.HtmlLayoutWriter.Attribute(string! value) -> void
+MarkupString.Html.HtmlLayoutWriter.Block(MarkupString.Layout.Block! block) -> void
+MarkupString.Html.HtmlLayoutWriter.Block(MarkupString.Layout.Block! block, MarkupString.Layout.LayoutContext! context) -> void
+MarkupString.Html.HtmlLayoutWriter.Context.get -> MarkupString.Layout.LayoutContext!
+MarkupString.Html.HtmlLayoutWriter.Encode(string! text) -> void
+MarkupString.Html.HtmlLayoutWriter.Registry.get -> MarkupString.MarkupRegistry!
+MarkupString.Html.HtmlLayoutWriter.Text(MarkupString.MarkupText! text) -> void
+MarkupString.Html.HtmlLayoutWriter.Width.get -> int
+MarkupString.Html.HtmlLayoutWriter.Write(string! html) -> void
 MarkupString.Html.HtmlMarkup
 MarkupString.Html.HtmlMarkup.<Clone>$() -> MarkupString.Html.HtmlMarkup!
 MarkupString.Html.HtmlMarkup.Attributes.get -> string?
@@ -49,6 +62,7 @@ MarkupString.Html.HtmlTagPolicy.OnViolation.init -> void
 MarkupString.Html.HtmlTagPolicy.TryCreate(string! tagName, string? attributes, out MarkupString.Html.HtmlMarkup? markup) -> bool
 MarkupString.Html.HtmlTagPolicy.UrlAttributes.get -> System.Collections.Generic.IReadOnlySet<string!>!
 MarkupString.Html.HtmlTagPolicy.UrlAttributes.init -> void
+MarkupString.Html.LayoutCss
 override MarkupString.Html.HtmlAttribute.GetHashCode() -> int
 override MarkupString.Html.HtmlAttribute.ToString() -> string!
 override MarkupString.Html.HtmlMarkup.Equals(object? obj) -> bool
@@ -66,10 +80,14 @@ static MarkupString.Html.HtmlMarkup.Tag(string! tagName, params System.ReadOnlyS
 static MarkupString.Html.HtmlMarkup.TryParseAttributes(string? attributes, out System.Collections.Generic.IReadOnlyList<MarkupString.Html.HtmlAttribute>! parsed) -> bool
 static MarkupString.Html.HtmlMarkup.operator !=(MarkupString.Html.HtmlMarkup? left, MarkupString.Html.HtmlMarkup? right) -> bool
 static MarkupString.Html.HtmlMarkup.operator ==(MarkupString.Html.HtmlMarkup? left, MarkupString.Html.HtmlMarkup? right) -> bool
+static MarkupString.Html.HtmlRegistration.WithBlockHtml<T>(this MarkupString.MarkupRegistry! registry, MarkupString.Html.BlockHtmlRenderer<T!>! renderer) -> MarkupString.MarkupRegistry!
 static MarkupString.Html.HtmlRegistration.WithHtml(this MarkupString.MarkupRegistry! registry) -> MarkupString.MarkupRegistry!
 static MarkupString.Html.HtmlRegistration.WithHtml(this MarkupString.MarkupRegistry! registry, MarkupString.Html.HtmlTagPolicy! htmlPolicy) -> MarkupString.MarkupRegistry!
+static MarkupString.Html.HtmlRegistration.WithLayoutImages(this MarkupString.MarkupRegistry! registry, System.Func<string!, bool>! allowImage) -> MarkupString.MarkupRegistry!
 static MarkupString.Html.HtmlTagPolicy.AddressAttributes.get -> System.Collections.Generic.IReadOnlySet<string!>!
 static MarkupString.Html.HtmlTagPolicy.WellFormed.get -> MarkupString.Html.HtmlTagPolicy!
 static MarkupString.Html.HtmlTagPolicy.operator !=(MarkupString.Html.HtmlTagPolicy? left, MarkupString.Html.HtmlTagPolicy? right) -> bool
 static MarkupString.Html.HtmlTagPolicy.operator ==(MarkupString.Html.HtmlTagPolicy? left, MarkupString.Html.HtmlTagPolicy? right) -> bool
+static readonly MarkupString.Html.LayoutCss.Fixed -> string!
+virtual MarkupString.Html.BlockHtmlRenderer<T>.Invoke(T! block, MarkupString.Html.HtmlLayoutWriter! html) -> void
 ~override MarkupString.Html.HtmlAttribute.Equals(object obj) -> bool

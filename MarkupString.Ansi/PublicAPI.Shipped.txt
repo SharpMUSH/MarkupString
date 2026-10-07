@@ -4,6 +4,7 @@ MarkupString.Ansi.AnsiBBCodeEmitter.AnsiBBCodeEmitter() -> void
 MarkupString.Ansi.AnsiBBCodeEmitter.Format.get -> MarkupString.MarkupFormat!
 MarkupString.Ansi.AnsiBBCodeEmitter.TryEmit(MarkupString.MarkupSet! set, System.ReadOnlySpan<char> body, in MarkupString.EmitContext context, System.Buffers.IBufferWriter<char>! output) -> bool
 MarkupString.Ansi.AnsiCodeParser
+MarkupString.Ansi.AnsiCodeWriter
 MarkupString.Ansi.AnsiColor
 MarkupString.Ansi.AnsiColor.AnsiColor(MarkupString.Ansi.AnsiColor! original) -> void
 MarkupString.Ansi.AnsiColor.Default
@@ -35,6 +36,12 @@ MarkupString.Ansi.AnsiColor.Xterm.Equals(MarkupString.Ansi.AnsiColor.Xterm? othe
 MarkupString.Ansi.AnsiColor.Xterm.Index.get -> byte
 MarkupString.Ansi.AnsiColor.Xterm.Index.init -> void
 MarkupString.Ansi.AnsiColor.Xterm.Xterm(byte Index) -> void
+MarkupString.Ansi.AnsiColorDepth
+MarkupString.Ansi.AnsiColorDepth.Attributes = 3 -> MarkupString.Ansi.AnsiColorDepth
+MarkupString.Ansi.AnsiColorDepth.None = 4 -> MarkupString.Ansi.AnsiColorDepth
+MarkupString.Ansi.AnsiColorDepth.Standard = 2 -> MarkupString.Ansi.AnsiColorDepth
+MarkupString.Ansi.AnsiColorDepth.TrueColor = 0 -> MarkupString.Ansi.AnsiColorDepth
+MarkupString.Ansi.AnsiColorDepth.Xterm256 = 1 -> MarkupString.Ansi.AnsiColorDepth
 MarkupString.Ansi.AnsiCss
 MarkupString.Ansi.AnsiEscapeParser
 MarkupString.Ansi.AnsiHtmlEmitter
@@ -44,11 +51,14 @@ MarkupString.Ansi.AnsiHtmlEmitter.TryEmit(MarkupString.MarkupSet! set, System.Re
 MarkupString.Ansi.AnsiMarkup
 MarkupString.Ansi.AnsiMarkup.<Clone>$() -> MarkupString.Ansi.AnsiMarkup!
 MarkupString.Ansi.AnsiMarkup.AnsiMarkup(MarkupString.Ansi.AnsiStyle Style) -> void
+MarkupString.Ansi.AnsiMarkup.Background.get -> MarkupString.RgbColor?
 MarkupString.Ansi.AnsiMarkup.Deconstruct(out MarkupString.Ansi.AnsiStyle Style) -> void
 MarkupString.Ansi.AnsiMarkup.Equals(MarkupString.Ansi.AnsiMarkup? other) -> bool
+MarkupString.Ansi.AnsiMarkup.Foreground.get -> MarkupString.RgbColor?
 MarkupString.Ansi.AnsiMarkup.Style.get -> MarkupString.Ansi.AnsiStyle
 MarkupString.Ansi.AnsiMarkup.Style.init -> void
 MarkupString.Ansi.AnsiMarkup.TryGetAnsiStyle(MarkupString.MarkupFormat! format, out MarkupString.Ansi.AnsiStyle style) -> bool
+MarkupString.Ansi.AnsiMarkup.WithForeground(MarkupString.RgbColor color) -> MarkupString.IColorMarkup!
 MarkupString.Ansi.AnsiMarkupCodec
 MarkupString.Ansi.AnsiMarkupCodec.AnsiMarkupCodec() -> void
 MarkupString.Ansi.AnsiMarkupCodec.Kind.get -> string!
@@ -57,26 +67,34 @@ MarkupString.Ansi.AnsiMarkupCodec.Read(System.Text.Json.JsonElement element) -> 
 MarkupString.Ansi.AnsiMarkupCodec.Write(System.Text.Json.Utf8JsonWriter! writer, MarkupString.IMarkup! markup) -> void
 MarkupString.Ansi.AnsiMxpEmitter
 MarkupString.Ansi.AnsiMxpEmitter.AnsiMxpEmitter() -> void
+MarkupString.Ansi.AnsiMxpEmitter.AnsiMxpEmitter(MarkupString.Ansi.AnsiColorDepth colorDepth) -> void
 MarkupString.Ansi.AnsiMxpEmitter.Format.get -> MarkupString.MarkupFormat!
 MarkupString.Ansi.AnsiMxpEmitter.TryEmit(MarkupString.MarkupSet! set, System.ReadOnlySpan<char> body, in MarkupString.EmitContext context, System.Buffers.IBufferWriter<char>! output) -> bool
 MarkupString.Ansi.AnsiPalette
 MarkupString.Ansi.AnsiPuebloEmitter
 MarkupString.Ansi.AnsiPuebloEmitter.AnsiPuebloEmitter() -> void
+MarkupString.Ansi.AnsiPuebloEmitter.AnsiPuebloEmitter(MarkupString.Ansi.AnsiColorDepth colorDepth) -> void
 MarkupString.Ansi.AnsiPuebloEmitter.Format.get -> MarkupString.MarkupFormat!
 MarkupString.Ansi.AnsiPuebloEmitter.TryEmit(MarkupString.MarkupSet! set, System.ReadOnlySpan<char> body, in MarkupString.EmitContext context, System.Buffers.IBufferWriter<char>! output) -> bool
 MarkupString.Ansi.AnsiRegistration
 MarkupString.Ansi.AnsiSetEmitter
 MarkupString.Ansi.AnsiSetEmitter.AnsiSetEmitter() -> void
+MarkupString.Ansi.AnsiSetEmitter.AnsiSetEmitter(MarkupString.Ansi.AnsiColorDepth colorDepth, bool hyperlinks) -> void
 MarkupString.Ansi.AnsiSetEmitter.Format.get -> MarkupString.MarkupFormat!
 MarkupString.Ansi.AnsiSetEmitter.TryEmit(MarkupString.MarkupSet! set, System.ReadOnlySpan<char> body, in MarkupString.EmitContext context, System.Buffers.IBufferWriter<char>! output) -> bool
 MarkupString.Ansi.AnsiStyle
 MarkupString.Ansi.AnsiStyle.AnsiStyle() -> void
+MarkupString.Ansi.AnsiStyle.AtDepth(MarkupString.Ansi.AnsiColorDepth depth) -> MarkupString.Ansi.AnsiStyle
 MarkupString.Ansi.AnsiStyle.Background.get -> MarkupString.Ansi.AnsiColor?
 MarkupString.Ansi.AnsiStyle.Background.init -> void
 MarkupString.Ansi.AnsiStyle.Blink.get -> bool
 MarkupString.Ansi.AnsiStyle.Blink.init -> void
+MarkupString.Ansi.AnsiStyle.BlinkOff.get -> bool
+MarkupString.Ansi.AnsiStyle.BlinkOff.init -> void
 MarkupString.Ansi.AnsiStyle.Bold.get -> bool
 MarkupString.Ansi.AnsiStyle.Bold.init -> void
+MarkupString.Ansi.AnsiStyle.BoldOff.get -> bool
+MarkupString.Ansi.AnsiStyle.BoldOff.init -> void
 MarkupString.Ansi.AnsiStyle.Clear.get -> bool
 MarkupString.Ansi.AnsiStyle.Clear.init -> void
 MarkupString.Ansi.AnsiStyle.Combine(MarkupString.Ansi.AnsiStyle inner) -> MarkupString.Ansi.AnsiStyle
@@ -88,6 +106,8 @@ MarkupString.Ansi.AnsiStyle.Foreground.init -> void
 MarkupString.Ansi.AnsiStyle.HasAnyAttribute.get -> bool
 MarkupString.Ansi.AnsiStyle.Inverted.get -> bool
 MarkupString.Ansi.AnsiStyle.Inverted.init -> void
+MarkupString.Ansi.AnsiStyle.InvertedOff.get -> bool
+MarkupString.Ansi.AnsiStyle.InvertedOff.init -> void
 MarkupString.Ansi.AnsiStyle.IsNone.get -> bool
 MarkupString.Ansi.AnsiStyle.Italic.get -> bool
 MarkupString.Ansi.AnsiStyle.Italic.init -> void
@@ -99,10 +119,15 @@ MarkupString.Ansi.AnsiStyle.LinkUrl.get -> string?
 MarkupString.Ansi.AnsiStyle.LinkUrl.init -> void
 MarkupString.Ansi.AnsiStyle.Overlined.get -> bool
 MarkupString.Ansi.AnsiStyle.Overlined.init -> void
+MarkupString.Ansi.AnsiStyle.StandardForeground.get -> MarkupString.Ansi.AnsiColor?
+MarkupString.Ansi.AnsiStyle.StandardForeground.init -> void
 MarkupString.Ansi.AnsiStyle.StrikeThrough.get -> bool
 MarkupString.Ansi.AnsiStyle.StrikeThrough.init -> void
 MarkupString.Ansi.AnsiStyle.Underlined.get -> bool
 MarkupString.Ansi.AnsiStyle.Underlined.init -> void
+MarkupString.Ansi.AnsiStyle.UnderlinedOff.get -> bool
+MarkupString.Ansi.AnsiStyle.UnderlinedOff.init -> void
+MarkupString.Ansi.AnsiTheme
 MarkupString.Ansi.BellEmitter
 MarkupString.Ansi.BellEmitter.BellEmitter(MarkupString.MarkupFormat! format) -> void
 MarkupString.Ansi.BellEmitter.Emit(MarkupString.IMarkup! markup, System.ReadOnlySpan<char> body, in MarkupString.EmitContext context, System.Buffers.IBufferWriter<char>! output) -> void
@@ -151,6 +176,9 @@ override sealed MarkupString.Ansi.AnsiColor.Rgb.Equals(MarkupString.Ansi.AnsiCol
 override sealed MarkupString.Ansi.AnsiColor.Standard.Equals(MarkupString.Ansi.AnsiColor? other) -> bool
 override sealed MarkupString.Ansi.AnsiColor.Xterm.Equals(MarkupString.Ansi.AnsiColor? other) -> bool
 static MarkupString.Ansi.AnsiCodeParser.Parse(string! codes) -> MarkupString.Ansi.AnsiMarkup!
+static MarkupString.Ansi.AnsiCodeParser.Parse(string! codes, System.Func<string!, MarkupString.Ansi.AnsiColor?>! namedColor) -> MarkupString.Ansi.AnsiMarkup!
+static MarkupString.Ansi.AnsiCodeWriter.Write(in MarkupString.Ansi.AnsiStyle style) -> string!
+static MarkupString.Ansi.AnsiCodeWriter.WriteColor(MarkupString.Ansi.AnsiColor? color, bool background) -> string!
 static MarkupString.Ansi.AnsiColor.Default.operator !=(MarkupString.Ansi.AnsiColor.Default? left, MarkupString.Ansi.AnsiColor.Default? right) -> bool
 static MarkupString.Ansi.AnsiColor.Default.operator ==(MarkupString.Ansi.AnsiColor.Default? left, MarkupString.Ansi.AnsiColor.Default? right) -> bool
 static MarkupString.Ansi.AnsiColor.NearestStandard(MarkupString.Ansi.AnsiColor.Rgb! color) -> MarkupString.Ansi.AnsiColor.Standard!
@@ -172,8 +200,11 @@ static MarkupString.Ansi.AnsiMarkup.operator ==(MarkupString.Ansi.AnsiMarkup? le
 static MarkupString.Ansi.AnsiPalette.Standard(byte index, bool bright) -> MarkupString.Ansi.AnsiColor.Rgb!
 static MarkupString.Ansi.AnsiPalette.Xterm(byte index) -> MarkupString.Ansi.AnsiColor.Rgb!
 static MarkupString.Ansi.AnsiRegistration.WithAnsi(this MarkupString.MarkupRegistry! registry) -> MarkupString.MarkupRegistry!
+static MarkupString.Ansi.AnsiRegistration.WithAnsiOutput(this MarkupString.MarkupRegistry! registry, MarkupString.Ansi.AnsiColorDepth colorDepth, bool hyperlinks = true) -> MarkupString.MarkupRegistry!
 static MarkupString.Ansi.AnsiStyle.operator !=(MarkupString.Ansi.AnsiStyle left, MarkupString.Ansi.AnsiStyle right) -> bool
 static MarkupString.Ansi.AnsiStyle.operator ==(MarkupString.Ansi.AnsiStyle left, MarkupString.Ansi.AnsiStyle right) -> bool
+static MarkupString.Ansi.AnsiTheme.Paint(MarkupString.ThemeColor color, MarkupString.ThemePaint paint = MarkupString.ThemePaint.Text) -> MarkupString.Ansi.AnsiMarkup!
+static MarkupString.Ansi.AnsiTheme.ToLayoutTheme(this MarkupString.ThemePalette! palette) -> MarkupString.Layout.LayoutTheme!
 static MarkupString.Ansi.SgrWriter.Reset(System.Buffers.IBufferWriter<char>! output) -> void
 static MarkupString.Ansi.SgrWriter.Transition(in MarkupString.Ansi.AnsiStyle from, in MarkupString.Ansi.AnsiStyle to, System.Buffers.IBufferWriter<char>! output) -> bool
 static MarkupString.Ansi.SgrWriter.WriteColorCodes(MarkupString.Ansi.AnsiColor! color, bool background, ref MarkupString.Ansi.SgrBuilder codes) -> void
