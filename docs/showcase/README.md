@@ -1,6 +1,6 @@
 # README showcase captures
 
-The two README screenshots are generated from MarkupString values rather than recreated by hand.
+The README screenshots are generated from MarkupString values rather than recreated by hand.
 The checked-in captures use this supported Linux x64 environment:
 
 - the .NET SDK selected by the repository's `global.json`;
@@ -23,7 +23,9 @@ present. After restoring the repository once, run from its root:
 docs/showcase/capture.sh
 ```
 
-Each page places the same value's ANSI rendering beside its semantic HTML rendering. The ANSI side
-is parsed back only to make its terminal styling visible in the browser capture; its text and SGR
-styling come from `Render(MarkupFormat.Ansi)`. The capture script applies rounded alpha masks and
-transparent padding so the dark cards sit cleanly on both GitHub README themes.
+The format pages place the same value's ANSI rendering beside its semantic HTML rendering. The
+theme page places the same layout under a preset and a generated palette. ANSI is parsed back only
+to make its terminal styling visible in the browser capture; its text and SGR styling come from
+`Render(MarkupFormat.Ansi)`. The capture script applies rounded alpha masks and transparent padding
+so the dark cards sit cleanly on both GitHub README themes, and omits volatile PNG timestamps so a
+repeat capture is byte-for-byte identical.

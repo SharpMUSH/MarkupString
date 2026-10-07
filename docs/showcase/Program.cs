@@ -74,6 +74,31 @@ WritePage(
 		figureValue,
 		registry);
 
+var character = new Stack(
+[
+		new Fields(
+		[
+				new Field(P("Name"), P("Lyra Vale")),
+				new Field(P("Role"), P("Wayfinder")),
+				new Field(P("Region"), P("Glasswood")),
+				new Field(P("Status"), P("Ready")),
+		]) { Columns = 2, Gap = 3, Leader = P("·") },
+		new Rule(P("CURRENT QUEST")),
+		new Gauge(7, 10) { Label = P("Trail"), Show = GaugeShow.Percent },
+		new Bullets([P("Map the moonwell"), P("Return before dawn")]),
+]).Bordered(P("WAYFINDER'S JOURNAL"));
+
+var fantasy = BlockLayout.Build(character.Themed(ThemePalette.Preset("fantasy")!.ToLayoutTheme()), 46);
+var generatedPalette = ThemePalette.Generate(new RgbColor(34, 211, 238), ThemeHarmony.Triadic, contrast: 0.35);
+var generated = BlockLayout.Build(character.Themed(generatedPalette.ToLayoutTheme()), 46);
+WriteThemePage(
+		Path.Combine(output, "theming.html"),
+		"One layout, a whole new world",
+		"Presets and generated palettes recolour every semantic part — and can change the shapes too.",
+		fantasy,
+		generated,
+		registry);
+
 static MarkupText P(string text) => MarkupText.Plain(text);
 
 static void WritePage(string path, string title, string subtitle, MarkupText value, MarkupRegistry registry)
@@ -81,7 +106,45 @@ static void WritePage(string path, string title, string subtitle, MarkupText val
 	var ansi = value.Render(MarkupFormat.Ansi, registry);
 	var ansiForBrowser = AnsiEscapeParser.Parse(ansi).Render(MarkupFormat.Html, registry);
 	var html = value.Render(MarkupFormat.Html, registry);
-	var escapedAnsi = WebUtility.HtmlEncode(ansi.Replace("\u001b", "\\e", StringComparison.Ordinal));
+	WriteComparisonPage(
+			path, title, subtitle, "MarkupText <span>→</span> renderer <span>→</span> native output",
+			"ANSI terminal", "SGR + cells", "terminal", ansiForBrowser,
+			"HTML browser", "semantic elements", "browser", html);
+}
+
+static void WriteThemePage(
+	string path,
+	string title,
+	string subtitle,
+	MarkupText preset,
+	MarkupText generated,
+	MarkupRegistry registry)
+{
+	var presetHtml = AnsiEscapeParser.Parse(preset.Render(MarkupFormat.Ansi, registry)).Render(MarkupFormat.Html, registry);
+	var generatedHtml = AnsiEscapeParser.Parse(generated.Render(MarkupFormat.Ansi, registry)).Render(MarkupFormat.Html, registry);
+	WriteComparisonPage(
+			path, title, subtitle, "layout <span>→</span> palette <span>→</span> themed output",
+			"Fantasy preset", "colours + glyphs", "terminal", presetHtml,
+			"Generated palette", "triadic harmony", "terminal", generatedHtml);
+}
+
+static void WriteComparisonPage(
+	string path,
+	string title,
+	string subtitle,
+	string flowHtml,
+	string leftLabel,
+	string leftNative,
+	string leftClass,
+	string leftContent,
+	string rightLabel,
+	string rightNative,
+	string rightClass,
+	string rightContent)
+{
+	static string PanelBody(string cssClass, string content) => cssClass == "terminal"
+			? "<pre class=\"terminal\">" + content + "</pre>"
+			: "<div class=\"browser\">" + content + "</div>";
 
 	File.WriteAllText(path, $$"""
 <!doctype html>
@@ -117,26 +180,24 @@ h1 { margin: 0 0 7px; color: #f8fafc; font-size: 30px; letter-spacing: -0.035em;
 .browser .ms-figure-image { max-width: 220px; margin: 0 20px 14px 0; filter: drop-shadow(0 10px 20px rgba(0, 0, 0, .35)); }
 .browser .ms-figure { font-family: "DejaVu Sans", sans-serif; }
 .browser .ms-text { line-height: 1.65; }
-.source { display: none; }
 </style>
 </head>
 <body>
 <main>
   <header>
     <div><h1>{{WebUtility.HtmlEncode(title)}}</h1><p class="subtitle">{{WebUtility.HtmlEncode(subtitle)}}</p></div>
-    <div class="flow">MarkupText <span>→</span> renderer <span>→</span> native output</div>
+    <div class="flow">{{flowHtml}}</div>
   </header>
   <section class="comparison">
     <article class="panel">
-      <div class="panel-head"><i class="dot"></i><span class="label">ANSI terminal</span><span class="native">SGR + cells</span></div>
-      <pre class="terminal">{{ansiForBrowser}}</pre>
+      <div class="panel-head"><i class="dot"></i><span class="label">{{WebUtility.HtmlEncode(leftLabel)}}</span><span class="native">{{WebUtility.HtmlEncode(leftNative)}}</span></div>
+      {{PanelBody(leftClass, leftContent)}}
     </article>
     <article class="panel">
-      <div class="panel-head"><i class="dot"></i><span class="label">HTML browser</span><span class="native">semantic elements</span></div>
-      <div class="browser">{{html}}</div>
+      <div class="panel-head"><i class="dot"></i><span class="label">{{WebUtility.HtmlEncode(rightLabel)}}</span><span class="native">{{WebUtility.HtmlEncode(rightNative)}}</span></div>
+      {{PanelBody(rightClass, rightContent)}}
     </article>
   </section>
-  <pre class="source">{{escapedAnsi}}</pre>
 </main>
 </body>
 </html>
