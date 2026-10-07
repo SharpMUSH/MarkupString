@@ -58,8 +58,10 @@ capture() {
         "$raw"
 
     magick composite -compose CopyOpacity "$mask" "$raw" "$clipped"
-    magick "$clipped" -bordercolor none -border 18 "$asset_dir/$asset"
+    magick "$clipped" -bordercolor none -border 18 \
+        -define png:exclude-chunk=date,time "$asset_dir/$asset"
 }
 
 capture box-drawing.html showcase-box-drawing.png
 capture image-drawing.html showcase-image-drawing.png
+capture theming.html showcase-theming.png

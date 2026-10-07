@@ -22,6 +22,7 @@
   <a href="#quick-start">Quick start</a> ·
   <a href="#packages">Packages</a> ·
   <a href="#unicode-aware-layout">Layout</a> ·
+  <a href="#theme-a-whole-layout">Theming</a> ·
   <a href="#documentation">Documentation</a> ·
   <a href="#contributing">Contributing</a>
 </p>
@@ -61,6 +62,43 @@ A `Figure` sends text art and flowing copy to a terminal, then becomes a real im
 and naturally flowing content in HTML.
 
 ![The same MarkupString figure rendered as ANSI terminal art and an HTML image](docs/assets/showcase-image-drawing.png)
+
+## Theme a whole layout
+
+A theme changes semantic parts together: borders, titles, labels, bullets, guides, gauges, table
+headings, and striped rows. Presets can change the drawing characters too; generated palettes build
+accessible colour roles from a single seed.
+
+```csharp
+var registry = MarkupRegistry.Empty.WithAnsi().WithHtml();
+
+var sheet = new Stack(
+[
+    new Fields(
+    [
+        new Field(MarkupText.Plain("Name"), MarkupText.Plain("Lyra Vale")),
+        new Field(MarkupText.Plain("Role"), MarkupText.Plain("Wayfinder")),
+    ]),
+    new Gauge(7, 10) { Label = MarkupText.Plain("Trail") },
+]).Bordered(MarkupText.Plain("WAYFINDER'S JOURNAL"));
+
+var fantasy = sheet.Themed(ThemePalette.Preset("fantasy")!.ToLayoutTheme());
+var housePalette = ThemePalette.Generate(
+    new RgbColor(34, 211, 238),
+    ThemeHarmony.Triadic,
+    contrast: 0.35);
+var house = sheet.Themed(housePalette.ToLayoutTheme());
+
+var value = BlockLayout.Build(house, width: 46);
+var ansi = value.Render(MarkupFormat.Ansi, registry);
+var html = value.Render(MarkupFormat.Html, registry);
+```
+
+![The same MarkupString layout rendered with a fantasy preset and a generated triadic palette](docs/assets/showcase-theming.png)
+
+Use `.Themed(...)` to override the surrounding theme, or `.ThemedUnder(...)` to provide defaults
+that a reader's theme can replace. See [themes and palettes](docs/layout.md#themes-and-palettes) for
+the built-in presets, light and dark modes, custom glyphs, base16 schemes, JSON, and contrast checks.
 
 ## Why MarkupString?
 
