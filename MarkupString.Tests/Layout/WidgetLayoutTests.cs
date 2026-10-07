@@ -238,9 +238,13 @@ public class WidgetLayoutTests
 	{
 		var html = BlockLayout.Build(Growing(1, 3), 60).Render(MarkupFormat.Html, Registry);
 
-		await Assert.That(html).Contains("<table class=\"ms-table ms-fill\"><thead><tr><th scope=\"col\" style=\"width:25%\">Name</th><th scope=\"col\" class=\"ms-p2 ms-nowrap\" style=\"text-align:right\">Idle</th><th scope=\"col\" class=\"ms-p3\" style=\"width:75%\">Doing</th>");
-		await Assert.That(html).Contains("<td><div class=\"ms-text\">Mannaz</div></td>").Because("the share is on the heading alone");
+		// Drawn as text at 60 the columns are 11, 4 and 41 cells; the page gets them as shares of 56.
+		await Assert.That(html).Contains("<table class=\"ms-table ms-fill\"><colgroup><col style=\"width:20%\"><col style=\"width:7%\"><col style=\"width:73%\"></colgroup><thead><tr><th scope=\"col\">Name</th><th scope=\"col\" class=\"ms-p2 ms-nowrap\" style=\"text-align:right\">Idle</th><th scope=\"col\" class=\"ms-p3\">Doing</th>");
+		await Assert.That(BlockLayout.Build(Who(), 60).Render(MarkupFormat.Html, Registry)).DoesNotContain("<colgroup>")
+			.Because("a table that does not fill is as wide as its cells");
 		await Assert.That(LayoutCss.Fixed).Contains(".ms-table.ms-fill { width: 100%; }");
+		await Assert.That(LayoutCss.Fixed).Contains(".ms-table.ms-fill > colgroup > col { width: auto !important; }")
+			.Because("on a page narrow enough to hide columns, their shares are given up");
 	}
 
 	[Test]

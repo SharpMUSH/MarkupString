@@ -948,3 +948,4 @@ MarkupString.ThemePalette.Seed.get -> MarkupString.RgbColor?
 MarkupString.ThemePalette.Seed.init -> void
 MarkupString.Layout.TableColumn.Grow.get -> int
 MarkupString.Layout.TableColumn.Grow.init -> void
+MarkupString.Layout.Table.ColumnWidths(MarkupString.Layout.LayoutContext! context, int width) -> System.Collections.Immutable.ImmutableArray<int>

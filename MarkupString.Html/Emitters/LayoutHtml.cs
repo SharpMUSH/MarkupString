@@ -412,16 +412,17 @@ internal static class LayoutHtml
 	private static void Table(Table table, HtmlLayoutWriter html)
 	{
 		var columns = table.Columns.IsDefault ? [] : table.Columns;
-		var shares = columns.Sum(column => column.Grow);
+		var fills = columns.Any(column => column.Grow > 0);
 		html.Write("<div class=\"ms-table-wrap\"><table class=\"ms-table");
 		if (table.Striped) html.Write(" ms-striped");
-		if (shares > 0) html.Write(" ms-fill");
-		html.Write("\"><thead><tr>");
+		if (fills) html.Write(" ms-fill");
+		html.Write("\">");
+		if (fills) Proportions(table.ColumnWidths(html.Context, html.Width), html);
+		html.Write("<thead><tr>");
 		foreach (var column in columns)
 		{
 			html.Write("<th scope=\"col\"");
-			// A filling table is the page's width; the growing headings take what the others leave, by share.
-			Cell(column, html, shares > 0 && column.Grow > 0 ? column.Grow * 100 / shares : 0);
+			Cell(column, html);
 			html.Write(">");
 			html.Text(column.Header);
 			html.Write("</th>");
@@ -433,7 +434,7 @@ internal static class LayoutHtml
 			for (var c = 0; c < columns.Length; c++)
 			{
 				html.Write("<td");
-				Cell(columns[c], html, 0);
+				Cell(columns[c], html);
 				html.Write(">");
 				if (!row.IsDefault && c < row.Length) html.Block(row[c]);
 				html.Write("</td>");
@@ -445,10 +446,9 @@ internal static class LayoutHtml
 
 	/// <summary>
 	/// A cell's alignment and its classes: <c>ms-p2</c>/<c>ms-p3</c> for a column that may be left out on
-	/// a narrow page, <c>ms-nowrap</c> for one whose cells stay on one line; on a heading, the
-	/// <paramref name="percent"/> of a filling table's width its column grows into.
+	/// a narrow page, <c>ms-nowrap</c> for one whose cells stay on one line.
 	/// </summary>
-	private static void Cell(TableColumn column, HtmlLayoutWriter html, int percent)
+	private static void Cell(TableColumn column, HtmlLayoutWriter html)
 	{
 		if (column.Priority >= 2 || !column.Wrap)
 		{
@@ -462,22 +462,38 @@ internal static class LayoutHtml
 			if (!column.Wrap) html.Write("ms-nowrap");
 			html.Write("\"");
 		}
-		var aligned = column.Alignment is Alignment.Right or Alignment.Center;
-		if (!aligned && percent == 0) return;
-		html.Write(" style=\"");
-		if (aligned)
+		if (column.Alignment is Alignment.Right or Alignment.Center)
 		{
-			html.Write("text-align:");
+			html.Write(" style=\"text-align:");
 			html.Write(column.Alignment == Alignment.Right ? "right" : "center");
+			html.Write("\"");
 		}
-		if (percent > 0)
+	}
+
+	/// <summary>
+	/// A filling table's columns as shares of the page's width, in the proportions the text layout
+	/// draws them at, so the growing columns take the room and the rest keep theirs; a narrower page
+	/// squeezes them all alike. A column the text layout leaves out, or a table it draws as cards,
+	/// gets no share. Where a narrow page hides the less important columns, <see cref="LayoutCss"/> lets
+	/// the rest share the width as the browser sees fit, so a hidden column's share is not left empty.
+	/// </summary>
+	private static void Proportions(ImmutableArray<int> widths, HtmlLayoutWriter html)
+	{
+		var total = widths.Sum();
+		if (total == 0) return;
+		html.Write("<colgroup>");
+		foreach (var width in widths)
 		{
-			if (aligned) html.Write(";");
-			html.Write("width:");
-			html.Write(Number(percent));
-			html.Write("%");
+			if (width == 0)
+			{
+				html.Write("<col>");
+				continue;
+			}
+			html.Write("<col style=\"width:");
+			html.Write(Number((int)Math.Round(width * 100.0 / total)));
+			html.Write("%\">");
 		}
-		html.Write("\"");
+		html.Write("</colgroup>");
 	}
 
 	/// <summary>

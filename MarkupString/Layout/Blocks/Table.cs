@@ -95,6 +95,18 @@ public sealed record Table(ImmutableArray<TableColumn> Columns, ImmutableArray<I
 	}
 
 	/// <summary>
+	/// The width each column is drawn at in <paramref name="width"/> cells, zero for one left out; empty
+	/// when the rows are drawn as cards instead. A format that lays the table out itself, such as HTML,
+	/// reads its proportions here.
+	/// </summary>
+	public ImmutableArray<int> ColumnWidths(LayoutContext context, int width)
+	{
+		if (Columns.IsDefaultOrEmpty) return [];
+		var divider = Separator is { } drawn ? context.Glyph(drawn, " | ").DisplayWidth : Gap;
+		return Widths(context, width, divider) is { } widths ? [.. widths] : [];
+	}
+
+	/// <summary>
 	/// <paramref name="spare"/> cells shared among the shown columns that grow, by their
 	/// <see cref="TableColumn.Grow"/> shares; the cells a share rounds away go to the first of them.
 	/// None grows past its <see cref="TableColumn.Max"/>.

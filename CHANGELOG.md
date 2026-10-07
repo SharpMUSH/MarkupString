@@ -12,8 +12,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - **Tables that fill their width.** `TableColumn.Grow` gives a column a share of the width a table has
   left once every column fits; a table with a growing column fills its width, and its heading rule
-  with it. HTML writes such a table as `ms-fill` (`width: 100%` in `LayoutCss`) and each growing
-  heading's share as a percentage width. The serializer keeps it (`gr`).
+  with it. HTML writes such a table as `ms-fill` (`width: 100%` in `LayoutCss`) with a `<colgroup>`
+  giving each column its share of the width as the text layout draws it
+  (`Table.ColumnWidths`), so a narrower page squeezes every column alike. The serializer keeps it (`gr`).
 
 ## 2.9.0 — 2026-10-07
 
