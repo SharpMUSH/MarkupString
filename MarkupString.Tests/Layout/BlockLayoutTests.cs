@@ -239,6 +239,22 @@ public class BlockLayoutTests
 	}
 
 	[Test]
+	public async Task Flex_PercentageItemsLeaveRoomForTheirSeparatorInHtml()
+	{
+		var flex = new Flex(
+		[
+			T("left").Sized(BlockSize.Percent(50)),
+			T("right").Sized(BlockSize.Percent(50)),
+		])
+		{ Separator = P(" │ ") };
+
+		var html = BlockLayout.Build(flex, 40).Render(MarkupFormat.Html, Registry);
+
+		await Assert.That(html).Contains("flex:1 1 calc(50% - 1.5ch)");
+		await Assert.That(LayoutCss.Fixed).Contains(".ms-item { min-width: 0; box-sizing: border-box; }");
+	}
+
+	[Test]
 	public async Task Figure_TextFlowsRoundTheArt()
 	{
 		var figure = new Figure(new ImageMarkup("https://example.com/cat.png", "A cat"), P("/\\_/\\\n( o.o )\n > ^ <"))
