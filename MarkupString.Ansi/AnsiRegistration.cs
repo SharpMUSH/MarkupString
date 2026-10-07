@@ -50,13 +50,24 @@ public static class AnsiRegistration
 	/// Whether a URL link is written as an OSC 8 hyperlink in <see cref="MarkupFormat.Ansi"/>; when false, its
 	/// text is written alone. Pueblo and MXP write links as their own tags either way.
 	/// </param>
-	public static MarkupRegistry WithAnsiOutput(this MarkupRegistry registry, AnsiColorDepth colorDepth, bool hyperlinks = true)
+	public static MarkupRegistry WithAnsiOutput(this MarkupRegistry registry, AnsiColorDepth colorDepth, bool hyperlinks = true) =>
+		registry.WithAnsiOutput(new AnsiOutputOptions(colorDepth, hyperlinks ? TerminalFeatures.Hyperlinks : TerminalFeatures.None));
+
+	/// <summary>
+	/// Returns a registry that writes for one client as <paramref name="options"/> describe it: every colour at its
+	/// depth in <see cref="MarkupFormat.Ansi"/>, <see cref="MarkupFormat.Pueblo"/> and <see cref="MarkupFormat.Mxp"/>,
+	/// and, in <see cref="MarkupFormat.Ansi"/>, links and pictures in the forms its terminal reads.
+	/// </summary>
+	/// <param name="registry">The registry to add to, one <see cref="WithAnsi"/> has already filled.</param>
+	/// <param name="options">What the client is sent.</param>
+	public static MarkupRegistry WithAnsiOutput(this MarkupRegistry registry, AnsiOutputOptions options)
 	{
 		ArgumentNullException.ThrowIfNull(registry);
+		ArgumentNullException.ThrowIfNull(options);
 
 		return registry
-			.With(new AnsiSetEmitter(colorDepth, hyperlinks))
-			.With(new AnsiPuebloEmitter(colorDepth))
-			.With(new AnsiMxpEmitter(colorDepth));
+			.With(new AnsiSetEmitter(options))
+			.With(new AnsiPuebloEmitter(options.ColorDepth))
+			.With(new AnsiMxpEmitter(options.ColorDepth));
 	}
 }

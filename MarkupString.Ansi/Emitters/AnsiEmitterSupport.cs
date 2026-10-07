@@ -194,26 +194,55 @@ internal static class AnsiEmitterSupport
 	}
 
 	/// <summary>
-	/// Writes the body inside an OSC 8 hyperlink when the style carries a navigable URL. OSC 8 can
-	/// only navigate, so a command link — and any URL with a scheme
-	/// <see cref="UrlSafety.IsSafeNavigableUrl"/> rejects — is written as plain text.
+	/// Writes the body as the link the style carries, in whichever form <paramref name="features"/> allows: a
+	/// navigable URL inside an OSC 8 hyperlink, a command as an MSLP link (<c>ESC ] 68 ; 1 ; SEND ; command BEL</c>
+	/// before the text, which MSLP delimits with underline). Anything else — no link, a form the client does not
+	/// read, a URL with a scheme <see cref="UrlSafety.IsSafeNavigableUrl"/> rejects, a command holding a control
+	/// character that would end the sequence early — is written as plain text.
 	/// </summary>
-	internal static void WriteHyperlinked(in AnsiStyle style, ReadOnlySpan<char> body, IBufferWriter<char> output)
+	internal static void WriteLinked(in AnsiStyle style, ReadOnlySpan<char> body, TerminalFeatures features, IBufferWriter<char> output)
 	{
-		if (style.LinkKind != LinkKind.Url
-			|| style.LinkUrl is not { Length: > 0 } url
-			|| !UrlSafety.IsSafeNavigableUrl(url))
+		if (style.LinkUrl is not { Length: > 0 } target)
 		{
 			output.Write(body);
 			return;
 		}
 
-		output.Write(Osc8);
-		output.Write(url);
-		output.Write(Bel);
+		if (style.LinkKind == LinkKind.Url && (features & TerminalFeatures.Hyperlinks) != 0 && UrlSafety.IsSafeNavigableUrl(target))
+		{
+			output.Write(Osc8);
+			output.Write(target);
+			output.Write(Bel);
+			output.Write(body);
+			output.Write(Osc8);
+			output.Write(Bel);
+			return;
+		}
+
+		if (style.LinkKind == LinkKind.Command && (features & TerminalFeatures.CommandLinks) != 0 && !HasControl(target))
+		{
+			output.Write(MslpSend);
+			output.Write(target);
+			output.Write(Bel);
+			output.Write(UnderlineOn);
+			output.Write(body);
+			// The underline is the link's extent. A run that was underlined anyway stays so.
+			output.Write(style.Underlined ? UnderlineOff + UnderlineOn : UnderlineOff);
+			return;
+		}
+
 		output.Write(body);
-		output.Write(Osc8);
-		output.Write(Bel);
+	}
+
+	private const string MslpSend = "\e]68;1;SEND;";
+	private const string UnderlineOn = "\e[4m";
+	private const string UnderlineOff = "\e[24m";
+
+	private static bool HasControl(string text)
+	{
+		foreach (var c in text)
+			if (char.IsControl(c)) return true;
+		return false;
 	}
 
 	/// <summary>

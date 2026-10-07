@@ -21,14 +21,21 @@ public sealed record Figure(ImageMarkup Image, MarkupText Art) : Block
 	/// <inheritdoc/>
 	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines)
 	{
-		if (Art.Length == 0)
+		var art = Art.Length == 0
+			? null
+			: Art.Split("\n").Select(line => line.Text.EndsWith('\r') ? line.Substring(0, line.Length - 1) : line).ToArray();
+
+		if (context.Pictures is { } pictures
+			&& pictures(Image, Math.Min(width, art?.Max(line => line.DisplayWidth) ?? width)) is { Columns: > 0, Rows: > 0 } cells)
+			art = PictureRows(art, cells, width);
+
+		if (art is null)
 		{
 			lines.AddRange(MarkupText.Plain($"[{Description}]").FormatColumn(BlockText.Column(width, context.TextAlignment)));
 			if (Beside is { } after) context.Draw(after, width, lines);
 			return;
 		}
 
-		var art = Art.Split("\n").Select(line => line.Text.EndsWith('\r') ? line.Substring(0, line.Length - 1) : line).ToArray();
 		var artWidth = Math.Min(width, art.Max(line => line.DisplayWidth));
 		var narrow = width - artWidth - Math.Max(0, Gap);
 
@@ -74,6 +81,27 @@ public sealed record Figure(ImageMarkup Image, MarkupText Art) : Block
 				? MarkupText.Concat([picture, gap, words])
 				: MarkupText.Concat([words, gap, picture]));
 		}
+	}
+
+	/// <summary>
+	/// The rows of cells the picture is drawn in, each marked with <see cref="PictureCellsMarkup"/> over
+	/// what a client the picture does not reach shows there: the art, which keeps its own size, or, with no
+	/// art, blank cells of <paramref name="cells"/> with the description on the middle row.
+	/// </summary>
+	private MarkupText[]? PictureRows(MarkupText[]? art, PictureCells cells, int width)
+	{
+		var columns = Math.Min(width, art?.Max(line => line.DisplayWidth) ?? cells.Columns);
+		var rows = art?.Length ?? cells.Rows;
+		if (columns <= 0) return art;
+		var under = art is not null
+			? art.Select(line => BlockText.Fit(line, columns)).ToArray()
+			: Enumerable.Range(0, rows).Select(row => row == rows / 2
+				? BlockText.Fit(MarkupText.Plain($"[{Description}]"), columns)
+				: BlockText.Blank(columns)).ToArray();
+
+		for (var row = 0; row < rows; row++)
+			under[row] = MarkupText.Wrap(new PictureCellsMarkup(Image, row, rows, columns), under[row]);
+		return under;
 	}
 
 	/// <inheritdoc/>

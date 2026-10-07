@@ -1,1 +1,41 @@
 #nullable enable
+MarkupString.Ansi.AnsiOutputOptions
+MarkupString.Ansi.AnsiOutputOptions.<Clone>$() -> MarkupString.Ansi.AnsiOutputOptions!
+MarkupString.Ansi.AnsiOutputOptions.AnsiOutputOptions(MarkupString.Ansi.AnsiColorDepth ColorDepth = MarkupString.Ansi.AnsiColorDepth.TrueColor, MarkupString.Ansi.TerminalFeatures Features = MarkupString.Ansi.TerminalFeatures.Hyperlinks) -> void
+MarkupString.Ansi.AnsiOutputOptions.CellHeight.get -> int
+MarkupString.Ansi.AnsiOutputOptions.CellHeight.init -> void
+MarkupString.Ansi.AnsiOutputOptions.CellWidth.get -> int
+MarkupString.Ansi.AnsiOutputOptions.CellWidth.init -> void
+MarkupString.Ansi.AnsiOutputOptions.ColorDepth.get -> MarkupString.Ansi.AnsiColorDepth
+MarkupString.Ansi.AnsiOutputOptions.ColorDepth.init -> void
+MarkupString.Ansi.AnsiOutputOptions.Deconstruct(out MarkupString.Ansi.AnsiColorDepth ColorDepth, out MarkupString.Ansi.TerminalFeatures Features) -> void
+MarkupString.Ansi.AnsiOutputOptions.Equals(MarkupString.Ansi.AnsiOutputOptions? other) -> bool
+MarkupString.Ansi.AnsiOutputOptions.Features.get -> MarkupString.Ansi.TerminalFeatures
+MarkupString.Ansi.AnsiOutputOptions.Features.init -> void
+MarkupString.Ansi.AnsiOutputOptions.Pictures.get -> MarkupString.Ansi.ITerminalPictureSource?
+MarkupString.Ansi.AnsiOutputOptions.Pictures.init -> void
+MarkupString.Ansi.AnsiSetEmitter.AnsiSetEmitter(MarkupString.Ansi.AnsiOutputOptions! options) -> void
+MarkupString.Ansi.ITerminalPictureSource
+MarkupString.Ansi.ITerminalPictureSource.MarkTransmitted(uint imageId) -> bool
+MarkupString.Ansi.ITerminalPictureSource.TryGetPicture(MarkupString.ImageMarkup! image, out MarkupString.Ansi.TerminalPicture? picture) -> bool
+MarkupString.Ansi.TerminalFeatures
+MarkupString.Ansi.TerminalFeatures.BlockArt = 32 -> MarkupString.Ansi.TerminalFeatures
+MarkupString.Ansi.TerminalFeatures.CommandLinks = 2 -> MarkupString.Ansi.TerminalFeatures
+MarkupString.Ansi.TerminalFeatures.Hyperlinks = 1 -> MarkupString.Ansi.TerminalFeatures
+MarkupString.Ansi.TerminalFeatures.InlineImages = 8 -> MarkupString.Ansi.TerminalFeatures
+MarkupString.Ansi.TerminalFeatures.KittyGraphics = 4 -> MarkupString.Ansi.TerminalFeatures
+MarkupString.Ansi.TerminalFeatures.None = 0 -> MarkupString.Ansi.TerminalFeatures
+MarkupString.Ansi.TerminalFeatures.Pictures = MarkupString.Ansi.TerminalFeatures.KittyGraphics | MarkupString.Ansi.TerminalFeatures.InlineImages | MarkupString.Ansi.TerminalFeatures.Sixel | MarkupString.Ansi.TerminalFeatures.BlockArt -> MarkupString.Ansi.TerminalFeatures
+MarkupString.Ansi.TerminalFeatures.Sixel = 16 -> MarkupString.Ansi.TerminalFeatures
+MarkupString.Ansi.TerminalPicture
+MarkupString.Ansi.TerminalPicture.Height.get -> int
+MarkupString.Ansi.TerminalPicture.Key.get -> string!
+MarkupString.Ansi.TerminalPicture.Rgba.get -> System.ReadOnlyMemory<byte>
+MarkupString.Ansi.TerminalPicture.TerminalPicture(string! key, int width, int height, System.ReadOnlyMemory<byte> rgba) -> void
+MarkupString.Ansi.TerminalPicture.Width.get -> int
+override MarkupString.Ansi.AnsiOutputOptions.Equals(object? obj) -> bool
+override MarkupString.Ansi.AnsiOutputOptions.GetHashCode() -> int
+override MarkupString.Ansi.AnsiOutputOptions.ToString() -> string!
+static MarkupString.Ansi.AnsiOutputOptions.operator !=(MarkupString.Ansi.AnsiOutputOptions? left, MarkupString.Ansi.AnsiOutputOptions? right) -> bool
+static MarkupString.Ansi.AnsiOutputOptions.operator ==(MarkupString.Ansi.AnsiOutputOptions? left, MarkupString.Ansi.AnsiOutputOptions? right) -> bool
+static MarkupString.Ansi.AnsiRegistration.WithAnsiOutput(this MarkupString.MarkupRegistry! registry, MarkupString.Ansi.AnsiOutputOptions! options) -> MarkupString.MarkupRegistry!

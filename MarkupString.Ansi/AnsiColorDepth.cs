@@ -2,7 +2,7 @@ namespace MarkupString.Ansi;
 
 /// <summary>
 /// How much colour a client can display. A registry built with
-/// <see cref="AnsiRegistration.WithAnsiOutput"/> writes every colour at the depth it is given, so a client
+/// <see cref="AnsiRegistration.WithAnsiOutput(MarkupRegistry, AnsiOutputOptions)"/> writes every colour at the depth it is given, so a client
 /// is never sent a sequence it cannot read.
 /// </summary>
 public enum AnsiColorDepth
