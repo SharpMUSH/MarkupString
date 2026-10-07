@@ -16,6 +16,36 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   giving each column its share of the width as the text layout draws it
   (`Table.ColumnWidths`), so a narrower page squeezes every column alike. The serializer keeps it (`gr`).
 
+## 2.10.0 — 2026-10-07
+
+### Added
+
+- **A look sets a border's corners, edges and sides.** `ThemeLook.TopLeft`, `TopRight`, `BottomLeft`,
+  `BottomRight` and `Side` are one column wide and `Edge` is a pattern along the top, the bottom and a
+  rule; in JSON `corners` (`[top-left, top-right, bottom-left, bottom-right]`), `edge` and `side`. An
+  ASCII-only reader gets the border's ASCII form.
+
+### Changed
+
+- **The genre themes are told apart by their frames.** Each has corners and edges of its own: fantasy
+  `❖` corners and fleurons round its titles, horror a cracked heavy line between daggers, mystery dashed
+  lines with `◇` corners, science-fiction `▛▜▙▟` brackets, spiritual a dotted line between stars, and
+  so on.
+
+### Removed
+
+- **The `adult` genre theme.** `romance` serves MSSP's Adult as well.
+
+### Fixed
+
+- **Half of a surrogate pair no longer throws from `ThemePalette.TryParse`.** Written out or escaped
+  as `\ud800`, it threw `ArgumentException` or `InvalidOperationException`; it is now refused like any
+  other text that is not a theme.
+- **A look refuses a piece that would break the line.** A control character (an escape, a newline) or
+  a piece with no width, such as a lone combining mark, is refused with the reason instead of drawn.
+- **A field separator an ASCII-only reader cannot see falls back to `: `,** as a gauge's pieces and a
+  bullet already did.
+
 ## 2.9.0 — 2026-10-07
 
 ### Added

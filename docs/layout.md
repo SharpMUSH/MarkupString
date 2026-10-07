@@ -499,9 +499,9 @@ colours.
 
 Four ways to make one:
 
-- **Presets**: `terminal`; one for each MSSP genre, `adult`, `fantasy`, `historical`, `horror`,
-  `modern`, `mystery`, `romance`, `science-fiction` and `spiritual` (`ThemePalette.Genres`), each with
-  a look of its own (below); and `catppuccin-mocha`, `catppuccin-latte`, `dracula`, `gruvbox-dark`, `nord`,
+- **Presets**: `terminal`; one for each MSSP genre, `fantasy`, `historical`, `horror`, `modern`,
+  `mystery`, `romance` (MSSP's Adult as well), `science-fiction` and `spiritual`
+  (`ThemePalette.Genres`), each with a look of its own (below); and `catppuccin-mocha`, `catppuccin-latte`, `dracula`, `gruvbox-dark`, `nord`,
   `solarized-dark`, `solarized-light`, `tokyo-night` (`ThemePalette.Preset(name)`).
 - **base16**: `ThemePalette.FromBase16(name, colors)` takes any of the hundreds of base16 schemes,
   mapped by base16's own guide (`base0D` primary, `base03` muted, `base08` error, ...).
@@ -515,9 +515,13 @@ Four ways to make one:
   `{"preset":"nord","colors":{"primary":"#bf616a","muted":8}}`. `ToJson` writes one back.
 
 A theme is more than its colours. `ThemePalette.Look`, a `ThemeLook`, sets the shapes too: a border
-preset and the ornaments round a title (`"╡ ❖ "`, `" ❖ ╞"`), the tree guide, the bullet, a gauge's
-pieces, the field separator and the rule under table headings. In JSON it is `look`:
-`{"preset":"nord","look":{"border":"double","title":["╡ ","  ╞"],"bullet":"❧","gauge":["[","█","░","]"]}}`.
+preset, its corners, edges and sides, the ornaments round a title (`"╡ ❖ "`, `" ❖ ╞"`), the tree
+guide, the bullet, a gauge's pieces, the field separator and the rule under table headings. In JSON
+it is `look`:
+`{"preset":"nord","look":{"border":"double","corners":["❖","❖","❖","❖"],"edge":"═","title":["╡ ","  ╞"],"bullet":"❧","gauge":["[","█","░","]"]}}`.
+Corners and the side are one column wide, the edge is a pattern repeated along the top, the bottom
+and a rule, and no piece may hold a control character; a look that breaks one of these is refused
+with the reason, never drawn.
 A look given with a preset changes only what it names; `"look":null` drops the preset's. A reader
 whose client has only ASCII gets the ASCII form of each piece.
 

@@ -1,19 +1,1 @@
 #nullable enable
-MarkupString.Html.BlockHtmlRenderer<T>
-MarkupString.Html.HtmlLayoutWriter
-MarkupString.Html.HtmlLayoutWriter.AllowsImage(string! source) -> bool
-MarkupString.Html.HtmlLayoutWriter.AsText(MarkupString.Layout.Block! block) -> void
-MarkupString.Html.HtmlLayoutWriter.Attribute(string! value) -> void
-MarkupString.Html.HtmlLayoutWriter.Block(MarkupString.Layout.Block! block) -> void
-MarkupString.Html.HtmlLayoutWriter.Block(MarkupString.Layout.Block! block, MarkupString.Layout.LayoutContext! context) -> void
-MarkupString.Html.HtmlLayoutWriter.Context.get -> MarkupString.Layout.LayoutContext!
-MarkupString.Html.HtmlLayoutWriter.Encode(string! text) -> void
-MarkupString.Html.HtmlLayoutWriter.Registry.get -> MarkupString.MarkupRegistry!
-MarkupString.Html.HtmlLayoutWriter.Text(MarkupString.MarkupText! text) -> void
-MarkupString.Html.HtmlLayoutWriter.Width.get -> int
-MarkupString.Html.HtmlLayoutWriter.Write(string! html) -> void
-MarkupString.Html.LayoutCss
-static MarkupString.Html.HtmlRegistration.WithBlockHtml<T>(this MarkupString.MarkupRegistry! registry, MarkupString.Html.BlockHtmlRenderer<T!>! renderer) -> MarkupString.MarkupRegistry!
-static MarkupString.Html.HtmlRegistration.WithLayoutImages(this MarkupString.MarkupRegistry! registry, System.Func<string!, bool>! allowImage) -> MarkupString.MarkupRegistry!
-static readonly MarkupString.Html.LayoutCss.Fixed -> string!
-virtual MarkupString.Html.BlockHtmlRenderer<T>.Invoke(T! block, MarkupString.Html.HtmlLayoutWriter! html) -> void

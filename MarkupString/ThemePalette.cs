@@ -249,56 +249,59 @@ public sealed record ThemePalette
 	};
 
 	/// <summary>
-	/// A theme for each genre MSSP names: adult, fantasy, historical, horror, modern, mystery, romance,
-	/// science-fiction and spiritual. Each is made from a colour that suits it (<see cref="Generate"/>)
-	/// and has its own border, title ornaments, bullet, guides and gauge (<see cref="Look"/>).
+	/// A theme for each genre MSSP names: fantasy, historical, horror, modern, mystery, romance (which
+	/// serves MSSP's Adult as well), science-fiction and spiritual. Each is made from a colour that suits it
+	/// (<see cref="Generate"/>) and has its own corners, edges, title ornaments, bullet, guides and gauge
+	/// (<see cref="Look"/>), so a box says which genre it is before its text does.
 	/// </summary>
 	public static IReadOnlyList<ThemePalette> Genres { get; } =
 	[
-		Genre("adult", "#b0306a", ThemeHarmony.Analogous, new ThemeLook
-		{
-			Border = "heavy", TitleOpen = "┫ ◈ ", TitleClose = " ◈ ┣", Guide = "heavy", Bullet = "◈",
-			GaugeOpen = "[", GaugeFilled = "◆", GaugeEmpty = "◇", GaugeClose = "]", Rule = "━",
-		}),
 		Genre("fantasy", "#c9a227", ThemeHarmony.Analogous, new ThemeLook
 		{
-			Border = "double", TitleOpen = "╡ ❖ ", TitleClose = " ❖ ╞", Guide = "double", Bullet = "❧",
+			Border = "double", TopLeft = "❖", TopRight = "❖", BottomLeft = "❖", BottomRight = "❖",
+			TitleOpen = "╡ ❧ ", TitleClose = " ☙ ╞", Guide = "double", Bullet = "❧",
 			GaugeOpen = "╞", GaugeFilled = "█", GaugeEmpty = "░", GaugeClose = "╡", Rule = "═",
 		}),
 		Genre("historical", "#a0784a", ThemeHarmony.Monochrome, new ThemeLook
 		{
-			Border = "double", TitleOpen = "╡ § ", TitleClose = " § ╞", Guide = "line", Bullet = "§",
-			Separator = " - ", Rule = "═",
+			Border = "single", TopLeft = "┼", TopRight = "┼", BottomLeft = "┼", BottomRight = "┼",
+			TitleOpen = "┤ ⁂ ", TitleClose = " ⁂ ├", Guide = "line", Bullet = "¶",
+			GaugeOpen = "[", GaugeFilled = "▪", GaugeEmpty = "·", GaugeClose = "]", Separator = " - ", Rule = "─",
 		}),
 		Genre("horror", "#b01e28", ThemeHarmony.Monochrome, new ThemeLook
 		{
-			Border = "heavy", TitleOpen = "┫ † ", TitleClose = " † ┣", Guide = "heavy", Bullet = "†",
-			GaugeOpen = "┫", GaugeFilled = "▓", GaugeEmpty = "░", GaugeClose = "┣", Rule = "━",
+			Border = "heavy", TopLeft = "†", TopRight = "†", BottomLeft = "†", BottomRight = "†", Edge = "━━╸━━━╺",
+			TitleOpen = "┫ † ", TitleClose = " † ┣", Guide = "heavy", Bullet = "†",
+			GaugeOpen = "┫", GaugeFilled = "▓", GaugeEmpty = "░", GaugeClose = "┣", Rule = "━╸",
 		}),
 		Genre("modern", "#4a90d9", ThemeHarmony.Analogous, new ThemeLook
 		{
-			Border = "rounded", Guide = "rounded", Bullet = "•",
-			GaugeOpen = "▕", GaugeFilled = "█", GaugeEmpty = "░", GaugeClose = "▏", Rule = "─",
+			Border = "rounded", TitleOpen = "┤ ", TitleClose = " ├", Guide = "rounded", Bullet = "•",
+			GaugeOpen = "▕", GaugeFilled = "█", GaugeEmpty = "░", GaugeClose = "▏", Separator = " · ", Rule = "─",
 		}),
 		Genre("mystery", "#6a4c9c", ThemeHarmony.Split, new ThemeLook
 		{
-			Border = "single", TitleOpen = "┤ ◆ ", TitleClose = " ◆ ├", Guide = "line", Bullet = "◇",
-			Separator = " .. ", Rule = "┄",
+			Border = "single", TopLeft = "◇", TopRight = "◇", BottomLeft = "◇", BottomRight = "◇", Edge = "┄", Side = "┆",
+			TitleOpen = "┤ ◆ ", TitleClose = " ◆ ├", Guide = "line", Bullet = "◇",
+			GaugeOpen = "[", GaugeFilled = "◆", GaugeEmpty = "◇", GaugeClose = "]", Separator = " … ", Rule = "┄",
 		}),
 		Genre("romance", "#d6577c", ThemeHarmony.Analogous, new ThemeLook
 		{
-			Border = "rounded", TitleOpen = "┤ ♥ ", TitleClose = " ♥ ├", Guide = "rounded", Bullet = "♥",
+			Border = "rounded", TopLeft = "♥", TopRight = "♥", BottomLeft = "♥", BottomRight = "♥",
+			TitleOpen = "┤ ♥ ", TitleClose = " ♥ ├", Guide = "rounded", Bullet = "♥",
 			GaugeOpen = "(", GaugeFilled = "♥", GaugeEmpty = "♡", GaugeClose = ")", Rule = "─",
 		}),
 		Genre("science-fiction", "#00c8ff", ThemeHarmony.Complementary, new ThemeLook
 		{
-			Border = "heavy", TitleOpen = "┫▐ ", TitleClose = " ▌┣", Guide = "heavy", Bullet = "▸",
+			Border = "heavy", TopLeft = "▛", TopRight = "▜", BottomLeft = "▙", BottomRight = "▟",
+			TitleOpen = "┫▐ ", TitleClose = " ▌┣", Guide = "heavy", Bullet = "▸",
 			GaugeOpen = "▕", GaugeFilled = "▰", GaugeEmpty = "▱", GaugeClose = "▏", Separator = " > ", Rule = "━",
 		}),
 		Genre("spiritual", "#9b7fd1", ThemeHarmony.Triadic, new ThemeLook
 		{
-			Border = "double", TitleOpen = "╡ ✧ ", TitleClose = " ✧ ╞", Guide = "rounded", Bullet = "✧",
-			GaugeOpen = "(", GaugeFilled = "●", GaugeEmpty = "○", GaugeClose = ")", Rule = "═",
+			Border = "rounded", TopLeft = "✧", TopRight = "✧", BottomLeft = "✧", BottomRight = "✧", Edge = "─┈",
+			TitleOpen = "┤ ✦ ", TitleClose = " ✦ ├", Guide = "rounded", Bullet = "✧",
+			GaugeOpen = "(", GaugeFilled = "●", GaugeEmpty = "○", GaugeClose = ")", Rule = "┈",
 		}),
 	];
 
@@ -461,6 +464,12 @@ public sealed record ThemePalette
 		{
 			using var document = JsonDocument.Parse(json);
 			return TryRead(document.RootElement, out palette, out error);
+		}
+		catch (Exception exception) when (exception is ArgumentException or InvalidOperationException)
+		{
+			// Half of a surrogate pair, written out or escaped, which JSON cannot hold as text.
+			error = "not JSON or a theme name";
+			return false;
 		}
 		catch (JsonException)
 		{

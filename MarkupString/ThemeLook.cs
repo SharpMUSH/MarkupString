@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using MarkupString.Layout;
 
@@ -13,6 +14,24 @@ public sealed record ThemeLook
 {
 	/// <summary>A border preset's name (<see cref="BorderStyle.Presets"/>).</summary>
 	public string? Border { get; init; }
+
+	/// <summary>The top-left corner, one column wide, in place of the border's own.</summary>
+	public string? TopLeft { get; init; }
+
+	/// <summary>The top-right corner.</summary>
+	public string? TopRight { get; init; }
+
+	/// <summary>The bottom-left corner.</summary>
+	public string? BottomLeft { get; init; }
+
+	/// <summary>The bottom-right corner.</summary>
+	public string? BottomRight { get; init; }
+
+	/// <summary>The top and bottom edges and a rule's line, a pattern repeated along them: <c>"━╸"</c>.</summary>
+	public string? Edge { get; init; }
+
+	/// <summary>The left and right sides, one column wide.</summary>
+	public string? Side { get; init; }
 
 	/// <summary>Before a title set into a box's edge or a rule, joining it to the line: <c>"╡ ❖ "</c>.</summary>
 	public string? TitleOpen { get; init; }
@@ -48,6 +67,12 @@ public sealed record ThemeLook
 	public ThemeLook Over(ThemeLook? below) => below is null ? this : new()
 	{
 		Border = Border ?? below.Border,
+		TopLeft = TopLeft ?? below.TopLeft,
+		TopRight = TopRight ?? below.TopRight,
+		BottomLeft = BottomLeft ?? below.BottomLeft,
+		BottomRight = BottomRight ?? below.BottomRight,
+		Edge = Edge ?? below.Edge,
+		Side = Side ?? below.Side,
 		TitleOpen = TitleOpen ?? below.TitleOpen,
 		TitleClose = TitleClose ?? below.TitleClose,
 		Guide = Guide ?? below.Guide,
@@ -65,7 +90,7 @@ public sealed record ThemeLook
 	{
 		return new LayoutTheme
 		{
-			Border = Border is null && TitleOpen is null && TitleClose is null ? null : BorderOf(BorderStyle.Preset(Border ?? "single") ?? BorderStyle.Single),
+			Border = Border is null && TitleOpen is null && TitleClose is null && TopLeft is null && Edge is null && Side is null ? null : BorderOf(BorderStyle.Preset(Border ?? "single") ?? BorderStyle.Single),
 			Guide = Guide is null ? null : TreeGuide.Preset(Guide),
 			Bullet = Piece(Bullet),
 			GaugeOpen = Piece(GaugeOpen),
@@ -81,14 +106,24 @@ public sealed record ThemeLook
 	{
 		TitleOpen = TitleOpen is null ? preset.TitleOpen : MarkupText.Plain(TitleOpen),
 		TitleClose = TitleClose is null ? preset.TitleClose : MarkupText.Plain(TitleClose),
+		TopLeft = TopLeft is null ? preset.TopLeft : MarkupText.Plain(TopLeft),
+		TopRight = TopRight is null ? preset.TopRight : MarkupText.Plain(TopRight),
+		BottomLeft = BottomLeft is null ? preset.BottomLeft : MarkupText.Plain(BottomLeft),
+		BottomRight = BottomRight is null ? preset.BottomRight : MarkupText.Plain(BottomRight),
+		Top = Edge is null ? preset.Top : MarkupText.Plain(Edge),
+		Bottom = Edge is null ? preset.Bottom : MarkupText.Plain(Edge),
+		Left = Side is null ? preset.Left : MarkupText.Plain(Side),
+		Right = Side is null ? preset.Right : MarkupText.Plain(Side),
 	};
 
 	private static MarkupText? Piece(string? text) => text is null ? null : MarkupText.Plain(text);
 
 	/// <summary>
-	/// Reads a look from JSON: <c>border</c> and <c>guide</c> as preset names, <c>title</c> as
-	/// <c>[open, close]</c>, <c>gauge</c> as <c>[open, filled, empty, close]</c>, and <c>bullet</c>,
-	/// <c>separator</c> and <c>rule</c> as text.
+	/// Reads a look from JSON: <c>border</c> and <c>guide</c> as preset names, <c>corners</c> as
+	/// <c>[top-left, top-right, bottom-left, bottom-right]</c> and <c>side</c>, each one column wide,
+	/// <c>edge</c> as a pattern, <c>title</c> as <c>[open, close]</c>, <c>gauge</c> as
+	/// <c>[open, filled, empty, close]</c>, and <c>bullet</c>, <c>separator</c> and <c>rule</c> as text.
+	/// No piece may hold a control character, and every piece but the separator takes up some width.
 	/// </summary>
 	public static bool TryRead(JsonElement element, out ThemeLook? look, out string? error)
 	{
@@ -122,6 +157,30 @@ public sealed record ThemeLook
 					}
 					result = result with { Guide = value.GetString() };
 					break;
+				case "corners":
+					if (Texts(value, 4) is not { } corners || !corners.All(OneColumn))
+					{
+						error = "corners is [top-left, top-right, bottom-left, bottom-right], each one column wide";
+						return false;
+					}
+					result = result with { TopLeft = corners[0], TopRight = corners[1], BottomLeft = corners[2], BottomRight = corners[3] };
+					break;
+				case "edge":
+					if (value.ValueKind != JsonValueKind.String || !Drawable(value.GetString()!))
+					{
+						error = "edge is text";
+						return false;
+					}
+					result = result with { Edge = value.GetString() };
+					break;
+				case "side":
+					if (value.ValueKind != JsonValueKind.String || !OneColumn(value.GetString()!))
+					{
+						error = "side is one column wide";
+						return false;
+					}
+					result = result with { Side = value.GetString() };
+					break;
 				case "title":
 					if (Texts(value, 2) is not { } title)
 					{
@@ -139,7 +198,7 @@ public sealed record ThemeLook
 					result = result with { GaugeOpen = gauge[0], GaugeFilled = gauge[1], GaugeEmpty = gauge[2], GaugeClose = gauge[3] };
 					break;
 				case "bullet" or "separator" or "rule":
-					if (value.ValueKind != JsonValueKind.String || (property.Name != "separator" && value.GetString()!.Length == 0))
+					if (value.ValueKind != JsonValueKind.String || !(property.Name == "separator" && value.GetString()!.Length == 0 || Drawable(value.GetString()!)))
 					{
 						error = $"{property.Name} is text";
 						return false;
@@ -165,8 +224,26 @@ public sealed record ThemeLook
 	{
 		if (value.ValueKind != JsonValueKind.Array || value.GetArrayLength() != count) return null;
 		var texts = value.EnumerateArray().Select(item => item.ValueKind == JsonValueKind.String ? item.GetString() : null).ToArray();
-		return texts.All(text => !string.IsNullOrEmpty(text)) ? [.. texts.Select(text => text!)] : null;
+		return texts.All(text => text is not null && Drawable(text)) ? [.. texts.Select(text => text!)] : null;
 	}
+
+	/// <summary>Whether <paramref name="text"/> takes up some width and holds no control character, which would move the cursor or start an escape.</summary>
+	private static bool Drawable(string text) =>
+		WellFormed(text) && DisplayWidth.Of(text) > 0 && !text.EnumerateRunes().Any(Rune.IsControl);
+
+	/// <summary>Whether every surrogate in <paramref name="text"/> is half of a pair.</summary>
+	private static bool WellFormed(string text)
+	{
+		for (var i = 0; i < text.Length; i++)
+		{
+			if (char.IsHighSurrogate(text[i]) && i + 1 < text.Length && char.IsLowSurrogate(text[i + 1])) i++;
+			else if (char.IsSurrogate(text[i])) return false;
+		}
+		return true;
+	}
+
+	/// <summary>Whether <paramref name="text"/> is drawable and exactly one column wide.</summary>
+	private static bool OneColumn(string text) => Drawable(text) && DisplayWidth.Of(text) == 1;
 
 	/// <summary>Writes the look as <see cref="TryRead"/> reads it.</summary>
 	public void Write(Utf8JsonWriter json)
@@ -174,6 +251,14 @@ public sealed record ThemeLook
 		ArgumentNullException.ThrowIfNull(json);
 		json.WriteStartObject();
 		if (Border is not null) json.WriteString("border", Border);
+		if (TopLeft is not null && TopRight is not null && BottomLeft is not null && BottomRight is not null)
+		{
+			json.WriteStartArray("corners");
+			foreach (var corner in new[] { TopLeft, TopRight, BottomLeft, BottomRight }) json.WriteStringValue(corner);
+			json.WriteEndArray();
+		}
+		if (Edge is not null) json.WriteString("edge", Edge);
+		if (Side is not null) json.WriteString("side", Side);
 		if (TitleOpen is not null && TitleClose is not null)
 		{
 			json.WriteStartArray("title");
