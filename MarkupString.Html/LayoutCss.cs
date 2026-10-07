@@ -11,6 +11,7 @@ namespace MarkupString.Html;
 /// second row of a striped table or list (a faint grey when unset). A page
 /// sets these to theme every layout on it; a layout's own theme sets them on its block, and a game's
 /// default theme sets the <c>-default</c> form of each, under what the page sets.
+/// A box's padding is <c>--ms-pad</c> (<c>1ch</c> unset), set on the box when its own differs.
 /// Everything is sized in <c>ch</c>, the width of a cell in the terminal font the layout was laid out
 /// in, and every row wraps, so nothing scrolls sideways on a narrow page.
 /// </remarks>
@@ -20,7 +21,7 @@ public static class LayoutCss
 	public static readonly string Fixed =
 		".ms-layout { display: block; max-width: 100%; white-space: normal; }\n" +
 		".ms-text { white-space: pre-wrap; overflow-wrap: anywhere; }\n" +
-		".ms-box { margin: 0; padding: 0 1ch; min-width: 0; border: 1px solid var(--ms-border, var(--ms-border-default, currentColor)); }\n" +
+		".ms-box { margin: 0; padding: 0 var(--ms-pad, 1ch); min-width: 0; border: 1px solid var(--ms-border, var(--ms-border-default, currentColor)); }\n" +
 		".ms-box.ms-border-none { border: none; padding: 0; }\n" +
 		".ms-box.ms-border-double { border: 3px double var(--ms-border, var(--ms-border-default, currentColor)); }\n" +
 		".ms-box.ms-border-heavy { border-width: 2px; }\n" +
@@ -41,7 +42,8 @@ public static class LayoutCss
 		".ms-item { min-width: 0; box-sizing: border-box; }\n" +
 		".ms-flex.ms-divided > .ms-item + .ms-item { border-left: 1px solid var(--ms-separator, var(--ms-separator-default, currentColor)); padding-left: 1ch; }\n" +
 		".ms-figure { display: flow-root; }\n" +
-		".ms-figure-image { max-width: 100%; height: auto; }\n" +
+		".ms-figure-image { max-width: 100%; height: auto; vertical-align: top; }\n" +
+		".ms-box:not(.ms-border-none) > .ms-float-none > .ms-figure-image { margin-block: var(--ms-pad, 1ch); }\n" +
 		".ms-figure-art { margin: 0; font: inherit; white-space: pre; }\n" +
 		".ms-float-left > .ms-figure-image, .ms-float-left > .ms-figure-art { float: left; max-width: 50%; margin: 0 2ch 0.5em 0; }\n" +
 		".ms-float-right > .ms-figure-image, .ms-float-right > .ms-figure-art { float: right; max-width: 50%; margin: 0 0 0.5em 2ch; }\n" +

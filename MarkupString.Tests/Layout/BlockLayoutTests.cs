@@ -306,6 +306,23 @@ public class BlockLayoutTests
 	}
 
 	[Test]
+	public async Task Figure_InABox_HasTheBoxPaddingOnEverySide()
+	{
+		var figure = new Figure(new ImageMarkup("https://example.com/cat.png", "A cat"), MarkupText.Empty);
+
+		var padded = BlockLayout.Build(new Frame(figure), 30).Render(MarkupFormat.Html, Registry);
+		var tight = BlockLayout.Build(new Frame(figure) { Padding = 0 }, 30).Render(MarkupFormat.Html, Registry);
+
+		await Assert.That(padded).Contains("<fieldset class=\"ms-box ms-border-single\"><div class=\"ms-figure ms-float-none\">");
+		await Assert.That(tight).Contains("<fieldset class=\"ms-box ms-border-single\" style=\"--ms-pad:0ch\"><div class=\"ms-figure ms-float-none\">");
+		// The picture sits on the top of its line rather than its baseline, so no gap for descenders is left
+		// under it, and a box puts its side padding above and below it too.
+		await Assert.That(LayoutCss.Fixed).Contains(".ms-box { margin: 0; padding: 0 var(--ms-pad, 1ch);");
+		await Assert.That(LayoutCss.Fixed).Contains(".ms-figure-image { max-width: 100%; height: auto; vertical-align: top; }");
+		await Assert.That(LayoutCss.Fixed).Contains(".ms-box:not(.ms-border-none) > .ms-float-none > .ms-figure-image { margin-block: var(--ms-pad, 1ch); }");
+	}
+
+	[Test]
 	public async Task Figure_RefusedPicture_ShowsItsArt()
 	{
 		var registry = Registry.WithLayoutImages(source => !source.Contains("example.com", StringComparison.Ordinal));

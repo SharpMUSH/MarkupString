@@ -68,7 +68,14 @@ internal static class LayoutHtml
 	{
 		html.Write("<fieldset class=\"ms-box ms-border-");
 		html.Write(Css(BorderOf(frame.Border, html).Name));
-		html.Write("\">");
+		html.Write("\"");
+		if (frame.Padding != 1)
+		{
+			html.Write(" style=\"--ms-pad:");
+			html.Write(Number(Math.Max(0, frame.Padding)));
+			html.Write("ch\"");
+		}
+		html.Write(">");
 		if (frame.Title is { Length: > 0 } title)
 		{
 			html.Write("<legend class=\"ms-box-title\"");
