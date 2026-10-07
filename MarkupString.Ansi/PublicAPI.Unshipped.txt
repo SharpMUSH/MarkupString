@@ -28,14 +28,30 @@ MarkupString.Ansi.TerminalFeatures.None = 0 -> MarkupString.Ansi.TerminalFeature
 MarkupString.Ansi.TerminalFeatures.Pictures = MarkupString.Ansi.TerminalFeatures.KittyGraphics | MarkupString.Ansi.TerminalFeatures.InlineImages | MarkupString.Ansi.TerminalFeatures.Sixel | MarkupString.Ansi.TerminalFeatures.BlockArt -> MarkupString.Ansi.TerminalFeatures
 MarkupString.Ansi.TerminalFeatures.Sixel = 16 -> MarkupString.Ansi.TerminalFeatures
 MarkupString.Ansi.TerminalPicture
+MarkupString.Ansi.TerminalPicture.Frames.get -> System.Collections.Generic.IReadOnlyList<MarkupString.Ansi.TerminalPictureFrame>!
 MarkupString.Ansi.TerminalPicture.Height.get -> int
 MarkupString.Ansi.TerminalPicture.Key.get -> string!
 MarkupString.Ansi.TerminalPicture.Rgba.get -> System.ReadOnlyMemory<byte>
+MarkupString.Ansi.TerminalPicture.TerminalPicture(string! key, int width, int height, System.Collections.Generic.IReadOnlyList<MarkupString.Ansi.TerminalPictureFrame>! frames) -> void
 MarkupString.Ansi.TerminalPicture.TerminalPicture(string! key, int width, int height, System.ReadOnlyMemory<byte> rgba) -> void
 MarkupString.Ansi.TerminalPicture.Width.get -> int
+MarkupString.Ansi.TerminalPictureFrame
+MarkupString.Ansi.TerminalPictureFrame.Deconstruct(out System.ReadOnlyMemory<byte> Rgba, out System.TimeSpan Duration) -> void
+MarkupString.Ansi.TerminalPictureFrame.Duration.get -> System.TimeSpan
+MarkupString.Ansi.TerminalPictureFrame.Duration.init -> void
+MarkupString.Ansi.TerminalPictureFrame.Equals(MarkupString.Ansi.TerminalPictureFrame other) -> bool
+MarkupString.Ansi.TerminalPictureFrame.Rgba.get -> System.ReadOnlyMemory<byte>
+MarkupString.Ansi.TerminalPictureFrame.Rgba.init -> void
+MarkupString.Ansi.TerminalPictureFrame.TerminalPictureFrame() -> void
+MarkupString.Ansi.TerminalPictureFrame.TerminalPictureFrame(System.ReadOnlyMemory<byte> Rgba, System.TimeSpan Duration) -> void
 override MarkupString.Ansi.AnsiOutputOptions.Equals(object? obj) -> bool
 override MarkupString.Ansi.AnsiOutputOptions.GetHashCode() -> int
 override MarkupString.Ansi.AnsiOutputOptions.ToString() -> string!
+~override MarkupString.Ansi.TerminalPictureFrame.Equals(object obj) -> bool
+override MarkupString.Ansi.TerminalPictureFrame.GetHashCode() -> int
+~override MarkupString.Ansi.TerminalPictureFrame.ToString() -> string
 static MarkupString.Ansi.AnsiOutputOptions.operator !=(MarkupString.Ansi.AnsiOutputOptions? left, MarkupString.Ansi.AnsiOutputOptions? right) -> bool
 static MarkupString.Ansi.AnsiOutputOptions.operator ==(MarkupString.Ansi.AnsiOutputOptions? left, MarkupString.Ansi.AnsiOutputOptions? right) -> bool
 static MarkupString.Ansi.AnsiRegistration.WithAnsiOutput(this MarkupString.MarkupRegistry! registry, MarkupString.Ansi.AnsiOutputOptions! options) -> MarkupString.MarkupRegistry!
+static MarkupString.Ansi.TerminalPictureFrame.operator !=(MarkupString.Ansi.TerminalPictureFrame left, MarkupString.Ansi.TerminalPictureFrame right) -> bool
+static MarkupString.Ansi.TerminalPictureFrame.operator ==(MarkupString.Ansi.TerminalPictureFrame left, MarkupString.Ansi.TerminalPictureFrame right) -> bool

@@ -195,6 +195,53 @@ public class TerminalFeatureTests
 	}
 
 	[Test]
+	public async Task KittySendsEachFrameOfAMovingPictureThenStartsIt()
+	{
+		var red = RedBlue(2, 2).Rgba;
+		var blue = red.ToArray().Reverse().ToArray();
+		var picture = new TerminalPicture("moving", 2, 2,
+			[new TerminalPictureFrame(red, TimeSpan.FromMilliseconds(100)), new TerminalPictureFrame(blue, TimeSpan.FromMilliseconds(250))]);
+		var source = new Source(picture);
+		var options = new AnsiOutputOptions(Features: TerminalFeatures.KittyGraphics) { Pictures = source };
+		var laid = Laid(new Figure(Cat, MarkupText.Empty), 10);
+
+		var first = RenderString(laid, options);
+		var second = RenderString(laid, options);
+		var id = source.Sent.Single();
+
+		await Assert.That(Regex.Matches(first, "a=T,U=1").Count).IsEqualTo(1);
+		await Assert.That(first).Contains($"a=f,i={id},f=100,X=1,z=250,q=2,m=0;");
+		await Assert.That(first).Contains($"a=a,i={id},r=1,z=100,q=2");
+		await Assert.That(first.IndexOf($"a=a,i={id},s=3,v=1,q=2", StringComparison.Ordinal))
+			.IsGreaterThan(first.IndexOf("a=f,", StringComparison.Ordinal));
+		await Assert.That(second).DoesNotContain("a=f,").And.DoesNotContain("a=a,");
+	}
+
+	[Test]
+	public async Task AMovingPictureIsItsFirstFrameWhereItCannotMove()
+	{
+		var still = RedBlue(2, 2);
+		var moving = new TerminalPicture("moving", 2, 2,
+			[new TerminalPictureFrame(still.Rgba, TimeSpan.FromMilliseconds(100)), new TerminalPictureFrame(new byte[16], TimeSpan.FromMilliseconds(100))]);
+		var laid = Laid(new Figure(Cat, MarkupText.Empty), 10);
+		string Render(TerminalPicture picture) =>
+			RenderString(laid, new AnsiOutputOptions(Features: TerminalFeatures.BlockArt) { Pictures = new Source(picture) });
+
+		await Assert.That(Render(moving)).IsEqualTo(Render(still));
+		await Assert.That(moving.Rgba.ToArray()).IsEquivalentTo(still.Rgba.ToArray());
+	}
+
+	[Test]
+	public async Task AMovingPictureNeedsFramesOfItsOwnSize()
+	{
+		await Assert.That(() => new TerminalPicture("bad", 2, 2,
+			[new TerminalPictureFrame(new byte[16], TimeSpan.Zero), new TerminalPictureFrame(new byte[4], TimeSpan.Zero)]))
+			.Throws<ArgumentException>();
+		await Assert.That(() => new TerminalPicture("none", 2, 2, Array.Empty<TerminalPictureFrame>())).Throws<ArgumentException>();
+		await Assert.That(new TerminalPicture("one", 2, 2, [new TerminalPictureFrame(new byte[16], TimeSpan.Zero)]).Frames).IsEmpty();
+	}
+
+	[Test]
 	public async Task KittyTransmissionIsChunkedAtFourKilobytes()
 	{
 		var random = new Random(7);

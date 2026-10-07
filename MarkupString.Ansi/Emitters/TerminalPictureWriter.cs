@@ -156,19 +156,60 @@ internal static class TerminalPictureWriter
 	/// so a connection shown the picture after the first is sent a copy.
 	/// </summary>
 	/// <remarks>
+	/// <para>
 	/// Sent as PNG (<c>f=100</c>) rather than zlib-compressed raw pixels (<c>f=32,o=z</c>): the PNG's row
 	/// filtering and dropped alpha make it about half the size for the same compression time, and every
 	/// terminal that speaks the protocol decodes PNG.
+	/// </para>
+	/// <para>
+	/// A moving picture's first frame is the image; each later frame follows as a whole frame written over its
+	/// base (<c>a=f,X=1</c>) with its own duration (<c>z</c>), then the first frame's duration is set and the
+	/// animation started looping (<c>a=a,s=3,v=1</c>). The terminal plays it from then on; nothing more is sent.
+	/// </para>
 	/// </remarks>
 	private static string EncodeKitty(TerminalPicture picture, KittyKey key)
 	{
 		var (width, height) = PictureScaler.FitWithin(picture.Width, picture.Height,
 			key.Columns * key.CellWidth, key.Rows * key.CellHeight, upscale: false);
-		var pixels = PictureScaler.Scale(picture.Rgba.Span, picture.Width, picture.Height, width, height);
-		var payload = Convert.ToBase64String(PngWriter.Encode(pixels, width, height));
-		var chunks = (payload.Length + KittyChunk - 1) / KittyChunk;
+		var text = new StringBuilder();
+		AppendKittyChunks(text, picture.Rgba.Span, picture, width, height,
+			string.Create(CultureInfo.InvariantCulture, $"a=T,U=1,i={key.Id},f=100,c={key.Columns},r={key.Rows},q=2"), "");
 
-		var text = new StringBuilder(payload.Length + 96 + chunks * 16);
+		if (picture.Frames.Count > 1)
+		{
+			for (var frame = 1; frame < picture.Frames.Count; frame++)
+			{
+				AppendKittyChunks(text, picture.Frames[frame].Rgba.Span, picture, width, height,
+					string.Create(CultureInfo.InvariantCulture, $"a=f,i={key.Id},f=100,X=1,z={KittyGap(picture.Frames[frame].Duration)},q=2"),
+					"a=f,");
+			}
+
+			text.Append(CultureInfo.InvariantCulture,
+				$"{Esc}_Ga=a,i={key.Id},r=1,z={KittyGap(picture.Frames[0].Duration)},q=2{StringTerminator}");
+			text.Append(CultureInfo.InvariantCulture, $"{Esc}_Ga=a,i={key.Id},s=3,v=1,q=2{StringTerminator}");
+		}
+
+		return text.ToString();
+	}
+
+	/// <summary>
+	/// A frame's duration as Kitty's gap in milliseconds: at least one, since Kitty ignores a zero gap and
+	/// reads a negative one as no gap at all.
+	/// </summary>
+	private static int KittyGap(TimeSpan duration) => (int)Math.Clamp(duration.TotalMilliseconds, 1, int.MaxValue);
+
+	/// <summary>
+	/// <paramref name="rgba"/> scaled to <paramref name="width"/> × <paramref name="height"/>, as a PNG in base64
+	/// chunks of at most <see cref="KittyChunk"/>: the first carrying <paramref name="first"/>, the rest
+	/// <paramref name="rest"/> (which a frame needs, <c>a=f,</c>) and each whether more follow.
+	/// </summary>
+	private static void AppendKittyChunks(StringBuilder text, ReadOnlySpan<byte> rgba, TerminalPicture picture, int width, int height,
+		string first, string rest)
+	{
+		var pixels = PictureScaler.Scale(rgba, picture.Width, picture.Height, width, height);
+		var payload = Convert.ToBase64String(PngWriter.Encode(pixels, width, height));
+		text.EnsureCapacity(text.Length + payload.Length + 96 + payload.Length / KittyChunk * 20);
+
 		var offset = 0;
 		do
 		{
@@ -177,20 +218,17 @@ internal static class TerminalPictureWriter
 			text.Append(Esc + "_G");
 			if (offset == 0)
 			{
-				text.Append(CultureInfo.InvariantCulture,
-					$"a=T,U=1,i={key.Id},f=100,c={key.Columns},r={key.Rows},q=2,m={more}");
+				text.Append(first).Append(",m=").Append(more);
 			}
 			else
 			{
-				text.Append("m=").Append(more).Append(",q=2");
+				text.Append(rest).Append("m=").Append(more).Append(",q=2");
 			}
 
 			text.Append(';').Append(payload, offset, length).Append(StringTerminator);
 			offset += length;
 		}
 		while (offset < payload.Length);
-
-		return text.ToString();
 	}
 
 	/// <summary>
