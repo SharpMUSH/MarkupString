@@ -414,6 +414,35 @@ public class TerminalFeatureTests
 	}
 
 	[Test]
+	[Arguments(AnsiColorDepth.Attributes)]
+	[Arguments(AnsiColorDepth.None)]
+	public async Task BlockArtWithoutColourIsTheTextArt(AnsiColorDepth depth)
+	{
+		var options = new AnsiOutputOptions(depth, TerminalFeatures.BlockArt) { Pictures = new Source(RedBlue()) };
+
+		var output = RenderString(Laid(new Figure(Cat, MarkupText.Empty), 10, new PictureCells(2, 1)), options);
+
+		await Assert.That(output).DoesNotContain("▀");
+		await Assert.That(output).DoesNotContain("▄");
+	}
+
+	/// <summary>A terminal that does not know its cell size reports 0; that is drawn at the default size, not divided by.</summary>
+	[Test]
+	[Arguments(TerminalFeatures.Sixel)]
+	[Arguments(TerminalFeatures.InlineImages)]
+	[Arguments(TerminalFeatures.KittyGraphics)]
+	public async Task AnUnknownCellSizeIsTheDefault(TerminalFeatures feature)
+	{
+		var laid = Laid(new Figure(Cat, MarkupText.Empty), 10, new PictureCells(2, 2));
+		var unknown = new AnsiOutputOptions(Features: feature) { Pictures = new Source(RedBlue()), CellWidth = 0, CellHeight = -1 };
+		var known = new AnsiOutputOptions(Features: feature) { Pictures = new Source(RedBlue()) };
+
+		await Assert.That(unknown.CellWidth).IsEqualTo(10);
+		await Assert.That(unknown.CellHeight).IsEqualTo(20);
+		await Assert.That(RenderString(laid, unknown)).IsEqualTo(RenderString(laid, known));
+	}
+
+	[Test]
 	public async Task KittyIsPreferredWhenTheClientHasSeveralWays()
 	{
 		var options = new AnsiOutputOptions(Features: TerminalFeatures.Pictures) { Pictures = new Source(RedBlue()) };

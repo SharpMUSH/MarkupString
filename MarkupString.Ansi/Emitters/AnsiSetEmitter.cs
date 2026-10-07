@@ -29,7 +29,13 @@ public sealed class AnsiSetEmitter(AnsiOutputOptions options) : IMarkupSetEmitte
 	}
 
 	private readonly AnsiOutputOptions _options = options ?? throw new ArgumentNullException(nameof(options));
-	private readonly TerminalFeatures _pictureMethod = options.Pictures is null ? TerminalFeatures.None : TerminalPictureWriter.Method(options.Features);
+	// Half blocks are colour and nothing else: at a depth without colour they are a grid of identical blocks,
+	// and the figure's text art says more.
+	private readonly TerminalFeatures _pictureMethod = options.Pictures is null
+		? TerminalFeatures.None
+		: TerminalPictureWriter.Method(options.ColorDepth is AnsiColorDepth.Attributes or AnsiColorDepth.None
+			? options.Features & ~TerminalFeatures.BlockArt
+			: options.Features);
 
 	/// <inheritdoc/>
 	public MarkupFormat Format => MarkupFormat.Ansi;

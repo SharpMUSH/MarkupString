@@ -84,8 +84,10 @@ neither fetches nor decodes a file. Without the pixels, or without the feature, 
 - **iTerm2 and sixel** are pixels over the screen. On the picture's first row the cursor makes room
   below (`ESC D` per row), comes back up, and draws the picture between `ESC 7` and `ESC 8`; every row
   then steps over its cells with `CSI n C`, so no text is written over it. Sixel is the cells' size in
-  pixels (`CellWidth` × `CellHeight`, 10 × 20 unless the host knows better).
-- **Half blocks** letterbox the picture into two pixels a cell, at the client's colour depth.
+  pixels (`CellWidth` × `CellHeight`, 10 × 20 unless the host knows better; 0, which a terminal
+  reports when it does not know, counts as unknown).
+- **Half blocks** letterbox the picture into two pixels a cell, at the client's colour depth. A client
+  with no colour (`Attributes` or `None`) is sent the text art instead.
 
 Each encoding (the PNG, the Kitty transmission, the sixels, the half-block rows) is made once per
 picture and size and kept with the `TerminalPicture`, for as long as the host keeps the picture: every

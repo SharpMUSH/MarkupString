@@ -13,9 +13,12 @@ public sealed record AnsiOutputOptions(
 	/// </summary>
 	public ITerminalPictureSource? Pictures { get; init; }
 
-	/// <summary>The width of the terminal's character cell in pixels, for a picture drawn in pixels (sixel). 10 when unknown.</summary>
-	public int CellWidth { get; init; } = 10;
+	/// <summary>
+	/// The width of the terminal's character cell in pixels, for a picture drawn in pixels (sixel). 10 when unknown,
+	/// which a terminal that does not know its own reports as 0: a value below 1 is taken as unknown.
+	/// </summary>
+	public int CellWidth { get; init => field = value > 0 ? value : 10; } = 10;
 
-	/// <summary>The height of the terminal's character cell in pixels, for a picture drawn in pixels (sixel). 20 when unknown.</summary>
-	public int CellHeight { get; init; } = 20;
+	/// <summary>The height of the terminal's character cell in pixels, for a picture drawn in pixels (sixel). 20 when unknown, as is a value below 1.</summary>
+	public int CellHeight { get; init => field = value > 0 ? value : 20; } = 20;
 }
