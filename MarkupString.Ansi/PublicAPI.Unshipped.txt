@@ -14,6 +14,8 @@ MarkupString.Ansi.AnsiOutputOptions.Features.get -> MarkupString.Ansi.TerminalFe
 MarkupString.Ansi.AnsiOutputOptions.Features.init -> void
 MarkupString.Ansi.AnsiOutputOptions.Pictures.get -> MarkupString.Ansi.ITerminalPictureSource?
 MarkupString.Ansi.AnsiOutputOptions.Pictures.init -> void
+MarkupString.Ansi.AnsiOutputOptions.Terminal.get -> MarkupString.Ansi.TerminalProfile?
+MarkupString.Ansi.AnsiOutputOptions.Terminal.init -> void
 MarkupString.Ansi.AnsiSetEmitter.AnsiSetEmitter(MarkupString.Ansi.AnsiOutputOptions! options) -> void
 MarkupString.Ansi.ITerminalPictureSource
 MarkupString.Ansi.ITerminalPictureSource.MarkTransmitted(uint imageId) -> bool
@@ -24,6 +26,7 @@ MarkupString.Ansi.TerminalFeatures.CommandLinks = 2 -> MarkupString.Ansi.Termina
 MarkupString.Ansi.TerminalFeatures.Hyperlinks = 1 -> MarkupString.Ansi.TerminalFeatures
 MarkupString.Ansi.TerminalFeatures.InlineImages = 8 -> MarkupString.Ansi.TerminalFeatures
 MarkupString.Ansi.TerminalFeatures.KittyGraphics = 4 -> MarkupString.Ansi.TerminalFeatures
+MarkupString.Ansi.TerminalFeatures.MovingPictures = 64 -> MarkupString.Ansi.TerminalFeatures
 MarkupString.Ansi.TerminalFeatures.None = 0 -> MarkupString.Ansi.TerminalFeatures
 MarkupString.Ansi.TerminalFeatures.Pictures = MarkupString.Ansi.TerminalFeatures.KittyGraphics | MarkupString.Ansi.TerminalFeatures.InlineImages | MarkupString.Ansi.TerminalFeatures.Sixel | MarkupString.Ansi.TerminalFeatures.BlockArt -> MarkupString.Ansi.TerminalFeatures
 MarkupString.Ansi.TerminalFeatures.Sixel = 16 -> MarkupString.Ansi.TerminalFeatures
@@ -44,14 +47,54 @@ MarkupString.Ansi.TerminalPictureFrame.Rgba.get -> System.ReadOnlyMemory<byte>
 MarkupString.Ansi.TerminalPictureFrame.Rgba.init -> void
 MarkupString.Ansi.TerminalPictureFrame.TerminalPictureFrame() -> void
 MarkupString.Ansi.TerminalPictureFrame.TerminalPictureFrame(System.ReadOnlyMemory<byte> Rgba, System.TimeSpan Duration) -> void
+MarkupString.Ansi.TerminalProfile
+MarkupString.Ansi.TerminalProfile.<Clone>$() -> MarkupString.Ansi.TerminalProfile!
+MarkupString.Ansi.TerminalProfile.Allow(MarkupString.Ansi.TerminalFeatures chosen) -> MarkupString.Ansi.TerminalFeatures
+MarkupString.Ansi.TerminalProfile.Deconstruct(out string! Id, out string! Name, out MarkupString.Ansi.TerminalFeatures Features) -> void
+MarkupString.Ansi.TerminalProfile.Equals(MarkupString.Ansi.TerminalProfile? other) -> bool
+MarkupString.Ansi.TerminalProfile.Features.get -> MarkupString.Ansi.TerminalFeatures
+MarkupString.Ansi.TerminalProfile.Features.init -> void
+MarkupString.Ansi.TerminalProfile.Id.get -> string!
+MarkupString.Ansi.TerminalProfile.Id.init -> void
+MarkupString.Ansi.TerminalProfile.InlineImageLimit.get -> int
+MarkupString.Ansi.TerminalProfile.InlineImageLimit.init -> void
+MarkupString.Ansi.TerminalProfile.MultipartInlineImages.get -> bool
+MarkupString.Ansi.TerminalProfile.MultipartInlineImages.init -> void
+MarkupString.Ansi.TerminalProfile.Name.get -> string!
+MarkupString.Ansi.TerminalProfile.Name.init -> void
+MarkupString.Ansi.TerminalProfile.Reports.get -> System.Collections.Generic.IReadOnlyList<string!>!
+MarkupString.Ansi.TerminalProfile.Reports.init -> void
+MarkupString.Ansi.TerminalProfile.TerminalProfile(string! Id, string! Name, MarkupString.Ansi.TerminalFeatures Features) -> void
 override MarkupString.Ansi.AnsiOutputOptions.Equals(object? obj) -> bool
 override MarkupString.Ansi.AnsiOutputOptions.GetHashCode() -> int
 override MarkupString.Ansi.AnsiOutputOptions.ToString() -> string!
 ~override MarkupString.Ansi.TerminalPictureFrame.Equals(object obj) -> bool
 override MarkupString.Ansi.TerminalPictureFrame.GetHashCode() -> int
 ~override MarkupString.Ansi.TerminalPictureFrame.ToString() -> string
+override MarkupString.Ansi.TerminalProfile.Equals(object? obj) -> bool
+override MarkupString.Ansi.TerminalProfile.GetHashCode() -> int
+override MarkupString.Ansi.TerminalProfile.ToString() -> string!
+static MarkupString.Ansi.AnsiOutputOptions.For(MarkupString.Ansi.TerminalProfile! terminal, MarkupString.Ansi.TerminalFeatures chosen, MarkupString.Ansi.AnsiColorDepth colorDepth = MarkupString.Ansi.AnsiColorDepth.TrueColor) -> MarkupString.Ansi.AnsiOutputOptions!
 static MarkupString.Ansi.AnsiOutputOptions.operator !=(MarkupString.Ansi.AnsiOutputOptions? left, MarkupString.Ansi.AnsiOutputOptions? right) -> bool
 static MarkupString.Ansi.AnsiOutputOptions.operator ==(MarkupString.Ansi.AnsiOutputOptions? left, MarkupString.Ansi.AnsiOutputOptions? right) -> bool
 static MarkupString.Ansi.AnsiRegistration.WithAnsiOutput(this MarkupString.MarkupRegistry! registry, MarkupString.Ansi.AnsiOutputOptions! options) -> MarkupString.MarkupRegistry!
 static MarkupString.Ansi.TerminalPictureFrame.operator !=(MarkupString.Ansi.TerminalPictureFrame left, MarkupString.Ansi.TerminalPictureFrame right) -> bool
 static MarkupString.Ansi.TerminalPictureFrame.operator ==(MarkupString.Ansi.TerminalPictureFrame left, MarkupString.Ansi.TerminalPictureFrame right) -> bool
+static MarkupString.Ansi.TerminalProfile.Alacritty.get -> MarkupString.Ansi.TerminalProfile!
+static MarkupString.Ansi.TerminalProfile.Contour.get -> MarkupString.Ansi.TerminalProfile!
+static MarkupString.Ansi.TerminalProfile.Find(string? id) -> MarkupString.Ansi.TerminalProfile?
+static MarkupString.Ansi.TerminalProfile.Foot.get -> MarkupString.Ansi.TerminalProfile!
+static MarkupString.Ansi.TerminalProfile.Ghostty.get -> MarkupString.Ansi.TerminalProfile!
+static MarkupString.Ansi.TerminalProfile.ITerm2.get -> MarkupString.Ansi.TerminalProfile!
+static MarkupString.Ansi.TerminalProfile.Identify(string? reported) -> MarkupString.Ansi.TerminalProfile?
+static MarkupString.Ansi.TerminalProfile.Kitty.get -> MarkupString.Ansi.TerminalProfile!
+static MarkupString.Ansi.TerminalProfile.Known.get -> System.Collections.Generic.IReadOnlyList<MarkupString.Ansi.TerminalProfile!>!
+static MarkupString.Ansi.TerminalProfile.Konsole.get -> MarkupString.Ansi.TerminalProfile!
+static MarkupString.Ansi.TerminalProfile.Mintty.get -> MarkupString.Ansi.TerminalProfile!
+static MarkupString.Ansi.TerminalProfile.VsCode.get -> MarkupString.Ansi.TerminalProfile!
+static MarkupString.Ansi.TerminalProfile.Vte.get -> MarkupString.Ansi.TerminalProfile!
+static MarkupString.Ansi.TerminalProfile.WezTerm.get -> MarkupString.Ansi.TerminalProfile!
+static MarkupString.Ansi.TerminalProfile.WindowsTerminal.get -> MarkupString.Ansi.TerminalProfile!
+static MarkupString.Ansi.TerminalProfile.XTerm.get -> MarkupString.Ansi.TerminalProfile!
+static MarkupString.Ansi.TerminalProfile.operator !=(MarkupString.Ansi.TerminalProfile? left, MarkupString.Ansi.TerminalProfile? right) -> bool
+static MarkupString.Ansi.TerminalProfile.operator ==(MarkupString.Ansi.TerminalProfile? left, MarkupString.Ansi.TerminalProfile? right) -> bool

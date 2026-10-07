@@ -29,9 +29,9 @@ internal static class GifWriter
 	{
 		var histogram = new int[Bins];
 		var transparent = false;
-		foreach (var (rgba, _) in frames)
+		foreach (var frame in frames)
 		{
-			var pixels = rgba.Span;
+			var pixels = frame.Rgba.Span;
 			for (var i = 0; i < pixels.Length; i += 4)
 			{
 				if (pixels[i + 3] < 128) transparent = true;
@@ -65,14 +65,14 @@ internal static class GifWriter
 
 		var indices = new byte[width * height];
 		var minimumCodeSize = Math.Max(2, bits);
-		foreach (var (rgba, duration) in frames)
+		foreach (var frame in frames)
 		{
-			var pixels = rgba.Span;
+			var pixels = frame.Rgba.Span;
 			for (int i = 0, p = 0; p < indices.Length; i += 4, p++)
 				indices[p] = pixels[i + 3] < 128 ? (byte)transparentIndex : lookup[Bin(pixels, i)];
 
 			// Graphic control: restore to background after the frame, the delay in hundredths, transparency.
-			var centiseconds = (int)Math.Clamp(Math.Round(duration.TotalMilliseconds / 10), 2, ushort.MaxValue);
+			var centiseconds = (int)Math.Clamp(Math.Round(frame.Shown.TotalMilliseconds / 10), 2, ushort.MaxValue);
 			output.Write([0x21, 0xF9, 0x04, (byte)((2 << 2) | (transparent ? 1 : 0))]);
 			WriteShort(output, centiseconds);
 			output.WriteByte(transparent ? (byte)transparentIndex : (byte)0);

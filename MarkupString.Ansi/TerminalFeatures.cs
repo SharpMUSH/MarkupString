@@ -47,6 +47,13 @@ public enum TerminalFeatures
 	/// </summary>
 	BlockArt = 32,
 
+	/// <summary>
+	/// A moving picture plays, through whichever of <see cref="KittyGraphics"/> or <see cref="InlineImages"/> draws
+	/// it: Kitty is sent its frames, iTerm2 a looping GIF. Without it, and by every other way of drawing, a moving
+	/// picture is its first frame. Not a way of drawing on its own, so not part of <see cref="Pictures"/>.
+	/// </summary>
+	MovingPictures = 64,
+
 	/// <summary>Every way of drawing a picture.</summary>
 	Pictures = KittyGraphics | InlineImages | Sixel | BlockArt,
 }

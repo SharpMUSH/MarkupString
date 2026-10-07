@@ -202,7 +202,7 @@ public class TerminalFeatureTests
 		var picture = new TerminalPicture("moving", 2, 2,
 			[new TerminalPictureFrame(red, TimeSpan.FromMilliseconds(100)), new TerminalPictureFrame(blue, TimeSpan.FromMilliseconds(250))]);
 		var source = new Source(picture);
-		var options = new AnsiOutputOptions(Features: TerminalFeatures.KittyGraphics) { Pictures = source };
+		var options = new AnsiOutputOptions(Features: TerminalFeatures.KittyGraphics | TerminalFeatures.MovingPictures) { Pictures = source };
 		var laid = Laid(new Figure(Cat, MarkupText.Empty), 10);
 
 		var first = RenderString(laid, options);
@@ -215,6 +215,40 @@ public class TerminalFeatureTests
 		await Assert.That(first.IndexOf($"a=a,i={id},s=3,v=1,q=2", StringComparison.Ordinal))
 			.IsGreaterThan(first.IndexOf("a=f,", StringComparison.Ordinal));
 		await Assert.That(second).DoesNotContain("a=f,").And.DoesNotContain("a=a,");
+	}
+
+	[Test]
+	public async Task AMovingPictureStaysStillUnlessTheClientAskedForMovingPictures()
+	{
+		var red = RedBlue(2, 2).Rgba;
+		var picture = new TerminalPicture("moving", 2, 2,
+			[new TerminalPictureFrame(red, TimeSpan.FromMilliseconds(100)), new TerminalPictureFrame(new byte[16], TimeSpan.FromMilliseconds(100))]);
+		var laid = Laid(new Figure(Cat, MarkupText.Empty), 10);
+		string Render(TerminalFeatures features) =>
+			RenderString(laid, new AnsiOutputOptions(Features: features) { Pictures = new Source(picture) });
+
+		await Assert.That(Render(TerminalFeatures.KittyGraphics)).DoesNotContain("a=f,").And.DoesNotContain("a=a,");
+		var still = Convert.FromBase64String(Regex.Match(Render(TerminalFeatures.InlineImages), ":([A-Za-z0-9+/=]+)\u0007").Groups[1].Value);
+		await Assert.That(still.Take(4)).IsEquivalentTo(new byte[] { 0x89, 0x50, 0x4E, 0x47 }); // a PNG, not a GIF
+	}
+
+	/// <summary>A frame of no delay, or one too short to see, is shown for a tenth of a second, as browsers show it.</summary>
+	[Test]
+	public async Task AFrameOfNoDelayIsShownForATenthOfASecond()
+	{
+		var red = RedBlue(2, 2).Rgba;
+		var picture = new TerminalPicture("fast", 2, 2,
+			[new TerminalPictureFrame(red, TimeSpan.Zero), new TerminalPictureFrame(new byte[16], TimeSpan.FromMilliseconds(10)),
+				new TerminalPictureFrame(red, TimeSpan.FromMilliseconds(20))]);
+		var laid = Laid(new Figure(Cat, MarkupText.Empty), 10);
+		string Render(TerminalFeatures features) =>
+			RenderString(laid, new AnsiOutputOptions(Features: features | TerminalFeatures.MovingPictures) { Pictures = new Source(picture) });
+
+		var kitty = Render(TerminalFeatures.KittyGraphics);
+		await Assert.That(Regex.Matches(kitty, @"a=f,[^;]*z=(\d+)").Select(m => m.Groups[1].Value)).IsEquivalentTo(new[] { "100", "20" });
+		await Assert.That(kitty).Contains(",r=1,z=100,");
+		var gif = GifReader.Read(Convert.FromBase64String(Regex.Match(Render(TerminalFeatures.InlineImages), ":([A-Za-z0-9+/=]+)\u0007").Groups[1].Value));
+		await Assert.That(gif.Frames.Select(f => f.Centiseconds)).IsEquivalentTo(new[] { 10, 10, 2 });
 	}
 
 	[Test]
@@ -289,7 +323,7 @@ public class TerminalFeatureTests
 		Array.Clear(blue, 8, 8);
 		var picture = new TerminalPicture("moving", 2, 2,
 			[new TerminalPictureFrame(red, TimeSpan.FromMilliseconds(100)), new TerminalPictureFrame(blue, TimeSpan.FromMilliseconds(250))]);
-		var options = new AnsiOutputOptions(Features: TerminalFeatures.InlineImages) { Pictures = new Source(picture) };
+		var options = new AnsiOutputOptions(Features: TerminalFeatures.InlineImages | TerminalFeatures.MovingPictures) { Pictures = new Source(picture) };
 
 		var output = RenderString(Laid(new Figure(Cat, MarkupText.Empty), 10, new PictureCells(4, 2)), options);
 		var gif = Convert.FromBase64String(Regex.Match(output, ":([A-Za-z0-9+/=]+)\u0007").Groups[1].Value);
@@ -324,7 +358,10 @@ public class TerminalFeatureTests
 
 		var frames = new[] { Noise(), Noise(), Noise() };
 		var picture = new TerminalPicture("noise", 128, 128, [.. frames.Select(f => new TerminalPictureFrame(f, TimeSpan.FromMilliseconds(40)))]);
-		var options = new AnsiOutputOptions(Features: TerminalFeatures.InlineImages) { Pictures = new Source(picture), CellWidth = 16, CellHeight = 32 };
+		var options = new AnsiOutputOptions(Features: TerminalFeatures.InlineImages | TerminalFeatures.MovingPictures)
+		{
+			Pictures = new Source(picture), CellWidth = 16, CellHeight = 32,
+		};
 
 		var output = RenderString(Laid(new Figure(Cat, MarkupText.Empty), 20, new PictureCells(8, 4)), options);
 		var decoded = GifReader.Read(Convert.FromBase64String(Regex.Match(output, ":([A-Za-z0-9+/=]+)\u0007").Groups[1].Value));
@@ -333,6 +370,48 @@ public class TerminalFeatureTests
 		await Assert.That(decoded.Frames.Count).IsEqualTo(3);
 		for (var i = 0; i < frames.Length; i++)
 			await Assert.That(decoded.Frames[i].Rgba.SequenceEqual(frames[i])).IsTrue();
+	}
+
+	/// <summary>
+	/// A moving picture too big for one iTerm2 sequence goes in parts to a terminal that reads them, each part under
+	/// the limit; to one that does not, it is sent still.
+	/// </summary>
+	[Test]
+	public async Task AnInlineImageOverTheLimitIsSentInPartsOrStill()
+	{
+		var random = new Random(5);
+		TerminalPictureFrame Noise()
+		{
+			var rgba = new byte[512 * 512 * 4];
+			random.NextBytes(rgba);
+			for (var i = 3; i < rgba.Length; i += 4) rgba[i] = 255;
+			return new TerminalPictureFrame(rgba, TimeSpan.FromMilliseconds(50));
+		}
+
+		var picture = new TerminalPicture("big", 512, 512, [Noise(), Noise(), Noise(), Noise()]);
+		var laid = Laid(new Figure(Cat, MarkupText.Empty), 20, new PictureCells(8, 4));
+		string Render(TerminalProfile terminal) => RenderString(laid,
+			AnsiOutputOptions.For(terminal, TerminalFeatures.InlineImages | TerminalFeatures.MovingPictures) with
+			{
+				Pictures = new Source(picture),
+				CellWidth = 64,
+				CellHeight = 128,
+			});
+
+		var parts = Render(TerminalProfile.ITerm2);
+		var sequences = Regex.Matches(parts, $"{Esc}]1337;([^{Bel}]*){Bel}").Select(m => m.Groups[1].Value).ToArray();
+		await Assert.That(sequences[0]).StartsWith("MultipartFile=inline=1;size=");
+		await Assert.That(sequences[^1]).IsEqualTo("FileEnd");
+		await Assert.That(sequences.Length).IsGreaterThan(3);
+		await Assert.That(sequences.All(s => s.Length + 8 <= TerminalProfile.ITerm2.InlineImageLimit)).IsTrue();
+		var gif = Convert.FromBase64String(string.Concat(sequences[1..^1].Select(s => s["FilePart=".Length..])));
+		await Assert.That(sequences[0]).Contains($"size={gif.Length};");
+		await Assert.That(GifReader.Read(gif).Frames.Count).IsEqualTo(4);
+
+		var still = Render(TerminalProfile.Konsole);
+		await Assert.That(still).DoesNotContain("MultipartFile");
+		var png = Convert.FromBase64String(Regex.Match(still, ":([A-Za-z0-9+/=]+)\u0007").Groups[1].Value);
+		await Assert.That(png.Take(4)).IsEquivalentTo(new byte[] { 0x89, 0x50, 0x4E, 0x47 });
 	}
 
 	private static byte Centre(Random random) => (byte)(random.Next(32) * 8 + 4);
