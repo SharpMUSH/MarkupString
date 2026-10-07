@@ -23,7 +23,7 @@ public sealed record Figure(ImageMarkup Image, MarkupText Art) : Block
 	{
 		if (Art.Length == 0)
 		{
-			lines.AddRange(MarkupText.Plain($"[{Description}]").FormatColumn(BlockText.Column(width, Alignment.Left)));
+			lines.AddRange(MarkupText.Plain($"[{Description}]").FormatColumn(BlockText.Column(width, context.TextAlignment)));
 			if (Beside is { } after) context.Draw(after, width, lines);
 			return;
 		}
@@ -34,7 +34,14 @@ public sealed record Figure(ImageMarkup Image, MarkupText Art) : Block
 
 		if (Float == FigureFloat.None || Beside is null || narrow < 8)
 		{
-			foreach (var line in art) lines.Add(BlockText.Fit(line, width));
+			// The art moves as one piece, so its lines keep their spacing against each other.
+			var indent = BlockText.Blank(context.TextAlignment switch
+			{
+				Alignment.Center => (width - artWidth) / 2,
+				Alignment.Right => width - artWidth,
+				_ => 0,
+			});
+			foreach (var line in art) lines.Add(BlockText.Fit(MarkupText.Concat([indent, BlockText.Fit(line, artWidth)]), width));
 			if (Beside is { } below) context.Draw(below, width, lines);
 			return;
 		}
