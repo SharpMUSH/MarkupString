@@ -32,6 +32,12 @@ public sealed record Fields(ImmutableArray<Field> Items) : Block
 	/// <summary>Cells between two columns.</summary>
 	public int Gap { get; init; } = 3;
 
+	/// <summary>
+	/// Whether every second field is laid on the theme's <see cref="LayoutTheme.StripeColor"/>, across the
+	/// label and the value. Dealt into columns, each column is striped on its own.
+	/// </summary>
+	public bool Striped { get; init; }
+
 	/// <summary>The separator drawn under <paramref name="context"/>.</summary>
 	internal MarkupText SeparatorIn(LayoutContext context) => Separator ?? context.Theme.Piece(theme => theme.FieldSeparator);
 
@@ -60,18 +66,21 @@ public sealed record Fields(ImmutableArray<Field> Items) : Block
 			return;
 		}
 
-		var separator = SeparatorIn(context);
+		var separator = context.Paint(theme => theme.SeparatorColor, SeparatorIn(context));
 		var labelWidth = Math.Min(Items.Max(field => field.Label.DisplayWidth), Math.Max(1, width / 2));
 		var valueWidth = width - labelWidth - separator.DisplayWidth;
 		if (valueWidth < Math.Min(MinValue, width))
 		{
 			// Too narrow to sit side by side: each label on its own line, its value indented under it.
 			var indent = BlockText.Blank(Math.Min(2, width - 1));
-			foreach (var field in Items)
+			for (var index = 0; index < Items.Length; index++)
 			{
+				var field = Items[index];
+				var first = lines.Count;
 				if (field.Label.Length > 0)
-					lines.AddRange(MarkupText.Concat([field.Label, separator.Trim(TrimType.TrimEnd)]).FormatColumn(BlockText.Column(width, Alignment.Left)));
-				foreach (var line in context.Lines(field.Value, width - indent.DisplayWidth)) lines.Add(MarkupText.Concat([indent, line]));
+					lines.AddRange(MarkupText.Concat([context.Paint(theme => theme.LabelColor, field.Label), separator.Trim(TrimType.TrimEnd)]).FormatColumn(BlockText.Column(width, Alignment.Left)));
+				foreach (var line in context.Lines(field.Value, width - indent.DisplayWidth)) lines.Add(Striped ? BlockText.Fit(MarkupText.Concat([indent, line]), width) : MarkupText.Concat([indent, line]));
+				if (Striped) context.Stripe(lines, first, index);
 			}
 			return;
 		}
@@ -83,18 +92,20 @@ public sealed record Fields(ImmutableArray<Field> Items) : Block
 		var leader = Leader is { Length: > 0 } pattern ? pattern : null;
 		var labelColumn = labelWidth + separator.DisplayWidth;
 		var blankLabel = BlockText.Blank(labelColumn);
-		foreach (var field in Items)
+		for (var index = 0; index < Items.Length; index++)
 		{
+			var field = Items[index];
+			var first = lines.Count;
 			var label = new List<MarkupText>();
 			if (field.Label.Length > 0 && leader is not null)
 			{
-				var rows = field.Label.FormatColumn(BlockText.Column(labelWidth, alignment) with { Fill = leader });
+				var rows = context.Paint(theme => theme.LabelColor, field.Label).FormatColumn(BlockText.Column(labelWidth, alignment) with { Fill = context.Paint(theme => theme.SeparatorColor, leader) });
 				for (var i = 0; i < rows.Length; i++)
 					label.Add(MarkupText.Concat([BlockText.Fit(rows[i], labelWidth), i == 0 ? separator : BlockText.Blank(separator.DisplayWidth)]));
 			}
 			else if (field.Label.Length > 0)
 			{
-				var rows = MarkupText.Concat([field.Label, head]).FormatColumn(BlockText.Column(labelWidth + head.DisplayWidth, alignment));
+				var rows = MarkupText.Concat([context.Paint(theme => theme.LabelColor, field.Label), head]).FormatColumn(BlockText.Column(labelWidth + head.DisplayWidth, alignment));
 				foreach (var row in rows) label.Add(BlockText.Fit(row, labelColumn));
 			}
 
@@ -106,6 +117,7 @@ public sealed record Fields(ImmutableArray<Field> Items) : Block
 					row < label.Count ? label[row] : blankLabel,
 					row < drawn.Count ? BlockText.Fit(drawn[row], valueWidth) : BlockText.Blank(valueWidth)]));
 			}
+			if (Striped) context.Stripe(lines, first, index);
 		}
 	}
 

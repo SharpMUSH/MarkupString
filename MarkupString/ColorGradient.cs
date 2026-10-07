@@ -19,6 +19,9 @@ public interface IColorMarkup : IMarkup
 	/// <summary>The foreground this layer sets, or <see langword="null"/> when it sets none or only the terminal knows it.</summary>
 	RgbColor? Foreground { get; }
 
+	/// <summary>The background this layer sets, or <see langword="null"/> when it sets none or only the terminal knows it.</summary>
+	RgbColor? Background => null;
+
 	/// <summary>The same layer with its foreground replaced.</summary>
 	IColorMarkup WithForeground(RgbColor color);
 }
@@ -300,14 +303,14 @@ public sealed record ColorGradient(ImmutableArray<IColorMarkup> Stops, GradientS
 	/// <summary>Below this chroma a colour is grey, and its hue means nothing.</summary>
 	private const double Achromatic = 0.0004;
 
-	private static (double L, double C, double H) Polar((double L, double A, double B) lab)
+	internal static (double L, double C, double H) Polar((double L, double A, double B) lab)
 	{
 		var chroma = Math.Sqrt(lab.A * lab.A + lab.B * lab.B);
 		var hue = chroma < Achromatic ? double.NaN : Math.Atan2(lab.B, lab.A) * 180 / Math.PI;
 		return (lab.L, chroma, hue < 0 ? hue + 360 : hue);
 	}
 
-	private static double ToLinear(byte channel)
+	internal static double ToLinear(byte channel)
 	{
 		var c = channel / 255.0;
 		return c <= 0.04045 ? c / 12.92 : Math.Pow((c + 0.055) / 1.055, 2.4);
@@ -316,7 +319,7 @@ public sealed record ColorGradient(ImmutableArray<IColorMarkup> Stops, GradientS
 	private static double FromLinear(double c) =>
 		c <= 0.0031308 ? 12.92 * c : 1.055 * Math.Pow(c, 1 / 2.4) - 0.055;
 
-	private static (double L, double A, double B) ToOklab(RgbColor color)
+	internal static (double L, double A, double B) ToOklab(RgbColor color)
 	{
 		double r = ToLinear(color.R), g = ToLinear(color.G), b = ToLinear(color.B);
 		var l = Math.Cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
@@ -343,7 +346,7 @@ public sealed record ColorGradient(ImmutableArray<IColorMarkup> Stops, GradientS
 	/// An Oklab colour in sRGB. One outside sRGB loses chroma, keeping its lightness and hue, until it
 	/// fits, the way CSS maps a colour into gamut, rather than having its channels clipped.
 	/// </summary>
-	private static RgbColor FromOklab(double lightness, double a, double b)
+	internal static RgbColor FromOklab(double lightness, double a, double b)
 	{
 		lightness = Math.Clamp(lightness, 0, 1);
 		static bool Fits((double R, double G, double B) c) =>

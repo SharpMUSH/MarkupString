@@ -11,6 +11,10 @@ public sealed record AnsiMarkup(AnsiStyle Style) : IColorMarkup, IAnsiStyleSourc
 	public RgbColor? Foreground => Style.Foreground?.ToRgb() is { } rgb ? new RgbColor(rgb.R, rgb.G, rgb.B) : null;
 
 	/// <inheritdoc/>
+	/// <remarks>A palette colour is resolved to its usual RGB value; the terminal's default has none.</remarks>
+	public RgbColor? Background => Style.Background?.ToRgb() is { } rgb ? new RgbColor(rgb.R, rgb.G, rgb.B) : null;
+
+	/// <inheritdoc/>
 	/// <remarks>
 	/// Everything else about the style is kept, and the colour this layer had is what a client with only
 	/// the sixteen standard colours is sent (<see cref="AnsiStyle.StandardForeground"/>).

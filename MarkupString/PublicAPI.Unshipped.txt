@@ -752,3 +752,197 @@ virtual MarkupString.Layout.Block.PrintMembers(System.Text.StringBuilder! builde
 static MarkupString.MarkupTextRenderer.RenderFragment(MarkupString.MarkupText! text, MarkupString.MarkupFormat! format, MarkupString.MarkupRegistry! registry, System.Buffers.IBufferWriter<char>! output) -> void
 ~override MarkupString.RgbColor.Equals(object obj) -> bool
 ~override MarkupString.RgbColor.ToString() -> string
+MarkupString.ColorMath
+MarkupString.ContrastShortfall
+MarkupString.ContrastShortfall.ContrastShortfall() -> void
+MarkupString.ContrastShortfall.ContrastShortfall(MarkupString.ThemeRole Role, double Ratio, double Required) -> void
+MarkupString.ContrastShortfall.Deconstruct(out MarkupString.ThemeRole Role, out double Ratio, out double Required) -> void
+MarkupString.ContrastShortfall.Equals(MarkupString.ContrastShortfall other) -> bool
+MarkupString.ContrastShortfall.Ratio.get -> double
+MarkupString.ContrastShortfall.Ratio.init -> void
+MarkupString.ContrastShortfall.Required.get -> double
+MarkupString.ContrastShortfall.Required.init -> void
+MarkupString.ContrastShortfall.Role.get -> MarkupString.ThemeRole
+MarkupString.ContrastShortfall.Role.init -> void
+MarkupString.Layout.LayoutContext.Paint(System.Func<MarkupString.Layout.LayoutTheme!, MarkupString.IMarkup?>! part, MarkupString.MarkupText! text) -> MarkupString.MarkupText!
+MarkupString.Layout.LayoutTheme.BorderColor.get -> MarkupString.IMarkup?
+MarkupString.Layout.LayoutTheme.BorderColor.init -> void
+MarkupString.Layout.LayoutTheme.BulletColor.get -> MarkupString.IMarkup?
+MarkupString.Layout.LayoutTheme.BulletColor.init -> void
+MarkupString.Layout.LayoutTheme.GaugeEmptyColor.get -> MarkupString.IMarkup?
+MarkupString.Layout.LayoutTheme.GaugeEmptyColor.init -> void
+MarkupString.Layout.LayoutTheme.GaugeFilledColor.get -> MarkupString.IMarkup?
+MarkupString.Layout.LayoutTheme.GaugeFilledColor.init -> void
+MarkupString.Layout.LayoutTheme.GuideColor.get -> MarkupString.IMarkup?
+MarkupString.Layout.LayoutTheme.GuideColor.init -> void
+MarkupString.Layout.LayoutTheme.HasColor.get -> bool
+MarkupString.Layout.LayoutTheme.HeaderRuleColor.get -> MarkupString.IMarkup?
+MarkupString.Layout.LayoutTheme.HeaderRuleColor.init -> void
+MarkupString.Layout.LayoutTheme.HeadingColor.get -> MarkupString.IMarkup?
+MarkupString.Layout.LayoutTheme.HeadingColor.init -> void
+MarkupString.Layout.LayoutTheme.LabelColor.get -> MarkupString.IMarkup?
+MarkupString.Layout.LayoutTheme.LabelColor.init -> void
+MarkupString.Layout.LayoutTheme.SeparatorColor.get -> MarkupString.IMarkup?
+MarkupString.Layout.LayoutTheme.SeparatorColor.init -> void
+MarkupString.Layout.LayoutTheme.TitleColor.get -> MarkupString.IMarkup?
+MarkupString.Layout.LayoutTheme.TitleColor.init -> void
+MarkupString.Layout.Themed.Fallback.get -> bool
+MarkupString.Layout.Themed.Fallback.init -> void
+MarkupString.Layout.Themed.Within(MarkupString.Layout.LayoutTheme! around) -> MarkupString.Layout.LayoutTheme!
+MarkupString.OklchColor
+MarkupString.OklchColor.C.get -> double
+MarkupString.OklchColor.C.init -> void
+MarkupString.OklchColor.Deconstruct(out double L, out double C, out double H) -> void
+MarkupString.OklchColor.Equals(MarkupString.OklchColor other) -> bool
+MarkupString.OklchColor.H.get -> double
+MarkupString.OklchColor.H.init -> void
+MarkupString.OklchColor.L.get -> double
+MarkupString.OklchColor.L.init -> void
+MarkupString.OklchColor.OklchColor() -> void
+MarkupString.OklchColor.OklchColor(double L, double C, double H) -> void
+MarkupString.ThemeColor
+MarkupString.ThemeColor.Deconstruct(out MarkupString.RgbColor? Rgb, out int? Slot) -> void
+MarkupString.ThemeColor.Equals(MarkupString.ThemeColor other) -> bool
+MarkupString.ThemeColor.Resolved.get -> MarkupString.RgbColor
+MarkupString.ThemeColor.Rgb.get -> MarkupString.RgbColor?
+MarkupString.ThemeColor.Rgb.init -> void
+MarkupString.ThemeColor.Slot.get -> int?
+MarkupString.ThemeColor.Slot.init -> void
+MarkupString.ThemeColor.ThemeColor() -> void
+MarkupString.ThemeColor.ThemeColor(MarkupString.RgbColor? Rgb, int? Slot) -> void
+MarkupString.ThemeHarmony
+MarkupString.ThemeHarmony.Analogous = 1 -> MarkupString.ThemeHarmony
+MarkupString.ThemeHarmony.Complementary = 2 -> MarkupString.ThemeHarmony
+MarkupString.ThemeHarmony.Monochrome = 0 -> MarkupString.ThemeHarmony
+MarkupString.ThemeHarmony.Split = 3 -> MarkupString.ThemeHarmony
+MarkupString.ThemeHarmony.Tetradic = 5 -> MarkupString.ThemeHarmony
+MarkupString.ThemeHarmony.Triadic = 4 -> MarkupString.ThemeHarmony
+MarkupString.ThemeMode
+MarkupString.ThemeMode.Dark = 0 -> MarkupString.ThemeMode
+MarkupString.ThemeMode.Light = 1 -> MarkupString.ThemeMode
+MarkupString.ThemePalette
+MarkupString.ThemePalette.<Clone>$() -> MarkupString.ThemePalette!
+MarkupString.ThemePalette.BackgroundColor.get -> MarkupString.RgbColor
+MarkupString.ThemePalette.Check() -> System.Collections.Generic.IReadOnlyList<MarkupString.ContrastShortfall>!
+MarkupString.ThemePalette.Colors.get -> System.Collections.Immutable.ImmutableDictionary<MarkupString.ThemeRole, MarkupString.ThemeColor>!
+MarkupString.ThemePalette.Colors.init -> void
+MarkupString.ThemePalette.Equals(MarkupString.ThemePalette? other) -> bool
+MarkupString.ThemePalette.Mode.get -> MarkupString.ThemeMode
+MarkupString.ThemePalette.Mode.init -> void
+MarkupString.ThemePalette.Name.get -> string!
+MarkupString.ThemePalette.Name.init -> void
+MarkupString.ThemePalette.ThemePalette() -> void
+MarkupString.ThemePalette.ToJson() -> string!
+MarkupString.ThemePalette.With(MarkupString.ThemeRole role, MarkupString.ThemeColor? color) -> MarkupString.ThemePalette!
+MarkupString.ThemePalette.this[MarkupString.ThemeRole role].get -> MarkupString.ThemeColor?
+MarkupString.ThemeRole
+MarkupString.ThemeRole.Background = 0 -> MarkupString.ThemeRole
+override MarkupString.ContrastShortfall.GetHashCode() -> int
+override MarkupString.OklchColor.GetHashCode() -> int
+override MarkupString.ThemeColor.GetHashCode() -> int
+override MarkupString.ThemePalette.Equals(object? obj) -> bool
+override MarkupString.ThemePalette.GetHashCode() -> int
+override MarkupString.ThemePalette.ToString() -> string!
+static MarkupString.ColorMath.Contrast(MarkupString.RgbColor first, MarkupString.RgbColor second) -> double
+static MarkupString.ColorMath.FromOklch(MarkupString.OklchColor color) -> MarkupString.RgbColor
+static MarkupString.ColorMath.Luminance(MarkupString.RgbColor color) -> double
+static MarkupString.ColorMath.Rotate(MarkupString.RgbColor color, double degrees) -> MarkupString.RgbColor
+static MarkupString.ColorMath.StandardColor(int slot) -> MarkupString.RgbColor
+static MarkupString.ColorMath.StandardSlot(MarkupString.RgbColor color) -> int
+static MarkupString.ColorMath.ToOklch(MarkupString.RgbColor color) -> MarkupString.OklchColor
+static MarkupString.ColorMath.TryParseHex(string? text, out MarkupString.RgbColor color) -> bool
+static MarkupString.ColorMath.WithContrast(MarkupString.RgbColor color, MarkupString.RgbColor background, double ratio) -> MarkupString.RgbColor
+static MarkupString.ContrastShortfall.operator !=(MarkupString.ContrastShortfall left, MarkupString.ContrastShortfall right) -> bool
+static MarkupString.ContrastShortfall.operator ==(MarkupString.ContrastShortfall left, MarkupString.ContrastShortfall right) -> bool
+static MarkupString.Layout.BlockExtensions.ThemedUnder(this MarkupString.Layout.Block! content, MarkupString.Layout.LayoutTheme! theme) -> MarkupString.Layout.Themed!
+static MarkupString.OklchColor.operator !=(MarkupString.OklchColor left, MarkupString.OklchColor right) -> bool
+static MarkupString.OklchColor.operator ==(MarkupString.OklchColor left, MarkupString.OklchColor right) -> bool
+static MarkupString.ThemeColor.Of(MarkupString.RgbColor rgb) -> MarkupString.ThemeColor
+static MarkupString.ThemeColor.Standard(int slot) -> MarkupString.ThemeColor
+static MarkupString.ThemeColor.operator !=(MarkupString.ThemeColor left, MarkupString.ThemeColor right) -> bool
+static MarkupString.ThemeColor.operator ==(MarkupString.ThemeColor left, MarkupString.ThemeColor right) -> bool
+static MarkupString.ThemePalette.FromBase16(string! name, System.Collections.Generic.IReadOnlyList<MarkupString.RgbColor>! colors) -> MarkupString.ThemePalette!
+static MarkupString.ThemePalette.Generate(MarkupString.RgbColor seed, MarkupString.ThemeHarmony harmony = MarkupString.ThemeHarmony.Analogous, MarkupString.ThemeMode mode = MarkupString.ThemeMode.Dark, double contrast = 0) -> MarkupString.ThemePalette!
+static MarkupString.ThemePalette.Preset(string! name) -> MarkupString.ThemePalette?
+static MarkupString.ThemePalette.Presets.get -> System.Collections.Generic.IReadOnlyList<MarkupString.ThemePalette!>!
+static MarkupString.ThemePalette.Required(MarkupString.ThemeRole role) -> double
+static MarkupString.ThemePalette.RoleName(MarkupString.ThemeRole role) -> string!
+static MarkupString.ThemePalette.Terminal.get -> MarkupString.ThemePalette!
+static MarkupString.ThemePalette.TryParse(string! json, out MarkupString.ThemePalette? palette, out string? error) -> bool
+static MarkupString.ThemePalette.TryParseRole(string! name, out MarkupString.ThemeRole role) -> bool
+static MarkupString.ThemePalette.TryRead(System.Text.Json.JsonElement element, out MarkupString.ThemePalette? palette, out string? error) -> bool
+static MarkupString.ThemePalette.operator !=(MarkupString.ThemePalette? left, MarkupString.ThemePalette? right) -> bool
+static MarkupString.ThemePalette.operator ==(MarkupString.ThemePalette? left, MarkupString.ThemePalette? right) -> bool
+~override MarkupString.ContrastShortfall.Equals(object obj) -> bool
+~override MarkupString.ContrastShortfall.ToString() -> string
+~override MarkupString.OklchColor.Equals(object obj) -> bool
+~override MarkupString.OklchColor.ToString() -> string
+~override MarkupString.ThemeColor.Equals(object obj) -> bool
+~override MarkupString.ThemeColor.ToString() -> string
+MarkupString.IColorMarkup.Background.get -> MarkupString.RgbColor?
+MarkupString.Layout.Fields.Striped.get -> bool
+MarkupString.Layout.Fields.Striped.init -> void
+MarkupString.Layout.LayoutTheme.StripeColor.get -> MarkupString.IMarkup?
+MarkupString.Layout.LayoutTheme.StripeColor.init -> void
+MarkupString.Layout.Table.Striped.get -> bool
+MarkupString.Layout.Table.Striped.init -> void
+MarkupString.ThemePaint
+MarkupString.ThemePaint.Background = 2 -> MarkupString.ThemePaint
+MarkupString.ThemePaint.Bold = 1 -> MarkupString.ThemePaint
+MarkupString.ThemePaint.Text = 0 -> MarkupString.ThemePaint
+MarkupString.ThemePalette.ToTheme(System.Func<MarkupString.ThemeColor, MarkupString.ThemePaint, MarkupString.IMarkup!>! paint) -> MarkupString.Layout.LayoutTheme!
+MarkupString.ThemeRole.Error = 9 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Foreground = 2 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Info = 10 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Muted = 6 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Primary = 3 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Secondary = 4 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Success = 7 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Surface = 1 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Tertiary = 5 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Warning = 8 -> MarkupString.ThemeRole
+MarkupString.ThemeLook
+MarkupString.ThemeLook.<Clone>$() -> MarkupString.ThemeLook!
+MarkupString.ThemeLook.Border.get -> string?
+MarkupString.ThemeLook.Border.init -> void
+MarkupString.ThemeLook.Bullet.get -> string?
+MarkupString.ThemeLook.Bullet.init -> void
+MarkupString.ThemeLook.Equals(MarkupString.ThemeLook? other) -> bool
+MarkupString.ThemeLook.GaugeClose.get -> string?
+MarkupString.ThemeLook.GaugeClose.init -> void
+MarkupString.ThemeLook.GaugeEmpty.get -> string?
+MarkupString.ThemeLook.GaugeEmpty.init -> void
+MarkupString.ThemeLook.GaugeFilled.get -> string?
+MarkupString.ThemeLook.GaugeFilled.init -> void
+MarkupString.ThemeLook.GaugeOpen.get -> string?
+MarkupString.ThemeLook.GaugeOpen.init -> void
+MarkupString.ThemeLook.Guide.get -> string?
+MarkupString.ThemeLook.Guide.init -> void
+MarkupString.ThemeLook.Over(MarkupString.ThemeLook? below) -> MarkupString.ThemeLook!
+MarkupString.ThemeLook.Rule.get -> string?
+MarkupString.ThemeLook.Rule.init -> void
+MarkupString.ThemeLook.Separator.get -> string?
+MarkupString.ThemeLook.Separator.init -> void
+MarkupString.ThemeLook.ThemeLook() -> void
+MarkupString.ThemeLook.TitleClose.get -> string?
+MarkupString.ThemeLook.TitleClose.init -> void
+MarkupString.ThemeLook.TitleOpen.get -> string?
+MarkupString.ThemeLook.TitleOpen.init -> void
+MarkupString.ThemeLook.ToTheme() -> MarkupString.Layout.LayoutTheme!
+MarkupString.ThemeLook.Write(System.Text.Json.Utf8JsonWriter! json) -> void
+MarkupString.ThemePalette.Look.get -> MarkupString.ThemeLook?
+MarkupString.ThemePalette.Look.init -> void
+override MarkupString.ThemeLook.Equals(object? obj) -> bool
+override MarkupString.ThemeLook.GetHashCode() -> int
+override MarkupString.ThemeLook.ToString() -> string!
+static MarkupString.ThemeLook.TryRead(System.Text.Json.JsonElement element, out MarkupString.ThemeLook? look, out string? error) -> bool
+static MarkupString.ThemeLook.operator !=(MarkupString.ThemeLook? left, MarkupString.ThemeLook? right) -> bool
+static MarkupString.ThemeLook.operator ==(MarkupString.ThemeLook? left, MarkupString.ThemeLook? right) -> bool
+static MarkupString.ThemePalette.Genres.get -> System.Collections.Generic.IReadOnlyList<MarkupString.ThemePalette!>!
+MarkupString.ThemePalette.Contrast.get -> double
+MarkupString.ThemePalette.Contrast.init -> void
+MarkupString.ThemePalette.Harmony.get -> MarkupString.ThemeHarmony
+MarkupString.ThemePalette.Harmony.init -> void
+MarkupString.ThemePalette.InMode(MarkupString.ThemeMode mode) -> MarkupString.ThemePalette!
+MarkupString.ThemePalette.Seed.get -> MarkupString.RgbColor?
+MarkupString.ThemePalette.Seed.init -> void

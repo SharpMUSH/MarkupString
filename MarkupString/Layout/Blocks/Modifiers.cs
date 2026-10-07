@@ -45,9 +45,22 @@ public sealed record Colored(Block Content, IMarkup Markup) : Block
 /// <param name="Theme">What it sets; what it leaves unset comes from around it.</param>
 public sealed record Themed(Block Content, LayoutTheme Theme) : Block
 {
+	/// <summary>
+	/// Whether <see cref="Theme"/> only fills in what the theme around it leaves unset, rather than
+	/// overriding it: a game's default look, under which the theme a reader draws it in still shows.
+	/// </summary>
+	public bool Fallback { get; init; }
+
+	/// <summary>The theme the content is drawn in, given the one <paramref name="around"/> it.</summary>
+	public LayoutTheme Within(LayoutTheme around)
+	{
+		ArgumentNullException.ThrowIfNull(around);
+		return Fallback ? around.Over(Theme) : Theme.Over(around);
+	}
+
 	/// <inheritdoc/>
 	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines) =>
-		(context with { Theme = Theme.Over(context.Theme) }).Draw(Content, width, lines);
+		(context with { Theme = Within(context.Theme) }).Draw(Content, width, lines);
 }
 
 /// <summary>Builds blocks up: a frame round one, a size in a row, a colour, a look.</summary>
@@ -80,6 +93,9 @@ public static class BlockExtensions
 
 	/// <summary><paramref name="content"/> in <paramref name="theme"/>, over the theme around it.</summary>
 	public static Themed Themed(this Block content, LayoutTheme theme) => new(content, theme);
+
+	/// <summary><paramref name="content"/> in <paramref name="theme"/> wherever the theme around it sets nothing (<see cref="Layout.Themed.Fallback"/>).</summary>
+	public static Themed ThemedUnder(this Block content, LayoutTheme theme) => new(content, theme) { Fallback = true };
 
 	/// <summary><paramref name="text"/> as a block, to build on.</summary>
 	public static TextBlock ToBlock(this MarkupText text) => new(text);
