@@ -52,6 +52,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **An MXP client draws a figure's picture in its cells.** A figure's `<IMAGE>` carried no size, so a
+  client drew the picture at its own size under the line it was named on, outside any box round it. It
+  is now sized in the cells laid out for it (`W=12c H=5c`), the art's or `PictureCells`', and a client
+  that honours cell sizes draws it there. A figure with neither, whose row is only its description
+  (`PictureRow.IsDescription`), still leaves the picture its own size.
 - **A figure whose art is the picture's own placeholder is one picture.** Art marked as the picture
   inline (a Markdown image laid out as a figure) carried both marks, so MXP, Pueblo and BBCode wrote the
   picture twice or dropped its cells, and the text beside it moved. A figure's rows now carry its mark

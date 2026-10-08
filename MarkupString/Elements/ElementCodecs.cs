@@ -49,6 +49,7 @@ internal static class ElementCodecs
 					w.WriteNumber("r", row.Row);
 					w.WriteNumber("rs", row.Rows);
 					w.WriteNumber("c", row.Columns);
+					if (row.IsDescription) w.WriteBoolean("dsc", true);
 				}
 			},
 			static e => new ImageMarkup(
@@ -59,7 +60,7 @@ internal static class ElementCodecs
 				Enum.TryParse<ImageAlign>(String(e, "a"), ignoreCase: true, out var align) ? align : null)
 			{
 				Row = Int(e, "r") is { } row && Int(e, "rs") is { } rows && Int(e, "c") is { } columns
-					? new PictureRow(row, rows, columns)
+					? new PictureRow(row, rows, columns) { IsDescription = e.TryGetProperty("dsc", out var described) && described.ValueKind == JsonValueKind.True }
 					: null,
 			}),
 		new Codec<PaneMarkup>("pane",

@@ -26,7 +26,8 @@ public enum ImageAlign
 /// </summary>
 /// <remarks>
 /// <para>MXP writes <c>&lt;IMAGE&gt;</c>, Pueblo and HTML <c>&lt;img&gt;</c>, and BBCode <c>[img]</c>, once
-/// for the picture (<see cref="StartsPicture"/>); over a figure's rows they keep the rest of its cells blank.
+/// for the picture (<see cref="StartsPicture"/>); over a figure's rows they keep the rest of its cells blank,
+/// and MXP sizes the tag to those cells (<c>W=12c H=5c</c>) so a client draws the picture in them.
 /// A terminal draws a figure's rows in its cells when its host has the picture's pixels. Every other format,
 /// and a client that refuses the picture, writes the wrapped text, so a terminal still learns there was a
 /// picture and where it is. Put it inside a link to make it one.</para>

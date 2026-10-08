@@ -63,10 +63,15 @@ internal sealed class ElementMxpEmitter(Type markupType, Func<string, bool>? sup
 					if (image.StartsPicture(context))
 					{
 						var (file, directory) = Split(image.Source);
+						// A figure's picture is sized in the cells laid out for it, so a client draws it over
+						// them rather than at its own size beside or under them.
+						var (width, height) = image.Row is { IsDescription: false } row
+							? ($"{row.Columns}c", $"{row.Rows}c")
+							: (Pixels(image.Width), Pixels(image.Height));
 						tag.Open("IMAGE").Positional(file)
 							.Named("URL", directory)
-							.Named("W", image.Width)
-							.Named("H", image.Height)
+							.Named("W", width)
+							.Named("H", height)
 							.Named("ALIGN", image.Align?.ToString().ToUpperInvariant())
 							.Close();
 					}
@@ -160,6 +165,8 @@ internal sealed class ElementMxpEmitter(Type markupType, Func<string, bool>? sup
 	}
 
 	private bool Supports(string element) => supports?.Invoke(element) ?? true;
+
+	private static string? Pixels(int? pixels) => pixels?.ToString(CultureInfo.InvariantCulture);
 
 	/// <summary>
 	/// MXP names a file and, separately, the address of the directory to fetch it from when the client
