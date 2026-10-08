@@ -22,12 +22,7 @@ public sealed record Figure(ImageMarkup Image, MarkupText Art) : Block
 	/// <inheritdoc/>
 	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines)
 	{
-		var art = Art.Length == 0
-			? null
-			: Art.Split("\n").Select(line => line.Text.EndsWith('\r') ? line.Substring(0, line.Length - 1) : line).ToArray();
-
-		// Art of line breaks alone has no cells to hold a picture, so it is no art.
-		if (art is not null && art.Max(line => line.DisplayWidth) == 0) art = null;
+		var art = ArtLines();
 
 		// The picture is on its rows whoever reads them: a terminal that has its pixels draws it in their cells,
 		// MXP or Pueblo writes it once, and everything else reads what the rows hold.
@@ -93,6 +88,27 @@ public sealed record Figure(ImageMarkup Image, MarkupText Art) : Block
 				? MarkupText.Concat([picture, gap, words])
 				: MarkupText.Concat([words, gap, picture]));
 		}
+	}
+
+	/// <summary>The art's lines, or none: art of line breaks alone has no cells to hold a picture, so it is no art.</summary>
+	private MarkupText[]? ArtLines()
+	{
+		if (Art.Length == 0) return null;
+		var art = Art.Split("\n").Select(line => line.Text.EndsWith('\r') ? line.Substring(0, line.Length - 1) : line).ToArray();
+		return art.Max(line => line.DisplayWidth) == 0 ? null : art;
+	}
+
+	/// <summary>
+	/// The cells wide the picture is drawn in at <paramref name="width"/> for a reader <paramref name="context"/>
+	/// draws it for, or none when the reader gets text instead.
+	/// </summary>
+	internal int? PictureWidth(LayoutContext context, int width)
+	{
+		if (Image.Source.Length == 0 || context.Pictures is not { } pictures) return null;
+		var artWidth = ArtLines()?.Max(line => line.DisplayWidth);
+		return pictures(Image, Math.Min(width, artWidth ?? width)) is { Columns: > 0, Rows: > 0 } cells
+			? Math.Min(width, artWidth ?? cells.Columns)
+			: null;
 	}
 
 	/// <summary>
