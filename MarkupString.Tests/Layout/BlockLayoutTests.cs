@@ -324,7 +324,21 @@ public class BlockLayoutTests
 		// The picture sits on the top of its line rather than its baseline, so no gap for descenders is left under it.
 		await Assert.That(LayoutCss.Fixed).Contains(".ms-figure-image { max-width: 100%; height: auto; vertical-align: top; }");
 		await Assert.That(LayoutCss.Fixed).Contains(".ms-box.ms-box-picture { padding: 0; width: fit-content; max-width: 100%; box-sizing: border-box; }");
-		await Assert.That(LayoutCss.Fixed).Contains(".ms-box { margin: 0; padding: 0 var(--ms-pad, 1ch);");
+		await Assert.That(LayoutCss.Fixed).Contains(".ms-box { --ms-pad: 1ch; margin: 0; padding: 0 var(--ms-pad);");
+	}
+
+	[Test]
+	public async Task Divider_InABoxWithoutPadding_ReachesOnlyToItsSides()
+	{
+		var tight = BlockLayout.Build(new Frame(new Stack([T("Above"), new Rule(), T("Below")])) { Padding = 0 }, 30).Render(MarkupFormat.Html, Registry);
+
+		await Assert.That(tight).Contains("<fieldset class=\"ms-box ms-border-single\" style=\"--ms-pad:0ch\">");
+		await Assert.That(tight).Contains("<div class=\"ms-divider ms-border-single\" role=\"separator\"></div>");
+		// A divider stretches across its box's padding, not a fixed 1ch, so it stops at the sides of a box padded 0.
+		await Assert.That(LayoutCss.Fixed).Contains(".ms-divider { margin: 0 calc(-1 * var(--ms-pad, 1ch)); }");
+		await Assert.That(LayoutCss.Fixed).Contains(".ms-box.ms-border-none > .ms-divider { margin: 0; }");
+		// Each box sets its own padding, so a box inside one padded 0 is padded 1ch again.
+		await Assert.That(LayoutCss.Fixed).Contains(".ms-box { --ms-pad: 1ch;");
 	}
 
 	[Test]
