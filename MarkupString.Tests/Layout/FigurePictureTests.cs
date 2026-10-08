@@ -64,6 +64,34 @@ public class FigurePictureTests
 		await Assert.That(laid.ToPlainText().TrimEnd()).IsEqualTo("[A cat]");
 	}
 
+	/// <summary>
+	/// Art that is the picture's own placeholder, marked as the picture inline, as a Markdown image laid out as
+	/// a figure is: still one picture, and the words beside it start where they do in the plain text.
+	/// </summary>
+	[Test]
+	[Arguments("mxp")]
+	[Arguments("pueblo")]
+	[Arguments("bbcode")]
+	public async Task ArtMarkedAsThePictureIsStillOnePicture(string format)
+	{
+		var placeholder = MarkupText.Wrap(Cat, "[image: A cat]");
+		var figure = new Figure(Cat, placeholder) { Float = FigureFloat.Left, Beside = new TextBlock(MarkupText.Plain("The cat sits by the fire.")) };
+		var laid = BlockLayout.Build(figure, 40);
+		var markupFormat = format switch { "mxp" => MarkupFormat.Mxp, "pueblo" => MarkupFormat.Pueblo, _ => MarkupFormat.BBCode };
+		var tag = format switch
+		{
+			"mxp" => "<IMAGE cat.png URL=https://example.test/img/>",
+			"pueblo" => "<img src=\"https://example.test/img/cat.png\" alt=\"A cat\">",
+			_ => "[img]https://example.test/img/cat.png[/img]",
+		};
+
+		var first = Lines(laid, markupFormat)[0];
+
+		await Assert.That(Count(first, tag)).IsEqualTo(1);
+		await Assert.That(first.Replace(tag, string.Empty).IndexOf("The cat", StringComparison.Ordinal))
+			.IsEqualTo(laid.ToPlainText().IndexOf("The cat", StringComparison.Ordinal));
+	}
+
 	/// <summary>The words beside a floated picture stay in the column they are in for a reader of the art.</summary>
 	[Test]
 	public async Task TextBesideAFloatedPictureStaysWhereItWas()
