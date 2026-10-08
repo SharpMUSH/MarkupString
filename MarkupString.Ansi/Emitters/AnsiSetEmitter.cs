@@ -9,7 +9,7 @@ namespace MarkupString.Ansi;
 /// </summary>
 /// <remarks>
 /// Links and pictures are written as the client's <see cref="AnsiOutputOptions.Features"/> allow: a URL link
-/// as OSC 8, a command link as MSLP, a row of a picture's cells (<see cref="PictureCellsMarkup"/>) as the
+/// as OSC 8, a command link as MSLP, a row of a figure's picture (<see cref="ImageMarkup.Row"/>) as the
 /// picture. Without the feature, a link is its text and a picture its text art.
 /// </remarks>
 /// <param name="options">What the client is sent: its colour depth and what else its terminal can do.</param>
@@ -56,7 +56,7 @@ public sealed class AnsiSetEmitter(AnsiOutputOptions options) : IMarkupSetEmitte
 		{
 			// The run that starts the row draws all of it; the others in the same row draw nothing, so the row is
 			// as many cells as the text it stands over.
-			if (context.StartsRegion(picture.Cells))
+			if (context.StartsRegion(picture.Image))
 				TerminalPictureWriter.Write(_pictureMethod, picture.Cells, picture.Pixels, effective, _options, core, output);
 		}
 		else
@@ -73,15 +73,16 @@ public sealed class AnsiSetEmitter(AnsiOutputOptions options) : IMarkupSetEmitte
 	}
 
 	/// <summary>The picture this run is a row of, when this client draws it and its pixels are to hand.</summary>
-	private (PictureCellsMarkup Cells, TerminalPicture Pixels)? Picture(MarkupSet set)
+	private (ImageMarkup Image, PictureRow Cells, TerminalPicture Pixels)? Picture(MarkupSet set)
 	{
 		if (_pictureMethod == TerminalFeatures.None) return null;
 		for (var i = 0; i < set.Count; i++)
 		{
-			if (set[i] is not PictureCellsMarkup cells) continue;
+			if (set[i] is not ImageMarkup { Row: { } cells } image) continue;
+			// The pixels are looked up by the picture alone: every row of it is the same picture.
 			return TerminalPictureWriter.CanDraw(_pictureMethod, cells)
-				&& _options.Pictures!.TryGetPicture(cells.Image, out var pixels)
-				? (cells, pixels)
+				&& _options.Pictures!.TryGetPicture(image with { Row = null }, out var pixels)
+				? (image, cells, pixels)
 				: null;
 		}
 		return null;

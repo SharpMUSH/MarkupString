@@ -18,8 +18,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     advertising MTTS's MSLP bit sends back when clicked. A command holding a control character is
     written as its text.
   - **Pictures in a figure's cells.** A `Figure` laid out under `LayoutContext.Pictures` reserves the
-    cells its picture takes (its art's, or `PictureCells` for one with none) and marks each row with
-    `PictureCellsMarkup`. In `MarkupFormat.Ansi` such a row is drawn as the picture for a client with
+    cells its picture takes (its art's, or `PictureCells` for one with none) and marks each row with its
+    `ImageMarkup`, `Row` set to a `PictureRow`. In `MarkupFormat.Ansi` such a row is drawn as the picture for a client with
     `KittyGraphics` (Unicode placeholders, the picture sent once per connection), `InlineImages`
     (iTerm2), `Sixel`, or `BlockArt` (half blocks), and as the art otherwise. The rows are the same
     width either way, so a box or a flex row around the figure stays aligned.
@@ -42,8 +42,23 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   the terminal takes in one sequence (a mebibyte, for iTerm2) is sent in parts where it reads them
   (`MultipartFile`), and a moving one is sent still where it does not.
 
+### Changed
+
+- **A picture is one `ImageMarkup`, laid out or inline.** `PictureCellsMarkup` is gone: a figure's rows
+  carry its `ImageMarkup` with `Row` (a `PictureRow`: which row, how many, how many cells wide), and the
+  serialiser keeps it. MXP, Pueblo, HTML and BBCode write a picture's element once
+  (`ImageMarkup.StartsPicture`): at the start of an inline picture, however many runs its description is
+  in, or on a figure's first row.
+
 ### Fixed
 
+- **A figure's picture reaches MXP, Pueblo and BBCode.** A `Figure` laid out as text marked its picture
+  only for a terminal that draws pictures in its cells, so every other format wrote the art alone and an
+  MXP client was never sent `<IMAGE>`. Its rows (or its `[description]`) now always carry the picture
+  when it has an address: a format with a picture element writes it on the first row and keeps the
+  figure's cells blank, so text beside it stays in its column, and a client that refuses the element, or
+  an HTML policy that refuses `<img>`, reads the art. A terminal without the picture's pixels still writes
+  the art.
 - **A box round a picture fits it in HTML.** The `<img>` of a `Figure` sat on the text baseline,
   leaving a band the height of a descender below it, and the box's side padding left gaps left and
   right but none above. The picture now aligns to the top of its line, and a box whose body is only a

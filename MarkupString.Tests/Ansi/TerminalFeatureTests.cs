@@ -104,7 +104,7 @@ public class TerminalFeatureTests
 		var laid = Laid(figure, 20);
 
 		await Assert.That(laid.ToPlainText()).IsEqualTo(BlockLayout.Build(figure, 20).ToPlainText());
-		var rows = laid.Runs.SelectMany(run => run.Markups).OfType<PictureCellsMarkup>().Distinct().ToArray();
+		var rows = laid.Runs.SelectMany(run => run.Markups).OfType<ImageMarkup>().Select(image => image.Row!.Value).Distinct().ToArray();
 		await Assert.That(rows.Select(r => (r.Row, r.Rows, r.Columns))).IsEquivalentTo(new[] { (0, 2, 7), (1, 2, 7) });
 	}
 
@@ -118,6 +118,10 @@ public class TerminalFeatureTests
 		await Assert.That(lines.Select(l => l.TrimEnd())).IsEquivalentTo(new[] { "", "[A cat]", "" });
 	}
 
+	/// <summary>
+	/// A reader who gets no picture still has it marked on the art's rows, for a format that writes it as an
+	/// element of its own; the cells are the art's and the text is the art.
+	/// </summary>
 	[Test]
 	public async Task AFigureIsItsArtWhenTheReaderGetsNoPicture()
 	{
@@ -125,7 +129,11 @@ public class TerminalFeatureTests
 
 		var laid = BlockLayout.Build(figure, 20, context: new LayoutContext { Pictures = (_, _) => null });
 
-		await Assert.That(laid.Runs.SelectMany(run => run.Markups).OfType<PictureCellsMarkup>()).IsEmpty();
+		await Assert.That(laid.ToPlainText().TrimEnd()).IsEqualTo("=^.^=");
+		await Assert.That(laid.Runs.SelectMany(run => run.Markups).OfType<ImageMarkup>().Select(image => image.Row))
+			.IsEquivalentTo(new PictureRow?[] { new PictureRow(0, 1, 5) });
+		await Assert.That(RenderString(laid, new AnsiOutputOptions(Features: TerminalFeatures.KittyGraphics) { Pictures = new Source(null) }).TrimEnd())
+			.IsEqualTo("=^.^=");
 	}
 
 	[Test]

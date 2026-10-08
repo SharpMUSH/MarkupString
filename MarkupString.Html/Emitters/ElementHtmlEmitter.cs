@@ -85,14 +85,30 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 				return;
 
 			case ImageMarkup image:
-				Write(markup, output, "img", Shape.Void, body, context,
-					("class", "ms-image"),
-					("src", image.Source),
-					("alt", image.Description ?? string.Empty),
-					("width", Number(image.Width)),
-					("height", Number(image.Height)),
-					("data-align", image.Align?.ToString().ToLowerInvariant()));
-				return;
+				{
+					ReadOnlySpan<(string, string?)> attributes =
+					[
+						("class", "ms-image"),
+						("src", image.Source),
+						("alt", image.Description ?? string.Empty),
+						("width", Number(image.Width)),
+						("height", Number(image.Height)),
+						("data-align", image.Align?.ToString().ToLowerInvariant()),
+					];
+
+					// A picture the policy refuses is its text on every run, the rows of a figure's art included.
+					if (Held("img", attributes) is null)
+					{
+						output.Write(body);
+						return;
+					}
+
+					if (image.StartsPicture(context)) Write(markup, output, "img", Shape.Void, body, context, attributes);
+
+					// A figure's rows keep their cells, so what is beside the picture stays where it was.
+					if (image.Row is not null) output.Write(new string(' ', DisplayWidth.Of(body)));
+					return;
+				}
 
 			case PreformattedMarkup:
 				Write(markup, output, "pre", Shape.Wrapping, body, context, ("class", "ms-preformatted"));
@@ -140,23 +156,10 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 		in EmitContext context,
 		params ReadOnlySpan<(string Name, string? Value)> attributes)
 	{
-		var written = new HtmlAttribute[Count(attributes)];
-		var next = 0;
-		foreach (var (attribute, value) in attributes)
+		if (Held(name, attributes) is not { } tag)
 		{
-			if (value is not null) written[next++] = new HtmlAttribute(attribute, value);
-		}
-
-		var tag = HtmlMarkup.Tag(name, written);
-		if (policy is not null)
-		{
-			if (policy.Apply(tag) is not { } held)
-			{
-				if (markup is not IPointMarkup) output.Write(body);
-				return;
-			}
-
-			tag = held;
+			if (markup is not IPointMarkup) output.Write(body);
+			return;
 		}
 
 		// One element around the whole stretch this layer covers, however many runs its content is in.
@@ -193,6 +196,20 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 		output.Write("</");
 		output.Write(tag.TagName);
 		output.Write(">");
+	}
+
+	/// <summary>The element as the policy lets it be written, or null for one it refuses.</summary>
+	private HtmlMarkup? Held(string name, ReadOnlySpan<(string Name, string? Value)> attributes)
+	{
+		var written = new HtmlAttribute[Count(attributes)];
+		var next = 0;
+		foreach (var (attribute, value) in attributes)
+		{
+			if (value is not null) written[next++] = new HtmlAttribute(attribute, value);
+		}
+
+		var tag = HtmlMarkup.Tag(name, written);
+		return policy is null ? tag : policy.Apply(tag);
 	}
 
 	private static int Count(ReadOnlySpan<(string Name, string? Value)> attributes)

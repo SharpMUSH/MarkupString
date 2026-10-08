@@ -10,27 +10,28 @@ MarkupString.Layout.PictureCells.PictureCells() -> void
 MarkupString.Layout.PictureCells.PictureCells(int Columns, int Rows) -> void
 MarkupString.Layout.PictureCells.Rows.get -> int
 MarkupString.Layout.PictureCells.Rows.init -> void
-MarkupString.PictureCellsMarkup
-MarkupString.PictureCellsMarkup.<Clone>$() -> MarkupString.PictureCellsMarkup!
-MarkupString.PictureCellsMarkup.Columns.get -> int
-MarkupString.PictureCellsMarkup.Columns.init -> void
-MarkupString.PictureCellsMarkup.Deconstruct(out MarkupString.ImageMarkup! Image, out int Row, out int Rows, out int Columns) -> void
-MarkupString.PictureCellsMarkup.Equals(MarkupString.PictureCellsMarkup? other) -> bool
-MarkupString.PictureCellsMarkup.Image.get -> MarkupString.ImageMarkup!
-MarkupString.PictureCellsMarkup.Image.init -> void
-MarkupString.PictureCellsMarkup.PictureCellsMarkup(MarkupString.ImageMarkup! Image, int Row, int Rows, int Columns) -> void
-MarkupString.PictureCellsMarkup.Row.get -> int
-MarkupString.PictureCellsMarkup.Row.init -> void
-MarkupString.PictureCellsMarkup.Rows.get -> int
-MarkupString.PictureCellsMarkup.Rows.init -> void
 override MarkupString.Layout.PictureCells.GetHashCode() -> int
-override MarkupString.PictureCellsMarkup.Equals(object? obj) -> bool
-override MarkupString.PictureCellsMarkup.GetHashCode() -> int
-override MarkupString.PictureCellsMarkup.ToString() -> string!
 static MarkupString.Layout.PictureCells.Fit(int width, int height, int columns, int cellWidth = 10, int cellHeight = 20) -> MarkupString.Layout.PictureCells
 static MarkupString.Layout.PictureCells.operator !=(MarkupString.Layout.PictureCells left, MarkupString.Layout.PictureCells right) -> bool
 static MarkupString.Layout.PictureCells.operator ==(MarkupString.Layout.PictureCells left, MarkupString.Layout.PictureCells right) -> bool
-static MarkupString.PictureCellsMarkup.operator !=(MarkupString.PictureCellsMarkup? left, MarkupString.PictureCellsMarkup? right) -> bool
-static MarkupString.PictureCellsMarkup.operator ==(MarkupString.PictureCellsMarkup? left, MarkupString.PictureCellsMarkup? right) -> bool
 ~override MarkupString.Layout.PictureCells.Equals(object obj) -> bool
 ~override MarkupString.Layout.PictureCells.ToString() -> string
+MarkupString.ImageMarkup.Row.get -> MarkupString.PictureRow?
+MarkupString.ImageMarkup.Row.init -> void
+MarkupString.ImageMarkup.StartsPicture(in MarkupString.EmitContext context) -> bool
+MarkupString.PictureRow
+MarkupString.PictureRow.Columns.get -> int
+MarkupString.PictureRow.Columns.init -> void
+MarkupString.PictureRow.Deconstruct(out int Row, out int Rows, out int Columns) -> void
+MarkupString.PictureRow.Equals(MarkupString.PictureRow other) -> bool
+MarkupString.PictureRow.PictureRow() -> void
+MarkupString.PictureRow.PictureRow(int Row, int Rows, int Columns) -> void
+MarkupString.PictureRow.Row.get -> int
+MarkupString.PictureRow.Row.init -> void
+MarkupString.PictureRow.Rows.get -> int
+MarkupString.PictureRow.Rows.init -> void
+override MarkupString.PictureRow.GetHashCode() -> int
+static MarkupString.PictureRow.operator !=(MarkupString.PictureRow left, MarkupString.PictureRow right) -> bool
+static MarkupString.PictureRow.operator ==(MarkupString.PictureRow left, MarkupString.PictureRow right) -> bool
+~override MarkupString.PictureRow.Equals(object obj) -> bool
+~override MarkupString.PictureRow.ToString() -> string

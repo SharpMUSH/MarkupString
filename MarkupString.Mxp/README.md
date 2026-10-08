@@ -56,6 +56,7 @@ written. Asking belongs to the telnet layer, and the answer to one connection.
 | `MarkupText.Music(source, volume, repeats, continues)` | `<MUSIC file V= L= C=1 U=>` |
 | `MarkupText.StopSound(channel)` | `<SOUND Off>`, `<MUSIC Off>` |
 | `MarkupText.Image(source, description, width, height, align)` | `<IMAGE file URL= W= H= ALIGN=>` |
+| a laid-out `Figure` | `<IMAGE file URL=>` on its first row, its other cells blank |
 | `MarkupText.Pane(content, name, title)` | `<FRAME name TITLE=><DEST name>content</DEST>` |
 | `MarkupText.ExpireLinks(group)` | `<EXPIRE group>` |
 | `MarkupText.Relocate(host, port, quiet)` | `<RELOCATE host port QUIET>` |

@@ -33,15 +33,21 @@ internal sealed class ImageBBCodeEmitter : IMarkupEmitter
 		ArgumentNullException.ThrowIfNull(output);
 
 		// A bracket would close the tag early, and BBCode has no way to escape one.
-		var source = ((ImageMarkup)markup).Source;
-		if (source.AsSpan().IndexOfAny('[', ']') >= 0)
+		var image = (ImageMarkup)markup;
+		if (image.Source.AsSpan().IndexOfAny('[', ']') >= 0)
 		{
 			output.Write(body);
 			return;
 		}
 
-		output.Write("[img]");
-		output.Write(source);
-		output.Write("[/img]");
+		if (image.StartsPicture(context))
+		{
+			output.Write("[img]");
+			output.Write(image.Source);
+			output.Write("[/img]");
+		}
+
+		// A figure's rows keep their cells, so what is beside the picture stays where it was.
+		if (image.Row is not null) output.Write(new string(' ', DisplayWidth.Of(body)));
 	}
 }
