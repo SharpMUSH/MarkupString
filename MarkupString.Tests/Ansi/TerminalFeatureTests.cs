@@ -191,6 +191,44 @@ public class TerminalFeatureTests
 		await Assert.That(widths).IsEquivalentTo(new[] { 20 });
 	}
 
+	/// <summary>
+	/// A box round nothing but a picture fits it, as it does in HTML: a terminal drew the box across the whole
+	/// width with the picture in its left corner, wider than the rules and lines around it.
+	/// </summary>
+	[Test]
+	public async Task ABoxRoundOnlyAPictureFitsIt()
+	{
+		var options = new AnsiOutputOptions(Features: TerminalFeatures.KittyGraphics) { Pictures = new Source(RedBlue()) };
+		var laid = Laid(new Frame(new Figure(Cat, MarkupText.Empty)), 40, new PictureCells(6, 2));
+
+		var lines = RenderString(laid, options).Split('\n');
+
+		await Assert.That(lines.Select(VisibleCells).Distinct().ToArray()).IsEquivalentTo(new[] { 8 });
+		await Assert.That(laid.ToPlainText().Split('\n')[0]).IsEqualTo("┌──────┐");
+	}
+
+	/// <summary>A titled box round a picture is still as wide as its title needs.</summary>
+	[Test]
+	public async Task ABoxRoundAPictureKeepsRoomForItsTitle()
+	{
+		var laid = Laid(new Frame(new Figure(Cat, MarkupText.Empty)) { Title = MarkupText.Plain("A long title") }, 40, new PictureCells(6, 2));
+
+		var lines = laid.ToPlainText().Split('\n');
+
+		await Assert.That(lines.Select(line => line.Length).Distinct().ToArray()).IsEquivalentTo(new[] { 19 });
+		await Assert.That(lines[0]).IsEqualTo("┌─┤ A long title ├┐");
+	}
+
+	/// <summary>A reader shown the picture's text instead gets the box across the width, as with any other text.</summary>
+	[Test]
+	public async Task ABoxRoundAPictureNotShownKeepsItsWidth()
+	{
+		var laid = BlockLayout.Build(new Frame(new Figure(Cat, MarkupText.Empty)), 40,
+			context: new LayoutContext { Pictures = (_, _) => null });
+
+		await Assert.That(laid.ToPlainText().Split('\n').Select(line => line.Length).Distinct().ToArray()).IsEquivalentTo(new[] { 40 });
+	}
+
 	[Test]
 	public async Task KittyWithoutThePixelsSendsTheArt()
 	{

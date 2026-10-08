@@ -68,6 +68,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   right but none above. The picture now aligns to the top of its line, and a box whose body is only a
   picture on a line of its own (`ms-box-picture`) has no padding and is no wider than the picture.
   A `Frame`'s `Padding` reaches the HTML as `--ms-pad` (it was always `1ch`).
+- **A box round a picture fits it in a terminal too.** A terminal that draws pictures got the box across
+  the whole width with the picture in its left corner, so it stood wider than the rules and lines
+  around it. A `Frame` whose body is only a picture on a line of its own, for a reader shown that
+  picture, now has no padding and is as wide as the picture (or its title, if that is wider). A reader
+  shown the art or the description instead still gets the box across the width.
 
 ## 2.11.2 — 2026-10-07
 
