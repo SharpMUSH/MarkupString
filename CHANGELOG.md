@@ -52,6 +52,10 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A box round a picture spans the width in a terminal again.** 2.14.2 fitted a box holding only a
+  picture to the picture, so in a scene log it stood narrower than every box and rule around it. It is
+  drawn across the width again, with its padding, and the picture at its left. HTML still fits it
+  (`ms-box-picture`).
 - **An MXP client draws a figure's picture in its cells.** A figure's `<IMAGE>` carried no size, so a
   client drew the picture at its own size under the line it was named on, outside any box round it. It
   is now sized in the cells laid out for it (`W=12c H=5c`), the art's or `PictureCells`', and a client
@@ -73,11 +77,6 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   right but none above. The picture now aligns to the top of its line, and a box whose body is only a
   picture on a line of its own (`ms-box-picture`) has no padding and is no wider than the picture.
   A `Frame`'s `Padding` reaches the HTML as `--ms-pad` (it was always `1ch`).
-- **A box round a picture fits it in a terminal too.** A terminal that draws pictures got the box across
-  the whole width with the picture in its left corner, so it stood wider than the rules and lines
-  around it. A `Frame` whose body is only a picture on a line of its own, for a reader shown that
-  picture, now has no padding and is as wide as the picture (or its title, if that is wider). A reader
-  shown the art or the description instead still gets the box across the width.
 
 ## 2.11.2 — 2026-10-07
 

@@ -49,22 +49,8 @@ public sealed record Frame(Block Body) : Block
 	{
 		var style = context.Paint(context.Border(Border));
 		var none = style.Name == BorderStyle.None.Name;
-		var sides = style.Left.DisplayWidth + style.Right.DisplayWidth;
 		var padding = BlockText.Blank(Padding);
-		var inner = Math.Max(1, width - sides - padding.DisplayWidth * 2);
-
-		// A box round nothing but a picture the reader is shown fits it, as it does in HTML: no padding, and no
-		// wider than the picture, or than the title needs.
-		if (Body is Figure { Float: FigureFloat.None, Beside: null } figure
-			&& figure.PictureWidth(context, Math.Max(1, width - sides)) is { } picture)
-		{
-			var title = Title is { Length: > 0 } t
-				? t.DisplayWidth + style.TitleOpen.DisplayWidth + style.TitleClose.DisplayWidth + (TitleAlignment is Alignment.Left or Alignment.Right ? 2 : 1)
-				: 0;
-			padding = MarkupText.Empty;
-			inner = Math.Max(1, Math.Min(width - sides, Math.Max(picture, title)));
-			width = inner + sides;
-		}
+		var inner = Math.Max(1, width - style.Left.DisplayWidth - style.Right.DisplayWidth - padding.DisplayWidth * 2);
 
 		if (!none || Title is { Length: > 0 })
 			lines.Add(BlockText.Edge(style.TopLeft, style.Top, style.TopRight, Title is null ? null : context.Paint(theme => theme.TitleColor, Title), TitleAlignment, style, width));
