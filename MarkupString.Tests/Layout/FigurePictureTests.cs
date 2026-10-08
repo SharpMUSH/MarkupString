@@ -36,7 +36,8 @@ public class FigurePictureTests
 
 		var lines = Lines(laid, MarkupFormat.Mxp);
 
-		await Assert.That(lines[0].TrimEnd()).IsEqualTo("<IMAGE cat.png URL=https://example.test/img/>");
+		// Sized in the cells the art takes, so a client draws it over them.
+		await Assert.That(lines[0].TrimEnd()).IsEqualTo("<IMAGE cat.png URL=https://example.test/img/ W=7c H=3c>");
 		await Assert.That(Count(string.Join('\n', lines), "<IMAGE")).IsEqualTo(1);
 		await Assert.That(lines.Skip(1).All(line => line.Trim().Length == 0)).IsTrue();
 		await Assert.That(lines.Length).IsEqualTo(3);
@@ -51,6 +52,21 @@ public class FigurePictureTests
 
 		await Assert.That(mxp.TrimEnd()).IsEqualTo("<IMAGE cat.png URL=https://example.test/img/>");
 		await Assert.That(laid.ToPlainText().TrimEnd()).IsEqualTo("[A cat]");
+	}
+
+	/// <summary>
+	/// A picture given cells of its own and no art is sized in them; its description alone is not cells laid
+	/// out for it, so a figure that has nothing else leaves the picture its own size.
+	/// </summary>
+	[Test]
+	public async Task OnlyCellsLaidOutForThePictureSizeIt()
+	{
+		var context = new LayoutContext { Pictures = (_, _) => new PictureCells(12, 5) };
+		var sized = BlockLayout.Build(new Figure(Cat, MarkupText.Empty), 20, context: context);
+		var described = BlockLayout.Build(new Figure(Cat, MarkupText.Empty), 20);
+
+		await Assert.That(Lines(sized, MarkupFormat.Mxp)[0].TrimEnd()).IsEqualTo("<IMAGE cat.png URL=https://example.test/img/ W=12c H=5c>");
+		await Assert.That(Lines(described, MarkupFormat.Mxp)[0].TrimEnd()).IsEqualTo("<IMAGE cat.png URL=https://example.test/img/>");
 	}
 
 	[Test]
@@ -80,7 +96,7 @@ public class FigurePictureTests
 		var markupFormat = format switch { "mxp" => MarkupFormat.Mxp, "pueblo" => MarkupFormat.Pueblo, _ => MarkupFormat.BBCode };
 		var tag = format switch
 		{
-			"mxp" => "<IMAGE cat.png URL=https://example.test/img/>",
+			"mxp" => "<IMAGE cat.png URL=https://example.test/img/ W=14c H=1c>",
 			"pueblo" => "<img src=\"https://example.test/img/cat.png\" alt=\"A cat\">",
 			_ => "[img]https://example.test/img/cat.png[/img]",
 		};
@@ -102,8 +118,9 @@ public class FigurePictureTests
 		var plain = laid.ToPlainText().Split('\n');
 		var mxp = Lines(laid, MarkupFormat.Mxp);
 
-		await Assert.That(mxp[0]).StartsWith("<IMAGE cat.png URL=https://example.test/img/>");
-		var untagged = mxp.Select(line => line.Replace("<IMAGE cat.png URL=https://example.test/img/>", string.Empty)).ToArray();
+		const string tag = "<IMAGE cat.png URL=https://example.test/img/ W=7c H=3c>";
+		await Assert.That(mxp[0]).StartsWith(tag);
+		var untagged = mxp.Select(line => line.Replace(tag, string.Empty)).ToArray();
 		await Assert.That(untagged.Length).IsEqualTo(plain.Length);
 		// The art is seven cells and the gap two: the picture's cells are blank, and the words start where they did.
 		for (var row = 0; row < plain.Length; row++)
@@ -172,6 +189,18 @@ public class FigurePictureTests
 
 		await Assert.That(first.Render(MarkupFormat.Html, registry)).IsEqualTo("/\\_/\\");
 		await Assert.That(second.Render(MarkupFormat.Html, registry)).IsEqualTo("( o.o )");
+	}
+
+	[Test]
+	public async Task ADescriptionRowSurvivesSerialisation()
+	{
+		var laid = BlockLayout.Build(new Figure(Cat, MarkupText.Empty), 20);
+
+		var back = MarkupTextSerializer.Deserialize(MarkupTextSerializer.Serialize(laid, Registry), Registry);
+
+		await Assert.That(back.Runs.SelectMany(run => run.Markups).OfType<ImageMarkup>().All(image => image.Row is { IsDescription: true }))
+			.IsTrue();
+		await Assert.That(back.Render(MarkupFormat.Mxp, Registry)).IsEqualTo(laid.Render(MarkupFormat.Mxp, Registry));
 	}
 
 	[Test]

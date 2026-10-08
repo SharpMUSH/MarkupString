@@ -38,7 +38,7 @@ public sealed record Figure(ImageMarkup Image, MarkupText Art) : Block
 		if (art is null)
 		{
 			var described = MarkupText.Plain($"[{Description}]").FormatColumn(BlockText.Column(width, context.TextAlignment));
-			lines.AddRange(Image.Source.Length > 0 ? Marked(described, described.Max(line => line.DisplayWidth)) : described);
+			lines.AddRange(Image.Source.Length > 0 ? Marked(described, described.Max(line => line.DisplayWidth), description: true) : described);
 			if (Beside is { } after) context.Draw(after, width, lines);
 			return;
 		}
@@ -130,12 +130,16 @@ public sealed record Figure(ImageMarkup Image, MarkupText Art) : Block
 		return Marked(under, columns);
 	}
 
-	/// <summary><paramref name="rows"/>, each <paramref name="columns"/> cells wide, as the rows of the picture.</summary>
-	private MarkupText[] Marked(MarkupText[] rows, int columns)
+	/// <summary>
+	/// <paramref name="rows"/>, each <paramref name="columns"/> cells wide, as the rows of the picture: its
+	/// <paramref name="description"/> standing in for it, or cells laid out for it.
+	/// </summary>
+	private MarkupText[] Marked(MarkupText[] rows, int columns, bool description = false)
 	{
 		var marked = new MarkupText[rows.Length];
 		for (var row = 0; row < rows.Length; row++)
-			marked[row] = MarkupText.Wrap(Image with { Row = new PictureRow(row, rows.Length, columns) }, Unpictured(rows[row]));
+			marked[row] = MarkupText.Wrap(Image with { Row = new PictureRow(row, rows.Length, columns) { IsDescription = description } },
+				Unpictured(rows[row]));
 		return marked;
 	}
 

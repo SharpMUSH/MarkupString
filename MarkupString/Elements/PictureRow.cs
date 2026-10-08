@@ -14,4 +14,13 @@ namespace MarkupString;
 /// <param name="Row">Which row of the picture this is, from 0.</param>
 /// <param name="Rows">How many rows the picture covers.</param>
 /// <param name="Columns">How many cells wide the picture is.</param>
-public readonly record struct PictureRow(int Row, int Rows, int Columns);
+public readonly record struct PictureRow(int Row, int Rows, int Columns)
+{
+	/// <summary>
+	/// Whether these cells hold the picture's description rather than cells laid out for it: the figure had no
+	/// art, and nothing gave the picture a size in cells. A format that sizes its picture element to the cells
+	/// it covers (MXP's <c>W</c> and <c>H</c>) leaves these alone, since a picture drawn in a line of its
+	/// description would be a strip.
+	/// </summary>
+	public bool IsDescription { get; init; }
+}

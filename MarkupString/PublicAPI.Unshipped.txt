@@ -35,3 +35,5 @@ static MarkupString.PictureRow.operator !=(MarkupString.PictureRow left, MarkupS
 static MarkupString.PictureRow.operator ==(MarkupString.PictureRow left, MarkupString.PictureRow right) -> bool
 ~override MarkupString.PictureRow.Equals(object obj) -> bool
 ~override MarkupString.PictureRow.ToString() -> string
+MarkupString.PictureRow.IsDescription.get -> bool
+MarkupString.PictureRow.IsDescription.init -> void
