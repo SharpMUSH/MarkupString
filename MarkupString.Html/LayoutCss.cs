@@ -11,7 +11,8 @@ namespace MarkupString.Html;
 /// second row of a striped table or list (a faint grey when unset). A page
 /// sets these to theme every layout on it; a layout's own theme sets them on its block, and a game's
 /// default theme sets the <c>-default</c> form of each, under what the page sets.
-/// A box's padding is <c>--ms-pad</c> (<c>1ch</c> unset), set on the box when its own differs.
+/// A box's padding is <c>--ms-pad</c>, <c>1ch</c> unless the box sets its own; a divider in the box reaches
+/// across that padding to the box's sides.
 /// Everything is sized in <c>ch</c>, the width of a cell in the terminal font the layout was laid out
 /// in, and every row wraps, so nothing scrolls sideways on a narrow page.
 /// </remarks>
@@ -21,7 +22,7 @@ public static class LayoutCss
 	public static readonly string Fixed =
 		".ms-layout { display: block; max-width: 100%; white-space: normal; }\n" +
 		".ms-text { white-space: pre-wrap; overflow-wrap: anywhere; }\n" +
-		".ms-box { margin: 0; padding: 0 var(--ms-pad, 1ch); min-width: 0; border: 1px solid var(--ms-border, var(--ms-border-default, currentColor)); }\n" +
+		".ms-box { --ms-pad: 1ch; margin: 0; padding: 0 var(--ms-pad); min-width: 0; border: 1px solid var(--ms-border, var(--ms-border-default, currentColor)); }\n" +
 		".ms-box.ms-border-none { border: none; padding: 0; }\n" +
 		".ms-box.ms-border-double { border: 3px double var(--ms-border, var(--ms-border-default, currentColor)); }\n" +
 		".ms-box.ms-border-heavy { border-width: 2px; }\n" +
@@ -34,7 +35,8 @@ public static class LayoutCss
 		".ms-rule::before, .ms-rule::after, .ms-divider::before, .ms-divider::after { content: \"\"; flex: 1 1 0; border-top: 1px solid var(--ms-border, var(--ms-border-default, currentColor)); }\n" +
 		".ms-rule[data-align=\"left\"]::before, .ms-divider[data-align=\"left\"]::before { flex: 0 0 1ch; }\n" +
 		".ms-rule[data-align=\"right\"]::after, .ms-divider[data-align=\"right\"]::after { flex: 0 0 1ch; }\n" +
-		".ms-divider { margin: 0 -1ch; }\n" +
+		".ms-divider { margin: 0 calc(-1 * var(--ms-pad, 1ch)); }\n" +
+		".ms-box.ms-border-none > .ms-divider { margin: 0; }\n" +
 		".ms-border-double.ms-rule::before, .ms-border-double.ms-rule::after { border-top: 3px double var(--ms-border, var(--ms-border-default, currentColor)); }\n" +
 		".ms-border-none.ms-rule::before, .ms-border-none.ms-rule::after { border-top: none; }\n" +
 		".ms-flex { display: flex; flex-wrap: wrap; }\n" +

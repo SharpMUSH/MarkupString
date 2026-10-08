@@ -52,6 +52,10 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A divider stops at its box's sides in HTML.** `.ms-divider` reached 1ch past each side of its box
+  whatever the box's padding, so in a box padded 0 (`--ms-pad:0ch`) every divider ran past the border.
+  It now reaches across `--ms-pad`, and not at all in a borderless box. Each box sets `--ms-pad: 1ch`
+  itself, so a box inside one padded 0 is no longer padded 0 too.
 - **A box round a picture spans the width in a terminal again.** 2.14.2 fitted a box holding only a
   picture to the picture, so in a scene log it stood narrower than every box and rule around it. It is
   drawn across the width again, with its padding, and the picture at its left. HTML still fits it
