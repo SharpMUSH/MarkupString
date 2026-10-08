@@ -52,6 +52,10 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- **A figure whose art is the picture's own placeholder is one picture.** Art marked as the picture
+  inline (a Markdown image laid out as a figure) carried both marks, so MXP, Pueblo and BBCode wrote the
+  picture twice or dropped its cells, and the text beside it moved. A figure's rows now carry its mark
+  alone.
 - **A figure's picture reaches MXP, Pueblo and BBCode.** A `Figure` laid out as text marked its picture
   only for a terminal that draws pictures in its cells, so every other format wrote the art alone and an
   MXP client was never sent `<IMAGE>`. Its rows (or its `[description]`) now always carry the picture

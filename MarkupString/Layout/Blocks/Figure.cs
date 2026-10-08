@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 namespace MarkupString.Layout;
 
 /// <summary>
@@ -118,8 +119,26 @@ public sealed record Figure(ImageMarkup Image, MarkupText Art) : Block
 	{
 		var marked = new MarkupText[rows.Length];
 		for (var row = 0; row < rows.Length; row++)
-			marked[row] = MarkupText.Wrap(Image with { Row = new PictureRow(row, rows.Length, columns) }, rows[row]);
+			marked[row] = MarkupText.Wrap(Image with { Row = new PictureRow(row, rows.Length, columns) }, Unpictured(rows[row]));
 		return marked;
+	}
+
+	/// <summary>
+	/// <paramref name="text"/> without the pictures it carries. Art is often the picture's own placeholder,
+	/// already marked as the picture inline; under the figure's mark that would be a second picture in the
+	/// same cells, written twice by a format with an element for it and pushing aside what is beside it.
+	/// </summary>
+	private static MarkupText Unpictured(MarkupText text)
+	{
+		if (!text.Runs.Any(run => run.Markups.Any(markup => markup is ImageMarkup))) return text;
+
+		var runs = ImmutableArray.CreateBuilder<Run>(text.Runs.Length);
+		foreach (var run in text.Runs)
+		{
+			var kept = run.Markups.Where(markup => markup is not ImageMarkup).ToArray();
+			if (kept.Length > 0) runs.Add(run with { Markups = MarkupSet.Of(kept) });
+		}
+		return new MarkupText(text.Text, runs.ToImmutable());
 	}
 
 	/// <inheritdoc/>
