@@ -16,6 +16,10 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   stand-ins come first. `LayoutContext.Fold` folds the text inside every block before it is
   measured, through the new `Block.MapText`, so tables stay aligned whatever the stand-ins' widths.
 
+## 2.16.0 — 2026-10-09
+
+### Added
+
 - **A rule or box edge holds several titles.** `Rule.Titles` and `Frame.Titles` add titles beside the
   first, each an `EdgeTitle` placed left, centre or right, so one line carries
   `=< Wren >=========< Scene 3 >=< 21:04 >=`. `Frame.BottomTitles` puts titles in a box's bottom
