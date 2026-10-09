@@ -6,6 +6,10 @@ namespace MarkupString.Layout;
 /// <param name="Items">The items; size one with <see cref="BlockExtensions.Sized"/>, or it shares out what the sized ones leave.</param>
 public sealed record Flex(ImmutableArray<Block> Items) : Block
 {
+	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with { Items = BlockText.Map(Items, map) };
+
 	/// <summary>Cells between two items, when there is no <see cref="Separator"/>.</summary>
 	public int Gap { get; init; } = 2;
 
@@ -143,6 +147,10 @@ public sealed record Flex(ImmutableArray<Block> Items) : Block
 /// <param name="Content">What is sized.</param>
 public sealed record Sized(Block Content) : Block
 {
+	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with { Content = Content.MapText(map) };
+
 	/// <summary>The width it asks for; <see cref="BlockSize.Auto"/> shares out what the others leave.</summary>
 	public BlockSize Basis { get; init; }
 

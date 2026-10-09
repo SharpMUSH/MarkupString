@@ -9,6 +9,10 @@ namespace MarkupString.Layout;
 /// <param name="Items">The items.</param>
 public sealed record Bullets(ImmutableArray<Block> Items) : Block
 {
+	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with { Items = BlockText.Map(Items, map) };
+
 	/// <summary>What kind of marker.</summary>
 	public BulletStyle Style { get; init; } = BulletStyle.Bullet;
 
@@ -116,6 +120,10 @@ public enum BulletStyle
 /// <param name="Items">The items.</param>
 public sealed record Grid(ImmutableArray<MarkupText> Items) : Block
 {
+	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with { Items = Items.IsDefault ? Items : Items.Select(map).ToImmutableArray() };
+
 	/// <summary>Cells between two columns.</summary>
 	public int Gap { get; init; } = 2;
 

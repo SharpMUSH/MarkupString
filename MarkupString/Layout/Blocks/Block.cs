@@ -49,6 +49,14 @@ public abstract record Block
 		return new BlockMeasure(1, natural);
 	}
 
+	/// <summary>
+	/// The block with <paramref name="map"/> applied to the text it shows: its content and titles, not the
+	/// pieces it draws with (borders, markers, fill), which <see cref="LayoutContext"/> already gives each
+	/// reader. How <see cref="LayoutContext.Fold"/> reaches every block in a tree. By default the block as it
+	/// is; a block of your own that holds text overrides it.
+	/// </summary>
+	public virtual Block MapText(Func<MarkupText, MarkupText> map) => this;
+
 	/// <summary>Text as a block.</summary>
 	public static implicit operator Block(MarkupText text) => new TextBlock(text);
 }
@@ -69,6 +77,14 @@ public sealed record LayoutContext
 
 	/// <summary>Plain ASCII only, for a client that cannot show anything else: box drawing becomes its nearest ASCII (<see cref="BorderStyle.ToAscii"/>).</summary>
 	public bool AsciiOnly { get; init; }
+
+	/// <summary>
+	/// For a reader whose client shows only ASCII or Latin-1, the characters it cannot show replaced
+	/// before the block is measured, so a stand-in of another width keeps the columns; null to keep
+	/// them. <see cref="BlockLayout.Build"/>, <see cref="BlockLayout.Lines"/> and
+	/// <see cref="BlockLayout.Relayout"/> apply it.
+	/// </summary>
+	public AsciiFold? Fold { get; init; }
 
 	/// <summary>
 	/// The content alone in reading order, for a screen reader: no borders, fill or columns, each

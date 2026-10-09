@@ -19,13 +19,21 @@ public static class BlockLayout
 	public static MarkupText Build(Block root, int width, bool fluid = false, LayoutContext? context = null)
 	{
 		ArgumentNullException.ThrowIfNull(root);
+		// The tree stays as it was given; only the lines are folded, by Lines.
 		var text = MarkupText.Join(MarkupText.NewLine, Lines(root, width, context));
 		return text.Length == 0 ? text : MarkupText.Wrap(new LayoutMarkup(root, width, fluid, text.Text), text);
 	}
 
-	/// <summary>Lays <paramref name="block"/> out at <paramref name="width"/> display cells, one entry per line.</summary>
-	public static IReadOnlyList<MarkupText> Lines(Block block, int width, LayoutContext? context = null) =>
-		(context ?? LayoutContext.Default).Lines(block, width);
+	/// <summary>
+	/// Lays <paramref name="block"/> out at <paramref name="width"/> display cells, one entry per line, its
+	/// text folded first when the context has a <see cref="LayoutContext.Fold"/>.
+	/// </summary>
+	public static IReadOnlyList<MarkupText> Lines(Block block, int width, LayoutContext? context = null)
+	{
+		ArgumentNullException.ThrowIfNull(block);
+		context ??= LayoutContext.Default;
+		return context.Lines(context.Fold is { } fold ? block.MapText(fold.Fold) : block, width);
+	}
 
 	/// <summary>
 	/// The tree <paramref name="content"/> was laid out from when the whole of it is one intact block,

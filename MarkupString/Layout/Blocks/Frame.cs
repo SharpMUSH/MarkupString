@@ -23,6 +23,10 @@ public sealed record EdgeTitle(MarkupText Text, Alignment Side = Alignment.Cente
 /// </remarks>
 public sealed record Rule(MarkupText? Title = null) : Block
 {
+	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with { Title = Title is null ? null : map(Title), Titles = BlockText.Map(Titles, map) };
+
 	/// <summary>Whose horizontal edge and title brackets the line is drawn with; unset, the frame's around it or the theme's.</summary>
 	public BorderStyle? Border { get; init; }
 
@@ -54,6 +58,16 @@ public sealed record Rule(MarkupText? Title = null) : Block
 /// <remarks>Usually made with <see cref="BlockExtensions.Bordered"/>.</remarks>
 public sealed record Frame(Block Body) : Block
 {
+	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with
+		{
+			Body = Body.MapText(map),
+			Title = Title is null ? null : map(Title),
+			Titles = BlockText.Map(Titles, map),
+			BottomTitles = BlockText.Map(BottomTitles, map),
+		};
+
 	/// <summary>The characters the frame is drawn with; unset, the theme's.</summary>
 	public BorderStyle? Border { get; init; }
 

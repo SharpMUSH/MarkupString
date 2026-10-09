@@ -8,6 +8,10 @@ namespace MarkupString.Layout;
 /// <param name="Maximum">How much there could be; the bar is full at this.</param>
 public sealed record Gauge(double Value, double Maximum) : Block
 {
+	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with { Label = Label is null ? null : map(Label) };
+
 	/// <summary>What it measures, or none.</summary>
 	public MarkupText? Label { get; init; }
 

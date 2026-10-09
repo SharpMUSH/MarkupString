@@ -8,6 +8,14 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+
+- **Text for a client without Unicode.** `AsciiFold` replaces each character an ASCII-only or
+  Latin-1 client cannot show with the nearest one it can (`·` to `*`, `—` to `-`, `é` to `e`, `?` for
+  the rest), keeping markup and, for the built-in stand-ins, each character's width. A game's own
+  stand-ins come first. `LayoutContext.Fold` folds the text inside every block before it is
+  measured, through the new `Block.MapText`, so tables stay aligned whatever the stand-ins' widths.
+
 ## 2.16.0 — 2026-10-09
 
 ### Added

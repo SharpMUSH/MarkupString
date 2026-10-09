@@ -134,7 +134,7 @@ public sealed record BorderStyle
 	}
 
 	/// <summary>The ASCII stand-in for a box-drawing character (U+2500 to U+257F), or null.</summary>
-	private static char? AsciiFor(char c) => c switch
+	internal static char? AsciiFor(char c) => c switch
 	{
 		'─' or '┄' or '┈' or '╌' or '╴' or '╶' => '-',
 		'━' or '┅' or '┉' or '╍' or '═' or '╸' or '╺' => '=',

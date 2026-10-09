@@ -14,6 +14,10 @@ namespace MarkupString.Layout;
 /// </remarks>
 public sealed record Fields(ImmutableArray<Field> Items) : Block
 {
+	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with { Items = Items.IsDefault ? Items : Items.Select(item => item with { Label = map(item.Label), Value = item.Value.MapText(map) }).ToImmutableArray() };
+
 	/// <summary>The narrowest a value column may be before each label goes over its value instead.</summary>
 	private const int MinValue = 10;
 
