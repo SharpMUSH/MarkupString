@@ -8,6 +8,122 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## 2.15.5 — 2026-10-09
+
+### Changed
+
+- **`ansi()` codes parse and wrap faster.** `AnsiCodeParser.Parse` reads the codes in place and shares
+  its palette colours, so for letter and xterm codes the markup is its only allocation (`hr`: 139 ns and 312 B before, 54 ns and
+  88 B after). Wrapping text in a style seen before reuses its `MarkupSet`, and wrapping styled text
+  again reuses what that pair made last time; `MarkupText` keeps runs that are already in normal form
+  instead of copying them. `MarkupText.Wrap(ansi, plain text)` went from 351 ns and 640 B to 154 ns and
+  208 B, and wrapping it again from 552 ns to 246 ns. `AnsiStyle` compares and hashes its switches as
+  one bit field, and `AnsiMarkup` keeps its hash.
+
+## 2.15.4 — 2026-10-08
+
+### Fixed
+
+- **A divider stops at its box's sides in HTML.** `.ms-divider` reached 1ch past each side of its box
+  whatever the box's padding, so in a box padded 0 (`--ms-pad:0ch`) every divider ran past the border.
+  It now reaches across `--ms-pad`, and not at all in a borderless box. Each box sets `--ms-pad: 1ch`
+  itself, so a box inside one padded 0 is no longer padded 0 too.
+
+## 2.15.3 — 2026-10-07
+
+The same code as 2.14.3, on the 2.15 line: 2.15.0 has the MXP sizing below without the box width fix.
+
+## 2.15.0 — 2026-10-07
+
+### Added
+
+- `PictureRow.IsDescription`, for the fix below.
+
+### Fixed
+
+- **An MXP client draws a figure's picture in its cells.** A figure's `<IMAGE>` carried no size, so a
+  client drew the picture at its own size under the line it was named on, outside any box round it. It
+  is now sized in the cells laid out for it (`W=12c H=5c`), the art's or `PictureCells`', and a client
+  that honours cell sizes draws it there. A figure with neither, whose row is only its description
+  (`PictureRow.IsDescription`), still leaves the picture its own size.
+
+## 2.14.3 — 2026-10-07
+
+### Fixed
+
+- **A box round a picture spans the width in a terminal again.** 2.14.2 fitted a box holding only a
+  picture to the picture, so in a scene log it stood narrower than every box and rule around it. It is
+  drawn across the width again, with its padding, and the picture at its left. HTML still fits it
+  (`ms-box-picture`).
+- **An MXP client draws a figure's picture in its cells.** As in 2.15.0.
+
+## 2.14.2 — 2026-10-07
+
+### Fixed
+
+- **A box round a picture fits it in a terminal too.** A terminal that draws pictures got the box across
+  the whole width with the picture in its left corner, so it stood wider than the rules and lines
+  around it. A `Frame` whose body is only a picture on a line of its own, for a reader shown that
+  picture, now has no padding and is as wide as the picture (or its title, if that is wider). A reader
+  shown the art or the description instead still gets the box across the width. (2.14.3 took this back.)
+
+## 2.14.1 — 2026-10-07
+
+### Fixed
+
+- **A figure whose art is the picture's own placeholder is one picture.** Art marked as the picture
+  inline (a Markdown image laid out as a figure) carried both marks, so MXP, Pueblo and BBCode wrote the
+  picture twice or dropped its cells, and the text beside it moved. A figure's rows now carry its mark
+  alone.
+
+## 2.14.0 — 2026-10-07
+
+### Changed
+
+- **A picture is one `ImageMarkup`, laid out or inline.** `PictureCellsMarkup` is gone: a figure's rows
+  carry its `ImageMarkup` with `Row` (a `PictureRow`: which row, how many, how many cells wide), and the
+  serialiser keeps it. MXP, Pueblo, HTML and BBCode write a picture's element once
+  (`ImageMarkup.StartsPicture`): at the start of an inline picture, however many runs its description is
+  in, or on a figure's first row.
+
+### Fixed
+
+- **A figure's picture reaches MXP, Pueblo and BBCode.** A `Figure` laid out as text marked its picture
+  only for a terminal that draws pictures in its cells, so every other format wrote the art alone and an
+  MXP client was never sent `<IMAGE>`. Its rows (or its `[description]`) now always carry the picture
+  when it has an address: a format with a picture element writes it on the first row and keeps the
+  figure's cells blank, so text beside it stays in its column, and a client that refuses the element, or
+  an HTML policy that refuses `<img>`, reads the art. A terminal without the picture's pixels still writes
+  the art.
+
+## 2.13.0 — 2026-10-07
+
+### Added
+
+- **Moving pictures.** A `TerminalPicture` made from `TerminalPictureFrame`s plays for a client with
+  `MovingPictures` as well as a way of drawing it: Kitty is sent each frame (`a=f,X=1`) and starts the
+  loop itself (`a=a,s=3,v=1`), and iTerm2 is sent a looping GIF (one global palette by median cut, no
+  dithering, so nothing shimmers between frames). Everywhere else, and without `MovingPictures`, it is
+  its first frame. A frame of 10 ms or less is shown for 100 ms, as browsers do.
+- **Terminals by name.** `TerminalProfile` lists the terminals this package knows (kitty, Ghostty,
+  WezTerm, iTerm2, Konsole, foot, xterm, Windows Terminal, mintty, VS Code, Contour, Rio, mlterm,
+  Alacritty, VTE and tmux): what each can be sent, read from its own source and release notes, and how.
+  `Identify` reads one from a terminal type or an XTVERSION reply, `Find` from the id a player gives.
+  `AnsiOutputOptions.For(terminal, chosen)` sends a terminal only what the player turned on of what it
+  can do, and `AnsiOutputOptions.Terminal` carries how it wants it: an iTerm2 inline image longer than
+  the terminal takes in one sequence (a mebibyte, for iTerm2) is sent in parts where it reads them
+  (`MultipartFile`), and a moving one is sent still where it does not.
+
+### Fixed
+
+- **A box round a picture fits it in HTML.** The `<img>` of a `Figure` sat on the text baseline,
+  leaving a band the height of a descender below it, and the box's side padding left gaps left and
+  right but none above. The picture now aligns to the top of its line, and a box whose body is only a
+  picture on a line of its own (`ms-box-picture`) has no padding and is no wider than the picture.
+  A `Frame`'s `Padding` reaches the HTML as `--ms-pad` (it was always `1ch`).
+
+## 2.12.0 — 2026-10-07
+
 ### Added
 
 - **Terminal features beyond colour.** `AnsiOutputOptions` describes one client: its colour depth,
@@ -28,66 +144,14 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
     RGB when the picture is opaque, filtered Up, at zlib level 2; sixel reads each band once and writes a
     colour only over the columns it reaches.
 
-- **Moving pictures.** A `TerminalPicture` made from `TerminalPictureFrame`s plays for a client with
-  `MovingPictures` as well as a way of drawing it: Kitty is sent each frame (`a=f,X=1`) and starts the
-  loop itself (`a=a,s=3,v=1`), and iTerm2 is sent a looping GIF (one global palette by median cut, no
-  dithering, so nothing shimmers between frames). Everywhere else, and without `MovingPictures`, it is
-  its first frame. A frame of 10 ms or less is shown for 100 ms, as browsers do.
-- **Terminals by name.** `TerminalProfile` lists the terminals this package knows (kitty, Ghostty,
-  WezTerm, iTerm2, Konsole, foot, xterm, Windows Terminal, mintty, VS Code, Contour, Rio, mlterm,
-  Alacritty, VTE and tmux): what each can be sent, read from its own source and release notes, and how.
-  `Identify` reads one from a terminal type or an XTVERSION reply, `Find` from the id a player gives.
-  `AnsiOutputOptions.For(terminal, chosen)` sends a terminal only what the player turned on of what it
-  can do, and `AnsiOutputOptions.Terminal` carries how it wants it: an iTerm2 inline image longer than
-  the terminal takes in one sequence (a mebibyte, for iTerm2) is sent in parts where it reads them
-  (`MultipartFile`), and a moving one is sent still where it does not.
-
-### Changed
-
-- **`ansi()` codes parse and wrap faster.** `AnsiCodeParser.Parse` reads the codes in place and shares
-  its palette colours, so for letter and xterm codes the markup is its only allocation (`hr`: 139 ns and 312 B before, 54 ns and
-  88 B after). Wrapping text in a style seen before reuses its `MarkupSet`, and wrapping styled text
-  again reuses what that pair made last time; `MarkupText` keeps runs that are already in normal form
-  instead of copying them. `MarkupText.Wrap(ansi, plain text)` went from 351 ns and 640 B to 154 ns and
-  208 B, and wrapping it again from 552 ns to 246 ns. `AnsiStyle` compares and hashes its switches as
-  one bit field, and `AnsiMarkup` keeps its hash.
-- **A picture is one `ImageMarkup`, laid out or inline.** `PictureCellsMarkup` is gone: a figure's rows
-  carry its `ImageMarkup` with `Row` (a `PictureRow`: which row, how many, how many cells wide), and the
-  serialiser keeps it. MXP, Pueblo, HTML and BBCode write a picture's element once
-  (`ImageMarkup.StartsPicture`): at the start of an inline picture, however many runs its description is
-  in, or on a figure's first row.
+## 2.11.3 — 2026-10-07
 
 ### Fixed
 
-- **A divider stops at its box's sides in HTML.** `.ms-divider` reached 1ch past each side of its box
-  whatever the box's padding, so in a box padded 0 (`--ms-pad:0ch`) every divider ran past the border.
-  It now reaches across `--ms-pad`, and not at all in a borderless box. Each box sets `--ms-pad: 1ch`
-  itself, so a box inside one padded 0 is no longer padded 0 too.
-- **A box round a picture spans the width in a terminal again.** 2.14.2 fitted a box holding only a
-  picture to the picture, so in a scene log it stood narrower than every box and rule around it. It is
-  drawn across the width again, with its padding, and the picture at its left. HTML still fits it
-  (`ms-box-picture`).
-- **An MXP client draws a figure's picture in its cells.** A figure's `<IMAGE>` carried no size, so a
-  client drew the picture at its own size under the line it was named on, outside any box round it. It
-  is now sized in the cells laid out for it (`W=12c H=5c`), the art's or `PictureCells`', and a client
-  that honours cell sizes draws it there. A figure with neither, whose row is only its description
-  (`PictureRow.IsDescription`), still leaves the picture its own size.
-- **A figure whose art is the picture's own placeholder is one picture.** Art marked as the picture
-  inline (a Markdown image laid out as a figure) carried both marks, so MXP, Pueblo and BBCode wrote the
-  picture twice or dropped its cells, and the text beside it moved. A figure's rows now carry its mark
-  alone.
-- **A figure's picture reaches MXP, Pueblo and BBCode.** A `Figure` laid out as text marked its picture
-  only for a terminal that draws pictures in its cells, so every other format wrote the art alone and an
-  MXP client was never sent `<IMAGE>`. Its rows (or its `[description]`) now always carry the picture
-  when it has an address: a format with a picture element writes it on the first row and keeps the
-  figure's cells blank, so text beside it stays in its column, and a client that refuses the element, or
-  an HTML policy that refuses `<img>`, reads the art. A terminal without the picture's pixels still writes
-  the art.
-- **A box round a picture fits it in HTML.** The `<img>` of a `Figure` sat on the text baseline,
-  leaving a band the height of a descender below it, and the box's side padding left gaps left and
-  right but none above. The picture now aligns to the top of its line, and a box whose body is only a
-  picture on a line of its own (`ms-box-picture`) has no padding and is no wider than the picture.
-  A `Frame`'s `Padding` reaches the HTML as `--ms-pad` (it was always `1ch`).
+- **Percentage flex items stay beside their gaps in HTML.** A row of items sized in percent that added
+  up to 100% wrapped, because the gaps between them took width the percentages did not leave. Each
+  item's width now gives up its share of the gaps (`calc(50% - 1ch)`), and an item's padding and border
+  count inside its width.
 
 ## 2.11.2 — 2026-10-07
 
