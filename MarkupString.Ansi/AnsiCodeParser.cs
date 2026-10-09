@@ -30,91 +30,6 @@ public static class AnsiCodeParser
 	private const string XtermPrefix = "+xterm";
 
 	/// <summary>
-	/// Splits <paramref name="input"/> into codes: a run of letters, or one colour (<c>#…</c>, <c>+…</c>, an
-	/// xterm number, or a <c>&lt;…&gt;</c> group, spaces and all). A colour after <c>/</c> or <c>!</c> comes back
-	/// with a leading <c>/</c>, the background marker the parser reads.
-	/// </summary>
-	private static IEnumerable<string> Tokenize(string input)
-	{
-		var letters = new System.Text.StringBuilder();
-		var background = false;
-		var i = 0;
-		while (i < input.Length)
-		{
-			var c = input[i];
-			if (c == ' ')
-			{
-				// A space ends a run of letters, and a background marker with nothing after it.
-				if (letters.Length > 0) yield return Take(letters, background);
-				background = false;
-				i++;
-				continue;
-			}
-
-			if (c is '/' or '!')
-			{
-				if (letters.Length > 0) yield return Take(letters, background);
-				background = true;
-				i++;
-				continue;
-			}
-
-			var number = char.IsAsciiDigit(c) || (c == '-' && i + 1 < input.Length && char.IsAsciiDigit(input[i + 1]));
-			if (c is '#' or '+' or '<' || number)
-			{
-				if (letters.Length > 0)
-				{
-					yield return Take(letters, background);
-					background = false;
-				}
-
-				var end = i + 1;
-				if (c == '<')
-				{
-					// No closing '>': only the word it starts is the (malformed, ignored) triplet, and the
-					// codes after the next space are read as usual.
-					end = input.IndexOf('>', i) is var close and >= 0
-						? close + 1
-						: input.IndexOf(' ', i) is var space and >= 0 ? space : input.Length;
-				}
-				else if (number)
-				{
-					// An xterm palette index: digits only, so u200 is underline and xterm 200. A sign is kept
-					// with them, so -1 is the out-of-range number it reads as, not a 1.
-					while (end < input.Length && char.IsAsciiDigit(input[end])) end++;
-				}
-				else
-				{
-					// A colour name may carry _ or - (a game's own names); hex digits never do.
-					while (end < input.Length
-						&& (char.IsAsciiLetterOrDigit(input[end]) || (c == '+' && input[end] is '_' or '-')))
-					{
-						end++;
-					}
-				}
-
-				yield return (background ? "/" : "") + input[i..end];
-				background = false;
-				i = end;
-				continue;
-			}
-
-			letters.Append(c);
-			i++;
-		}
-
-		if (letters.Length > 0) yield return Take(letters, background);
-	}
-
-	/// <summary>The letters gathered so far, with the background marker if one came before them.</summary>
-	private static string Take(System.Text.StringBuilder letters, bool background)
-	{
-		var token = (background ? "/" : "") + letters;
-		letters.Clear();
-		return token;
-	}
-
-	/// <summary>
 	/// Parses a string of ANSI codes into the markup they describe. Named colours (<c>+name</c>) are ignored;
 	/// <see cref="Parse(string, Func{string, AnsiColor?})"/> resolves them.
 	/// </summary>
@@ -136,68 +51,134 @@ public static class AnsiCodeParser
 	/// Resolves a <c>+name</c> colour (the name without its <c>+</c>) to the colour it stands for, or
 	/// <see langword="null"/> when there is no such colour, which is then ignored.
 	/// </param>
+	/// <remarks>
+	/// <c>ansi()</c> is among the most called functions in a game, so the codes are read in place and palette
+	/// colours (letters and xterm numbers) are shared: for those the markup returned is the only allocation.
+	/// A hex or <c>&lt;r g b&gt;</c> colour adds its <see cref="AnsiColor.Rgb"/>, and a named colour the name
+	/// handed to <paramref name="namedColor"/>.
+	/// </remarks>
 	public static AnsiMarkup Parse(string codes, Func<string, AnsiColor?> namedColor)
 	{
 		ArgumentNullException.ThrowIfNull(namedColor);
 		ArgumentNullException.ThrowIfNull(codes);
 
-		AnsiColor? foreground = null;
-		AnsiColor? background = null;
-		var blink = false;
-		var bold = false;
-		var clear = false;
-		var inverted = false;
-		var underlined = false;
-		// PennMUSH's offbits: F, H, I and U turn the attribute off here and in what this span encloses.
-		var blinkOff = false;
-		var boldOff = false;
-		var invertedOff = false;
-		var underlinedOff = false;
+		var reader = new Reader(namedColor);
+		var input = codes.AsSpan();
 
-		foreach (var token in Tokenize(codes))
+		// Splits the input into codes: a run of letters, or one colour (#…, +…, an xterm number, or a <…>
+		// group, spaces and all). A colour after / or ! is the background.
+		var lettersStart = -1;
+		var background = false;
+		var i = 0;
+		while (i < input.Length)
 		{
-			var code = token.AsSpan();
-			var isBackground = false;
-
-			if (code.StartsWith("/"))
+			var c = input[i];
+			if (c == ' ')
 			{
-				isBackground = true;
-				code = code[1..];
-			}
-
-			if (code.StartsWith("#"))
-			{
-				if (AnsiColor.TryParseHex(code, out var hex))
-				{
-					if (isBackground) background = hex;
-					else foreground = hex;
-				}
-
+				// A space ends a run of letters, and a background marker with nothing after it.
+				if (lettersStart >= 0) reader.Letters(input[lettersStart..i]);
+				lettersStart = -1;
+				background = false;
+				i++;
 				continue;
 			}
 
-			if (code.StartsWith("<") && code.EndsWith(">"))
+			if (c is '/' or '!')
 			{
-				if (TryParseTriplet(code[1..^1], out var triplet))
+				if (lettersStart >= 0) reader.Letters(input[lettersStart..i]);
+				lettersStart = -1;
+				background = true;
+				i++;
+				continue;
+			}
+
+			var number = char.IsAsciiDigit(c) || (c == '-' && i + 1 < input.Length && char.IsAsciiDigit(input[i + 1]));
+			if (c is '#' or '+' or '<' || number)
+			{
+				if (lettersStart >= 0)
 				{
-					if (isBackground) background = triplet;
-					else foreground = triplet;
+					reader.Letters(input[lettersStart..i]);
+					lettersStart = -1;
+					background = false;
 				}
 
+				var end = i + 1;
+				if (c == '<')
+				{
+					// No closing '>': only the word it starts is the (malformed, ignored) triplet, and the
+					// codes after the next space are read as usual.
+					end = input[i..].IndexOf('>') is var close and >= 0
+						? i + close + 1
+						: input[i..].IndexOf(' ') is var space and >= 0 ? i + space : input.Length;
+				}
+				else if (number)
+				{
+					// An xterm palette index: digits only, so u200 is underline and xterm 200. A sign is kept
+					// with them, so -1 is the out-of-range number it reads as, not a 1.
+					while (end < input.Length && char.IsAsciiDigit(input[end])) end++;
+				}
+				else
+				{
+					// A colour name may carry _ or - (a game's own names); hex digits never do.
+					while (end < input.Length
+						&& (char.IsAsciiLetterOrDigit(input[end]) || (c == '+' && input[end] is '_' or '-')))
+					{
+						end++;
+					}
+				}
+
+				reader.Colour(input[i..end], background);
+				background = false;
+				i = end;
 				continue;
+			}
+
+			if (lettersStart < 0) lettersStart = i;
+			i++;
+		}
+
+		if (lettersStart >= 0) reader.Letters(input[lettersStart..]);
+
+		return reader.ToMarkup();
+	}
+
+	/// <summary>The attributes read so far, one code at a time.</summary>
+	private ref struct Reader(Func<string, AnsiColor?> namedColor)
+	{
+		private AnsiColor? _foreground;
+		private AnsiColor? _background;
+		private bool _blink;
+		private bool _bold;
+		private bool _clear;
+		private bool _inverted;
+		private bool _underlined;
+		// PennMUSH's offbits: F, H, I and U turn the attribute off here and in what this span encloses.
+		private bool _blinkOff;
+		private bool _boldOff;
+		private bool _invertedOff;
+		private bool _underlinedOff;
+
+		/// <summary>One colour: <c>#…</c>, <c>&lt;…&gt;</c>, <c>+name</c>, <c>+xtermN</c> or a bare number.</summary>
+		public void Colour(ReadOnlySpan<char> code, bool isBackground)
+		{
+			if (code.StartsWith('#'))
+			{
+				if (AnsiColor.TryParseHex(code, out var hex)) Set(hex, isBackground);
+				return;
+			}
+
+			if (code.StartsWith('<') && code.EndsWith('>'))
+			{
+				if (TryParseTriplet(code[1..^1], out var triplet)) Set(triplet, isBackground);
+				return;
 			}
 
 			var isXtermPrefixed = code.StartsWith(XtermPrefix);
-			if (code.StartsWith("+") && !isXtermPrefixed)
+			if (code.StartsWith('+') && !isXtermPrefixed)
 			{
 				// Always consumed here: falling through would read the name's letters as colour codes.
-				if (namedColor(code[1..].ToString()) is { } named)
-				{
-					if (isBackground) background = named;
-					else foreground = named;
-				}
-
-				continue;
+				if (namedColor(code[1..].ToString()) is { } named) Set(named, isBackground);
+				return;
 			}
 
 			if (isXtermPrefixed || int.TryParse(code, NumberStyles.Integer, CultureInfo.InvariantCulture, out _))
@@ -209,14 +190,25 @@ public static class AnsiCodeParser
 				if (int.TryParse(digits, NumberStyles.Integer, CultureInfo.InvariantCulture, out var index)
 					&& index is >= 0 and < 256)
 				{
-					if (isBackground) background = new AnsiColor.Xterm((byte)index);
-					else foreground = new AnsiColor.Xterm((byte)index);
+					Set(AnsiColor.XtermOf((byte)index), isBackground);
 				}
 
-				continue;
+				return;
 			}
 
-			// Single-letter codes. 'h' is a per-token modifier, so it resets on every token.
+			// An unterminated <… group: its letters are read as letters.
+			Letters(code);
+		}
+
+		private void Set(AnsiColor colour, bool isBackground)
+		{
+			if (isBackground) _background = colour;
+			else _foreground = colour;
+		}
+
+		/// <summary>A run of single-letter codes. 'h' is a per-run modifier, so it resets on every run.</summary>
+		public void Letters(ReadOnlySpan<char> code)
+		{
 			var highlight = false;
 			// Whether a palette letter has taken the highlight up; one that none has is bold.
 			var highlightUsed = false;
@@ -231,78 +223,78 @@ public static class AnsiCodeParser
 				switch (chr)
 				{
 					// Each attribute and its capital are one bit: the later of the two wins.
-					case 'h': highlight = true; boldOff = false; break;
+					case 'h': highlight = true; _boldOff = false; break;
 					case 'H':
 						highlight = false;
-						bold = false;
-						boldOff = true;
+						_bold = false;
+						_boldOff = true;
 						// The hilite already given to a palette letter goes too: hrH is plain red.
-						if (foreground is AnsiColor.Standard { Bright: true } bright)
+						if (_foreground is AnsiColor.Standard { Bright: true } bright)
 						{
-							foreground = new AnsiColor.Standard(bright.Index, false);
+							_foreground = AnsiColor.StandardOf(bright.Index, false);
 						}
 						break;
-					case 'i': inverted = true; invertedOff = false; break;
-					case 'I': inverted = false; invertedOff = true; break;
-					case 'f': blink = true; blinkOff = false; break;
-					case 'F': blink = false; blinkOff = true; break;
-					case 'u': underlined = true; underlinedOff = false; break;
-					case 'U': underlined = false; underlinedOff = true; break;
+					case 'i': _inverted = true; _invertedOff = false; break;
+					case 'I': _inverted = false; _invertedOff = true; break;
+					case 'f': _blink = true; _blinkOff = false; break;
+					case 'F': _blink = false; _blinkOff = true; break;
+					case 'u': _underlined = true; _underlinedOff = false; break;
+					case 'U': _underlined = false; _underlinedOff = true; break;
 					case 'n':
-						clear = true;
-						foreground = null;
-						background = null;
-						blink = false;
-						bold = false;
-						inverted = false;
-						underlined = false;
+						_clear = true;
+						_foreground = null;
+						_background = null;
+						_blink = false;
+						_bold = false;
+						_inverted = false;
+						_underlined = false;
 						highlight = false;
 						// Clear already discards everything around this span; nothing is left to turn off.
-						blinkOff = false;
-						boldOff = false;
-						invertedOff = false;
-						underlinedOff = false;
+						_blinkOff = false;
+						_boldOff = false;
+						_invertedOff = false;
+						_underlinedOff = false;
 						break;
-					case 'd': foreground = AnsiColor.Default.Instance; break;
-					case 'D': background = AnsiColor.Default.Instance; break;
-					case 'x': foreground = new AnsiColor.Standard(0, highlight); break;
-					case 'r': foreground = new AnsiColor.Standard(1, highlight); break;
-					case 'g': foreground = new AnsiColor.Standard(2, highlight); break;
-					case 'y': foreground = new AnsiColor.Standard(3, highlight); break;
-					case 'b': foreground = new AnsiColor.Standard(4, highlight); break;
-					case 'm': foreground = new AnsiColor.Standard(5, highlight); break;
-					case 'c': foreground = new AnsiColor.Standard(6, highlight); break;
-					case 'w': foreground = new AnsiColor.Standard(7, highlight); break;
+					case 'd': _foreground = AnsiColor.Default.Instance; break;
+					case 'D': _background = AnsiColor.Default.Instance; break;
+					case 'x': _foreground = AnsiColor.StandardOf(0, highlight); break;
+					case 'r': _foreground = AnsiColor.StandardOf(1, highlight); break;
+					case 'g': _foreground = AnsiColor.StandardOf(2, highlight); break;
+					case 'y': _foreground = AnsiColor.StandardOf(3, highlight); break;
+					case 'b': _foreground = AnsiColor.StandardOf(4, highlight); break;
+					case 'm': _foreground = AnsiColor.StandardOf(5, highlight); break;
+					case 'c': _foreground = AnsiColor.StandardOf(6, highlight); break;
+					case 'w': _foreground = AnsiColor.StandardOf(7, highlight); break;
 					// 'h' before a background letter is SGR 1 (bold), not a bright background —
 					// terminals have no "bright background" attribute distinct from bold text.
-					case 'X': background = new AnsiColor.Standard(0, false); bold |= highlight; break;
-					case 'R': background = new AnsiColor.Standard(1, false); bold |= highlight; break;
-					case 'G': background = new AnsiColor.Standard(2, false); bold |= highlight; break;
-					case 'Y': background = new AnsiColor.Standard(3, false); bold |= highlight; break;
-					case 'B': background = new AnsiColor.Standard(4, false); bold |= highlight; break;
-					case 'M': background = new AnsiColor.Standard(5, false); bold |= highlight; break;
-					case 'C': background = new AnsiColor.Standard(6, false); bold |= highlight; break;
-					case 'W': background = new AnsiColor.Standard(7, false); bold |= highlight; break;
+					case 'X': _background = AnsiColor.StandardOf(0, false); _bold |= highlight; break;
+					case 'R': _background = AnsiColor.StandardOf(1, false); _bold |= highlight; break;
+					case 'G': _background = AnsiColor.StandardOf(2, false); _bold |= highlight; break;
+					case 'Y': _background = AnsiColor.StandardOf(3, false); _bold |= highlight; break;
+					case 'B': _background = AnsiColor.StandardOf(4, false); _bold |= highlight; break;
+					case 'M': _background = AnsiColor.StandardOf(5, false); _bold |= highlight; break;
+					case 'C': _background = AnsiColor.StandardOf(6, false); _bold |= highlight; break;
+					case 'W': _background = AnsiColor.StandardOf(7, false); _bold |= highlight; break;
 				}
 			}
 
 			// PennMUSH's hilite with no palette letter to brighten: SGR 1 on whatever colour the text has.
-			bold |= highlight && !highlightUsed;
+			_bold |= highlight && !highlightUsed;
 		}
 
-		return new AnsiMarkup(new AnsiStyle
+		public readonly AnsiMarkup ToMarkup() => new(new AnsiStyle
 		{
-			Foreground = foreground,
-			Background = background,
-			Blink = blink,
-			Bold = bold,
-			Clear = clear,
-			Inverted = inverted,
-			Underlined = underlined,
-			BlinkOff = blinkOff,
-			BoldOff = boldOff,
-			InvertedOff = invertedOff,
-			UnderlinedOff = underlinedOff,
+			Foreground = _foreground,
+			Background = _background,
+			Blink = _blink,
+			Bold = _bold,
+			Clear = _clear,
+			Inverted = _inverted,
+			Underlined = _underlined,
+			BlinkOff = _blinkOff,
+			BoldOff = _boldOff,
+			InvertedOff = _invertedOff,
+			UnderlinedOff = _underlinedOff,
 		});
 	}
 

@@ -72,6 +72,36 @@ public readonly record struct AnsiStyle
 	/// <summary>The style that changes nothing.</summary>
 	public static readonly AnsiStyle None = default;
 
+	/// <summary>Every switch and the link kind, one bit or field each, so equality and hashing read them at once.</summary>
+	private int Bits =>
+		(Bold ? 1 << 0 : 0)
+		| (Faint ? 1 << 1 : 0)
+		| (Italic ? 1 << 2 : 0)
+		| (Underlined ? 1 << 3 : 0)
+		| (Overlined ? 1 << 4 : 0)
+		| (Blink ? 1 << 5 : 0)
+		| (Inverted ? 1 << 6 : 0)
+		| (StrikeThrough ? 1 << 7 : 0)
+		| (BlinkOff ? 1 << 8 : 0)
+		| (BoldOff ? 1 << 9 : 0)
+		| (InvertedOff ? 1 << 10 : 0)
+		| (UnderlinedOff ? 1 << 11 : 0)
+		| (Clear ? 1 << 12 : 0)
+		| ((int)LinkKind << 16);
+
+	/// <summary>Field-by-field equality, written out because a style is compared each time a markup set is looked up.</summary>
+	public bool Equals(AnsiStyle other) =>
+		Bits == other.Bits
+		&& Equals(Foreground, other.Foreground)
+		&& Equals(Background, other.Background)
+		&& Equals(StandardForeground, other.StandardForeground)
+		&& string.Equals(LinkUrl, other.LinkUrl, StringComparison.Ordinal)
+		&& string.Equals(LinkText, other.LinkText, StringComparison.Ordinal);
+
+	/// <inheritdoc/>
+	public override int GetHashCode() =>
+		HashCode.Combine(Bits, Foreground, Background, StandardForeground, LinkUrl, LinkText);
+
 	/// <summary>
 	/// True when any colour is set or any attribute flag (including <see cref="Clear"/> and the ones that turn
 	/// an attribute off) is on.

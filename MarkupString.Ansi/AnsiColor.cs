@@ -57,6 +57,20 @@ public abstract record AnsiColor
 
 	private static readonly Rgb Black = new(0, 0, 0);
 
+	private static readonly Standard[] Standards =
+	[
+		.. Enumerable.Range(0, 8).Select(index => new Standard((byte)index, false)),
+		.. Enumerable.Range(0, 8).Select(index => new Standard((byte)index, true)),
+	];
+
+	private static readonly Xterm[] Xterms = [.. Enumerable.Range(0, 256).Select(index => new Xterm((byte)index))];
+
+	/// <summary>The shared <see cref="Standard"/> for a palette slot, 0–7, so a parse allocates no colour.</summary>
+	internal static Standard StandardOf(byte index, bool bright) => Standards[(bright ? 8 : 0) + index];
+
+	/// <summary>The shared <see cref="Xterm"/> for a palette index.</summary>
+	internal static Xterm XtermOf(byte index) => Xterms[index];
+
 	/// <summary>
 	/// Resolves this colour to 24-bit RGB, looking the palette entry up where needed.
 	/// Returns <see langword="null"/> for <see cref="Default"/>, whose value only the terminal knows.

@@ -6,6 +6,41 @@ namespace MarkupString.Ansi;
 /// </summary>
 public sealed record AnsiMarkup(AnsiStyle Style) : IColorMarkup, IAnsiStyleSource
 {
+	/// <summary>
+	/// <see cref="Style"/>'s hash, worked out on first use. A layer is hashed each time a
+	/// <see cref="MarkupSet"/> holding it is built or looked up, and a style is twenty fields.
+	/// Zero means not yet known.
+	/// </summary>
+	private int _hash;
+
+	/// <summary>The formatting this layer applies.</summary>
+	/// <remarks>Setting it, as a <c>with</c> expression does after copying the layer, forgets the hash.</remarks>
+	public AnsiStyle Style
+	{
+		get;
+		init
+		{
+			field = value;
+			_hash = 0;
+		}
+	} = Style;
+
+	/// <summary>Value equality through <see cref="Style"/>, the hashes compared first.</summary>
+	public bool Equals(AnsiMarkup? other) =>
+		ReferenceEquals(this, other)
+		|| (other is not null && GetHashCode() == other.GetHashCode() && Style.Equals(other.Style));
+
+	/// <inheritdoc/>
+	public override int GetHashCode()
+	{
+		var hash = _hash;
+		if (hash != 0) return hash;
+		hash = Style.GetHashCode();
+		if (hash == 0) hash = 1;
+		_hash = hash;
+		return hash;
+	}
+
 	/// <inheritdoc/>
 	/// <remarks>A palette colour is resolved to its usual RGB value; the terminal's default has none.</remarks>
 	public RgbColor? Foreground => Style.Foreground?.ToRgb() is { } rgb ? new RgbColor(rgb.R, rgb.G, rgb.B) : null;

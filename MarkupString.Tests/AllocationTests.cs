@@ -26,3 +26,34 @@ public class AllocationTests
 		await Assert.That(perInstance).IsBetween(32, 300);
 	}
 }
+
+public class AnsiAllocationTests
+{
+	/// <summary>
+	/// ansi() parses its codes on every call. The codes are read in place, so the markup returned is the
+	/// only allocation; this fails if the parse goes back to building a string per code.
+	/// </summary>
+	[Test]
+	public async Task ParsingLetterCodes_AllocatesOnlyTheMarkup()
+	{
+		const int iterations = 10_000;
+		for (var i = 0; i < 100; i++) GC.KeepAlive(MarkupString.Ansi.AnsiCodeParser.Parse("hr/b u"));
+
+		var before = GC.GetAllocatedBytesForCurrentThread();
+		for (var i = 0; i < iterations; i++) GC.KeepAlive(MarkupString.Ansi.AnsiCodeParser.Parse("hr/b u"));
+		var perParse = (GC.GetAllocatedBytesForCurrentThread() - before) / iterations;
+
+		await Assert.That(perParse).IsBetween(16, 120);
+	}
+
+	/// <summary>Wrapping plain text in a style seen before builds no candidate set to look up.</summary>
+	[Test]
+	public async Task WrappingPlainText_ReusesTheStylesSet()
+	{
+		var text = MarkupText.Plain("Hello World");
+		var first = MarkupText.Wrap(MarkupString.Ansi.AnsiCodeParser.Parse("hr"), text);
+		var second = MarkupText.Wrap(MarkupString.Ansi.AnsiCodeParser.Parse("hr"), text);
+
+		await Assert.That(second.Runs[0].Markups).IsSameReferenceAs(first.Runs[0].Markups);
+	}
+}
