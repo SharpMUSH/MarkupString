@@ -8,6 +8,15 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+
+- **A rule or box edge holds several titles.** `Rule.Titles` and `Frame.Titles` add titles beside the
+  first, each an `EdgeTitle` placed left, centre or right, so one line carries
+  `=< Wren >=========< Scene 3 >=< 21:04 >=`. `Frame.BottomTitles` puts titles in a box's bottom
+  edge. Titles that do not fit are left out in a fixed order (centre, then right, then left), a screen
+  reader hears them left to right, HTML draws them as a flex row, and the JSON codec keeps them
+  (`tt`, `bt`). `BlockText.Edge` takes a list of titles for blocks of your own.
+
 ## 2.15.5 — 2026-10-09
 
 ### Changed

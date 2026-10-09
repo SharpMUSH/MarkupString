@@ -1,1 +1,21 @@
 #nullable enable
+MarkupString.Layout.EdgeTitle
+MarkupString.Layout.EdgeTitle.<Clone>$() -> MarkupString.Layout.EdgeTitle!
+MarkupString.Layout.EdgeTitle.Deconstruct(out MarkupString.MarkupText! Text, out MarkupString.Layout.Alignment Side) -> void
+MarkupString.Layout.EdgeTitle.EdgeTitle(MarkupString.MarkupText! Text, MarkupString.Layout.Alignment Side = MarkupString.Layout.Alignment.Center) -> void
+MarkupString.Layout.EdgeTitle.Equals(MarkupString.Layout.EdgeTitle? other) -> bool
+MarkupString.Layout.EdgeTitle.Side.get -> MarkupString.Layout.Alignment
+MarkupString.Layout.EdgeTitle.Side.init -> void
+MarkupString.Layout.EdgeTitle.Text.get -> MarkupString.MarkupText!
+MarkupString.Layout.EdgeTitle.Text.init -> void
+MarkupString.Layout.Frame.BottomTitles.get -> System.Collections.Immutable.ImmutableArray<MarkupString.Layout.EdgeTitle!>
+MarkupString.Layout.Frame.BottomTitles.init -> void
+MarkupString.Layout.Frame.Titles.get -> System.Collections.Immutable.ImmutableArray<MarkupString.Layout.EdgeTitle!>
+MarkupString.Layout.Frame.Titles.init -> void
+MarkupString.Layout.Rule.Titles.get -> System.Collections.Immutable.ImmutableArray<MarkupString.Layout.EdgeTitle!>
+MarkupString.Layout.Rule.Titles.init -> void
+override MarkupString.Layout.EdgeTitle.Equals(object? obj) -> bool
+override MarkupString.Layout.EdgeTitle.GetHashCode() -> int
+override MarkupString.Layout.EdgeTitle.ToString() -> string!
+static MarkupString.Layout.EdgeTitle.operator !=(MarkupString.Layout.EdgeTitle? left, MarkupString.Layout.EdgeTitle? right) -> bool
+static MarkupString.Layout.EdgeTitle.operator ==(MarkupString.Layout.EdgeTitle? left, MarkupString.Layout.EdgeTitle? right) -> bool

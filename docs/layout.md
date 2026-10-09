@@ -290,6 +290,36 @@ draws the same tree as a `<fieldset>` with a legend, a divider, and a flex row w
 35 and 36 `ch` and wrap onto rows of their own on a narrower page. Include `LayoutCss.Fixed`, or
 your own copy of its rules, on the page.
 
+### Several titles in one edge
+
+A `Rule` or a `Frame`'s top edge holds more than one title. `Title` and `TitleAlignment` place the
+first; `Titles` adds more, each an `EdgeTitle` with its own side. A `Frame`'s `BottomTitles` go in its
+bottom edge, which is then drawn even for a borderless frame.
+
+```csharp
+var header = new Rule(MarkupText.Plain("Wren"))
+{
+  Border = BorderStyle.Mush,
+  TitleAlignment = Alignment.Left,
+  Titles =
+  [
+    new EdgeTitle(MarkupText.Plain("Scene 3"), Alignment.Right),
+    new EdgeTitle(MarkupText.Plain("21:04"), Alignment.Right),
+  ],
+};
+```
+
+```
+=< Wren >=========< Scene 3 >=< 21:04 >=
+```
+
+Titles on one side sit in order, a cell of line apart. A centre title stays centred unless that would
+crowd a side's titles, and then moves over to keep a cell clear. When the line is too narrow for all
+of them, titles are left out one at a time: the last centre title first, then the right title farthest
+from the end, then the last left one. At 31 cells the line above is `=< Wren >============< 21:04 >=`.
+A screen reader hears the titles left to right, joined by commas. In HTML each title is a segment of
+a flex row with the line drawn between them.
+
 ### How it fits together
 
 - **A block draws itself.** Every block derives from `Block` and draws its own lines at the width it
@@ -309,8 +339,8 @@ your own copy of its rules, on the page.
 
 | Block | Terminal | HTML |
 |---|---|---|
-| `Frame` (`.Bordered(title, border)`) | the frame, its title set into the top edge | `<fieldset>` and `<legend>` |
-| `Rule` | a line of the border's top edge with the title in it; inside a frame, a divider meeting the sides | a line drawn in CSS |
+| `Frame` (`.Bordered(title, border)`) | the frame, its titles set into the top and bottom edges | `<fieldset>` and `<legend>` |
+| `Rule` | a line of the border's top edge with its titles in it; inside a frame, a divider meeting the sides | a line drawn in CSS |
 | `Flex` | items side by side at widths shared from their `Sized` bases, stacked when one would fall under its `Min` | a wrapping flex row |
 | `Figure` | the text art, with `Beside` flowing round it; MXP and Pueblo write the picture on its first row and keep its cells blank | an `<img>` floated beside it |
 | `Fields` | labels in one column, values lined up in the next, a long value wrapping under itself | a `<dl>` laid out as a two-column grid |

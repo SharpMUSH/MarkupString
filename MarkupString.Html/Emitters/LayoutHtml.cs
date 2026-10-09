@@ -79,12 +79,22 @@ internal static class LayoutHtml
 			html.Write("ch\"");
 		}
 		html.Write(">");
-		if (frame.Title is { Length: > 0 } title)
+		var top = Titles(frame.Title, frame.TitleAlignment, frame.Titles);
+		if (top.Count > 1)
+		{
+			// Several titles share the top edge: the legend spans it and draws the line between them.
+			html.Write("<legend class=\"ms-box-title ms-titles ms-border-");
+			html.Write(Css(BorderOf(frame.Border, html).Name));
+			html.Write("\">");
+			EdgeTitles(top, html);
+			html.Write("</legend>");
+		}
+		else if (top.Count == 1)
 		{
 			html.Write("<legend class=\"ms-box-title\"");
-			Align(frame.TitleAlignment, html);
+			Align(top[0].Side, html);
 			html.Write(">");
-			html.Text(title);
+			html.Text(top[0].Text);
 			html.Write("</legend>");
 		}
 		foreach (var child in frame.Body is Stack { Children.IsDefault: false } body ? body.Children : [frame.Body])
@@ -92,25 +102,82 @@ internal static class LayoutHtml
 			if (child is Rule divider) Rule(divider, "ms-divider", divider.Border ?? frame.Border, html);
 			else html.Block(child);
 		}
+		var bottom = Titles(null, Alignment.Center, frame.BottomTitles);
+		if (bottom.Count > 0)
+		{
+			// The bottom edge, drawn as a line with its titles in place of the box's own bottom border.
+			html.Write("<div class=\"ms-box-bottom ms-titles ms-border-");
+			html.Write(Css(BorderOf(frame.Border, html).Name));
+			html.Write("\">");
+			EdgeTitles(bottom, html);
+			html.Write("</div>");
+		}
 		html.Write("</fieldset>");
+	}
+
+	/// <summary><paramref name="title"/> at <paramref name="alignment"/>, then <paramref name="more"/>; the empty ones left out.</summary>
+	private static List<EdgeTitle> Titles(MarkupText? title, Alignment alignment, ImmutableArray<EdgeTitle> more)
+	{
+		var titles = new List<EdgeTitle>();
+		if (title is { Length: > 0 }) titles.Add(new EdgeTitle(title, alignment));
+		titles.AddRange((more.IsDefault ? [] : more).Where(extra => extra is { Text.Length: > 0 }));
+		return titles;
+	}
+
+	private static Alignment Side(Alignment side) => side is Alignment.Left or Alignment.Right ? side : Alignment.Center;
+
+	/// <summary>
+	/// The titles in place along an edge: left ones against the start, middle ones centred, right ones against the end,
+	/// a short line between neighbours on a side and a stretching line between the sides. A terminal leaves out what does
+	/// not fit; a page wraps it instead.
+	/// </summary>
+	private static void EdgeTitles(List<EdgeTitle> titles, HtmlLayoutWriter html)
+	{
+		var groups = new[] { Alignment.Left, Alignment.Center, Alignment.Right }
+			.Select(side => (Side: side, Titles: titles.Where(title => Side(title.Side) == side).ToList()))
+			.Where(group => group.Titles.Count > 0)
+			.ToList();
+		html.Write(groups[0].Side == Alignment.Left ? "<span class=\"ms-line ms-end\"></span>" : "<span class=\"ms-line\"></span>");
+		for (var g = 0; g < groups.Count; g++)
+		{
+			if (g > 0) html.Write("<span class=\"ms-line\"></span>");
+			for (var t = 0; t < groups[g].Titles.Count; t++)
+			{
+				if (t > 0) html.Write("<span class=\"ms-line ms-end\"></span>");
+				html.Write("<span class=\"ms-rule-title\">");
+				html.Text(groups[g].Titles[t].Text);
+				html.Write("</span>");
+			}
+		}
+		html.Write(groups[^1].Side == Alignment.Right ? "<span class=\"ms-line ms-end\"></span>" : "<span class=\"ms-line\"></span>");
 	}
 
 	private static BorderStyle BorderOf(BorderStyle? border, HtmlLayoutWriter html) => border ?? html.Context.Theme.Border ?? BorderStyle.Single;
 
 	private static void Rule(Rule rule, string kind, BorderStyle? border, HtmlLayoutWriter html)
 	{
+		var titles = Titles(rule.Title, rule.TitleAlignment, rule.Titles);
 		html.Write("<div class=\"");
 		html.Write(kind);
+		if (titles.Count > 1) html.Write(" ms-titles");
 		html.Write(" ms-border-");
 		html.Write(Css(BorderOf(border, html).Name));
 		html.Write("\" role=\"separator\"");
-		Align(rule.TitleAlignment, html);
-		html.Write(">");
-		if (rule.Title is { Length: > 0 } title)
+		if (titles.Count > 1)
 		{
-			html.Write("<span class=\"ms-rule-title\">");
-			html.Text(title);
-			html.Write("</span>");
+			html.Write(">");
+			EdgeTitles(titles, html);
+		}
+		else
+		{
+			Align(titles.Count == 1 ? titles[0].Side : rule.TitleAlignment, html);
+			html.Write(">");
+			if (titles.Count == 1)
+			{
+				html.Write("<span class=\"ms-rule-title\">");
+				html.Text(titles[0].Text);
+				html.Write("</span>");
+			}
 		}
 		html.Write("</div>");
 	}
