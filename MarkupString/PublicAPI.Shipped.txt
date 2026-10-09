@@ -156,8 +156,11 @@ MarkupString.ImageMarkup.Equals(MarkupString.ImageMarkup? other) -> bool
 MarkupString.ImageMarkup.Height.get -> int?
 MarkupString.ImageMarkup.Height.init -> void
 MarkupString.ImageMarkup.ImageMarkup(string! Source, string? Description = null, int? Width = null, int? Height = null, MarkupString.ImageAlign? Align = null) -> void
+MarkupString.ImageMarkup.Row.get -> MarkupString.PictureRow?
+MarkupString.ImageMarkup.Row.init -> void
 MarkupString.ImageMarkup.Source.get -> string!
 MarkupString.ImageMarkup.Source.init -> void
+MarkupString.ImageMarkup.StartsPicture(in MarkupString.EmitContext context) -> bool
 MarkupString.ImageMarkup.Width.get -> int?
 MarkupString.ImageMarkup.Width.init -> void
 MarkupString.Layout.Aligned
@@ -515,6 +518,8 @@ MarkupString.Layout.LayoutContext.Linear.get -> bool
 MarkupString.Layout.LayoutContext.Linear.init -> void
 MarkupString.Layout.LayoutContext.Lines(MarkupString.Layout.Block! block, int width) -> System.Collections.Generic.List<MarkupString.MarkupText!>!
 MarkupString.Layout.LayoutContext.Paint(System.Func<MarkupString.Layout.LayoutTheme!, MarkupString.IMarkup?>! part, MarkupString.MarkupText! text) -> MarkupString.MarkupText!
+MarkupString.Layout.LayoutContext.Pictures.get -> System.Func<MarkupString.ImageMarkup!, int, MarkupString.Layout.PictureCells?>?
+MarkupString.Layout.LayoutContext.Pictures.init -> void
 MarkupString.Layout.LayoutContext.TextAlignment.get -> MarkupString.Layout.Alignment
 MarkupString.Layout.LayoutContext.TextAlignment.init -> void
 MarkupString.Layout.LayoutContext.Theme.get -> MarkupString.Layout.LayoutTheme!
@@ -590,6 +595,15 @@ MarkupString.Layout.LayoutTheme.StripeColor.get -> MarkupString.IMarkup?
 MarkupString.Layout.LayoutTheme.StripeColor.init -> void
 MarkupString.Layout.LayoutTheme.TitleColor.get -> MarkupString.IMarkup?
 MarkupString.Layout.LayoutTheme.TitleColor.init -> void
+MarkupString.Layout.PictureCells
+MarkupString.Layout.PictureCells.Columns.get -> int
+MarkupString.Layout.PictureCells.Columns.init -> void
+MarkupString.Layout.PictureCells.Deconstruct(out int Columns, out int Rows) -> void
+MarkupString.Layout.PictureCells.Equals(MarkupString.Layout.PictureCells other) -> bool
+MarkupString.Layout.PictureCells.PictureCells() -> void
+MarkupString.Layout.PictureCells.PictureCells(int Columns, int Rows) -> void
+MarkupString.Layout.PictureCells.Rows.get -> int
+MarkupString.Layout.PictureCells.Rows.init -> void
 MarkupString.Layout.Rule
 MarkupString.Layout.Rule.Border.get -> MarkupString.Layout.BorderStyle?
 MarkupString.Layout.Rule.Border.init -> void
@@ -632,6 +646,7 @@ MarkupString.Layout.Stack.Deconstruct(out System.Collections.Immutable.Immutable
 MarkupString.Layout.Stack.Equals(MarkupString.Layout.Stack? other) -> bool
 MarkupString.Layout.Stack.Stack(System.Collections.Immutable.ImmutableArray<MarkupString.Layout.Block!> Children) -> void
 MarkupString.Layout.Table
+MarkupString.Layout.Table.ColumnWidths(MarkupString.Layout.LayoutContext! context, int width) -> System.Collections.Immutable.ImmutableArray<int>
 MarkupString.Layout.Table.Columns.get -> System.Collections.Immutable.ImmutableArray<MarkupString.Layout.TableColumn!>
 MarkupString.Layout.Table.Columns.init -> void
 MarkupString.Layout.Table.Deconstruct(out System.Collections.Immutable.ImmutableArray<MarkupString.Layout.TableColumn!> Columns, out System.Collections.Immutable.ImmutableArray<System.Collections.Immutable.ImmutableArray<MarkupString.Layout.Block!>> Rows) -> void
@@ -653,6 +668,8 @@ MarkupString.Layout.TableColumn.Alignment.get -> MarkupString.Layout.Alignment
 MarkupString.Layout.TableColumn.Alignment.init -> void
 MarkupString.Layout.TableColumn.Deconstruct(out MarkupString.MarkupText! Header) -> void
 MarkupString.Layout.TableColumn.Equals(MarkupString.Layout.TableColumn? other) -> bool
+MarkupString.Layout.TableColumn.Grow.get -> int
+MarkupString.Layout.TableColumn.Grow.init -> void
 MarkupString.Layout.TableColumn.Header.get -> MarkupString.MarkupText!
 MarkupString.Layout.TableColumn.Header.init -> void
 MarkupString.Layout.TableColumn.Max.get -> int
@@ -856,6 +873,19 @@ MarkupString.PaneMarkup.Name.init -> void
 MarkupString.PaneMarkup.PaneMarkup(string! Name, string? Title = null) -> void
 MarkupString.PaneMarkup.Title.get -> string?
 MarkupString.PaneMarkup.Title.init -> void
+MarkupString.PictureRow
+MarkupString.PictureRow.Columns.get -> int
+MarkupString.PictureRow.Columns.init -> void
+MarkupString.PictureRow.Deconstruct(out int Row, out int Rows, out int Columns) -> void
+MarkupString.PictureRow.Equals(MarkupString.PictureRow other) -> bool
+MarkupString.PictureRow.IsDescription.get -> bool
+MarkupString.PictureRow.IsDescription.init -> void
+MarkupString.PictureRow.PictureRow() -> void
+MarkupString.PictureRow.PictureRow(int Row, int Rows, int Columns) -> void
+MarkupString.PictureRow.Row.get -> int
+MarkupString.PictureRow.Row.init -> void
+MarkupString.PictureRow.Rows.get -> int
+MarkupString.PictureRow.Rows.init -> void
 MarkupString.PrefetchMarkup
 MarkupString.PrefetchMarkup.<Clone>$() -> MarkupString.PrefetchMarkup!
 MarkupString.PrefetchMarkup.Deconstruct(out string! Source) -> void
@@ -1182,6 +1212,7 @@ override MarkupString.Layout.LayoutSeparator.ToString() -> string!
 override MarkupString.Layout.LayoutTheme.Equals(object? obj) -> bool
 override MarkupString.Layout.LayoutTheme.GetHashCode() -> int
 override MarkupString.Layout.LayoutTheme.ToString() -> string!
+override MarkupString.Layout.PictureCells.GetHashCode() -> int
 override MarkupString.Layout.Rule.<Clone>$() -> MarkupString.Layout.Rule!
 override MarkupString.Layout.Rule.Draw(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Rule.DrawLinear(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
@@ -1252,6 +1283,7 @@ override MarkupString.OklchColor.GetHashCode() -> int
 override MarkupString.PaneMarkup.Equals(object? obj) -> bool
 override MarkupString.PaneMarkup.GetHashCode() -> int
 override MarkupString.PaneMarkup.ToString() -> string!
+override MarkupString.PictureRow.GetHashCode() -> int
 override MarkupString.PrefetchMarkup.Equals(object? obj) -> bool
 override MarkupString.PrefetchMarkup.GetHashCode() -> int
 override MarkupString.PrefetchMarkup.ToString() -> string!
@@ -1415,6 +1447,9 @@ static MarkupString.Layout.LayoutTheme.Default.get -> MarkupString.Layout.Layout
 static MarkupString.Layout.LayoutTheme.Defaults.get -> MarkupString.Layout.LayoutTheme!
 static MarkupString.Layout.LayoutTheme.operator !=(MarkupString.Layout.LayoutTheme? left, MarkupString.Layout.LayoutTheme? right) -> bool
 static MarkupString.Layout.LayoutTheme.operator ==(MarkupString.Layout.LayoutTheme? left, MarkupString.Layout.LayoutTheme? right) -> bool
+static MarkupString.Layout.PictureCells.Fit(int width, int height, int columns, int cellWidth = 10, int cellHeight = 20) -> MarkupString.Layout.PictureCells
+static MarkupString.Layout.PictureCells.operator !=(MarkupString.Layout.PictureCells left, MarkupString.Layout.PictureCells right) -> bool
+static MarkupString.Layout.PictureCells.operator ==(MarkupString.Layout.PictureCells left, MarkupString.Layout.PictureCells right) -> bool
 static MarkupString.Layout.Rule.operator !=(MarkupString.Layout.Rule? left, MarkupString.Layout.Rule? right) -> bool
 static MarkupString.Layout.Rule.operator ==(MarkupString.Layout.Rule? left, MarkupString.Layout.Rule? right) -> bool
 static MarkupString.Layout.Shaded.operator !=(MarkupString.Layout.Shaded? left, MarkupString.Layout.Shaded? right) -> bool
@@ -1503,6 +1538,8 @@ static MarkupString.OklchColor.operator !=(MarkupString.OklchColor left, MarkupS
 static MarkupString.OklchColor.operator ==(MarkupString.OklchColor left, MarkupString.OklchColor right) -> bool
 static MarkupString.PaneMarkup.operator !=(MarkupString.PaneMarkup? left, MarkupString.PaneMarkup? right) -> bool
 static MarkupString.PaneMarkup.operator ==(MarkupString.PaneMarkup? left, MarkupString.PaneMarkup? right) -> bool
+static MarkupString.PictureRow.operator !=(MarkupString.PictureRow left, MarkupString.PictureRow right) -> bool
+static MarkupString.PictureRow.operator ==(MarkupString.PictureRow left, MarkupString.PictureRow right) -> bool
 static MarkupString.PrefetchMarkup.operator !=(MarkupString.PrefetchMarkup? left, MarkupString.PrefetchMarkup? right) -> bool
 static MarkupString.PrefetchMarkup.operator ==(MarkupString.PrefetchMarkup? left, MarkupString.PrefetchMarkup? right) -> bool
 static MarkupString.RelocateMarkup.operator !=(MarkupString.RelocateMarkup? left, MarkupString.RelocateMarkup? right) -> bool
@@ -1573,16 +1610,17 @@ virtual MarkupString.Layout.LayoutCell.PrintMembers(System.Text.StringBuilder! b
 ~override MarkupString.Layout.BlockSize.Equals(object obj) -> bool
 ~override MarkupString.Layout.Indent.Equals(object obj) -> bool
 ~override MarkupString.Layout.Indent.ToString() -> string
+~override MarkupString.Layout.PictureCells.Equals(object obj) -> bool
+~override MarkupString.Layout.PictureCells.ToString() -> string
 ~override MarkupString.Layout.TextLine.Equals(object obj) -> bool
 ~override MarkupString.Layout.TextLine.ToString() -> string
 ~override MarkupString.OklchColor.Equals(object obj) -> bool
 ~override MarkupString.OklchColor.ToString() -> string
+~override MarkupString.PictureRow.Equals(object obj) -> bool
+~override MarkupString.PictureRow.ToString() -> string
 ~override MarkupString.RgbColor.Equals(object obj) -> bool
 ~override MarkupString.RgbColor.ToString() -> string
 ~override MarkupString.Run.Equals(object obj) -> bool
 ~override MarkupString.Run.ToString() -> string
 ~override MarkupString.ThemeColor.Equals(object obj) -> bool
 ~override MarkupString.ThemeColor.ToString() -> string
-MarkupString.Layout.Table.ColumnWidths(MarkupString.Layout.LayoutContext! context, int width) -> System.Collections.Immutable.ImmutableArray<int>
-MarkupString.Layout.TableColumn.Grow.get -> int
-MarkupString.Layout.TableColumn.Grow.init -> void
