@@ -351,6 +351,17 @@ MarkupString.Layout.ColumnFormat.Wrap.init -> void
 MarkupString.Layout.CutFrom
 MarkupString.Layout.CutFrom.End = 0 -> MarkupString.Layout.CutFrom
 MarkupString.Layout.CutFrom.Start = 1 -> MarkupString.Layout.CutFrom
+MarkupString.Layout.EdgeTitle
+MarkupString.Layout.EdgeTitle.<Clone>$() -> MarkupString.Layout.EdgeTitle!
+MarkupString.Layout.EdgeTitle.Deconstruct(out MarkupString.MarkupText! Text, out MarkupString.Layout.Alignment Side) -> void
+MarkupString.Layout.EdgeTitle.EdgeTitle(MarkupString.MarkupText! Text, MarkupString.Layout.Alignment Side = MarkupString.Layout.Alignment.Center) -> void
+MarkupString.Layout.EdgeTitle.Equals(MarkupString.Layout.EdgeTitle? other) -> bool
+MarkupString.Layout.EdgeTitle.Priority.get -> int?
+MarkupString.Layout.EdgeTitle.Priority.init -> void
+MarkupString.Layout.EdgeTitle.Side.get -> MarkupString.Layout.Alignment
+MarkupString.Layout.EdgeTitle.Side.init -> void
+MarkupString.Layout.EdgeTitle.Text.get -> MarkupString.MarkupText!
+MarkupString.Layout.EdgeTitle.Text.init -> void
 MarkupString.Layout.Field
 MarkupString.Layout.Field.<Clone>$() -> MarkupString.Layout.Field!
 MarkupString.Layout.Field.Deconstruct(out MarkupString.MarkupText! Label, out MarkupString.Layout.Block! Value) -> void
@@ -429,6 +440,8 @@ MarkupString.Layout.Frame.Body.get -> MarkupString.Layout.Block!
 MarkupString.Layout.Frame.Body.init -> void
 MarkupString.Layout.Frame.Border.get -> MarkupString.Layout.BorderStyle?
 MarkupString.Layout.Frame.Border.init -> void
+MarkupString.Layout.Frame.BottomTitles.get -> System.Collections.Immutable.ImmutableArray<MarkupString.Layout.EdgeTitle!>
+MarkupString.Layout.Frame.BottomTitles.init -> void
 MarkupString.Layout.Frame.Deconstruct(out MarkupString.Layout.Block! Body) -> void
 MarkupString.Layout.Frame.Equals(MarkupString.Layout.Frame? other) -> bool
 MarkupString.Layout.Frame.Frame(MarkupString.Layout.Block! Body) -> void
@@ -438,6 +451,8 @@ MarkupString.Layout.Frame.Title.get -> MarkupString.MarkupText?
 MarkupString.Layout.Frame.Title.init -> void
 MarkupString.Layout.Frame.TitleAlignment.get -> MarkupString.Layout.Alignment
 MarkupString.Layout.Frame.TitleAlignment.init -> void
+MarkupString.Layout.Frame.Titles.get -> System.Collections.Immutable.ImmutableArray<MarkupString.Layout.EdgeTitle!>
+MarkupString.Layout.Frame.Titles.init -> void
 MarkupString.Layout.Gauge
 MarkupString.Layout.Gauge.BarWidth.get -> int
 MarkupString.Layout.Gauge.BarWidth.init -> void
@@ -614,6 +629,8 @@ MarkupString.Layout.Rule.Title.get -> MarkupString.MarkupText?
 MarkupString.Layout.Rule.Title.init -> void
 MarkupString.Layout.Rule.TitleAlignment.get -> MarkupString.Layout.Alignment
 MarkupString.Layout.Rule.TitleAlignment.init -> void
+MarkupString.Layout.Rule.Titles.get -> System.Collections.Immutable.ImmutableArray<MarkupString.Layout.EdgeTitle!>
+MarkupString.Layout.Rule.Titles.init -> void
 MarkupString.Layout.SeparatorRows
 MarkupString.Layout.SeparatorRows.EveryRow = 0 -> MarkupString.Layout.SeparatorRows
 MarkupString.Layout.SeparatorRows.FirstRowOnly = 1 -> MarkupString.Layout.SeparatorRows
@@ -1149,6 +1166,9 @@ override MarkupString.Layout.Colored.ToString() -> string!
 override MarkupString.Layout.ColumnFormat.Equals(object? obj) -> bool
 override MarkupString.Layout.ColumnFormat.GetHashCode() -> int
 override MarkupString.Layout.ColumnFormat.ToString() -> string!
+override MarkupString.Layout.EdgeTitle.Equals(object? obj) -> bool
+override MarkupString.Layout.EdgeTitle.GetHashCode() -> int
+override MarkupString.Layout.EdgeTitle.ToString() -> string!
 override MarkupString.Layout.Field.Equals(object? obj) -> bool
 override MarkupString.Layout.Field.GetHashCode() -> int
 override MarkupString.Layout.Field.ToString() -> string!
@@ -1415,6 +1435,8 @@ static MarkupString.Layout.Colored.operator !=(MarkupString.Layout.Colored? left
 static MarkupString.Layout.Colored.operator ==(MarkupString.Layout.Colored? left, MarkupString.Layout.Colored? right) -> bool
 static MarkupString.Layout.ColumnFormat.operator !=(MarkupString.Layout.ColumnFormat? left, MarkupString.Layout.ColumnFormat? right) -> bool
 static MarkupString.Layout.ColumnFormat.operator ==(MarkupString.Layout.ColumnFormat? left, MarkupString.Layout.ColumnFormat? right) -> bool
+static MarkupString.Layout.EdgeTitle.operator !=(MarkupString.Layout.EdgeTitle? left, MarkupString.Layout.EdgeTitle? right) -> bool
+static MarkupString.Layout.EdgeTitle.operator ==(MarkupString.Layout.EdgeTitle? left, MarkupString.Layout.EdgeTitle? right) -> bool
 static MarkupString.Layout.Field.operator !=(MarkupString.Layout.Field? left, MarkupString.Layout.Field? right) -> bool
 static MarkupString.Layout.Field.operator ==(MarkupString.Layout.Field? left, MarkupString.Layout.Field? right) -> bool
 static MarkupString.Layout.Fields.operator !=(MarkupString.Layout.Fields? left, MarkupString.Layout.Fields? right) -> bool

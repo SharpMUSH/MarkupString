@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## 2.16.0 — 2026-10-09
+
 ### Added
 
 - **A rule or box edge holds several titles.** `Rule.Titles` and `Frame.Titles` add titles beside the
