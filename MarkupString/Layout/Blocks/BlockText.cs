@@ -60,8 +60,9 @@ internal static class BlockText
 	/// <remarks>
 	/// Titles on one side sit in order, a cell of the fill apart, the first on the left a cell in from the end and the
 	/// last on the right likewise; the middle ones are centred, moved over only to keep a cell clear of the others.
-	/// Those that do not fit are left out, the middle first, then the right, then the left, on each side the one
-	/// farthest from its end first; one alone that does not fit is cut, as a single title always was.
+	/// Those that do not fit are left out by <see cref="EdgeTitle.Priority"/>, highest first; among equals the middle
+	/// goes first, then the right, then the left, on each side the one farthest from its end first. One alone that does
+	/// not fit is cut, as a single title always was.
 	/// </remarks>
 	public static MarkupText Edge(
 		MarkupText left, MarkupText fill, MarkupText right, IReadOnlyList<EdgeTitle> titles, BorderStyle style, int width)
@@ -70,7 +71,7 @@ internal static class BlockText
 		fill = fill.Length == 0 ? MarkupText.Space : fill;
 		var set = titles
 			.Where(title => title.Text.Length > 0)
-			.Select(title => (Side: Side(title.Side), Text: MarkupText.Concat([style.TitleOpen, title.Text, style.TitleClose])))
+			.Select(title => (Side: Side(title.Side), Text: MarkupText.Concat([style.TitleOpen, title.Text, style.TitleClose]), Priority: Priority(title)))
 			.ToList();
 		while (set.Count > 1 && Needed(set) > inner) set.RemoveAt(Dropped(set));
 		if (set.Count < 2) return Edge(left, fill, right, set.Count == 0 ? null : set[0].Text, set.Count == 0 ? Alignment.Center : set[0].Side, inner);
@@ -125,7 +126,7 @@ internal static class BlockText
 	private static int Span(List<MarkupText> texts) => texts.Count == 0 ? 0 : texts.Sum(text => text.DisplayWidth) + texts.Count - 1;
 
 	/// <summary>The fewest cells the titles fit in: each side a cell in from its end, a cell of fill between neighbours.</summary>
-	private static int Needed(List<(Alignment Side, MarkupText Text)> set)
+	private static int Needed(List<(Alignment Side, MarkupText Text, int Priority)> set)
 	{
 		var groups = new[] { Alignment.Left, Alignment.Center, Alignment.Right }
 			.Select(side => set.Where(title => title.Side == side).Select(title => title.Text).ToList())
@@ -137,12 +138,29 @@ internal static class BlockText
 		return groups.Sum(Span) + groups.Count - 1 + ends;
 	}
 
-	/// <summary>The title to leave out next: the last in the middle, else the first on the right, else the last on the left.</summary>
-	private static int Dropped(List<(Alignment Side, MarkupText Text)> set)
+	/// <summary>A title's priority: its own, else 1 on the left, 2 on the right, 3 in the middle.</summary>
+	private static int Priority(EdgeTitle title) => title.Priority ?? Side(title.Side) switch
 	{
-		if (set.FindLastIndex(title => title.Side == Alignment.Center) is var middle and >= 0) return middle;
-		if (set.FindIndex(title => title.Side == Alignment.Right) is var right and >= 0) return right;
-		return set.FindLastIndex(title => title.Side == Alignment.Left);
+		Alignment.Left => 1,
+		Alignment.Right => 2,
+		_ => 3,
+	};
+
+	/// <summary>
+	/// The title to leave out next: the highest priority; among equals the middle, then the right, then the left, and
+	/// on a side the one farthest from its end (the last in the middle or on the left, the first on the right).
+	/// </summary>
+	private static int Dropped(List<(Alignment Side, MarkupText Text, int Priority)> set)
+	{
+		var highest = set.Max(title => title.Priority);
+		foreach (var side in new[] { Alignment.Center, Alignment.Right, Alignment.Left })
+		{
+			var index = side == Alignment.Right
+				? set.FindIndex(title => title.Priority == highest && title.Side == side)
+				: set.FindLastIndex(title => title.Priority == highest && title.Side == side);
+			if (index >= 0) return index;
+		}
+		return set.Count - 1;
 	}
 
 	/// <summary>A line of <paramref name="inner"/> cells between two ends, one title set into it.</summary>

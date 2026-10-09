@@ -5,7 +5,14 @@ namespace MarkupString.Layout;
 /// <summary>A title set into a line or a frame's edge: against its left end, its right end, or in its middle.</summary>
 /// <param name="Text">The title.</param>
 /// <param name="Side"><see cref="Alignment.Left"/>, <see cref="Alignment.Right"/>, or the middle for any other value.</param>
-public sealed record EdgeTitle(MarkupText Text, Alignment Side = Alignment.Center);
+public sealed record EdgeTitle(MarkupText Text, Alignment Side = Alignment.Center)
+{
+	/// <summary>
+	/// How important it is, as a <see cref="TableColumn.Priority"/> is: when the titles do not fit, the highest number is
+	/// left out first. Unset, it follows the side: 1 on the left, 2 on the right, 3 in the middle.
+	/// </summary>
+	public int? Priority { get; init; }
+}
 
 /// <summary>A line across the width, with titles set into it.</summary>
 /// <param name="Title">The title, or none.</param>

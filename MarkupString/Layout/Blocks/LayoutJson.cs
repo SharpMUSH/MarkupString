@@ -298,11 +298,15 @@ internal static class LayoutJson
 		{
 			tw.Text("t", title.Text);
 			tw.Enum("s", title.Side, Alignment.Center);
+			if (title.Priority is { } priority) tw.Int("p", priority, int.MinValue);
 		});
 	}
 
 	private static System.Collections.Immutable.ImmutableArray<EdgeTitle> ReadTitles(BlockReader reader, string name) =>
-		reader.Array(name, title => new EdgeTitle(title.Text("t") ?? MarkupText.Empty, title.Enum("s", Alignment.Center)));
+		reader.Array(name, title => new EdgeTitle(title.Text("t") ?? MarkupText.Empty, title.Enum("s", Alignment.Center))
+		{
+			Priority = title.Int("p") is { } priority ? Math.Clamp(priority, 1, 1000) : null,
+		});
 
 	private static string Name(Alignment alignment) => alignment.ToString().ToLowerInvariant();
 }

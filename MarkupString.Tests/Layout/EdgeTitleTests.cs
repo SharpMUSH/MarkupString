@@ -138,4 +138,35 @@ public class EdgeTitleTests
 		await Assert.That(BlockLayout.Build(box, 12).Render(MarkupFormat.Html, Registry)).Contains(
 			"<div class=\"ms-box-bottom ms-titles ms-border-mush\"><span class=\"ms-line\"></span><span class=\"ms-rule-title\">1/3</span><span class=\"ms-line ms-end\"></span></div></fieldset>");
 	}
+
+	[Test]
+	public async Task APriority_KeepsATitleTheSideWouldDrop()
+	{
+		var rule = new Rule
+		{
+			Border = BorderStyle.Mush,
+			Titles =
+			[
+				new EdgeTitle(P("Wren"), Alignment.Left) { Priority = 2 },
+				new EdgeTitle(P("Pose 17")) { Priority = 1 },
+				new EdgeTitle(P("Scene 3"), Alignment.Right),
+			],
+		};
+
+		await Assert.That(Line(rule, 40)).IsEqualTo("=< Wren >======< Pose 17 >==< Scene 3 >=");
+		await Assert.That(Line(rule, 26)).IsEqualTo("=< Wren >=< Pose 17 >=====").Because("the right title is 2 by its side, and among equals the right goes before the left");
+		await Assert.That(Line(rule, 16)).IsEqualTo("===< Pose 17 >==");
+	}
+
+	[Test]
+	public async Task TheSerializer_KeepsAPriority()
+	{
+		var rule = new Rule { Border = BorderStyle.Mush, Titles = [new EdgeTitle(P("A"), Alignment.Left) { Priority = 2 }, new EdgeTitle(P("B")) { Priority = 1 }] };
+
+		var json = MarkupTextSerializer.Serialize(BlockLayout.Build(rule, 20, fluid: true), Registry);
+		var read = MarkupTextSerializer.Deserialize(json, Registry);
+
+		await Assert.That(json).Contains("\"p\":2");
+		await Assert.That(BlockLayout.Relayout(read, 6, LayoutContext.Default).ToPlainText()).IsEqualTo("=< B >");
+	}
 }

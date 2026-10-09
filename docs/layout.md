@@ -315,8 +315,12 @@ var header = new Rule(MarkupText.Plain("Wren"))
 
 Titles on one side sit in order, a cell of line apart. A centre title stays centred unless that would
 crowd a side's titles, and then moves over to keep a cell clear. When the line is too narrow for all
-of them, titles are left out one at a time: the last centre title first, then the right title farthest
-from the end, then the last left one. At 31 cells the line above is `=< Wren >============< 21:04 >=`.
+of them, titles are left out one at a time by `Priority`, the highest number first, as a table leaves
+out its columns. A title with no priority of its own takes its side's: 1 on the left, 2 on the right,
+3 in the middle. Among equals the middle goes first, then the right, then the left, and on each side
+the title farthest from its end. At 31 cells the line above is `=< Wren >============< 21:04 >=`; give
+`Scene 3` a `Priority` of 1 and `21:04` goes instead. To set the first title's priority, leave `Title`
+empty and put every title in `Titles`.
 A screen reader hears the titles left to right, joined by commas. In HTML each title is a segment of
 a flex row with the line drawn between them.
 

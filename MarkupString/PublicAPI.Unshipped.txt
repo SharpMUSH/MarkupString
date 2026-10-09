@@ -19,3 +19,5 @@ override MarkupString.Layout.EdgeTitle.GetHashCode() -> int
 override MarkupString.Layout.EdgeTitle.ToString() -> string!
 static MarkupString.Layout.EdgeTitle.operator !=(MarkupString.Layout.EdgeTitle? left, MarkupString.Layout.EdgeTitle? right) -> bool
 static MarkupString.Layout.EdgeTitle.operator ==(MarkupString.Layout.EdgeTitle? left, MarkupString.Layout.EdgeTitle? right) -> bool
+MarkupString.Layout.EdgeTitle.Priority.get -> int?
+MarkupString.Layout.EdgeTitle.Priority.init -> void
