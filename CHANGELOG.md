@@ -45,7 +45,7 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - **`ansi()` codes parse and wrap faster.** `AnsiCodeParser.Parse` reads the codes in place and shares
-  its palette colours, so the markup is its only allocation (`hr`: 139 ns and 312 B before, 54 ns and
+  its palette colours, so for letter and xterm codes the markup is its only allocation (`hr`: 139 ns and 312 B before, 54 ns and
   88 B after). Wrapping text in a style seen before reuses its `MarkupSet`, and wrapping styled text
   again reuses what that pair made last time; `MarkupText` keeps runs that are already in normal form
   instead of copying them. `MarkupText.Wrap(ansi, plain text)` went from 351 ns and 640 B to 154 ns and

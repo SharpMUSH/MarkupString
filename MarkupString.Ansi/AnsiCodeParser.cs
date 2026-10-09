@@ -52,9 +52,10 @@ public static class AnsiCodeParser
 	/// <see langword="null"/> when there is no such colour, which is then ignored.
 	/// </param>
 	/// <remarks>
-	/// <c>ansi()</c> is among the most called functions in a game, so the codes are read in place: the only
-	/// allocations are the markup returned and, for a named colour, the name handed to
-	/// <paramref name="namedColor"/>.
+	/// <c>ansi()</c> is among the most called functions in a game, so the codes are read in place and palette
+	/// colours (letters and xterm numbers) are shared: for those the markup returned is the only allocation.
+	/// A hex or <c>&lt;r g b&gt;</c> colour adds its <see cref="AnsiColor.Rgb"/>, and a named colour the name
+	/// handed to <paramref name="namedColor"/>.
 	/// </remarks>
 	public static AnsiMarkup Parse(string codes, Func<string, AnsiColor?> namedColor)
 	{
