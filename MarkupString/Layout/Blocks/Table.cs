@@ -12,6 +12,14 @@ namespace MarkupString.Layout;
 /// <param name="Rows">The rows, a cell per column; a short row is padded with empty cells. A cell's text takes its column's alignment unless it sets its own.</param>
 public sealed record Table(ImmutableArray<TableColumn> Columns, ImmutableArray<ImmutableArray<Block>> Rows) : Block
 {
+	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with
+		{
+			Columns = Columns.IsDefault ? Columns : Columns.Select(column => column with { Header = map(column.Header) }).ToImmutableArray(),
+			Rows = Rows.IsDefault ? Rows : Rows.Select(row => BlockText.Map(row, map)).ToImmutableArray(),
+		};
+
 	/// <summary>Cells between two columns, when there is no <see cref="Separator"/>.</summary>
 	public int Gap { get; init; } = 2;
 

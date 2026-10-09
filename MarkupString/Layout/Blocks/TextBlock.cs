@@ -6,6 +6,10 @@ namespace MarkupString.Layout;
 /// <param name="Content">The text, with its own markup.</param>
 public sealed record TextBlock(MarkupText Content) : Block
 {
+	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with { Content = map(Content) };
+
 	/// <summary>Where each line sits in the width; unset, where the context puts text (<see cref="LayoutContext.TextAlignment"/>).</summary>
 	public Alignment? Alignment { get; init; }
 
@@ -31,6 +35,10 @@ public sealed record TextBlock(MarkupText Content) : Block
 /// <remarks>As a <see cref="Frame"/>'s body, a <see cref="Rule"/> child becomes a divider that meets the frame's sides.</remarks>
 public sealed record Stack(ImmutableArray<Block> Children) : Block
 {
+	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with { Children = BlockText.Map(Children, map) };
+
 	/// <inheritdoc/>
 	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines)
 	{

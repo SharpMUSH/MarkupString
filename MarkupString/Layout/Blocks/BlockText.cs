@@ -188,6 +188,20 @@ internal static class BlockText
 		return MarkupText.Concat([left, middle.FormatColumn(format)[0], right]);
 	}
 
+	/// <summary>Each of <paramref name="blocks"/> with <paramref name="map"/> applied to its text (<see cref="Block.MapText"/>).</summary>
+	public static ImmutableArray<Block> Map(ImmutableArray<Block> blocks, Func<MarkupText, MarkupText> map) =>
+		blocks.IsDefault ? blocks : blocks.Select(block => block.MapText(map)).ToImmutableArray();
+
+	/// <summary>Each of <paramref name="titles"/> with <paramref name="map"/> applied to its text.</summary>
+	public static ImmutableArray<EdgeTitle> Map(ImmutableArray<EdgeTitle> titles, Func<MarkupText, MarkupText> map) =>
+		titles.IsDefault ? titles : titles.Select(title => title with { Text = map(title.Text) }).ToImmutableArray();
+
+	/// <summary>Each of <paramref name="items"/>, and the items under it, with <paramref name="map"/> applied to its text.</summary>
+	public static ImmutableArray<TreeItem> Map(ImmutableArray<TreeItem> items, Func<MarkupText, MarkupText> map) =>
+		items.IsDefault
+			? items
+			: items.Select(item => item with { Content = item.Content.MapText(map), Children = Map(item.Children, map) }).ToImmutableArray();
+
 	/// <summary>A number as a person writes it: <c>6</c>, <c>2.5</c>.</summary>
 	public static string Figure(double value) => value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
 }

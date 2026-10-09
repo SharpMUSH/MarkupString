@@ -21,3 +21,30 @@ static MarkupString.Layout.EdgeTitle.operator !=(MarkupString.Layout.EdgeTitle? 
 static MarkupString.Layout.EdgeTitle.operator ==(MarkupString.Layout.EdgeTitle? left, MarkupString.Layout.EdgeTitle? right) -> bool
 MarkupString.Layout.EdgeTitle.Priority.get -> int?
 MarkupString.Layout.EdgeTitle.Priority.init -> void
+MarkupString.AsciiFold
+MarkupString.AsciiFold.AsciiFold(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, string!>>? translations = null, bool latin1 = false) -> void
+MarkupString.AsciiFold.Fold(MarkupString.MarkupText! text) -> MarkupString.MarkupText!
+MarkupString.AsciiFold.Fold(string! text) -> string!
+MarkupString.AsciiFold.Latin1.get -> bool
+MarkupString.AsciiFold.Translations.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+MarkupString.Layout.LayoutContext.Fold.get -> MarkupString.AsciiFold?
+MarkupString.Layout.LayoutContext.Fold.init -> void
+override MarkupString.Layout.Aligned.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+override MarkupString.Layout.Bullets.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+override MarkupString.Layout.Colored.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+override MarkupString.Layout.Fields.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+override MarkupString.Layout.Figure.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+override MarkupString.Layout.Flex.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+override MarkupString.Layout.Frame.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+override MarkupString.Layout.Gauge.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+override MarkupString.Layout.Grid.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+override MarkupString.Layout.Rule.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+override MarkupString.Layout.Shaded.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+override MarkupString.Layout.Sized.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+override MarkupString.Layout.Stack.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+override MarkupString.Layout.Table.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+override MarkupString.Layout.TextBlock.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+override MarkupString.Layout.Themed.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+override MarkupString.Layout.Tree.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+static MarkupString.AsciiFold.Default.get -> MarkupString.AsciiFold!
+virtual MarkupString.Layout.Block.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!

@@ -8,6 +8,10 @@ namespace MarkupString.Layout;
 /// <param name="Art">Text art standing in for the picture where pictures are not shown; its lines keep their own spacing. Empty for none.</param>
 public sealed record Figure(ImageMarkup Image, MarkupText Art) : Block
 {
+	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with { Art = map(Art), Beside = Beside?.MapText(map) };
+
 	/// <summary>Which side the picture sits on, with <see cref="Beside"/> flowing round it.</summary>
 	public FigureFloat Float { get; init; }
 

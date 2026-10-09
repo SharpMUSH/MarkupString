@@ -8,6 +8,10 @@ namespace MarkupString.Layout;
 public sealed record Aligned(Block Content, Alignment Alignment) : Block
 {
 	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with { Content = Content.MapText(map) };
+
+	/// <inheritdoc/>
 	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines) =>
 		(context with { TextAlignment = Alignment }).Draw(Content, width, lines);
 }
@@ -20,6 +24,10 @@ public sealed record Aligned(Block Content, Alignment Alignment) : Block
 /// <param name="Gradient">The colours.</param>
 public sealed record Shaded(Block Content, ColorGradient Gradient) : Block
 {
+	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with { Content = Content.MapText(map) };
+
 	/// <summary>Which way the colours run.</summary>
 	public GradientFlow Flow { get; init; } = GradientFlow.Across;
 
@@ -34,6 +42,10 @@ public sealed record Shaded(Block Content, ColorGradient Gradient) : Block
 public sealed record Colored(Block Content, IMarkup Markup) : Block
 {
 	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with { Content = Content.MapText(map) };
+
+	/// <inheritdoc/>
 	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines)
 	{
 		foreach (var line in context.Lines(Content, width)) lines.Add(MarkupText.Wrap(Markup, line));
@@ -45,6 +57,10 @@ public sealed record Colored(Block Content, IMarkup Markup) : Block
 /// <param name="Theme">What it sets; what it leaves unset comes from around it.</param>
 public sealed record Themed(Block Content, LayoutTheme Theme) : Block
 {
+	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with { Content = Content.MapText(map) };
+
 	/// <summary>
 	/// Whether <see cref="Theme"/> only fills in what the theme around it leaves unset, rather than
 	/// overriding it: a game's default look, under which the theme a reader draws it in still shows.

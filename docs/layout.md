@@ -500,8 +500,29 @@ or heavy one `=`, an upright `|`, a corner or tee `+`. A double frame stays reco
 colour on a piece is kept. A piece holding anything else (an emoji, a title bracket like `┤ `) takes
 the `ascii` preset's piece, as does any tree guide piece, so the last branch stays `` `- ``. A flex
 separator is translated the same way, and so are gauge, bullet and table pieces (a `•` becomes `*`,
-a `█` `#`). Text inside a block is never changed. `Linear` drops borders
+a `█` `#`). Text inside a block is changed only by `Fold`, below. `Linear` drops borders
 and guides, reads fields as `Label: value` lines and indents tree levels with spaces.
+
+**Folding text.** `AsciiFold` replaces each character a client cannot show with the nearest one it
+can: `·` and `•` become `*`, dashes `-`, curly quotes straight ones, `é` an `e`, a fullwidth letter
+the letter and a space, and anything else `?`, once for each cell it took. Each built-in stand-in
+is as wide as what it replaces, so text padded into columns keeps them. `new AsciiFold(latin1: true)`
+keeps what Latin-1 has (`·`, `é`), and `new AsciiFold(translations)` puts stand-ins of your own
+first, such as `·` to `" - "` or `…` to `"..."`; each key is one character outside ASCII, each value
+printable ASCII. `fold.Fold(text)` folds a string or a `MarkupText`, whose markup stays on the
+characters it was on.
+
+Given as `LayoutContext.Fold`, the fold reaches the text inside every block (`Block.MapText`) before
+the block is measured, so a stand-in of another width still lines up. The tree a block carries is
+not changed. Text outside blocks is the caller's to fold.
+
+```csharp
+var fold = new AsciiFold([new("·", " - ")]);
+var context = new LayoutContext { AsciiOnly = true, Fold = fold };
+var text = fold.Fold(BlockLayout.Relayout(output, width, context));
+```
+
+A block of your own that holds text overrides `MapText` so the fold reaches it.
 
 **Nesting.** `BlockLayout.AsBlock(content)` returns the tree of a text that is one whole block, and
 a `TextBlock` otherwise, so a builder that takes text as an argument nests a block it is given.

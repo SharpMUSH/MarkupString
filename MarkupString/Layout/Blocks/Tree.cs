@@ -9,6 +9,10 @@ namespace MarkupString.Layout;
 /// <param name="Items">The top-level items.</param>
 public sealed record Tree(ImmutableArray<TreeItem> Items) : Block
 {
+	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with { Items = BlockText.Map(Items, map) };
+
 	/// <summary>The characters the guide lines are drawn with; unset, the theme's.</summary>
 	public TreeGuide? Guide { get; init; }
 
