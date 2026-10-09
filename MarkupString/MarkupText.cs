@@ -73,6 +73,9 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 		}
 
 		var outer = MarkupSet.Of(markup);
+		// Plain text, the usual case for ansi() and its kin: one run, nothing to merge.
+		if (inner.Runs.IsDefaultOrEmpty) return new MarkupText(inner.Text, [new Run(0, inner.Length, outer)]);
+
 		var builder = ImmutableArray.CreateBuilder<Run>(inner.Runs.Length * 2 + 1);
 		var position = 0;
 		foreach (var run in inner.Runs)
@@ -256,9 +259,34 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 		return kept.Count == 0 ? MarkupSet.Of(NeutralMarkup.Instance) : MarkupSet.Of(kept);
 	}
 
+	/// <summary>
+	/// Whether <paramref name="runs"/> are already what <see cref="Normalise"/> would make of them: in
+	/// order, in range, none empty, no two adjacent ones carrying an equal set, and every point on its
+	/// own carrier. Nearly every caller hands over runs in that form, so checking first spares them a
+	/// copy.
+	/// </summary>
+	private static bool IsNormal(ImmutableArray<Run> runs, string text, int length)
+	{
+		var previousEnd = 0;
+		MarkupSet? previous = null;
+		foreach (var run in runs)
+		{
+			if (run.Length <= 0 || run.Start < previousEnd || run.End > length) return false;
+			if (previous is not null && run.Start == previousEnd && previous.Equals(run.Markups)) return false;
+			if (!ReferenceEquals(WithoutMisplacedPoints(run.Markups, text.AsSpan(run.Start, run.Length)), run.Markups))
+				return false;
+
+			previousEnd = run.End;
+			previous = run.Markups;
+		}
+
+		return true;
+	}
+
 	private static ImmutableArray<Run> Normalise(ImmutableArray<Run> runs, string text, int length)
 	{
 		if (runs.IsDefaultOrEmpty) return ImmutableArray<Run>.Empty;
+		if (IsNormal(runs, text, length)) return runs;
 		var sorted = false;
 		for (var i = 1; i < runs.Length; i++) if (runs[i].Start < runs[i - 1].Start) { sorted = true; break; }
 		var source = sorted ? runs.Sort((a, b) => a.Start.CompareTo(b.Start)) : runs;

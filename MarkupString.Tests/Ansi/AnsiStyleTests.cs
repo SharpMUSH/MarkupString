@@ -262,3 +262,55 @@ public class AnsiStyleTests
 	public async Task AnOffCodeAloneIsAnAttribute()
 		=> await Assert.That(new AnsiStyle { UnderlinedOff = true }.IsNone).IsFalse();
 }
+
+public class AnsiStyleEqualityTests
+{
+	/// <summary>
+	/// Equality and hashing are written out by hand for speed; this fails when a property is added to
+	/// the style and left out of them.
+	/// </summary>
+	[Test]
+	public async Task Equals_SeesEveryProperty()
+	{
+		foreach (var property in typeof(AnsiStyle).GetProperties()
+			.Where(p => p.SetMethod is not null && p.GetIndexParameters().Length == 0))
+		{
+			object changed = AnsiStyle.None;
+			property.SetValue(changed, property.PropertyType switch
+			{
+				var t when t == typeof(bool) => true,
+				var t when t == typeof(string) => "x",
+				var t when t == typeof(AnsiColor) => new AnsiColor.Standard(1, false),
+				var t when t == typeof(LinkKind) => Enum.GetValues<LinkKind>().Last(),
+				var t => throw new InvalidOperationException($"No test value for {property.Name} ({t.Name})."),
+			});
+
+			await Assert.That(((AnsiStyle)changed).Equals(AnsiStyle.None)).IsFalse().Because(property.Name);
+			await Assert.That(((AnsiStyle)changed).Equals((AnsiStyle)changed)).IsTrue().Because(property.Name);
+		}
+	}
+
+	[Test]
+	public async Task EqualStyles_HashAlike()
+	{
+		var a = new AnsiStyle { Foreground = new AnsiColor.Rgb(1, 2, 3), Bold = true, LinkUrl = "https://example.com" };
+		var b = new AnsiStyle { Foreground = new AnsiColor.Rgb(1, 2, 3), Bold = true, LinkUrl = "https://example.com" };
+
+		await Assert.That(a.Equals(b)).IsTrue();
+		await Assert.That(a.GetHashCode()).IsEqualTo(b.GetHashCode());
+	}
+
+	[Test]
+	public async Task Markup_With_ForgetsTheHashOfTheStyleItReplaced()
+	{
+		var red = AnsiMarkup.Create(foreground: new AnsiColor.Standard(1, false));
+		_ = red.GetHashCode();
+
+		var blue = red with { Style = new AnsiStyle { Foreground = new AnsiColor.Standard(4, false) } };
+		var freshBlue = AnsiMarkup.Create(foreground: new AnsiColor.Standard(4, false));
+
+		await Assert.That(blue.Equals(freshBlue)).IsTrue();
+		await Assert.That(blue.GetHashCode()).IsEqualTo(freshBlue.GetHashCode());
+		await Assert.That(blue.Equals(red)).IsFalse();
+	}
+}

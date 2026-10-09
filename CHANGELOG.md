@@ -44,6 +44,13 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- **`ansi()` codes parse and wrap faster.** `AnsiCodeParser.Parse` reads the codes in place and shares
+  its palette colours, so the markup is its only allocation (`hr`: 139 ns and 312 B before, 54 ns and
+  88 B after). Wrapping text in a style seen before reuses its `MarkupSet`, and wrapping styled text
+  again reuses what that pair made last time; `MarkupText` keeps runs that are already in normal form
+  instead of copying them. `MarkupText.Wrap(ansi, plain text)` went from 351 ns and 640 B to 154 ns and
+  208 B, and wrapping it again from 552 ns to 246 ns. `AnsiStyle` compares and hashes its switches as
+  one bit field, and `AnsiMarkup` keeps its hash.
 - **A picture is one `ImageMarkup`, laid out or inline.** `PictureCellsMarkup` is gone: a figure's rows
   carry its `ImageMarkup` with `Row` (a `PictureRow`: which row, how many, how many cells wide), and the
   serialiser keeps it. MXP, Pueblo, HTML and BBCode write a picture's element once

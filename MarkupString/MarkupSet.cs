@@ -30,7 +30,28 @@ public sealed class MarkupSet : IEquatable<MarkupSet>, IReadOnlyList<IMarkup>
 		_hash = h.ToHashCode();
 	}
 
-	public static MarkupSet Of(IMarkup markup) => Canonical(new MarkupSet([markup]));
+	/// <summary>
+	/// The canonical one-layer set for each layer asked for, so wrapping text in a layer seen before
+	/// builds no candidate set to look up. Bounded as <see cref="Intern"/> is.
+	/// </summary>
+	private static readonly ConcurrentDictionary<IMarkup, MarkupSet> Singles = new();
+	private static int _singlesCount;
+
+	/// <summary>
+	/// What <see cref="Append"/> made of a set and a layer, so wrapping styled text again in a style seen
+	/// before (nested <c>ansi()</c>) copies no layers. Bounded as <see cref="Intern"/> is.
+	/// </summary>
+	private static readonly ConcurrentDictionary<(MarkupSet Set, IMarkup Outer), MarkupSet> Appended = new();
+	private static int _appendedCount;
+
+	public static MarkupSet Of(IMarkup markup)
+	{
+		if (Singles.TryGetValue(markup, out var known)) return known;
+		var set = Canonical(new MarkupSet([markup]));
+		Remember(Singles, markup, set, ref _singlesCount);
+		return set;
+	}
+
 	public static MarkupSet Of(ReadOnlySpan<IMarkup> markups) => Canonical(new MarkupSet(Distinct(markups.ToArray())));
 	public static MarkupSet Of(IEnumerable<IMarkup> markups) => Canonical(new MarkupSet(Distinct(markups.ToArray())));
 
@@ -38,10 +59,25 @@ public sealed class MarkupSet : IEquatable<MarkupSet>, IReadOnlyList<IMarkup>
 	/// <remarks>A layer the set already carries is not added twice; see <see cref="Distinct"/>.</remarks>
 	public MarkupSet Append(IMarkup outer)
 	{
+		if (Appended.TryGetValue((this, outer), out var known)) return known;
 		var items = new IMarkup[_items.Length + 1];
 		_items.CopyTo(items, 0);
 		items[^1] = outer;
-		return Canonical(new MarkupSet(Distinct(items)));
+		var set = Canonical(new MarkupSet(Distinct(items)));
+		Remember(Appended, (this, outer), set, ref _appendedCount);
+		return set;
+	}
+
+	private static void Remember<TKey>(ConcurrentDictionary<TKey, MarkupSet> table, TKey key, MarkupSet set, ref int count)
+		where TKey : notnull
+	{
+		if (Volatile.Read(ref count) >= InternCapacity)
+		{
+			table.Clear();
+			Volatile.Write(ref count, 0);
+		}
+
+		if (table.TryAdd(key, set)) Interlocked.Increment(ref count);
 	}
 
 	/// <summary>
@@ -56,6 +92,7 @@ public sealed class MarkupSet : IEquatable<MarkupSet>, IReadOnlyList<IMarkup>
 	private static IMarkup[] Distinct(IMarkup[] items)
 	{
 		if (items.Length < 2) return items;
+		if (!HasRepeat(items)) return items;
 
 		var kept = new List<IMarkup>(items.Length);
 		foreach (var item in items)
@@ -74,6 +111,16 @@ public sealed class MarkupSet : IEquatable<MarkupSet>, IReadOnlyList<IMarkup>
 		}
 
 		return kept.Count == items.Length ? items : kept.ToArray();
+	}
+
+	private static bool HasRepeat(IMarkup[] items)
+	{
+		for (var i = 1; i < items.Length; i++)
+			for (var j = 0; j < i; j++)
+				if (Equals(items[j], items[i]))
+					return true;
+
+		return false;
 	}
 
 	private static MarkupSet Canonical(MarkupSet candidate)
@@ -101,6 +148,7 @@ public sealed class MarkupSet : IEquatable<MarkupSet>, IReadOnlyList<IMarkup>
 
 	public bool Equals(MarkupSet? other)
 	{
+		if (ReferenceEquals(this, other)) return true;
 		if (other is null || other._items.Length != _items.Length || other._hash != _hash) return false;
 		for (var i = 0; i < _items.Length; i++) if (!_items[i].Equals(other._items[i])) return false;
 		return true;
