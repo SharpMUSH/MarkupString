@@ -111,7 +111,7 @@ public class AnsiForeignLayerTests
 	{
 		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new Tag("b"), MarkupText.Wrap(new Tag("a"), "x")));
 		await Assert.That(Render(text, MarkupFormat.Html))
-			.IsEqualTo("<span style=\"color: #aa0000\"><b><a>x</a></b></span>");
+			.IsEqualTo("<span style=\"color: var(--ms-ansi-1, #aa0000)\"><b><a>x</a></b></span>");
 	}
 
 	// ── A foreign layer between two of this package's ────────────────────────────
@@ -127,7 +127,7 @@ public class AnsiForeignLayerTests
 		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new Tag("t"), MarkupText.Wrap(Bold, "x")));
 
 		await Assert.That(Render(text, MarkupFormat.Html))
-			.IsEqualTo("<span style=\"color: #aa0000\"><t><span class=\"ms-bold\">x</span></t></span>");
+			.IsEqualTo("<span style=\"color: var(--ms-ansi-1, #aa0000)\"><t><span class=\"ms-bold\">x</span></t></span>");
 	}
 
 	/// <summary>
@@ -228,6 +228,6 @@ public class AnsiForeignLayerTests
 	{
 		var text = MarkupText.Wrap(Red, MarkupText.Wrap(new BoldTag(), "x"));
 		await Assert.That(Render(text, MarkupFormat.Html))
-			.IsEqualTo("<span style=\"color: #aa0000\"><b>x</b></span>");
+			.IsEqualTo("<span style=\"color: var(--ms-ansi-1, #aa0000)\"><b>x</b></span>");
 	}
 }

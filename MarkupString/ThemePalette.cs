@@ -73,6 +73,39 @@ public enum ThemeRole
 
 	/// <summary>Things to know.</summary>
 	Info,
+
+	/// <summary>Text quieter than <see cref="Muted"/>: timestamps, hints, what can be skipped.</summary>
+	Subtle,
+
+	/// <summary>Links and command links.</summary>
+	Link,
+
+	/// <summary>A background behind marked text: a search hit, the current item, something new. Painted as a background.</summary>
+	Highlight,
+
+	/// <summary>Red, as this theme draws it.</summary>
+	Red,
+
+	/// <summary>Orange, as this theme draws it.</summary>
+	Orange,
+
+	/// <summary>Yellow, as this theme draws it.</summary>
+	Yellow,
+
+	/// <summary>Green, as this theme draws it.</summary>
+	Green,
+
+	/// <summary>Cyan, as this theme draws it.</summary>
+	Cyan,
+
+	/// <summary>Blue, as this theme draws it.</summary>
+	Blue,
+
+	/// <summary>Purple, as this theme draws it.</summary>
+	Purple,
+
+	/// <summary>Pink, as this theme draws it.</summary>
+	Pink,
 }
 
 /// <summary>How <see cref="ThemePalette.ToTheme"/> asks for a colour to be painted.</summary>
@@ -172,18 +205,18 @@ public sealed record ThemePalette
 	public RgbColor BackgroundColor =>
 		this[ThemeRole.Background]?.Resolved ?? (Mode == ThemeMode.Dark ? new RgbColor(0, 0, 0) : new RgbColor(255, 255, 255));
 
-	/// <summary>The contrast a role should have with the background: 3 for lines, 4.5 for text.</summary>
+	/// <summary>The contrast a role should have with the background: 3 for lines and quiet text, 4.5 for text.</summary>
 	public static double Required(ThemeRole role) => role switch
 	{
-		ThemeRole.Background or ThemeRole.Surface => 1,
-		ThemeRole.Primary or ThemeRole.Muted => 3,
+		ThemeRole.Background or ThemeRole.Surface or ThemeRole.Highlight => 1,
+		ThemeRole.Primary or ThemeRole.Muted or ThemeRole.Subtle => 3,
 		_ => 4.5,
 	};
 
 	/// <summary>
 	/// The roles set whose contrast with the background is under <see cref="Required"/>. A standard colour
 	/// alone, or a standard background, looks however the reader's client makes it, so it is not measured;
-	/// nor is the surface, which is a background too.
+	/// nor are the surface and the highlight, which are backgrounds too.
 	/// </summary>
 	public IReadOnlyList<ContrastShortfall> Check()
 	{
@@ -192,7 +225,7 @@ public sealed record ThemePalette
 		if (this[ThemeRole.Background] is { Rgb: null }) return shortfalls;
 		foreach (var role in Enum.GetValues<ThemeRole>())
 		{
-			if (role is ThemeRole.Background or ThemeRole.Surface || this[role] is not { Rgb: not null } color) continue;
+			if (role is ThemeRole.Background or ThemeRole.Surface or ThemeRole.Highlight || this[role] is not { Rgb: not null } color) continue;
 			var ratio = ColorMath.Contrast(color.Resolved, background);
 			if (ratio < Required(role)) shortfalls.Add(new ContrastShortfall(role, ratio, Required(role)));
 		}
@@ -228,7 +261,7 @@ public sealed record ThemePalette
 
 	/// <summary>
 	/// Standard colours alone, so each reader sees the game in the colours their own client is set to:
-	/// cyan borders, bright white titles, yellow bullets, dark grey guides.
+	/// cyan borders, bright white titles, yellow bullets, dark grey guides, and each hue the client's own.
 	/// </summary>
 	public static ThemePalette Terminal { get; } = new()
 	{
@@ -245,6 +278,17 @@ public sealed record ThemePalette
 			[ThemeRole.Warning] = ThemeColor.Standard(3),
 			[ThemeRole.Error] = ThemeColor.Standard(1),
 			[ThemeRole.Info] = ThemeColor.Standard(12),
+			[ThemeRole.Subtle] = ThemeColor.Standard(8),
+			[ThemeRole.Link] = ThemeColor.Standard(14),
+			[ThemeRole.Highlight] = ThemeColor.Standard(8),
+			[ThemeRole.Red] = ThemeColor.Standard(9),
+			[ThemeRole.Orange] = ThemeColor.Standard(3),
+			[ThemeRole.Yellow] = ThemeColor.Standard(11),
+			[ThemeRole.Green] = ThemeColor.Standard(10),
+			[ThemeRole.Cyan] = ThemeColor.Standard(14),
+			[ThemeRole.Blue] = ThemeColor.Standard(12),
+			[ThemeRole.Purple] = ThemeColor.Standard(5),
+			[ThemeRole.Pink] = ThemeColor.Standard(13),
 		}),
 	};
 
@@ -340,9 +384,12 @@ public sealed record ThemePalette
 	/// <summary>
 	/// A base16 scheme (<c>base00</c> to <c>base0F</c>) as a palette, by base16's own guide: background
 	/// <c>base00</c>, foreground <c>base05</c>, muted <c>base03</c>, primary <c>base0D</c> (blue),
-	/// secondary <c>base0E</c> (magenta), tertiary <c>base0C</c> (cyan), success <c>base0B</c>, warning
-	/// <c>base0A</c>, error <c>base08</c>, info <c>base0C</c>. Each keeps the standard colour base16
-	/// gives its place in a terminal; dark or light by the background.
+	/// secondary <c>base0E</c> (magenta), tertiary <c>base09</c> (orange), success <c>base0B</c>, warning
+	/// <c>base0A</c>, error <c>base08</c>, info <c>base0C</c> (cyan), link <c>base0D</c>, highlight
+	/// <c>base02</c> (the selection background), and the hues red <c>base08</c> to purple <c>base0E</c> in
+	/// base16's order. Subtle is muted taken a third of the way to the background, and pink lies between red
+	/// and purple. Each keeps the standard colour base16 gives its place in a terminal; dark or light by the
+	/// background.
 	/// </summary>
 	/// <exception cref="ArgumentException">There are not sixteen colours.</exception>
 	public static ThemePalette FromBase16(string name, IReadOnlyList<RgbColor> colors)
@@ -350,23 +397,35 @@ public sealed record ThemePalette
 		ArgumentNullException.ThrowIfNull(colors);
 		if (colors.Count != 16) throw new ArgumentException("A base16 scheme has sixteen colours.", nameof(colors));
 		ThemeColor At(int index, int slot) => new(colors[index], slot);
+		var dark = ColorMath.Luminance(colors[0]) < 0.18;
 		return new ThemePalette
 		{
 			Name = name,
-			Mode = ColorMath.Luminance(colors[0]) < 0.18 ? ThemeMode.Dark : ThemeMode.Light,
+			Mode = dark ? ThemeMode.Dark : ThemeMode.Light,
 			Colors = ImmutableDictionary.CreateRange(new Dictionary<ThemeRole, ThemeColor>
 			{
 				[ThemeRole.Background] = At(0x0, 0),
-				[ThemeRole.Surface] = At(0x1, ColorMath.Luminance(colors[0]) < 0.18 ? 8 : 7),
+				[ThemeRole.Surface] = At(0x1, dark ? 8 : 7),
 				[ThemeRole.Foreground] = At(0x5, 7),
 				[ThemeRole.Muted] = At(0x3, 8),
 				[ThemeRole.Primary] = At(0xD, 4),
 				[ThemeRole.Secondary] = At(0xE, 5),
-				[ThemeRole.Tertiary] = At(0xC, 6),
+				[ThemeRole.Tertiary] = At(0x9, 3),
 				[ThemeRole.Success] = At(0xB, 2),
 				[ThemeRole.Warning] = At(0xA, 3),
 				[ThemeRole.Error] = At(0x8, 1),
 				[ThemeRole.Info] = At(0xC, 6),
+				[ThemeRole.Subtle] = new(Mix(colors[0x3], colors[0x0], 1 / 3.0), 8),
+				[ThemeRole.Link] = At(0xD, 4),
+				[ThemeRole.Highlight] = At(0x2, dark ? 8 : 7),
+				[ThemeRole.Red] = At(0x8, 1),
+				[ThemeRole.Orange] = At(0x9, 3),
+				[ThemeRole.Yellow] = At(0xA, 3),
+				[ThemeRole.Green] = At(0xB, 2),
+				[ThemeRole.Cyan] = At(0xC, 6),
+				[ThemeRole.Blue] = At(0xD, 4),
+				[ThemeRole.Purple] = At(0xE, 5),
+				[ThemeRole.Pink] = new(Between(colors[0x8], colors[0xE]), 5),
 			}),
 		};
 	}
@@ -376,8 +435,9 @@ public sealed record ThemePalette
 	/// <paramref name="harmony"/> says and its chroma, and each is made lighter or darker until it stands
 	/// out from the background enough: 3:1 for lines, 4.5:1 for text, both raised toward 7:1 by
 	/// <paramref name="contrast"/>. Success, warning, error and info keep green, amber, red and blue,
-	/// turned a little toward the seed. The background and foreground are near black and near white
-	/// tinted with the seed.
+	/// turned a little toward the seed, as do the hues red to pink. Subtle is a dimmer muted, the link is
+	/// the primary hue at text contrast, and the highlight a background tinted with the seed. The background
+	/// and foreground are near black and near white tinted with the seed.
 	/// </summary>
 	/// <param name="seed">The colour it is made from.</param>
 	/// <param name="harmony">How the accents' hues are picked.</param>
@@ -442,8 +502,127 @@ public sealed record ThemePalette
 				[ThemeRole.Warning] = Status(80),
 				[ThemeRole.Error] = Status(27),
 				[ThemeRole.Info] = info is { } turn ? Accent(turn, 0.76, 1, text) : Status(245),
+				[ThemeRole.Subtle] = Accent(0, 0.42, chroma == 0 ? 0 : 0.1, lines),
+				[ThemeRole.Link] = Accent(0, 0.8, 1, text),
+				[ThemeRole.Highlight] = new(HighlightOn(background, foreground, chroma, hue), dark ? 8 : 7),
+				[ThemeRole.Red] = Status(Hues.Angles[ThemeRole.Red]),
+				[ThemeRole.Orange] = Status(Hues.Angles[ThemeRole.Orange]),
+				[ThemeRole.Yellow] = Status(Hues.Angles[ThemeRole.Yellow]),
+				[ThemeRole.Green] = Status(Hues.Angles[ThemeRole.Green]),
+				[ThemeRole.Cyan] = Status(Hues.Angles[ThemeRole.Cyan]),
+				[ThemeRole.Blue] = Status(Hues.Angles[ThemeRole.Blue]),
+				[ThemeRole.Purple] = Status(Hues.Angles[ThemeRole.Purple]),
+				[ThemeRole.Pink] = Status(Hues.Angles[ThemeRole.Pink]),
 			}),
 		};
+	}
+
+	/// <summary>The hues, apart so they are set before the presets that are made with them.</summary>
+	private static class Hues
+	{
+		/// <summary>Where each hue sits on the OKLCH wheel.</summary>
+		public static readonly ImmutableDictionary<ThemeRole, double> Angles = ImmutableDictionary.CreateRange(new Dictionary<ThemeRole, double>
+		{
+			[ThemeRole.Red] = 27,
+			[ThemeRole.Orange] = 55,
+			[ThemeRole.Yellow] = 95,
+			[ThemeRole.Green] = 145,
+			[ThemeRole.Cyan] = 200,
+			[ThemeRole.Blue] = 255,
+			[ThemeRole.Purple] = 305,
+			[ThemeRole.Pink] = 350,
+		});
+
+		/// <summary>The standard colour a sixteen-colour client is sent for each hue.</summary>
+		public static readonly ImmutableDictionary<ThemeRole, int> Slots = ImmutableDictionary.CreateRange(new Dictionary<ThemeRole, int>
+		{
+			[ThemeRole.Red] = 9,
+			[ThemeRole.Orange] = 3,
+			[ThemeRole.Yellow] = 11,
+			[ThemeRole.Green] = 10,
+			[ThemeRole.Cyan] = 14,
+			[ThemeRole.Blue] = 12,
+			[ThemeRole.Purple] = 5,
+			[ThemeRole.Pink] = 13,
+		});
+	}
+
+	/// <summary>
+	/// A background a little toward <paramref name="foreground"/> from <paramref name="background"/>, tinted with
+	/// the hue, that <paramref name="foreground"/> still reads on at 4.5:1.
+	/// </summary>
+	private static RgbColor HighlightOn(RgbColor background, RgbColor foreground, double chroma, double hue)
+	{
+		var dark = ColorMath.Luminance(background) < 0.18;
+		var start = ColorMath.ToOklch(background).L;
+		var highlight = background;
+		for (var step = 1; step <= 8; step++)
+		{
+			var tried = ColorMath.FromOklch(new OklchColor(start + (dark ? 0.02 : -0.012) * step, Math.Min(chroma, 0.07), hue));
+			if (ColorMath.Contrast(foreground, tried) < 4.5) break;
+			highlight = tried;
+		}
+		return highlight;
+	}
+
+	/// <summary><paramref name="from"/> taken <paramref name="share"/> of the way to <paramref name="to"/>, channel by channel.</summary>
+	private static RgbColor Mix(RgbColor from, RgbColor to, double share)
+	{
+		byte Channel(byte a, byte b) => (byte)Math.Round(a + (b - a) * share);
+		return new RgbColor(Channel(from.R, to.R), Channel(from.G, to.G), Channel(from.B, to.B));
+	}
+
+	/// <summary>The colour halfway between two, the short way round the OKLCH hue wheel.</summary>
+	private static RgbColor Between(RgbColor first, RgbColor second)
+	{
+		var (a, b) = (ColorMath.ToOklch(first), ColorMath.ToOklch(second));
+		if (double.IsNaN(a.H) || double.IsNaN(b.H)) return Mix(first, second, 0.5);
+		return ColorMath.FromOklch(new OklchColor((a.L + b.L) / 2, (a.C + b.C) / 2, ColorMath.Wrap(a.H + ColorMath.Turn(a.H, b.H) / 2)));
+	}
+
+	/// <summary>
+	/// This palette with subtle, link, highlight and the hues worked out from its other colours where it leaves
+	/// them unset: subtle from muted, the link from primary, the highlight from the background, and each hue at
+	/// text contrast on the background. A palette of standard colours alone gets standard colours.
+	/// </summary>
+	public ThemePalette Completed() => Completed(new HashSet<ThemeRole>());
+
+	private ThemePalette Completed(HashSet<ThemeRole> keepUnset)
+	{
+		var standard = Colors.Count > 0 && Colors.Values.All(color => color.Rgb is null);
+		var background = BackgroundColor;
+		var dark = ColorMath.Luminance(background) < 0.18;
+		var result = this;
+
+		void Fill(ThemeRole role, ThemeColor? color)
+		{
+			if (result[role] is null && !keepUnset.Contains(role) && color is { } set) result = result.With(role, set);
+		}
+
+		Fill(ThemeRole.Subtle, this[ThemeRole.Muted] switch
+		{
+			{ Rgb: { } muted } => new ThemeColor(Mix(muted, background, 1 / 3.0), 8),
+			{ } muted => muted,
+			null => null,
+		});
+		Fill(ThemeRole.Link, this[ThemeRole.Primary] switch
+		{
+			{ Rgb: { } primary } color => new ThemeColor(ColorMath.WithContrast(primary, background, 4.5), color.Slot),
+			{ } primary => primary,
+			null => null,
+		});
+		var foreground = this[ThemeRole.Foreground]?.Resolved ?? (dark ? new RgbColor(255, 255, 255) : new RgbColor(0, 0, 0));
+		var tint = ColorMath.ToOklch(this[ThemeRole.Primary]?.Resolved ?? background).H;
+		Fill(ThemeRole.Highlight, standard
+			? ThemeColor.Standard(dark ? 8 : 7)
+			: new ThemeColor(HighlightOn(background, foreground, 0.04, double.IsNaN(tint) ? 250 : tint), dark ? 8 : 7));
+		foreach (var (role, angle) in Hues.Angles)
+		{
+			Fill(role, standard
+				? ThemeColor.Standard(Hues.Slots[role])
+				: new ThemeColor(ColorMath.WithContrast(ColorMath.FromOklch(new OklchColor(dark ? 0.75 : 0.5, 0.14, angle)), background, 4.5), Hues.Slots[role]));
+		}
+		return result;
 	}
 
 	/// <summary>The role named <paramref name="name"/>, ignoring case.</summary>
@@ -455,7 +634,8 @@ public sealed record ThemePalette
 	/// <c>preset</c> (start from that one), <c>base16</c> (sixteen colours), <c>seed</c> with
 	/// <c>harmony</c> and <c>contrast</c> (generate one), <c>mode</c>, <c>name</c>, and <c>colors</c>
 	/// setting roles: <c>"#88c0d0"</c>, a standard colour <c>6</c>, <c>{"rgb":"#88c0d0","slot":6}</c>, or
-	/// <c>null</c> to unset one.
+	/// <c>null</c> to unset one. Subtle, link, highlight and the hues it leaves unset, and does not unset with
+	/// <c>null</c>, are worked out from the rest (<see cref="Completed()"/>).
 	/// </summary>
 	public static bool TryParse(string json, out ThemePalette? palette, out string? error)
 	{
@@ -586,6 +766,7 @@ public sealed record ThemePalette
 			else result = result with { Look = look!.Over(result.Look) };
 		}
 
+		var unset = new HashSet<ThemeRole>();
 		if (element.TryGetProperty("colors", out var colorsValue))
 		{
 			if (colorsValue.ValueKind != JsonValueKind.Object)
@@ -603,6 +784,7 @@ public sealed record ThemePalette
 				if (property.Value.ValueKind == JsonValueKind.Null)
 				{
 					result = result.With(role, null);
+					unset.Add(role);
 					continue;
 				}
 				if (!TryReadColor(property.Value, out var color, out error)) return false;
@@ -617,7 +799,7 @@ public sealed record ThemePalette
 			return false;
 		}
 
-		palette = result;
+		palette = result.Completed(unset);
 		return true;
 	}
 

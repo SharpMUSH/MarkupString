@@ -6,6 +6,12 @@ namespace MarkupString.Ansi;
 /// inline instead (see <c>AnsiHtmlEmitter</c>). A page that renders <see cref="MarkupFormat.Html"/>
 /// includes this once.
 /// </summary>
+/// <remarks>
+/// The sixteen standard colours are written as <c>var(--ms-ansi-0, #000000)</c> to
+/// <c>var(--ms-ansi-15, #ffffff)</c>: 0-7 black, red, green, yellow, blue, magenta, cyan and white, 8-15
+/// their bright forms. A page sets those properties to give <c>ansi()</c> colours its own scheme, as a
+/// terminal's colour scheme does; one that sets none shows the usual colours.
+/// </remarks>
 public static class AnsiCss
 {
 	/// <summary>

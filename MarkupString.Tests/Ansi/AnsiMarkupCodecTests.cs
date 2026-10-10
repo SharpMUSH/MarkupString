@@ -193,7 +193,7 @@ public class AnsiMarkupCodecTests
 	{
 		var text = MarkupTextSerializer.Deserialize(Palette("\"f\":[1,31],\"lu\":\"look\",\"lk\":1"), Registry);
 		await Assert.That(text.Render(MarkupFormat.Html, Registry))
-			.IsEqualTo("<span style=\"color: #ff5555\"><a class=\"ms-cmd-link\" role=\"button\" tabindex=\"0\" xch_cmd=\"look\">x</a></span>");
+			.IsEqualTo("<span style=\"color: var(--ms-ansi-9, #ff5555)\"><a class=\"ms-cmd-link\" role=\"button\" tabindex=\"0\" xch_cmd=\"look\">x</a></span>");
 	}
 
 	[Test]

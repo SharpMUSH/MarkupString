@@ -26,3 +26,15 @@ override MarkupString.Layout.Themed.MapText(System.Func<MarkupString.MarkupText!
 override MarkupString.Layout.Tree.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 static MarkupString.AsciiFold.Default.get -> MarkupString.AsciiFold!
 virtual MarkupString.Layout.Block.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+MarkupString.ThemePalette.Completed() -> MarkupString.ThemePalette!
+MarkupString.ThemeRole.Blue = 19 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Cyan = 18 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Green = 17 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Highlight = 13 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Link = 12 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Orange = 15 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Pink = 21 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Purple = 20 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Red = 14 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Subtle = 11 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Yellow = 16 -> MarkupString.ThemeRole

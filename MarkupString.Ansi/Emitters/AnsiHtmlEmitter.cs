@@ -6,7 +6,9 @@ namespace MarkupString.Ansi;
 /// Renders a run as one HTML element: the folded style becomes a single
 /// <c>&lt;span style="…" class="…"&gt;</c>, with colours as inline hex (they are open-ended, so a
 /// stylesheet cannot enumerate them) and attributes as <c>ms-*</c> classes (a fixed set, which a
-/// stylesheet can). A link becomes the anchor inside that span.
+/// stylesheet can). A link becomes the anchor inside that span. The sixteen standard colours are
+/// written as <c>var(--ms-ansi-N, #hex)</c>, so a page can set its own as a terminal's colour scheme
+/// does (<see cref="AnsiCss"/>), and shows the usual colour when it does not.
 /// </summary>
 public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 {
@@ -35,6 +37,8 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 		// own colour shows through.
 		var foregroundHex = foreground?.ToHex() ?? string.Empty;
 		var backgroundHex = background?.ToHex() ?? string.Empty;
+		var foregroundSlot = SlotOf(foreground);
+		var backgroundSlot = SlotOf(background);
 		var hasStyle = foregroundHex.Length > 0 || backgroundHex.Length > 0;
 		var hasClasses = HasClasses(style, hasStyle);
 
@@ -52,13 +56,13 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 			if (foregroundHex.Length > 0)
 			{
 				output.Write("color: ");
-				output.Write(foregroundHex);
+				WriteColor(foregroundSlot, foregroundHex, output);
 			}
 			if (foregroundHex.Length > 0 && backgroundHex.Length > 0) output.Write("; ");
 			if (backgroundHex.Length > 0)
 			{
 				output.Write("background-color: ");
-				output.Write(backgroundHex);
+				WriteColor(backgroundSlot, backgroundHex, output);
 			}
 			output.Write("\"");
 		}
@@ -73,6 +77,30 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 		output.Write(">");
 		WriteAnchored(style, body, output);
 		output.Write("</span>");
+	}
+
+	/// <summary>The standard colour, 0-15, <paramref name="color"/> is, or -1 for any other.</summary>
+	private static int SlotOf(AnsiColor? color) => color switch
+	{
+		AnsiColor.Standard standard => standard.Index + (standard.Bright ? 8 : 0),
+		AnsiColor.Xterm { Index: < 16 } xterm => xterm.Index,
+		_ => -1,
+	};
+
+	/// <summary>The custom property a page sets standard colour N with: <c>--ms-ansi-N</c>.</summary>
+	private static readonly string[] SlotProperties = [.. Enumerable.Range(0, 16).Select(slot => $"var(--ms-ansi-{slot}, ")];
+
+	/// <summary>A colour: a standard one as its custom property with <paramref name="hex"/> to fall back on, any other as <paramref name="hex"/>.</summary>
+	private static void WriteColor(int slot, string hex, IBufferWriter<char> output)
+	{
+		if (slot < 0)
+		{
+			output.Write(hex);
+			return;
+		}
+		output.Write(SlotProperties[slot]);
+		output.Write(hex);
+		output.Write(")");
 	}
 
 	/// <summary>
