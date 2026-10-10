@@ -71,7 +71,7 @@ public class ThemeTests
 	{
 		var palette = ThemePalette.Generate(Hex("#5e81ac"), ThemeHarmony.Triadic, ThemeMode.Light, contrast: 1);
 
-		foreach (var role in Enum.GetValues<ThemeRole>().Where(role => role is not (ThemeRole.Background or ThemeRole.Surface)))
+		foreach (var role in Enum.GetValues<ThemeRole>().Where(role => role is not (ThemeRole.Background or ThemeRole.Surface or ThemeRole.Highlight)))
 			await Assert.That(ColorMath.Contrast(palette[role]!.Value.Resolved, palette.BackgroundColor)).IsGreaterThanOrEqualTo(7);
 	}
 
@@ -110,6 +110,91 @@ public class ThemeTests
 		await Assert.That(nord[ThemeRole.Error]).IsEqualTo(new ThemeColor(Hex("#bf616a"), 1));
 		await Assert.That(nord.Mode).IsEqualTo(ThemeMode.Dark);
 		await Assert.That(ThemePalette.Preset("solarized-light")!.Mode).IsEqualTo(ThemeMode.Light);
+		await Assert.That(nord[ThemeRole.Tertiary]).IsEqualTo(new ThemeColor(Hex("#d08770"), 3));
+		await Assert.That(nord[ThemeRole.Info]).IsEqualTo(new ThemeColor(Hex("#88c0d0"), 6));
+		await Assert.That(nord[ThemeRole.Highlight]).IsEqualTo(new ThemeColor(Hex("#434c5e"), 8));
+		await Assert.That(nord[ThemeRole.Purple]).IsEqualTo(new ThemeColor(Hex("#b48ead"), 5));
+	}
+
+	[Test]
+	public async Task EveryPreset_TellsTertiaryAndInfoApart()
+	{
+		foreach (var palette in ThemePalette.Presets)
+			await Assert.That(palette[ThemeRole.Tertiary]).IsNotEqualTo(palette[ThemeRole.Info]);
+	}
+
+	[Test]
+	public async Task EveryPreset_SetsEveryRole()
+	{
+		var missing = ThemePalette.Presets.SelectMany(palette => Enum.GetValues<ThemeRole>().Where(role => palette[role] is null).Select(role => $"{palette.Name}.{role}"));
+		// The terminal preset stripes nothing, leaving the client's own background alone.
+		await Assert.That(missing).IsEquivalentTo(["terminal.Surface"]);
+	}
+
+	[Test]
+	[Arguments(ThemeRole.Red, 27)]
+	[Arguments(ThemeRole.Orange, 55)]
+	[Arguments(ThemeRole.Yellow, 95)]
+	[Arguments(ThemeRole.Green, 145)]
+	[Arguments(ThemeRole.Cyan, 200)]
+	[Arguments(ThemeRole.Blue, 255)]
+	[Arguments(ThemeRole.Purple, 305)]
+	[Arguments(ThemeRole.Pink, 350)]
+	public async Task Generate_KeepsEachHueItsName(ThemeRole role, double hue)
+	{
+		foreach (var mode in Enum.GetValues<ThemeMode>())
+		{
+			var palette = ThemePalette.Generate(Hex("#7aa2f7"), ThemeHarmony.Analogous, mode);
+			var made = ColorMath.ToOklch(palette[role]!.Value.Rgb!.Value).H;
+			await Assert.That(Math.Abs(((made - hue) % 360 + 540) % 360 - 180)).IsLessThanOrEqualTo(25);
+		}
+	}
+
+	[Test]
+	public async Task Generate_TheForegroundReadsOnTheHighlight()
+	{
+		foreach (var mode in Enum.GetValues<ThemeMode>())
+		{
+			var palette = ThemePalette.Generate(Hex("#d6577c"), ThemeHarmony.Split, mode);
+			var highlight = palette[ThemeRole.Highlight]!.Value.Resolved;
+			await Assert.That(ColorMath.Contrast(palette[ThemeRole.Foreground]!.Value.Resolved, highlight)).IsGreaterThanOrEqualTo(4.5);
+			await Assert.That(highlight).IsNotEqualTo(palette.BackgroundColor);
+		}
+	}
+
+	[Test]
+	public async Task Json_WorksOutTheRolesItLeavesOut()
+	{
+		await Assert.That(ThemePalette.TryParse("""{"colors":{"background":"#1a1b26","foreground":"#c0caf5","primary":"#7aa2f7","muted":"#565f89","pink":null}}""", out var palette, out _)).IsTrue();
+
+		await Assert.That(palette![ThemeRole.Pink]).IsNull();
+		await Assert.That(ThemePalette.TryParse(palette.ToJson(), out var reread, out _)).IsTrue();
+		await Assert.That(reread).IsEqualTo(palette).Because("pink stays unset when it is written and read back");
+		await Assert.That(palette[ThemeRole.Link]).IsNotNull();
+		await Assert.That(palette[ThemeRole.Subtle]).IsNotNull();
+		await Assert.That(palette[ThemeRole.Highlight]).IsNotNull();
+		foreach (var hue in new[] { ThemeRole.Red, ThemeRole.Orange, ThemeRole.Yellow, ThemeRole.Green, ThemeRole.Cyan, ThemeRole.Blue, ThemeRole.Purple })
+			await Assert.That(ColorMath.Contrast(palette[hue]!.Value.Resolved, palette.BackgroundColor)).IsGreaterThanOrEqualTo(4.5);
+	}
+
+	[Test]
+	public async Task Json_TheWorkedOutSubtleIsStillReadable()
+	{
+		await Assert.That(ThemePalette.TryParse("""{"colors":{"background":"#ffffff","muted":"#777777"}}""", out var palette, out _)).IsTrue();
+
+		await Assert.That(ColorMath.Contrast(palette![ThemeRole.Subtle]!.Value.Resolved, palette.BackgroundColor)).IsGreaterThanOrEqualTo(3);
+		await Assert.That(ColorMath.Contrast(palette[ThemeRole.Subtle]!.Value.Resolved, palette.BackgroundColor))
+			.IsLessThan(ColorMath.Contrast(palette[ThemeRole.Muted]!.Value.Resolved, palette.BackgroundColor));
+	}
+
+	[Test]
+	public async Task Json_OfStandardColours_WorksOutStandardColours()
+	{
+		await Assert.That(ThemePalette.TryParse("""{"colors":{"background":0,"primary":6}}""", out var palette, out _)).IsTrue();
+
+		await Assert.That(palette![ThemeRole.Red]).IsEqualTo(ThemeColor.Standard(9));
+		await Assert.That(palette[ThemeRole.Link]).IsEqualTo(ThemeColor.Standard(6));
+		await Assert.That(palette[ThemeRole.Highlight]).IsEqualTo(ThemeColor.Standard(8));
 	}
 
 	[Test]
@@ -137,7 +222,7 @@ public class ThemeTests
 	[Arguments("\"nowhere\"", "no theme named 'nowhere'")]
 	[Arguments("""{"seed":"blue"}""", "seed is a colour like #7aa2f7")]
 	[Arguments("""{"seed":"#123456","preset":"nord"}""", "use one of preset, base16 and seed")]
-	[Arguments("""{"colors":{"accent":"#fff"}}""", "'accent' is not a role; the roles are background, surface, foreground, primary, secondary, tertiary, muted, success, warning, error, info")]
+	[Arguments("""{"colors":{"accent":"#fff"}}""", "'accent' is not a role; the roles are background, surface, foreground, primary, secondary, tertiary, muted, success, warning, error, info, subtle, link, highlight, red, orange, yellow, green, cyan, blue, purple, pink")]
 	[Arguments("""{"colors":{"primary":16}}""", "'16' is not a colour: use #rrggbb, a standard colour 0 to 15, or {\"rgb\":..,\"slot\":..}")]
 	[Arguments("""{"border":"red"}""", "a theme has no 'border'")]
 	public async Task Json_SaysWhatIsWrong(string json, string error)
@@ -165,7 +250,7 @@ public class ThemeTests
 
 		await Assert.That(ansi).Contains("\u001b[38;2;129;161;193m┌");
 		await Assert.That(ansi).Contains("\u001b[1;38;2;180;142;173mSheet");
-		await Assert.That(ansi).Contains("\u001b[38;2;136;192;208m•");
+		await Assert.That(ansi).Contains("\u001b[38;2;208;135;112m•");
 		await Assert.That(ansi).Contains("\u001b[38;2;180;142;173mName");
 		await Assert.That(BlockLayout.Build(box.Themed(theme), 20).ToPlainText()).IsEqualTo(BlockLayout.Build(box, 20).ToPlainText());
 	}

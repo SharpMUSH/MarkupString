@@ -119,6 +119,14 @@ public class AnsiRenderTests
 	}
 
 	[Test]
+	public async Task Html_StandardColours_AreAPropertyThePageCanSet()
+	{
+		var text = MarkupText.Wrap(AnsiMarkup.Create(foreground: new AnsiColor.Xterm(3), background: new AnsiColor.Standard(4, false)), "x");
+		await Assert.That(Render(text, MarkupFormat.Html))
+			.IsEqualTo("<span style=\"color: var(--ms-ansi-3, #aa5500); background-color: var(--ms-ansi-bg-4, var(--ms-ansi-4, #0000aa))\">x</span>");
+	}
+
+	[Test]
 	public async Task Html_DefaultForeground_CarriesNoStyle()
 	{
 		var text = MarkupText.Wrap(AnsiMarkup.Create(foreground: AnsiColor.Default.Instance), "x");
@@ -129,7 +137,7 @@ public class AnsiRenderTests
 	public async Task Html_HighlightedRed_IsTheBrightVariant()
 	{
 		var text = MarkupText.Wrap(AnsiCodeParser.Parse("hr"), "x");
-		await Assert.That(Render(text, MarkupFormat.Html)).IsEqualTo("<span style=\"color: #ff5555\">x</span>");
+		await Assert.That(Render(text, MarkupFormat.Html)).IsEqualTo("<span style=\"color: var(--ms-ansi-9, #ff5555)\">x</span>");
 	}
 
 	[Test]
@@ -225,7 +233,7 @@ public class AnsiRenderTests
 	{
 		var text = MarkupText.Wrap(Red, "<b>x</b>");
 		await Assert.That(Render(text, MarkupFormat.Html))
-			.IsEqualTo("<span style=\"color: #aa0000\">&lt;b&gt;x&lt;/b&gt;</span>");
+			.IsEqualTo("<span style=\"color: var(--ms-ansi-1, #aa0000)\">&lt;b&gt;x&lt;/b&gt;</span>");
 	}
 
 	[Test]

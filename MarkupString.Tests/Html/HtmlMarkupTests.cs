@@ -102,7 +102,7 @@ public class HtmlMarkupTests
 		// inside the colour's <span> because that is where it was put (see AnsiForeignLayerTests.
 		// Html_FormatSpecificStyleSourceWithAnsiLayer_TagSitsInsideTheColourSpan).
 		await Assert.That(Render(text, MarkupFormat.Html))
-			.IsEqualTo("<span style=\"color: #aa0000\"><b>x</b></span>");
+			.IsEqualTo("<span style=\"color: var(--ms-ansi-1, #aa0000)\"><b>x</b></span>");
 		await Assert.That(Render(text, MarkupFormat.BBCode)).IsEqualTo("[color=#aa0000][b]x[/b][/color]");
 	}
 

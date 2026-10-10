@@ -7,22 +7,22 @@
 07 blink              | <span class="ms-blink">blink</span>
 08 inverted           | <span class="ms-invert">inverted</span>
 09 strikethrough      | <span class="ms-strike">strikethrough</span>
-10 fg-standard        | <span style="color: #aa0000">red</span>
-11 fg-bright          | <span style="color: #ff5555">bright red</span>
+10 fg-standard        | <span style="color: var(--ms-ansi-1, #aa0000)">red</span>
+11 fg-bright          | <span style="color: var(--ms-ansi-9, #ff5555)">bright red</span>
 12 fg-xterm-200       | <span style="color: #ff00d7">xterm 200</span>
 13 fg-rgb             | <span style="color: #123456">rgb</span>
 14 fg-default         | default fg
-15 bg-standard        | <span style="background-color: #0000aa">on blue</span>
-16 bg-bright          | <span style="background-color: #5555ff">on bright blue</span>
+15 bg-standard        | <span style="background-color: var(--ms-ansi-bg-4, var(--ms-ansi-4, #0000aa))">on blue</span>
+16 bg-bright          | <span style="background-color: var(--ms-ansi-bg-12, var(--ms-ansi-12, #5555ff))">on bright blue</span>
 17 bg-xterm-24        | <span style="background-color: #005f87">on xterm 24</span>
 18 bg-rgb             | <span style="background-color: #008040">on rgb</span>
 19 bg-default         | default bg
 20 link-url           | <a href="https://example.com/a?b=1&amp;c=2" target="_blank" rel="noopener noreferrer">example</a>
 21 link-command       | <a class="ms-cmd-link" role="button" tabindex="0" xch_cmd="+who" title="Who is on?">who</a>
-22 nested-three-deep  | <span style="color: #aa0000" class="ms-bold ms-underline">deep</span>
-23 adjacent-runs      | <span style="color: #aa0000">red</span>-<span style="color: #00aa00" class="ms-bold">bold green</span><span class="ms-underline">under</span>
+22 nested-three-deep  | <span style="color: var(--ms-ansi-1, #aa0000)" class="ms-bold ms-underline">deep</span>
+23 adjacent-runs      | <span style="color: var(--ms-ansi-1, #aa0000)">red</span>-<span style="color: var(--ms-ansi-2, #00aa00)" class="ms-bold">bold green</span><span class="ms-underline">under</span>
 24 html-send          | <send href="north" hint="Go north">north</send>
-25 html-b-in-colour   | <span style="color: #00aa00"><b>bold green</b></span>
-26 unicode            | <span style="color: #aa0000">日本語 😀 café</span>
+25 html-b-in-colour   | <span style="color: var(--ms-ansi-2, #00aa00)"><b>bold green</b></span>
+26 unicode            | <span style="color: var(--ms-ansi-1, #aa0000)">日本語 😀 café</span>
 27 needs-encoding     | <span class="ms-bold">&lt;a href="x"&gt; &amp; 'y' &lt;/a&gt;</span>
-28 clear-after-colour | <span style="color: #aa0000">red</span>cleared
+28 clear-after-colour | <span style="color: var(--ms-ansi-1, #aa0000)">red</span>cleared

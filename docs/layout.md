@@ -536,15 +536,21 @@ A `LayoutTheme` sets the colour of each part as well as its characters: `BorderC
 `GaugeFilledColor`, `GaugeEmptyColor` and `StripeColor`. Each is a markup layer, so a title can be bold as well as
 coloured, and colour a piece sets itself still wins. Nothing is coloured by default.
 
-A `ThemePalette` names eleven colours by what they are for (`ThemeRole`: background, surface,
-foreground, primary, secondary, tertiary, muted, success, warning, error, info), and `ToTheme` maps
-them onto the parts: borders and gauge bars primary, titles secondary and bold, labels secondary,
-bullets tertiary, headings primary and bold, guides and separators muted, stripes on the surface. The
-ANSI package does the painting:
+A `ThemePalette` names its colours by what they are for (`ThemeRole`: background, surface,
+foreground, primary, secondary, tertiary, muted, success, warning, error, info, subtle, link and
+highlight), and `ToTheme` maps them onto the parts: borders and gauge bars primary, titles secondary and
+bold, labels secondary, bullets tertiary, headings primary and bold, guides and separators muted,
+stripes on the surface. The ANSI package does the painting:
 
 ```csharp
 var sheet = character.Bordered(MarkupText.Plain("Ann")).Themed(ThemePalette.Preset("nord")!.ToLayoutTheme());
 ```
+
+Subtle is text quieter than muted (timestamps, hints), link the colour of links, and highlight a
+background behind marked text, such as a search hit; it is the one role besides the background and
+surface that is painted behind text. A palette also names eight hues, `red`, `orange`, `yellow`,
+`green`, `cyan`, `blue`, `purple` and `pink`, the way a terminal's colour scheme decides what its red
+looks like: code that asks for the theme's red gets a red that reads on that theme's background.
 
 Each palette colour is a `ThemeColor`: an exact colour, the standard colour (0-15) a sixteen-colour
 client is sent instead, or both. The standard colour is picked by kind (`ColorMath.StandardSlot`), so a
@@ -559,7 +565,8 @@ Four ways to make one:
   (`ThemePalette.Genres`), each with a look of its own (below); and `catppuccin-mocha`, `catppuccin-latte`, `dracula`, `gruvbox-dark`, `nord`,
   `solarized-dark`, `solarized-light`, `tokyo-night` (`ThemePalette.Preset(name)`).
 - **base16**: `ThemePalette.FromBase16(name, colors)` takes any of the hundreds of base16 schemes,
-  mapped by base16's own guide (`base0D` primary, `base03` muted, `base08` error, ...).
+  mapped by base16's own guide (`base0D` primary, `base03` muted, `base08` error, `base02` highlight,
+  `base08` to `base0E` the hues red to purple, ...).
 - **From one colour**: `ThemePalette.Generate(seed, harmony, mode, contrast)`. The accents' hues come
   from the seed's by `ThemeHarmony` (monochrome, analogous, complementary, split, triadic, tetradic),
   and each is made lighter or darker, keeping its hue, until its WCAG contrast with the background
@@ -567,7 +574,14 @@ Four ways to make one:
   warning, error and info stay green, amber, red and blue, turned a little toward the seed.
 - **JSON**: `ThemePalette.TryParse` reads a preset's name, or an object with one of `preset`,
   `base16` or `seed` (with `harmony`, `contrast`), and `mode`, `name` and `colors` to set roles:
-  `{"preset":"nord","colors":{"primary":"#bf616a","muted":8}}`. `ToJson` writes one back.
+  `{"preset":"nord","colors":{"primary":"#bf616a","muted":8}}`. `ToJson` writes one back. Subtle,
+  link, highlight and the hues that `colors` leaves out are worked out from the rest
+  (`ThemePalette.Completed`): subtle from muted, the link from primary, and each hue at 4.5:1 on the
+  background. Set one to `null` to leave it unset.
+
+In HTML, the sixteen standard ANSI colours are written as `var(--ms-ansi-N, #hex)`, so a page sets
+`--ms-ansi-0` to `--ms-ansi-15` to give `ansi()` colours its own scheme; a page that sets none shows the
+usual colours (`AnsiCss`). Backgrounds read `--ms-ansi-bg-N` first, so a page can keep text readable on them.
 
 A theme is more than its colours. `ThemePalette.Look`, a `ThemeLook`, sets the shapes too: a border
 preset, its corners, edges and sides, the ornaments round a title (`"╡ ❖ "`, `" ❖ ╞"`), the tree

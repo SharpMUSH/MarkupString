@@ -92,7 +92,7 @@ foreach (var (label, roundTripped) in new[]
 Expect(rendered["plain"], "日本語テキスト", "plain");
 Expect(rendered["ansi"], "\e[1;31m", "ansi");
 Expect(rendered["html"], "<send href=\"n\">", "html");
-Expect(rendered["html"], "color: #ff5555", "html");
+Expect(rendered["html"], "color: var(--ms-ansi-9, #ff5555)", "html");
 Expect(rendered["pueblo"], "<A XCH_CMD=\"look\"", "pueblo");
 Expect(rendered["mxp"], "<SEND HREF=\"look\"", "mxp");
 Expect(rendered["bbcode"], "[color=#ff5555]", "bbcode");
