@@ -168,11 +168,23 @@ public class ThemeTests
 		await Assert.That(ThemePalette.TryParse("""{"colors":{"background":"#1a1b26","foreground":"#c0caf5","primary":"#7aa2f7","muted":"#565f89","pink":null}}""", out var palette, out _)).IsTrue();
 
 		await Assert.That(palette![ThemeRole.Pink]).IsNull();
+		await Assert.That(ThemePalette.TryParse(palette.ToJson(), out var reread, out _)).IsTrue();
+		await Assert.That(reread).IsEqualTo(palette).Because("pink stays unset when it is written and read back");
 		await Assert.That(palette[ThemeRole.Link]).IsNotNull();
 		await Assert.That(palette[ThemeRole.Subtle]).IsNotNull();
 		await Assert.That(palette[ThemeRole.Highlight]).IsNotNull();
 		foreach (var hue in new[] { ThemeRole.Red, ThemeRole.Orange, ThemeRole.Yellow, ThemeRole.Green, ThemeRole.Cyan, ThemeRole.Blue, ThemeRole.Purple })
 			await Assert.That(ColorMath.Contrast(palette[hue]!.Value.Resolved, palette.BackgroundColor)).IsGreaterThanOrEqualTo(4.5);
+	}
+
+	[Test]
+	public async Task Json_TheWorkedOutSubtleIsStillReadable()
+	{
+		await Assert.That(ThemePalette.TryParse("""{"colors":{"background":"#ffffff","muted":"#777777"}}""", out var palette, out _)).IsTrue();
+
+		await Assert.That(ColorMath.Contrast(palette![ThemeRole.Subtle]!.Value.Resolved, palette.BackgroundColor)).IsGreaterThanOrEqualTo(3);
+		await Assert.That(ColorMath.Contrast(palette[ThemeRole.Subtle]!.Value.Resolved, palette.BackgroundColor))
+			.IsLessThan(ColorMath.Contrast(palette[ThemeRole.Muted]!.Value.Resolved, palette.BackgroundColor));
 	}
 
 	[Test]

@@ -415,7 +415,7 @@ public sealed record ThemePalette
 				[ThemeRole.Warning] = At(0xA, 3),
 				[ThemeRole.Error] = At(0x8, 1),
 				[ThemeRole.Info] = At(0xC, 6),
-				[ThemeRole.Subtle] = new(Mix(colors[0x3], colors[0x0], 1 / 3.0), 8),
+				[ThemeRole.Subtle] = new(Quieter(colors[0x3], colors[0x0]), 8),
 				[ThemeRole.Link] = At(0xD, 4),
 				[ThemeRole.Highlight] = At(0x2, dark ? 8 : 7),
 				[ThemeRole.Red] = At(0x8, 1),
@@ -565,6 +565,13 @@ public sealed record ThemePalette
 		return highlight;
 	}
 
+	/// <summary>
+	/// <paramref name="muted"/> taken a third of the way to <paramref name="background"/>, but no further than 3:1
+	/// against it, the contrast quiet text needs; a muted colour already under 3:1 is left where it is.
+	/// </summary>
+	private static RgbColor Quieter(RgbColor muted, RgbColor background) =>
+		ColorMath.WithContrast(Mix(muted, background, 1 / 3.0), background, Math.Min(3, ColorMath.Contrast(muted, background)));
+
 	/// <summary><paramref name="from"/> taken <paramref name="share"/> of the way to <paramref name="to"/>, channel by channel.</summary>
 	private static RgbColor Mix(RgbColor from, RgbColor to, double share)
 	{
@@ -579,6 +586,9 @@ public sealed record ThemePalette
 		if (double.IsNaN(a.H) || double.IsNaN(b.H)) return Mix(first, second, 0.5);
 		return ColorMath.FromOklch(new OklchColor((a.L + b.L) / 2, (a.C + b.C) / 2, ColorMath.Wrap(a.H + ColorMath.Turn(a.H, b.H) / 2)));
 	}
+
+	/// <summary>Whether <see cref="Completed()"/> works out <paramref name="role"/> when it is unset.</summary>
+	private static bool Completable(ThemeRole role) => role is ThemeRole.Subtle or ThemeRole.Link or ThemeRole.Highlight || Hues.Angles.ContainsKey(role);
 
 	/// <summary>
 	/// This palette with subtle, link, highlight and the hues worked out from its other colours where it leaves
@@ -601,7 +611,7 @@ public sealed record ThemePalette
 
 		Fill(ThemeRole.Subtle, this[ThemeRole.Muted] switch
 		{
-			{ Rgb: { } muted } => new ThemeColor(Mix(muted, background, 1 / 3.0), 8),
+			{ Rgb: { } muted } => new ThemeColor(Quieter(muted, background), 8),
 			{ } muted => muted,
 			null => null,
 		});
@@ -843,7 +853,8 @@ public sealed record ThemePalette
 
 	/// <summary>
 	/// The palette as JSON that <see cref="TryParse(string, out ThemePalette?, out string?)"/> reads back:
-	/// its name, mode, and each role set as <c>{"rgb":"#88c0d0","slot":6}</c>.
+	/// its name, mode, and each role set as <c>{"rgb":"#88c0d0","slot":6}</c>; a role reading would work out, left
+	/// unset, as <c>null</c>.
 	/// </summary>
 	public string ToJson()
 	{
@@ -856,7 +867,12 @@ public sealed record ThemePalette
 			json.WriteStartObject("colors");
 			foreach (var role in Enum.GetValues<ThemeRole>())
 			{
-				if (this[role] is not { } color) continue;
+				if (this[role] is not { } color)
+				{
+					// A role reading would work out is written unset, so it stays unset when read back.
+					if (Completable(role)) json.WriteNull(RoleName(role));
+					continue;
+				}
 				json.WriteStartObject(RoleName(role));
 				if (color.Rgb is { } rgb) json.WriteString("rgb", rgb.ToHex());
 				if (color.Slot is { } slot) json.WriteNumber("slot", slot);
