@@ -17,7 +17,7 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   a JSON palette works out the ones it leaves out (`ThemePalette.Completed`).
 - **A page can theme the sixteen ANSI colours.** HTML writes a standard colour as
   `var(--ms-ansi-N, #hex)`, so a page that sets `--ms-ansi-0` to `--ms-ansi-15` gives `ansi()` colours
-  its own scheme. A page that sets none shows the same colours as before.
+  its own scheme, and `--ms-ansi-bg-N` for backgrounds. A page that sets none shows the same colours as before.
 - **Text for a client without Unicode.** `AsciiFold` replaces each character an ASCII-only or
   Latin-1 client cannot show with the nearest one it can (`·` to `*`, `—` to `-`, `é` to `e`, `?` for
   the rest), keeping markup and, for the built-in stand-ins, each character's width. A game's own

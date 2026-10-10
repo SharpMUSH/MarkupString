@@ -12,8 +12,8 @@
 12 fg-xterm-200       | <span style="color: #ff00d7">xterm 200</span>
 13 fg-rgb             | <span style="color: #123456">rgb</span>
 14 fg-default         | default fg
-15 bg-standard        | <span style="background-color: var(--ms-ansi-4, #0000aa)">on blue</span>
-16 bg-bright          | <span style="background-color: var(--ms-ansi-12, #5555ff)">on bright blue</span>
+15 bg-standard        | <span style="background-color: var(--ms-ansi-bg-4, var(--ms-ansi-4, #0000aa))">on blue</span>
+16 bg-bright          | <span style="background-color: var(--ms-ansi-bg-12, var(--ms-ansi-12, #5555ff))">on bright blue</span>
 17 bg-xterm-24        | <span style="background-color: #005f87">on xterm 24</span>
 18 bg-rgb             | <span style="background-color: #008040">on rgb</span>
 19 bg-default         | default bg

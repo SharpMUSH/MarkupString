@@ -581,7 +581,7 @@ Four ways to make one:
 
 In HTML, the sixteen standard ANSI colours are written as `var(--ms-ansi-N, #hex)`, so a page sets
 `--ms-ansi-0` to `--ms-ansi-15` to give `ansi()` colours its own scheme; a page that sets none shows the
-usual colours (`AnsiCss`).
+usual colours (`AnsiCss`). Backgrounds read `--ms-ansi-bg-N` first, so a page can keep text readable on them.
 
 A theme is more than its colours. `ThemePalette.Look`, a `ThemeLook`, sets the shapes too: a border
 preset, its corners, edges and sides, the ornaments round a title (`"╡ ❖ "`, `" ❖ ╞"`), the tree

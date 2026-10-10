@@ -123,7 +123,7 @@ public class AnsiRenderTests
 	{
 		var text = MarkupText.Wrap(AnsiMarkup.Create(foreground: new AnsiColor.Xterm(3), background: new AnsiColor.Standard(4, false)), "x");
 		await Assert.That(Render(text, MarkupFormat.Html))
-			.IsEqualTo("<span style=\"color: var(--ms-ansi-3, #aa5500); background-color: var(--ms-ansi-4, #0000aa)\">x</span>");
+			.IsEqualTo("<span style=\"color: var(--ms-ansi-3, #aa5500); background-color: var(--ms-ansi-bg-4, var(--ms-ansi-4, #0000aa))\">x</span>");
 	}
 
 	[Test]
