@@ -285,6 +285,21 @@ public class WireCompatibilityTests
 		await Assert.That(MarkupTextSerializer.Inspect(json, registry).CanRewrite).IsFalse();
 	}
 
+	/// <summary>
+	/// A copy of a row with the same layout id but a different tree must not be interned as the
+	/// original, or saving the original after reading the copy would write the copy's tree.
+	/// </summary>
+	[Test]
+	public async Task LayoutWithTheSameId_AndAnotherTree_IsNotTakenForTheOriginal()
+	{
+		var copy = Layout.Replace("\"t\":\"Hooooo?\"", "\"t\":\"Hiiiiii\"");
+		_ = MarkupTextSerializer.Deserialize(copy, Registry);
+
+		var read = MarkupTextSerializer.Deserialize(Layout, Registry);
+
+		await Assert.That(MarkupTextSerializer.Serialize(read, Registry)).IsEqualTo(Layout);
+	}
+
 	[Test]
 	public async Task WorstFinding_Wins()
 	{

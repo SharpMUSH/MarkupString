@@ -29,6 +29,13 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **A codec that throws no longer fails the read.** Its layer reads as an `UnknownMarkup` holding the
   raw object, which renders as nothing and is written back as it was.
 
+### Fixed
+
+- **A layout read from a copy of a row with a different tree is no longer taken for the original.**
+  Layers are interned by equality, which compared a layout's id and text but not its tree, so after
+  reading an edited or damaged copy, reading the original could hand back the copy's tree, and
+  saving it wrote that tree.
+
 ## 2.18.1 — 2026-10-13
 
 ### Changed
