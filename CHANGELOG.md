@@ -8,6 +8,17 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## 2.18.1 — 2026-10-13
+
+### Changed
+
+- **`Repeat` writes the text once instead of concatenating copies.** It builds the string in a few
+  block copies and the runs directly, so `MarkupText.Space.Repeat(1000000)` takes about 1 ms and 2 MB
+  instead of 18 ms and 18 MB. Padding, fills and blank lines in layouts go through it too. The
+  result is unchanged.
+
+## 2.18.0 — 2026-10-10
+
 ### Added
 
 - **More theme colours.** `ThemeRole` gains `Subtle` (text quieter than muted), `Link`, `Highlight` (a
@@ -18,16 +29,21 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **A page can theme the sixteen ANSI colours.** HTML writes a standard colour as
   `var(--ms-ansi-N, #hex)`, so a page that sets `--ms-ansi-0` to `--ms-ansi-15` gives `ansi()` colours
   its own scheme, and `--ms-ansi-bg-N` for backgrounds. A page that sets none shows the same colours as before.
-- **Text for a client without Unicode.** `AsciiFold` replaces each character an ASCII-only or
-  Latin-1 client cannot show with the nearest one it can (`·` to `*`, `—` to `-`, `é` to `e`, `?` for
-  the rest), keeping markup and, for the built-in stand-ins, each character's width. A game's own
-  stand-ins come first. `LayoutContext.Fold` folds the text inside every block before it is
-  measured, through the new `Block.MapText`, so tables stay aligned whatever the stand-ins' widths.
 
 ### Changed
 
 - **A base16 palette's tertiary colour is `base09` (orange),** not `base0C`, which info already used,
   so bullets and info text are no longer the same colour.
+
+## 2.17.0 — 2026-10-09
+
+### Added
+
+- **Text for a client without Unicode.** `AsciiFold` replaces each character an ASCII-only or
+  Latin-1 client cannot show with the nearest one it can (`·` to `*`, `—` to `-`, `é` to `e`, `?` for
+  the rest), keeping markup and, for the built-in stand-ins, each character's width. A game's own
+  stand-ins come first. `LayoutContext.Fold` folds the text inside every block before it is
+  measured, through the new `Block.MapText`, so tables stay aligned whatever the stand-ins' widths.
 
 ## 2.16.0 — 2026-10-09
 

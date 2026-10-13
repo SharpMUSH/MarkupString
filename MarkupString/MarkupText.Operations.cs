@@ -297,9 +297,28 @@ public sealed partial class MarkupText
 	{
 		if (count <= 0 || Length == 0) return Empty;
 		if (count == 1) return this;
-		var parts = new MarkupText[count];
-		Array.Fill(parts, this);
-		return Concat(parts.AsSpan());
+		var text = Length == 1
+			? new string(Text[0], count)
+			: string.Create(checked(Length * count), Text, static (span, unit) =>
+			{
+				// Each copy doubles what is written, so n copies take log n block copies.
+				unit.AsSpan().CopyTo(span);
+				for (var filled = unit.Length; filled < span.Length; filled *= 2)
+					span[..Math.Min(filled, span.Length - filled)].CopyTo(span[filled..]);
+			});
+		if (Runs.IsDefaultOrEmpty) return new MarkupText(text, ImmutableArray<Run>.Empty);
+		// One style over the whole text: the copies would coalesce into one run anyway. A point
+		// marks a single carrier, so its copies stay apart.
+		if (Runs is [{ Start: 0 } whole] && whole.Length == Length && !whole.Markups.Any(m => m is IPointMarkup))
+			return new MarkupText(text, [new Run(0, text.Length, whole.Markups)]);
+
+		var runs = ImmutableArray.CreateBuilder<Run>(Runs.Length * count);
+		for (var copy = 0; copy < count; copy++)
+		{
+			var offset = copy * Length;
+			foreach (var run in Runs) runs.Add(run with { Start = run.Start + offset });
+		}
+		return new MarkupText(text, runs.MoveToImmutable());
 	}
 
 	/// <summary>Removes <paramref name="length"/> code units from <paramref name="index"/>.</summary>

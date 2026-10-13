@@ -1,4 +1,10 @@
 #nullable enable
+MarkupString.AsciiFold
+MarkupString.AsciiFold.AsciiFold(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, string!>>? translations = null, bool latin1 = false) -> void
+MarkupString.AsciiFold.Fold(MarkupString.MarkupText! text) -> MarkupString.MarkupText!
+MarkupString.AsciiFold.Fold(string! text) -> string!
+MarkupString.AsciiFold.Latin1.get -> bool
+MarkupString.AsciiFold.Translations.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
 MarkupString.BellMarkup
 MarkupString.BellMarkup.Carrier.get -> string!
 MarkupString.BufferWriterExtensions
@@ -526,6 +532,8 @@ MarkupString.Layout.LayoutContext.AsciiOnly.init -> void
 MarkupString.Layout.LayoutContext.Border(MarkupString.Layout.BorderStyle? style) -> MarkupString.Layout.BorderStyle!
 MarkupString.Layout.LayoutContext.Draw(MarkupString.Layout.Block! block, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 MarkupString.Layout.LayoutContext.Equals(MarkupString.Layout.LayoutContext? other) -> bool
+MarkupString.Layout.LayoutContext.Fold.get -> MarkupString.AsciiFold?
+MarkupString.Layout.LayoutContext.Fold.init -> void
 MarkupString.Layout.LayoutContext.Glyph(MarkupString.MarkupText! piece, string! fallback) -> MarkupString.MarkupText!
 MarkupString.Layout.LayoutContext.Guide(MarkupString.Layout.TreeGuide? guide) -> MarkupString.Layout.TreeGuide!
 MarkupString.Layout.LayoutContext.LayoutContext() -> void
@@ -1060,6 +1068,7 @@ MarkupString.ThemePalette.BackgroundColor.get -> MarkupString.RgbColor
 MarkupString.ThemePalette.Check() -> System.Collections.Generic.IReadOnlyList<MarkupString.ContrastShortfall>!
 MarkupString.ThemePalette.Colors.get -> System.Collections.Immutable.ImmutableDictionary<MarkupString.ThemeRole, MarkupString.ThemeColor>!
 MarkupString.ThemePalette.Colors.init -> void
+MarkupString.ThemePalette.Completed() -> MarkupString.ThemePalette!
 MarkupString.ThemePalette.Contrast.get -> double
 MarkupString.ThemePalette.Contrast.init -> void
 MarkupString.ThemePalette.Equals(MarkupString.ThemePalette? other) -> bool
@@ -1081,16 +1090,27 @@ MarkupString.ThemePalette.With(MarkupString.ThemeRole role, MarkupString.ThemeCo
 MarkupString.ThemePalette.this[MarkupString.ThemeRole role].get -> MarkupString.ThemeColor?
 MarkupString.ThemeRole
 MarkupString.ThemeRole.Background = 0 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Blue = 19 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Cyan = 18 -> MarkupString.ThemeRole
 MarkupString.ThemeRole.Error = 9 -> MarkupString.ThemeRole
 MarkupString.ThemeRole.Foreground = 2 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Green = 17 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Highlight = 13 -> MarkupString.ThemeRole
 MarkupString.ThemeRole.Info = 10 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Link = 12 -> MarkupString.ThemeRole
 MarkupString.ThemeRole.Muted = 6 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Orange = 15 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Pink = 21 -> MarkupString.ThemeRole
 MarkupString.ThemeRole.Primary = 3 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Purple = 20 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Red = 14 -> MarkupString.ThemeRole
 MarkupString.ThemeRole.Secondary = 4 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Subtle = 11 -> MarkupString.ThemeRole
 MarkupString.ThemeRole.Success = 7 -> MarkupString.ThemeRole
 MarkupString.ThemeRole.Surface = 1 -> MarkupString.ThemeRole
 MarkupString.ThemeRole.Tertiary = 5 -> MarkupString.ThemeRole
 MarkupString.ThemeRole.Warning = 8 -> MarkupString.ThemeRole
+MarkupString.ThemeRole.Yellow = 16 -> MarkupString.ThemeRole
 MarkupString.TrimType
 MarkupString.TrimType.TrimBoth = 2 -> MarkupString.TrimType
 MarkupString.TrimType.TrimEnd = 1 -> MarkupString.TrimType
@@ -1143,6 +1163,7 @@ override MarkupString.Layout.Aligned.<Clone>$() -> MarkupString.Layout.Aligned!
 override MarkupString.Layout.Aligned.Draw(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Aligned.Equals(object? obj) -> bool
 override MarkupString.Layout.Aligned.GetHashCode() -> int
+override MarkupString.Layout.Aligned.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 override MarkupString.Layout.Aligned.ToString() -> string!
 override MarkupString.Layout.Block.Equals(object? obj) -> bool
 override MarkupString.Layout.Block.GetHashCode() -> int
@@ -1157,11 +1178,13 @@ override MarkupString.Layout.Bullets.<Clone>$() -> MarkupString.Layout.Bullets!
 override MarkupString.Layout.Bullets.Draw(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Bullets.Equals(object? obj) -> bool
 override MarkupString.Layout.Bullets.GetHashCode() -> int
+override MarkupString.Layout.Bullets.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 override MarkupString.Layout.Bullets.ToString() -> string!
 override MarkupString.Layout.Colored.<Clone>$() -> MarkupString.Layout.Colored!
 override MarkupString.Layout.Colored.Draw(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Colored.Equals(object? obj) -> bool
 override MarkupString.Layout.Colored.GetHashCode() -> int
+override MarkupString.Layout.Colored.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 override MarkupString.Layout.Colored.ToString() -> string!
 override MarkupString.Layout.ColumnFormat.Equals(object? obj) -> bool
 override MarkupString.Layout.ColumnFormat.GetHashCode() -> int
@@ -1177,6 +1200,7 @@ override MarkupString.Layout.Fields.Draw(MarkupString.Layout.LayoutContext! cont
 override MarkupString.Layout.Fields.DrawLinear(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Fields.Equals(object? obj) -> bool
 override MarkupString.Layout.Fields.GetHashCode() -> int
+override MarkupString.Layout.Fields.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 override MarkupString.Layout.Fields.Measure(MarkupString.Layout.LayoutContext! context, int width) -> MarkupString.Layout.BlockMeasure
 override MarkupString.Layout.Fields.ToString() -> string!
 override MarkupString.Layout.Figure.<Clone>$() -> MarkupString.Layout.Figure!
@@ -1184,30 +1208,35 @@ override MarkupString.Layout.Figure.Draw(MarkupString.Layout.LayoutContext! cont
 override MarkupString.Layout.Figure.DrawLinear(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Figure.Equals(object? obj) -> bool
 override MarkupString.Layout.Figure.GetHashCode() -> int
+override MarkupString.Layout.Figure.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 override MarkupString.Layout.Figure.ToString() -> string!
 override MarkupString.Layout.Flex.<Clone>$() -> MarkupString.Layout.Flex!
 override MarkupString.Layout.Flex.Draw(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Flex.DrawLinear(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Flex.Equals(object? obj) -> bool
 override MarkupString.Layout.Flex.GetHashCode() -> int
+override MarkupString.Layout.Flex.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 override MarkupString.Layout.Flex.ToString() -> string!
 override MarkupString.Layout.Frame.<Clone>$() -> MarkupString.Layout.Frame!
 override MarkupString.Layout.Frame.Draw(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Frame.DrawLinear(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Frame.Equals(object? obj) -> bool
 override MarkupString.Layout.Frame.GetHashCode() -> int
+override MarkupString.Layout.Frame.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 override MarkupString.Layout.Frame.ToString() -> string!
 override MarkupString.Layout.Gauge.<Clone>$() -> MarkupString.Layout.Gauge!
 override MarkupString.Layout.Gauge.Draw(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Gauge.DrawLinear(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Gauge.Equals(object? obj) -> bool
 override MarkupString.Layout.Gauge.GetHashCode() -> int
+override MarkupString.Layout.Gauge.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 override MarkupString.Layout.Gauge.ToString() -> string!
 override MarkupString.Layout.Grid.<Clone>$() -> MarkupString.Layout.Grid!
 override MarkupString.Layout.Grid.Draw(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Grid.DrawLinear(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Grid.Equals(object? obj) -> bool
 override MarkupString.Layout.Grid.GetHashCode() -> int
+override MarkupString.Layout.Grid.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 override MarkupString.Layout.Grid.ToString() -> string!
 override MarkupString.Layout.Indent.GetHashCode() -> int
 override MarkupString.Layout.LayoutCell.Equals(object? obj) -> bool
@@ -1238,27 +1267,32 @@ override MarkupString.Layout.Rule.Draw(MarkupString.Layout.LayoutContext! contex
 override MarkupString.Layout.Rule.DrawLinear(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Rule.Equals(object? obj) -> bool
 override MarkupString.Layout.Rule.GetHashCode() -> int
+override MarkupString.Layout.Rule.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 override MarkupString.Layout.Rule.ToString() -> string!
 override MarkupString.Layout.Shaded.<Clone>$() -> MarkupString.Layout.Shaded!
 override MarkupString.Layout.Shaded.Draw(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Shaded.Equals(object? obj) -> bool
 override MarkupString.Layout.Shaded.GetHashCode() -> int
+override MarkupString.Layout.Shaded.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 override MarkupString.Layout.Shaded.ToString() -> string!
 override MarkupString.Layout.Sized.<Clone>$() -> MarkupString.Layout.Sized!
 override MarkupString.Layout.Sized.Draw(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Sized.Equals(object? obj) -> bool
 override MarkupString.Layout.Sized.GetHashCode() -> int
+override MarkupString.Layout.Sized.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 override MarkupString.Layout.Sized.ToString() -> string!
 override MarkupString.Layout.Stack.<Clone>$() -> MarkupString.Layout.Stack!
 override MarkupString.Layout.Stack.Draw(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Stack.Equals(object? obj) -> bool
 override MarkupString.Layout.Stack.GetHashCode() -> int
+override MarkupString.Layout.Stack.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 override MarkupString.Layout.Stack.ToString() -> string!
 override MarkupString.Layout.Table.<Clone>$() -> MarkupString.Layout.Table!
 override MarkupString.Layout.Table.Draw(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Table.DrawLinear(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Table.Equals(object? obj) -> bool
 override MarkupString.Layout.Table.GetHashCode() -> int
+override MarkupString.Layout.Table.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 override MarkupString.Layout.Table.ToString() -> string!
 override MarkupString.Layout.TableColumn.Equals(object? obj) -> bool
 override MarkupString.Layout.TableColumn.GetHashCode() -> int
@@ -1268,6 +1302,7 @@ override MarkupString.Layout.TextBlock.Draw(MarkupString.Layout.LayoutContext! c
 override MarkupString.Layout.TextBlock.DrawLinear(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.TextBlock.Equals(object? obj) -> bool
 override MarkupString.Layout.TextBlock.GetHashCode() -> int
+override MarkupString.Layout.TextBlock.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 override MarkupString.Layout.TextBlock.Measure(MarkupString.Layout.LayoutContext! context, int width) -> MarkupString.Layout.BlockMeasure
 override MarkupString.Layout.TextBlock.ToString() -> string!
 override MarkupString.Layout.TextLine.GetHashCode() -> int
@@ -1275,12 +1310,14 @@ override MarkupString.Layout.Themed.<Clone>$() -> MarkupString.Layout.Themed!
 override MarkupString.Layout.Themed.Draw(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Themed.Equals(object? obj) -> bool
 override MarkupString.Layout.Themed.GetHashCode() -> int
+override MarkupString.Layout.Themed.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 override MarkupString.Layout.Themed.ToString() -> string!
 override MarkupString.Layout.Tree.<Clone>$() -> MarkupString.Layout.Tree!
 override MarkupString.Layout.Tree.Draw(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Tree.DrawLinear(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 override MarkupString.Layout.Tree.Equals(object? obj) -> bool
 override MarkupString.Layout.Tree.GetHashCode() -> int
+override MarkupString.Layout.Tree.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 override MarkupString.Layout.Tree.ToString() -> string!
 override MarkupString.Layout.TreeGuide.Equals(object? obj) -> bool
 override MarkupString.Layout.TreeGuide.GetHashCode() -> int
@@ -1353,6 +1390,7 @@ override sealed MarkupString.Layout.Table.Equals(MarkupString.Layout.Block? othe
 override sealed MarkupString.Layout.TextBlock.Equals(MarkupString.Layout.Block? other) -> bool
 override sealed MarkupString.Layout.Themed.Equals(MarkupString.Layout.Block? other) -> bool
 override sealed MarkupString.Layout.Tree.Equals(MarkupString.Layout.Block? other) -> bool
+static MarkupString.AsciiFold.Default.get -> MarkupString.AsciiFold!
 static MarkupString.BufferWriterExtensions.Write(this System.Buffers.IBufferWriter<char>! writer, System.ReadOnlySpan<char> text) -> void
 static MarkupString.ColorGradient.Blend(MarkupString.RgbColor from, MarkupString.RgbColor to, double t, MarkupString.GradientSpace space) -> MarkupString.RgbColor
 static MarkupString.ColorGradient.operator !=(MarkupString.ColorGradient? left, MarkupString.ColorGradient? right) -> bool
@@ -1618,6 +1656,7 @@ static readonly MarkupString.PreformattedMarkup.Instance -> MarkupString.Preform
 virtual MarkupString.Layout.Block.DrawLinear(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
 virtual MarkupString.Layout.Block.EqualityContract.get -> System.Type!
 virtual MarkupString.Layout.Block.Equals(MarkupString.Layout.Block? other) -> bool
+virtual MarkupString.Layout.Block.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
 virtual MarkupString.Layout.Block.Measure(MarkupString.Layout.LayoutContext! context, int width) -> MarkupString.Layout.BlockMeasure
 virtual MarkupString.Layout.Block.PrintMembers(System.Text.StringBuilder! builder) -> bool
 virtual MarkupString.Layout.LayoutCell.EqualityContract.get -> System.Type!

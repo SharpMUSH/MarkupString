@@ -360,6 +360,47 @@ public class MarkupTextOperationsTests
 	public async Task Repeat_ZeroTimes_ReturnsEmpty()
 		=> await Assert.That(MarkupText.Plain("ab").Repeat(0).Length).IsEqualTo(0);
 
+	public static IEnumerable<Func<MarkupText>> RepeatUnits()
+	{
+		yield return () => MarkupText.Space;
+		yield return () => MarkupText.Plain("abc");
+		yield return () => MarkupText.Wrap(Red, "-");
+		yield return () => MarkupText.Wrap(Red, "ab");
+		yield return () => MarkupText.Concat([MarkupText.Wrap(Red, "a"), MarkupText.Plain("bc"), MarkupText.Wrap(Red, "d")]);
+		yield return () => MarkupText.Concat(MarkupText.Plain("x"), MarkupText.Wrap(Red, "y"));
+		yield return MarkupText.Bell;
+		yield return () => MarkupText.Concat(MarkupText.Plain("Hey"), MarkupText.Bell());
+	}
+
+	/// <summary>Repeat builds what concatenating the copies one by one builds, runs and all.</summary>
+	[Test]
+	[MethodDataSource(nameof(RepeatUnits))]
+	public async Task Repeat_MatchesConcatenatedCopies(MarkupText unit)
+	{
+		foreach (var count in new[] { 2, 3, 7, 64, 1001 })
+		{
+			var expected = MarkupText.Concat(Enumerable.Repeat(unit, count).ToArray().AsSpan());
+			var result = unit.Repeat(count);
+
+			await Assert.That(result.Text).IsEqualTo(expected.Text);
+			await Assert.That(result.Runs.SequenceEqual(expected.Runs)).IsTrue();
+		}
+	}
+
+	[Test]
+	public async Task Repeat_PlainText_AllocatesOnlyTheString()
+	{
+		const int count = 100_000;
+		GC.KeepAlive(MarkupText.Space.Repeat(count));
+
+		var before = GC.GetAllocatedBytesForCurrentThread();
+		GC.KeepAlive(MarkupText.Space.Repeat(count));
+		var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+
+		// Two bytes a character for the string, plus the MarkupText itself.
+		await Assert.That(allocated).IsBetween(2L * count, 2L * count + 512);
+	}
+
 	// Remove, Replace, Insert
 
 	[Test]
