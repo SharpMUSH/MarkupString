@@ -86,25 +86,35 @@ public class WireCompatibilityTests
 	[Arguments("""{"v":99,"t":"x","future":true}""")]
 	[Arguments("""{"v":2,"text":"important"}""")]
 	[Arguments("""{"v":"1","t":"x"}""")]
-	public async Task UnknownVersion_IsUnsupported_AndNotRead(string json)
+	public async Task UnknownVersion_IsUnsupported(string json)
 	{
 		var result = MarkupTextSerializer.Inspect(json, Registry);
 
 		await Assert.That(result.Status).IsEqualTo(MarkupReadStatus.Unsupported);
 		await Assert.That(result.CanRewrite).IsFalse();
-		await Assert.That(result.Value).IsNull();
 		await Assert.That(result.Diagnostics.Single()).Contains("Wire version");
 	}
 
+	/// <summary>
+	/// A newer row shows as its plain text, and nothing else in it is read as version 1: its
+	/// palette and cover may mean something else in the version that wrote them.
+	/// </summary>
 	[Test]
-	public async Task UnknownVersion_Deserialize_Throws()
-		=> await Assert.That(() => MarkupTextSerializer.Deserialize("""{"v":2,"text":"important"}""", Registry))
-			.Throws<JsonException>();
+	public async Task UnknownVersion_ShowsItsPlainTextOnly()
+	{
+		const string json = """{"v":2,"t":"Hello world","p":[null,[{"k":"ansi","f":9}]],"r":[5,1]}""";
+
+		await Assert.That(MarkupTextSerializer.Inspect(json, Registry).Value).IsEqualTo(MarkupText.Plain("Hello world"));
+		var read = MarkupTextSerializer.Deserialize(json, Registry);
+		await Assert.That(read.Text).IsEqualTo("Hello world");
+		await Assert.That(read.Runs).IsEmpty();
+		await Assert.That(MarkupTextSerializer.Deserialize(Encoding.UTF8.GetBytes(json), Registry).Text).IsEqualTo("Hello world");
+	}
 
 	[Test]
-	public async Task UnknownVersion_Utf8Deserialize_Throws()
-		=> await Assert.That(() => MarkupTextSerializer.Deserialize(Encoding.UTF8.GetBytes("""{"v":2,"t":"x"}"""), Registry))
-			.Throws<JsonException>();
+	public async Task UnknownVersion_WithNoText_ShowsAsEmpty()
+		=> await Assert.That(MarkupTextSerializer.Deserialize("""{"v":2,"text":"important"}""", Registry))
+			.IsSameReferenceAs(MarkupText.Empty);
 
 	[Test]
 	public async Task VersionOne_IsRead()
@@ -256,7 +266,23 @@ public class WireCompatibilityTests
 
 		await Assert.That(result.Status).IsEqualTo(MarkupReadStatus.Damaged);
 		await Assert.That(result.Value!.Runs[0].Markups[0]).IsEqualTo((IMarkup)new UnknownMarkup("boom", """{"k":"boom","q":1}"""));
-		await Assert.That(() => MarkupTextSerializer.Deserialize(json, registry)).Throws<InvalidOperationException>();
+
+		// Deserialize reads it the same way rather than failing the read, and the layer writes back as it was.
+		var read = MarkupTextSerializer.Deserialize(json, registry);
+		await Assert.That(read.Runs[0].Markups[0]).IsEqualTo((IMarkup)new UnknownMarkup("boom", """{"k":"boom","q":1}"""));
+		await Assert.That(MarkupTextSerializer.Serialize(read, registry)).IsEqualTo(json);
+	}
+
+	[Test]
+	public async Task ThrowingCodec_InsideALayout_DoesNotFailTheRead()
+	{
+		var json = Layout.Replace("{\"k\":\"ansi\",\"f\":10}", "{\"k\":\"boom\",\"f\":10}");
+		var registry = Registry.With(new ThrowingCodec());
+
+		var read = MarkupTextSerializer.Deserialize(json, registry);
+
+		await Assert.That(read.Text).IsEqualTo(MarkupTextSerializer.Deserialize(Layout, Registry).Text);
+		await Assert.That(MarkupTextSerializer.Inspect(json, registry).CanRewrite).IsFalse();
 	}
 
 	[Test]

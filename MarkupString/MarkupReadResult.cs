@@ -52,8 +52,9 @@ public sealed class MarkupReadResult
 	public MarkupReadStatus Status { get; }
 
 	/// <summary>
-	/// The text read. Null when nothing could be read without guessing: the payload is not a JSON
-	/// object, or it names a wire version this reader does not know.
+	/// The text read, the same text <see cref="MarkupTextSerializer.Deserialize(string)"/> returns.
+	/// For a wire version this reader does not know it is the payload's plain text only. Null when
+	/// the payload is not a JSON object, so there is no text to show.
 	/// </summary>
 	public MarkupText? Value { get; }
 

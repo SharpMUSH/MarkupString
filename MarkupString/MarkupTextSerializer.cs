@@ -265,12 +265,19 @@ public static class MarkupTextSerializer
 	/// Reads the top-level envelope after checking its wire version, which nested texts (inside a
 	/// layout) do not carry: a version is a property of the stored document, not of each text in it.
 	/// </summary>
-	private static MarkupText ReadVersioned(JsonElement root, MarkupRegistry? registry)
-	{
-		if (root.ValueKind == JsonValueKind.Object && !IsKnownVersion(root, out var version))
-			throw new JsonException($"Markup wire version {version} is not one this reader knows; it reads version {WireVersion}.");
-		return Read(root, registry);
-	}
+	private static MarkupText ReadVersioned(JsonElement root, MarkupRegistry? registry) =>
+		root.ValueKind == JsonValueKind.Object && !IsKnownVersion(root, out _) ? Fallback(root) : Read(root, registry);
+
+	/// <summary>
+	/// What a payload in a wire version this reader does not know shows as: its <c>"t"</c> as plain
+	/// text. Every wire version keeps <c>"t"</c> as the plain text of the whole document so that an
+	/// older reader has something to show; nothing else in the payload is read, since its meaning
+	/// belongs to a version this reader does not know.
+	/// </summary>
+	private static MarkupText Fallback(JsonElement root) =>
+		root.TryGetProperty("t", out var text) && text.ValueKind == JsonValueKind.String
+			? MarkupText.Plain(text.GetString() ?? string.Empty)
+			: MarkupText.Empty;
 
 	/// <summary>
 	/// Whether <paramref name="root"/> is in a wire version this reader knows. No <c>"v"</c> is
@@ -419,13 +426,30 @@ public static class MarkupTextSerializer
 	/// Reads one markup layer. As on the write side, <paramref name="registry"/> falls back to
 	/// <see cref="MarkupRegistry.Default"/> only where a codec is actually looked up.
 	/// </summary>
-	private static IMarkup ReadMarkup(JsonElement element, MarkupRegistry? registry)
+	private static IMarkup ReadMarkup(JsonElement element, MarkupRegistry? registry) => ReadMarkup(element, registry, out _);
+
+	/// <summary>
+	/// Reads one markup layer. A codec that throws — a game's own, or one meeting a row it was never
+	/// written for — leaves the layer as an <see cref="UnknownMarkup"/> holding the raw object, so the
+	/// read still succeeds, the layer renders as nothing, and writing the text back keeps it.
+	/// <paramref name="failure"/> is the codec's message when it threw.
+	/// </summary>
+	private static IMarkup ReadMarkup(JsonElement element, MarkupRegistry? registry, out string? failure)
 	{
+		failure = null;
 		var kind = KindOf(element);
 		if (kind == NeutralKind) return NeutralMarkup.Instance;
-		if (kind == Layout.LayoutJson.Kind) return Layout.LayoutJson.Read(element, registry);
-		var codec = ElementCodecs.Find(kind) ?? (registry ?? MarkupRegistry.Default).FindCodec(kind);
-		return codec is null ? new UnknownMarkup(kind, element.GetRawText()) : codec.Read(element);
+		try
+		{
+			if (kind == Layout.LayoutJson.Kind) return Layout.LayoutJson.Read(element, registry);
+			var codec = ElementCodecs.Find(kind) ?? (registry ?? MarkupRegistry.Default).FindCodec(kind);
+			return codec is null ? new UnknownMarkup(kind, element.GetRawText()) : codec.Read(element);
+		}
+		catch (Exception exception) when (exception is not OutOfMemoryException)
+		{
+			failure = exception.Message;
+			return new UnknownMarkup(kind, element.GetRawText());
+		}
 	}
 
 	/// <summary>The kind of a markup object, inferred as described on this class for one with no <c>"k"</c>.</summary>
@@ -438,24 +462,19 @@ public static class MarkupTextSerializer
 
 	/// <summary>
 	/// <see cref="ReadMarkup(JsonElement, MarkupRegistry?)"/> for <see cref="Inspect(string)"/>: a codec
-	/// that throws leaves the layer opaque instead of failing the read, and every layer a codec reads
-	/// is written straight back and compared with what it was read from, which is the only way to
-	/// know that a codec — core's, a package's or a game's — kept everything in it.
+	/// that throws is reported, and every layer a codec reads is written straight back and compared
+	/// with what it was read from, which is the only way to know that a codec — core's, a package's or a game's — kept everything in it.
 	/// </summary>
 	private static IMarkup ReadMarkup(JsonElement element, MarkupRegistry? registry, ReadCheck check)
 	{
 		var kind = KindOf(element);
 		if (element.TryGetProperty("k", out var k) && k.ValueKind != JsonValueKind.String)
 			check.Damage($"A layer's \"k\" is {Describe(k)}, not a string; it reads as \"{kind}\".");
-		IMarkup markup;
-		try
+		var markup = ReadMarkup(element, registry, out var failure);
+		if (failure is not null)
 		{
-			markup = ReadMarkup(element, registry);
-		}
-		catch (Exception exception) when (exception is not OutOfMemoryException)
-		{
-			check.Damage($"The \"{kind}\" codec could not read a layer ({exception.Message}); it is kept as an unknown layer.");
-			return new UnknownMarkup(kind, element.GetRawText());
+			check.Damage($"The \"{kind}\" codec could not read a layer ({failure}); it is kept as an unknown layer.");
+			return markup;
 		}
 
 		if (markup is UnknownMarkup)
@@ -567,8 +586,8 @@ public static class MarkupTextSerializer
 			// and a version this reader does not know is not read as one it does.
 			if (!IsKnownVersion(root, out var version))
 			{
-				check.Unsupported($"Wire version {version} is not one this reader knows; it reads version {WireVersion}.");
-				return check.Result(value: null);
+				check.Unsupported($"Wire version {version} is not one this reader knows; it reads version {WireVersion}. The value is its plain text only.");
+				return check.Result(Fallback(root));
 			}
 
 			foreach (var property in root.EnumerateObject())

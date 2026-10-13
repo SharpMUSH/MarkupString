@@ -20,12 +20,14 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   overruns its text, a codec that throws, and payloads that are not JSON objects. See
   [Serialization](docs/serialization.md#reading-stored-text-for-saving-inspect).
 - **A wire version.** The stored shape is wire version 1 (`MarkupTextSerializer.WireVersion`), which
-  writes no `"v"`, as every release since 1.0.0 has. The bytes written are unchanged.
+  writes no `"v"`, as every release since 1.0.0 has. The bytes written are unchanged. A payload with
+  any other `"v"` reads as its `"t"` in plain text, without the rest being read as version 1, and
+  every later version keeps `"t"` as the document's plain text so that this fallback always works.
 
 ### Changed
 
-- **`Deserialize` throws `JsonException` for a `"v"` other than 1,** instead of reading the payload
-  as version 1. No writer has produced one, so no stored row changes how it reads.
+- **A codec that throws no longer fails the read.** Its layer reads as an `UnknownMarkup` holding the
+  raw object, which renders as nothing and is written back as it was.
 
 ## 2.18.1 — 2026-10-13
 

@@ -78,9 +78,15 @@ property, and every released writer since 1.0.0 has written it. A reader treats 
 `"v":1`, as version 1.
 
 Any other `"v"` is a format this reader does not know. The reader checks it before it reads anything
-else, because the version decides what the other properties mean. `Deserialize` throws a
-`JsonException` for an unknown version, and `Inspect` reports it as `Unsupported` with no value. A
-row in an unknown version is never read as version 1 and never saved back as an empty or plain text.
+else, because the version decides what the other properties mean. It does not fail the read: it
+shows the payload's `"t"` as plain text, and reads nothing else, since a palette or cover from
+another version may not mean what version 1 means by it. `Inspect` reports the same value as
+`Unsupported`, so a caller keeps the stored row rather than saving the plain text over it.
+
+That fallback is a rule every later version has to keep: **`"t"` is always the plain text of the
+whole document**, so a reader that knows only an earlier version always has something to show.
+It is the same idea as the plain-text `body` a Matrix client falls back on for an event type it
+does not know.
 
 The wire version is separate from the package version: a release that adds a markup kind or a
 property does not change it. It changes only if the envelope itself changes in a way a version 1
@@ -110,10 +116,10 @@ else
 
 When several things are wrong, the worst one decides `Status`, and `Diagnostics` lists them all.
 
-`Value` is null only when nothing could be read without guessing: the payload is not a JSON object,
-or its wire version is unknown. Otherwise it is the same text `Deserialize` returns, fit to show.
-A codec that throws does not fail `Inspect`: its layer is kept as an `UnknownMarkup` and the result
-is `Damaged`. `Deserialize` still lets the exception through.
+`Value` is the same text `Deserialize` returns, fit to show. It is null only when the payload is
+not a JSON object, so there is no text in it. A codec that throws fails neither read: its layer is
+kept as an `UnknownMarkup` holding the raw object, renders as nothing and writes back as it was,
+and `Inspect` reports the result as `Damaged`.
 
 To find what a codec would leave out, `Inspect` writes each layer it read straight back and
 compares the two. A codec may write a value in a newer form than the one it read, such as a legacy
@@ -127,8 +133,9 @@ the path that saves a value back, not on every read.
 
 ## Validation
 
-Both `Deserialize` overloads reject trailing content after the document and an unknown wire
-version. A run cover that overflows the text is clipped rather than rejected, so a truncated or
+Both `Deserialize` overloads reject trailing content after the document, and they throw for a
+payload that is not JSON or not an object, since there is no text in it to show. Nothing else
+fails a read. A run cover that overflows the text is clipped rather than rejected, so a truncated or
 slightly-wrong `r` degrades to less markup instead of an exception; `Inspect` reports it as
 `Damaged`.
 
