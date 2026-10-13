@@ -499,7 +499,7 @@ public static class MarkupTextSerializer
 		using var rewritten = JsonDocument.Parse(written);
 		// A legacy neutral object is recognised by its "n", which the neutral kind does not write.
 		var ignore = kind == NeutralKind && !element.TryGetProperty("k", out _) ? "n" : null;
-		if (WireShape.Lost(element, rewritten.RootElement, ignore) is { } path)
+		if (WireShape.Lost(element, rewritten.RootElement, ignore, kind) is { } path)
 			check.Loss($"A \"{kind}\" layer would not be written back as read: {path}.");
 		return markup;
 	}

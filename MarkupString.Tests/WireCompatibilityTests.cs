@@ -145,6 +145,20 @@ public class WireCompatibilityTests
 		await Assert.That(result.Diagnostics.Single()).Contains("/future is dropped");
 	}
 
+	/// <summary>
+	/// A value a codec cannot read is written back as something else: an array where a string
+	/// belongs, a number where a name belongs. Only the ANSI codec's legacy colour arrays are written
+	/// back as a scalar on purpose.
+	/// </summary>
+	[Test]
+	[Arguments("""{"t":"x","p":[null,[{"k":"sound","s":[1,2]}]],"r":[1,1]}""")]
+	[Arguments("""{"t":"x","p":[null,[{"k":"pane","n":5}]],"r":[1,1]}""")]
+	[Arguments("""{"t":"x","p":[null,[{"k":"html","h":"b","a":7}]],"r":[1,1]}""")]
+	[Arguments("""{"t":"x","p":[null,[{"k":"ansi","lt":[1]}]],"r":[1,1]}""")]
+	[Arguments("""{"t":"x","p":[null,[{"k":"ansi","f":[99,99]}]],"r":[1,1]}""")]
+	public async Task KnownKind_WithAValueOfTheWrongKind_IsUnsupported(string json)
+		=> await Assert.That(MarkupTextSerializer.Inspect(json, Registry).Status).IsEqualTo(MarkupReadStatus.Unsupported);
+
 	[Test]
 	public async Task Neutral_WithAPropertyItDoesNotKnow_IsUnsupported()
 		=> await Assert.That(MarkupTextSerializer.Inspect("""{"t":"x","p":[null,[{"k":"neutral","future":1}]],"r":[1,1]}""", Registry).Status)

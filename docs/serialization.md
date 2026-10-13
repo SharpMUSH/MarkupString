@@ -149,10 +149,12 @@ kept as an `UnknownMarkup` holding the raw object, renders as nothing and writes
 and `Inspect` reports the result as `Damaged`.
 
 To find what a codec would leave out, `Inspect` writes each layer it read straight back and
-compares the two. A codec may write a value in a newer form than the one it read, such as a legacy
-colour array as a palette index, so values are not compared. Structure is compared: every property
-read must be written, an object must stay an object, an array must keep its length, and the
-`"k"` and `"t"` discriminators must keep their values. This catches a game's own codecs as well as
+compares the two. A codec may write a value in a newer form than the one it read, such as
+`"bo":0` as `"bo":1`, so values are not compared, only their kind. Every property read must be
+written, each value must keep its kind (an object stays an object, an array keeps its length, a
+number stays a number), and the `"k"` and `"t"` discriminators must keep their values. The one
+exception is the ANSI codec's legacy colour arrays, such as `"f":[31]`, which it writes back as the
+colour they mean. This catches a game's own codecs as well as
 the shipped ones, without each codec having to report what it skipped.
 
 `Inspect` does more work than `Deserialize`, since it writes every layer a second time. Use it on
