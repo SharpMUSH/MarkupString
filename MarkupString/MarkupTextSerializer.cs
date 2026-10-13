@@ -509,6 +509,63 @@ public static class MarkupTextSerializer
 	/// <summary>The wire version this build reads and writes. Version 1 writes no <c>"v"</c>.</summary>
 	public const int WireVersion = 1;
 
+	/// <summary>
+	/// The wire version <paramref name="json"/> was written in, read without parsing the rest of it:
+	/// 1 when it has no <c>"v"</c> or is empty, null when it is not a JSON object or its <c>"v"</c> is
+	/// not a whole number.
+	/// </summary>
+	/// <param name="json">A stored text, in any version.</param>
+	public static int? VersionOf(string json)
+	{
+		ArgumentNullException.ThrowIfNull(json);
+		return VersionOf(Encoding.UTF8.GetBytes(json));
+	}
+
+	/// <summary>
+	/// The wire version <paramref name="utf8Json"/> was written in, read without parsing the rest of
+	/// it: 1 when it has no <c>"v"</c> or is empty, null when it is not a JSON object or its
+	/// <c>"v"</c> is not a whole number.
+	/// </summary>
+	/// <param name="utf8Json">A stored text as UTF-8, in any version.</param>
+	public static int? VersionOf(ReadOnlySpan<byte> utf8Json)
+	{
+		if (utf8Json.IsEmpty) return WireVersion;
+		var reader = new Utf8JsonReader(utf8Json);
+		try
+		{
+			if (!reader.Read() || reader.TokenType != JsonTokenType.StartObject) return null;
+			while (reader.Read() && reader.TokenType == JsonTokenType.PropertyName)
+			{
+				var isVersion = reader.ValueTextEquals("v"u8);
+				if (!reader.Read()) return null;
+				if (isVersion)
+					return reader.TokenType == JsonTokenType.Number && reader.TryGetInt32(out var version) ? version : null;
+				reader.Skip();
+			}
+			return reader.TokenType == JsonTokenType.EndObject ? WireVersion : null;
+		}
+		catch (JsonException)
+		{
+			return null;
+		}
+	}
+
+	/// <summary>
+	/// Whether <paramref name="json"/> is in an earlier wire version than <see cref="WireVersion"/>, so
+	/// that an upgrade step would rewrite it. False for the current version, a newer one, and a
+	/// payload whose version cannot be read.
+	/// </summary>
+	/// <param name="json">A stored text, in any version.</param>
+	public static bool NeedsUpgrade(string json) => VersionOf(json) < WireVersion;
+
+	/// <summary>
+	/// Whether <paramref name="utf8Json"/> is in an earlier wire version than <see cref="WireVersion"/>,
+	/// so that an upgrade step would rewrite it. False for the current version, a newer one, and a
+	/// payload whose version cannot be read.
+	/// </summary>
+	/// <param name="utf8Json">A stored text as UTF-8, in any version.</param>
+	public static bool NeedsUpgrade(ReadOnlySpan<byte> utf8Json) => VersionOf(utf8Json) < WireVersion;
+
 	/// <summary>The envelope properties of wire version 1.</summary>
 	private static readonly string[] EnvelopeProperties = ["t", "p", "r", "v"];
 

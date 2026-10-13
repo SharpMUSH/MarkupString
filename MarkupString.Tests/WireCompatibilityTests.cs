@@ -195,6 +195,45 @@ public class WireCompatibilityTests
 		await Assert.That(result.Diagnostics.Single()).Contains("Palette entry 2");
 	}
 
+	// ── Version ──────────────────────────────────────────────────────────────────
+
+	[Test]
+	[MethodDataSource(nameof(Released))]
+	public async Task Released_IsVersionOne_AndNeedsNoUpgrade(string json)
+	{
+		await Assert.That(MarkupTextSerializer.VersionOf(json)).IsEqualTo(1);
+		await Assert.That(MarkupTextSerializer.NeedsUpgrade(json)).IsFalse();
+		await Assert.That(MarkupTextSerializer.VersionOf(Encoding.UTF8.GetBytes(json))).IsEqualTo(1);
+	}
+
+	[Test]
+	[Arguments("", 1)]
+	[Arguments("""{"v":1,"t":"x"}""", 1)]
+	[Arguments("""{"t":"x","p":[null,[{"k":"zzz","v":7}]],"r":[1,1],"v":3}""", 3)]
+	[Arguments("""{"t":{"v":9},"v":2}""", 2)]
+	[Arguments("""{"v":0}""", 0)]
+	public async Task VersionOf_ReadsTheTopLevelVersion(string json, int version)
+		=> await Assert.That(MarkupTextSerializer.VersionOf(json)).IsEqualTo(version);
+
+	[Test]
+	[Arguments("not json")]
+	[Arguments("[1]")]
+	[Arguments("""{"v":"2"}""")]
+	[Arguments("""{"v":1.5}""")]
+	[Arguments("""{"t":"x" """)]
+	public async Task VersionOf_UnreadableVersion_IsNull(string json)
+	{
+		await Assert.That(MarkupTextSerializer.VersionOf(json)).IsNull();
+		await Assert.That(MarkupTextSerializer.NeedsUpgrade(json)).IsFalse();
+	}
+
+	[Test]
+	public async Task NeedsUpgrade_OnlyForAnEarlierVersion()
+	{
+		await Assert.That(MarkupTextSerializer.NeedsUpgrade("""{"v":0}""")).IsTrue();
+		await Assert.That(MarkupTextSerializer.NeedsUpgrade("""{"v":2}""")).IsFalse();
+	}
+
 	// ── Damaged ──────────────────────────────────────────────────────────────────
 
 	[Test]

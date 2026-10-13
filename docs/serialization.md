@@ -92,6 +92,33 @@ The wire version is separate from the package version: a release that adds a mar
 property does not change it. It changes only if the envelope itself changes in a way a version 1
 reader would misread, and a reader that knows the new version keeps reading version 1.
 
+## Upgrading stored text
+
+`MarkupTextSerializer.VersionOf(stored)` reports the wire version a stored text was written in
+without parsing the rest of it: 1 when there is no `"v"`, null when the payload is not a JSON object
+or its `"v"` is not a whole number. `NeedsUpgrade(stored)` is true when that version is earlier than
+`WireVersion`. Version 1 is the only version so far, so it is false for every row there is.
+
+Both are there so that a store can find what needs upgrading, at startup or in a scan, before a
+later version exists. When one does, it comes with one upgrade step from the version before it,
+and the steps run in order, so a world from any earlier version reaches the current one without
+a step for every pair of versions. Each step keeps to these rules:
+
+- **It works on the stored JSON**, not through `MarkupText`, so that nothing the object model does
+  not hold is lost on the way.
+- **It is idempotent.** A payload already in the step's target version comes back byte for byte,
+  so a migration can stop and resume, or run twice, without harm.
+- **It changes nothing it cannot read.** A payload in a newer version, or one that is damaged, is
+  reported and left as it is.
+- **It keeps `"t"`**, the plain text of the whole document, as every version does.
+- **It ships with fixtures** written by the release before it, checked from the old version to the
+  new one and read back.
+
+Running the steps over a world is the store's work, not this package's: taking a backup first,
+working in batches with a checkpoint, reporting what it skipped, and recording which version a
+world needs before an older build opens it. Readers keep reading every earlier version all the
+same, since backups, messages in flight and plugins never pass through a migration.
+
 ## Reading stored text for saving: `Inspect`
 
 `Deserialize` is for showing text. It recovers what it can from a damaged or partly understood row

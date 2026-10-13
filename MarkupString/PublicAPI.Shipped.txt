@@ -1700,3 +1700,7 @@ static MarkupString.MarkupTextSerializer.Inspect(System.ReadOnlySpan<byte> utf8J
 static MarkupString.MarkupTextSerializer.Inspect(System.ReadOnlySpan<byte> utf8Json, MarkupString.MarkupRegistry? registry) -> MarkupString.MarkupReadResult!
 static MarkupString.MarkupTextSerializer.Inspect(string! json) -> MarkupString.MarkupReadResult!
 static MarkupString.MarkupTextSerializer.Inspect(string! json, MarkupString.MarkupRegistry? registry) -> MarkupString.MarkupReadResult!
+static MarkupString.MarkupTextSerializer.NeedsUpgrade(System.ReadOnlySpan<byte> utf8Json) -> bool
+static MarkupString.MarkupTextSerializer.NeedsUpgrade(string! json) -> bool
+static MarkupString.MarkupTextSerializer.VersionOf(System.ReadOnlySpan<byte> utf8Json) -> int?
+static MarkupString.MarkupTextSerializer.VersionOf(string! json) -> int?

@@ -23,6 +23,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   writes no `"v"`, as every release since 1.0.0 has. The bytes written are unchanged. A payload with
   any other `"v"` reads as its `"t"` in plain text, without the rest being read as version 1, and
   every later version keeps `"t"` as the document's plain text so that this fallback always works.
+- **`MarkupTextSerializer.VersionOf` and `NeedsUpgrade`** report the wire version a stored text was
+  written in, without parsing the rest of it, so that a store can find what a later version would
+  upgrade. See [Upgrading stored text](docs/serialization.md#upgrading-stored-text).
 
 ### Changed
 
