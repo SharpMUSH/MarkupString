@@ -1,5 +1,14 @@
 <Project>
 
+  <!-- Keep the package family recognizable with one embedded NuGet icon. -->
+  <PropertyGroup Condition="'$(PackageId)' == 'MarkupString' OR '$(PackageId)' == 'MarkupString.Ansi' OR '$(PackageId)' == 'MarkupString.Html' OR '$(PackageId)' == 'MarkupString.Mxp' OR '$(PackageId)' == 'MarkupString.Pueblo'">
+    <PackageIcon>markupstring-icon.png</PackageIcon>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(PackageIcon)' == 'markupstring-icon.png'">
+    <None Include="$(MSBuildThisFileDirectory)assets/branding/markupstring-icon.png"
+          Pack="true" PackagePath="/" />
+  </ItemGroup>
+
   <!--
     Fails the build when a project's C# no longer matches .editorconfig.
 
