@@ -8,6 +8,37 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## 2.19.0 — 2026-10-13
+
+### Added
+
+- **`MarkupTextSerializer.Inspect` says whether a stored text can be saved back without loss.** It
+  reads like `Deserialize` and returns a `MarkupReadResult`: the value, a `Status` (`Complete`,
+  `Opaque`, `Unsupported`, `Damaged`), one diagnostic per problem, and `CanRewrite`. It never throws
+  on bad input. It reports an unknown property on a known kind, an unknown layout block, a gradient
+  stop that would be dropped, an unknown envelope property, an unused palette entry, a cover that
+  overruns its text, a codec that throws, and payloads that are not JSON objects. See
+  [Serialization](docs/serialization.md#reading-stored-text-for-saving-inspect).
+- **A wire version.** The stored shape is wire version 1 (`MarkupTextSerializer.WireVersion`), which
+  writes no `"v"`, as every release since 1.0.0 has. The bytes written are unchanged. A payload with
+  any other `"v"` reads as its `"t"` in plain text, without the rest being read as version 1, and
+  every later version keeps `"t"` as the document's plain text so that this fallback always works.
+- **`MarkupTextSerializer.VersionOf` and `NeedsUpgrade`** report the wire version a stored text was
+  written in, without parsing the rest of it, so that a store can find what a later version would
+  upgrade. See [Upgrading stored text](docs/serialization.md#upgrading-stored-text).
+
+### Changed
+
+- **A codec that throws no longer fails the read.** Its layer reads as an `UnknownMarkup` holding the
+  raw object, which renders as nothing and is written back as it was.
+
+### Fixed
+
+- **A layout read from a copy of a row with a different tree is no longer taken for the original.**
+  Layers are interned by equality, which compared a layout's id and text but not its tree, so after
+  reading an edited or damaged copy, reading the original could hand back the copy's tree, and
+  saving it wrote that tree.
+
 ## 2.18.1 — 2026-10-13
 
 ### Changed

@@ -8,7 +8,9 @@ namespace MarkupString.Layout;
 /// <para>Two layers are equal when they are the same layout: one <see cref="Id"/>, laid out at the same
 /// width over the same text. A block that spans several styled runs is therefore one region to the
 /// renderer however it was read back, and two layouts built apart are two regions however alike they
-/// look, so neither ever stands in for the other.</para>
+/// look, so neither ever stands in for the other. A layer read back is also equal only to one read
+/// from the same tree (or holding the same <see cref="Root"/>), so a copy of a row whose tree was
+/// edited or damaged is never interned as the original, nor the original as it.</para>
 /// </remarks>
 public sealed class LayoutMarkup : IBlockMarkup, IEquatable<LayoutMarkup>
 {
@@ -48,6 +50,14 @@ public sealed class LayoutMarkup : IBlockMarkup, IEquatable<LayoutMarkup>
 	/// <summary>The fingerprint of that text.</summary>
 	public ulong Hash { get; }
 
+	/// <summary>
+	/// The fingerprint of the JSON the tree was read from, or zero for a tree built in this process.
+	/// Two layers read from the same row share it however many runs they were read into; a copy of
+	/// the row whose tree was edited or damaged does not, so interning never hands one read the
+	/// other's tree.
+	/// </summary>
+	internal ulong Source { get; init; }
+
 	/// <inheritdoc/>
 	public bool Covers(ReadOnlySpan<char> text) => text.Length == Length && Fingerprint(text) == Hash;
 
@@ -67,7 +77,8 @@ public sealed class LayoutMarkup : IBlockMarkup, IEquatable<LayoutMarkup>
 
 	/// <inheritdoc/>
 	public bool Equals(LayoutMarkup? other) =>
-		other is not null && Id == other.Id && Width == other.Width && Fluid == other.Fluid && Length == other.Length && Hash == other.Hash;
+		other is not null && Id == other.Id && Width == other.Width && Fluid == other.Fluid && Length == other.Length && Hash == other.Hash
+			&& (ReferenceEquals(Root, other.Root) || (Source != 0 && Source == other.Source));
 
 	/// <inheritdoc/>
 	public override bool Equals(object? obj) => obj is LayoutMarkup other && Equals(other);

@@ -32,7 +32,11 @@ internal static class LayoutJson
 		// A tree that could not all be read must not be drawn in place of its text, or laid out again:
 		// a length no text has keeps the block from ever counting as intact.
 		var length = state.Incomplete ? -1 : layout.Int("l") ?? -1;
-		return new LayoutMarkup(root, layout.Int("w") ?? 0, layout.Bool("fl"), length, layout.Hex("h"), layout.Hex("id"));
+		var source = element.TryGetProperty("n", out var tree) ? LayoutMarkup.Fingerprint(tree.GetRawText()) : 0UL;
+		return new LayoutMarkup(root, layout.Int("w") ?? 0, layout.Bool("fl"), length, layout.Hex("h"), layout.Hex("id"))
+		{
+			Source = source == 0 ? 1 : source,
+		};
 	}
 
 	public static BlockCodec? CodecFor(Type type, MarkupRegistry? registry) =>

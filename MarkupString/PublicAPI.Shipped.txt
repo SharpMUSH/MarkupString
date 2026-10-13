@@ -1685,3 +1685,22 @@ virtual MarkupString.Layout.LayoutCell.PrintMembers(System.Text.StringBuilder! b
 ~override MarkupString.Run.ToString() -> string
 ~override MarkupString.ThemeColor.Equals(object obj) -> bool
 ~override MarkupString.ThemeColor.ToString() -> string
+MarkupString.MarkupReadResult
+MarkupString.MarkupReadResult.CanRewrite.get -> bool
+MarkupString.MarkupReadResult.Diagnostics.get -> System.Collections.Immutable.ImmutableArray<string!>
+MarkupString.MarkupReadResult.Status.get -> MarkupString.MarkupReadStatus
+MarkupString.MarkupReadResult.Value.get -> MarkupString.MarkupText?
+MarkupString.MarkupReadStatus
+MarkupString.MarkupReadStatus.Complete = 0 -> MarkupString.MarkupReadStatus
+MarkupString.MarkupReadStatus.Damaged = 3 -> MarkupString.MarkupReadStatus
+MarkupString.MarkupReadStatus.Opaque = 1 -> MarkupString.MarkupReadStatus
+MarkupString.MarkupReadStatus.Unsupported = 2 -> MarkupString.MarkupReadStatus
+const MarkupString.MarkupTextSerializer.WireVersion = 1 -> int
+static MarkupString.MarkupTextSerializer.Inspect(System.ReadOnlySpan<byte> utf8Json) -> MarkupString.MarkupReadResult!
+static MarkupString.MarkupTextSerializer.Inspect(System.ReadOnlySpan<byte> utf8Json, MarkupString.MarkupRegistry? registry) -> MarkupString.MarkupReadResult!
+static MarkupString.MarkupTextSerializer.Inspect(string! json) -> MarkupString.MarkupReadResult!
+static MarkupString.MarkupTextSerializer.Inspect(string! json, MarkupString.MarkupRegistry? registry) -> MarkupString.MarkupReadResult!
+static MarkupString.MarkupTextSerializer.NeedsUpgrade(System.ReadOnlySpan<byte> utf8Json) -> bool
+static MarkupString.MarkupTextSerializer.NeedsUpgrade(string! json) -> bool
+static MarkupString.MarkupTextSerializer.VersionOf(System.ReadOnlySpan<byte> utf8Json) -> int?
+static MarkupString.MarkupTextSerializer.VersionOf(string! json) -> int?
