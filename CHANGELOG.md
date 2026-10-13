@@ -8,6 +8,25 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## 2.19.0 — 2026-10-13
+
+### Added
+
+- **`MarkupTextSerializer.Inspect` says whether a stored text can be saved back without loss.** It
+  reads like `Deserialize` and returns a `MarkupReadResult`: the value, a `Status` (`Complete`,
+  `Opaque`, `Unsupported`, `Damaged`), one diagnostic per problem, and `CanRewrite`. It never throws
+  on bad input. It reports an unknown property on a known kind, an unknown layout block, a gradient
+  stop that would be dropped, an unknown envelope property, an unused palette entry, a cover that
+  overruns its text, a codec that throws, and payloads that are not JSON objects. See
+  [Serialization](docs/serialization.md#reading-stored-text-for-saving-inspect).
+- **A wire version.** The stored shape is wire version 1 (`MarkupTextSerializer.WireVersion`), which
+  writes no `"v"`, as every release since 1.0.0 has. The bytes written are unchanged.
+
+### Changed
+
+- **`Deserialize` throws `JsonException` for a `"v"` other than 1,** instead of reading the payload
+  as version 1. No writer has produced one, so no stored row changes how it reads.
+
 ## 2.18.1 — 2026-10-13
 
 ### Changed

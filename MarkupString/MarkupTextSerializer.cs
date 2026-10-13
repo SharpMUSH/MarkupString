@@ -230,7 +230,7 @@ public static class MarkupTextSerializer
 		if (json.Length == 0) return MarkupText.Empty;
 
 		using var document = JsonDocument.Parse(json);
-		return Read(document.RootElement, registry);
+		return ReadVersioned(document.RootElement, registry);
 	}
 
 	/// <summary>
@@ -258,23 +258,60 @@ public static class MarkupTextSerializer
 		if (reader.Read())
 			throw new JsonException("Unexpected content after the JSON value.");
 
-		return Read(document.RootElement, registry);
+		return ReadVersioned(document.RootElement, registry);
 	}
 
-	internal static MarkupText Read(JsonElement root, MarkupRegistry? registry)
+	/// <summary>
+	/// Reads the top-level envelope after checking its wire version, which nested texts (inside a
+	/// layout) do not carry: a version is a property of the stored document, not of each text in it.
+	/// </summary>
+	private static MarkupText ReadVersioned(JsonElement root, MarkupRegistry? registry)
+	{
+		if (root.ValueKind == JsonValueKind.Object && !IsKnownVersion(root, out var version))
+			throw new JsonException($"Markup wire version {version} is not one this reader knows; it reads version {WireVersion}.");
+		return Read(root, registry);
+	}
+
+	/// <summary>
+	/// Whether <paramref name="root"/> is in a wire version this reader knows. No <c>"v"</c> is
+	/// version 1, the only one there is; <paramref name="version"/> is the raw value otherwise.
+	/// </summary>
+	private static bool IsKnownVersion(JsonElement root, out string version)
+	{
+		version = WireVersion.ToString(System.Globalization.CultureInfo.InvariantCulture);
+		if (!root.TryGetProperty("v", out var element)) return true;
+		version = element.GetRawText();
+		return element.ValueKind == JsonValueKind.Number && element.TryGetInt32(out var number) && number == WireVersion;
+	}
+
+	internal static MarkupText Read(JsonElement root, MarkupRegistry? registry) => Read(root, registry, check: null);
+
+	/// <summary>
+	/// Reads the envelope. <paramref name="check"/>, when given, is told about everything the read
+	/// recovers from or leaves out; it is null on every path but <see cref="Inspect(string)"/>.
+	/// </summary>
+	private static MarkupText Read(JsonElement root, MarkupRegistry? registry, ReadCheck? check)
 	{
 		// Every shape check below treats a malformed payload as a less marked-up one rather than
 		// throwing: this reads rows written by older builds and bytes off a bus, and losing colour on
 		// one corrupt attribute beats failing the read that carries it.
-		var text = root.TryGetProperty("t", out var textElement) && textElement.ValueKind == JsonValueKind.String
+		var hasText = root.TryGetProperty("t", out var textElement);
+		var text = hasText && textElement.ValueKind == JsonValueKind.String
 			? textElement.GetString() ?? string.Empty
 			: string.Empty;
+		if (hasText && textElement.ValueKind != JsonValueKind.String) check?.Damage($"\"t\" is {Describe(textElement)}, not a string.");
 
-		if (!root.TryGetProperty("p", out var paletteElement) || paletteElement.ValueKind != JsonValueKind.Array
-				|| !root.TryGetProperty("r", out var coverElement) || coverElement.ValueKind != JsonValueKind.Array)
+		var hasPalette = root.TryGetProperty("p", out var paletteElement);
+		var hasCover = root.TryGetProperty("r", out var coverElement);
+		if (!hasPalette || paletteElement.ValueKind != JsonValueKind.Array
+				|| !hasCover || coverElement.ValueKind != JsonValueKind.Array)
+		{
+			if (hasPalette || hasCover) check?.Damage("\"p\" and \"r\" are not both arrays, so the text reads without its markup.");
 			return MarkupText.Plain(text);
+		}
 
-		var palette = ReadPalette(paletteElement, registry);
+		var palette = ReadPalette(paletteElement, registry, check);
+		var used = check is null ? null : new bool[palette.Length];
 		var runs = ImmutableArray.CreateBuilder<Run>();
 		var position = 0;
 
@@ -283,25 +320,58 @@ public static class MarkupTextSerializer
 		{
 			// A non-numeric or negative length would desynchronise every later pair, so reading stops
 			// there, as it does on a truncated pair rather than reading a length as an index.
-			if (!TryReadInt32(cover.Current, out var length) || length < 0) break;
-			if (!cover.MoveNext() || !TryReadInt32(cover.Current, out var index)) break;
+			if (!TryReadInt32(cover.Current, out var length) || length < 0)
+			{
+				check?.Damage($"\"r\" has {cover.Current.GetRawText()} where a length belongs; the rest of the cover is not read.");
+				break;
+			}
+			if (!cover.MoveNext() || !TryReadInt32(cover.Current, out var index))
+			{
+				check?.Damage("\"r\" ends without the palette index of its last length.");
+				break;
+			}
 
 			// A cover already at (or past) the end of the text has nothing left to describe, and an
 			// unclipped length would let position overrun int range on the next add (two int.MaxValue
 			// entries wrap it negative, which sorts runs out of order and trips the overlap check
 			// below). Clipping here — rather than leaving it to the constructor — keeps position itself
 			// bounded by text.Length across every iteration.
-			if (position >= text.Length) break;
+			if (position >= text.Length)
+			{
+				if (length > 0) check?.Damage("\"r\" covers more than the text.");
+				break;
+			}
 			var runLength = Math.Min(length, text.Length - position);
+			if (runLength < length) check?.Damage("\"r\" covers more than the text.");
 
 			// Slot 0 is the reserved "no markup" entry, and so is any index the palette does not have:
 			// both leave the stretch as a gap, which is plain text.
-			if (index > 0 && index <= palette.Length) runs.Add(new Run(position, runLength, palette[index - 1]));
+			if (index > 0 && index <= palette.Length)
+			{
+				runs.Add(new Run(position, runLength, palette[index - 1]));
+				if (used is not null) used[index - 1] = true;
+			}
+			else if (index != 0) check?.Damage($"\"r\" names palette entry {index}, which \"p\" does not have.");
 			position += runLength;
 		}
 
+		// Writing builds the palette from the runs, so an entry nothing points at is not written back.
+		if (used is not null)
+			for (var i = 0; i < used.Length; i++)
+				if (!used[i]) check!.Loss($"Palette entry {i + 1} is not used by \"r\" and would not be written back.");
+
 		return new MarkupText(text, runs.ToImmutable());
 	}
+
+	private static string Describe(JsonElement element) => element.ValueKind switch
+	{
+		JsonValueKind.Object => "an object",
+		JsonValueKind.Array => "an array",
+		JsonValueKind.Number => "a number",
+		JsonValueKind.True or JsonValueKind.False => "a boolean",
+		JsonValueKind.Null => "null",
+		_ => "a string",
+	};
 
 	private static bool TryReadInt32(JsonElement element, out int value)
 	{
@@ -310,7 +380,7 @@ public static class MarkupTextSerializer
 	}
 
 	/// <summary>Reads the palette, skipping slot 0 (the reserved null entry); callers subtract one.</summary>
-	private static MarkupSet[] ReadPalette(JsonElement palette, MarkupRegistry? registry)
+	private static MarkupSet[] ReadPalette(JsonElement palette, MarkupRegistry? registry, ReadCheck? check)
 	{
 		var entries = new List<MarkupSet>();
 		var markups = new List<IMarkup>();
@@ -320,14 +390,22 @@ public static class MarkupTextSerializer
 			if (first)
 			{
 				first = false;
+				if (entry.ValueKind != JsonValueKind.Null) check?.Damage("Palette entry 0 is not null; it is never read.");
 				continue;
 			}
 
 			markups.Clear();
 			if (entry.ValueKind == JsonValueKind.Array)
+			{
 				foreach (var markup in entry.EnumerateArray())
 					if (markup.ValueKind == JsonValueKind.Object)
-						markups.Add(ReadMarkup(markup, registry));
+						markups.Add(check is null ? ReadMarkup(markup, registry) : ReadMarkup(markup, registry, check));
+					else
+						check?.Damage($"Palette entry {entries.Count + 1} holds {Describe(markup)} where a markup object belongs.");
+			}
+			else check?.Damage($"Palette entry {entries.Count + 1} is {Describe(entry)}, not an array.");
+			if (markups.Count == 0 && entry.ValueKind == JsonValueKind.Array && entry.GetArrayLength() == 0)
+				check?.Damage($"Palette entry {entries.Count + 1} is empty.");
 
 			// A set must hold at least one markup; an entry that read as none is a slot no cover index
 			// can usefully point at, so it takes a neutral layer rather than dropping and shifting
@@ -343,15 +421,190 @@ public static class MarkupTextSerializer
 	/// </summary>
 	private static IMarkup ReadMarkup(JsonElement element, MarkupRegistry? registry)
 	{
-		var kind = element.TryGetProperty("k", out var k) && k.ValueKind == JsonValueKind.String
+		var kind = KindOf(element);
+		if (kind == NeutralKind) return NeutralMarkup.Instance;
+		if (kind == Layout.LayoutJson.Kind) return Layout.LayoutJson.Read(element, registry);
+		var codec = ElementCodecs.Find(kind) ?? (registry ?? MarkupRegistry.Default).FindCodec(kind);
+		return codec is null ? new UnknownMarkup(kind, element.GetRawText()) : codec.Read(element);
+	}
+
+	/// <summary>The kind of a markup object, inferred as described on this class for one with no <c>"k"</c>.</summary>
+	private static string KindOf(JsonElement element) =>
+		element.TryGetProperty("k", out var k) && k.ValueKind == JsonValueKind.String
 			? k.GetString()!
 			: element.TryGetProperty("h", out _) ? "html"
 			: element.TryGetProperty("n", out _) ? NeutralKind
 			: "ansi";
 
-		if (kind == NeutralKind) return NeutralMarkup.Instance;
-		if (kind == Layout.LayoutJson.Kind) return Layout.LayoutJson.Read(element, registry);
-		var codec = ElementCodecs.Find(kind) ?? (registry ?? MarkupRegistry.Default).FindCodec(kind);
-		return codec is null ? new UnknownMarkup(kind, element.GetRawText()) : codec.Read(element);
+	/// <summary>
+	/// <see cref="ReadMarkup(JsonElement, MarkupRegistry?)"/> for <see cref="Inspect(string)"/>: a codec
+	/// that throws leaves the layer opaque instead of failing the read, and every layer a codec reads
+	/// is written straight back and compared with what it was read from, which is the only way to
+	/// know that a codec — core's, a package's or a game's — kept everything in it.
+	/// </summary>
+	private static IMarkup ReadMarkup(JsonElement element, MarkupRegistry? registry, ReadCheck check)
+	{
+		var kind = KindOf(element);
+		if (element.TryGetProperty("k", out var k) && k.ValueKind != JsonValueKind.String)
+			check.Damage($"A layer's \"k\" is {Describe(k)}, not a string; it reads as \"{kind}\".");
+		IMarkup markup;
+		try
+		{
+			markup = ReadMarkup(element, registry);
+		}
+		catch (Exception exception) when (exception is not OutOfMemoryException)
+		{
+			check.Damage($"The \"{kind}\" codec could not read a layer ({exception.Message}); it is kept as an unknown layer.");
+			return new UnknownMarkup(kind, element.GetRawText());
+		}
+
+		if (markup is UnknownMarkup)
+		{
+			check.Opaque();
+			return markup;
+		}
+
+		string written;
+		try
+		{
+			var buffer = new ArrayBufferWriter<byte>();
+			using (var writer = new Utf8JsonWriter(buffer, WriterOptions)) WriteMarkup(writer, markup, registry);
+			written = Encoding.UTF8.GetString(buffer.WrittenSpan);
+		}
+		catch (Exception exception) when (exception is not OutOfMemoryException)
+		{
+			check.Loss($"A \"{kind}\" layer could not be written back ({exception.Message}).");
+			return markup;
+		}
+
+		using var rewritten = JsonDocument.Parse(written);
+		// A legacy neutral object is recognised by its "n", which the neutral kind does not write.
+		var ignore = kind == NeutralKind && !element.TryGetProperty("k", out _) ? "n" : null;
+		if (WireShape.Lost(element, rewritten.RootElement, ignore) is { } path)
+			check.Loss($"A \"{kind}\" layer would not be written back as read: {path}.");
+		return markup;
+	}
+
+	// ── Inspecting ───────────────────────────────────────────────────────────────
+
+	/// <summary>The wire version this build reads and writes. Version 1 writes no <c>"v"</c>.</summary>
+	public const int WireVersion = 1;
+
+	/// <summary>The envelope properties of wire version 1.</summary>
+	private static readonly string[] EnvelopeProperties = ["t", "p", "r", "v"];
+
+	/// <summary>
+	/// Reads a stored <see cref="MarkupText"/> using <see cref="MarkupRegistry.Default"/> and reports
+	/// whether writing it back would keep everything the payload held. Never throws on bad input.
+	/// </summary>
+	/// <param name="json">The JSON produced by <see cref="Serialize(MarkupText)"/>, or anything else.</param>
+	public static MarkupReadResult Inspect(string json) => Inspect(json, registry: null);
+
+	/// <summary>
+	/// Reads a stored <see cref="MarkupText"/> and reports whether writing it back would keep
+	/// everything the payload held. Never throws on bad input.
+	/// </summary>
+	/// <param name="json">The JSON produced by <see cref="Serialize(MarkupText, MarkupRegistry?)"/>, or anything else.</param>
+	/// <param name="registry">The codecs to use; <see cref="MarkupRegistry.Default"/> when null.</param>
+	public static MarkupReadResult Inspect(string json, MarkupRegistry? registry)
+	{
+		ArgumentNullException.ThrowIfNull(json);
+		return Inspect(Encoding.UTF8.GetBytes(json), registry);
+	}
+
+	/// <summary>
+	/// Reads a stored <see cref="MarkupText"/> from UTF-8 JSON using <see cref="MarkupRegistry.Default"/>
+	/// and reports whether writing it back would keep everything the payload held. Never throws on bad input.
+	/// </summary>
+	/// <param name="utf8Json">The UTF-8 JSON produced by <see cref="Serialize(MarkupText, IBufferWriter{byte})"/>, or anything else.</param>
+	public static MarkupReadResult Inspect(ReadOnlySpan<byte> utf8Json) => Inspect(utf8Json, registry: null);
+
+	/// <summary>
+	/// Reads a stored <see cref="MarkupText"/> from UTF-8 JSON and reports whether writing it back
+	/// would keep everything the payload held. Never throws on bad input.
+	/// </summary>
+	/// <remarks>
+	/// An empty payload is <see cref="MarkupText.Empty"/>, as <see cref="Deserialize(string)"/> reads it.
+	/// </remarks>
+	/// <param name="utf8Json">The UTF-8 JSON produced by <see cref="Serialize(MarkupText, IBufferWriter{byte}, MarkupRegistry?)"/>, or anything else.</param>
+	/// <param name="registry">The codecs to use; <see cref="MarkupRegistry.Default"/> when null.</param>
+	public static MarkupReadResult Inspect(ReadOnlySpan<byte> utf8Json, MarkupRegistry? registry)
+	{
+		if (utf8Json.IsEmpty) return new MarkupReadResult(MarkupReadStatus.Complete, MarkupText.Empty, []);
+
+		var check = new ReadCheck();
+		JsonDocument document;
+		var reader = new Utf8JsonReader(utf8Json);
+		try
+		{
+			document = JsonDocument.ParseValue(ref reader);
+		}
+		catch (JsonException exception)
+		{
+			check.Damage($"The payload is not JSON ({exception.Message}).");
+			return check.Result(value: null);
+		}
+
+		using (document)
+		{
+			try
+			{
+				if (reader.Read()) check.Damage("There is content after the JSON value.");
+			}
+			catch (JsonException)
+			{
+				check.Damage("There is content after the JSON value.");
+			}
+
+			var root = document.RootElement;
+			if (root.ValueKind != JsonValueKind.Object)
+			{
+				check.Damage($"The payload is {Describe(root)}, not an object.");
+				return check.Result(value: null);
+			}
+
+			// The version decides what every other property means, so it is read before any of them,
+			// and a version this reader does not know is not read as one it does.
+			if (!IsKnownVersion(root, out var version))
+			{
+				check.Unsupported($"Wire version {version} is not one this reader knows; it reads version {WireVersion}.");
+				return check.Result(value: null);
+			}
+
+			foreach (var property in root.EnumerateObject())
+				if (Array.IndexOf(EnvelopeProperties, property.Name) < 0)
+					check.Loss($"The envelope property \"{property.Name}\" is not one this reader knows and would not be written back.");
+
+			return check.Result(Read(root, registry, check));
+		}
+	}
+
+	/// <summary>What one <see cref="Inspect(ReadOnlySpan{byte}, MarkupRegistry?)"/> found.</summary>
+	private sealed class ReadCheck
+	{
+		private readonly List<string> _diagnostics = [];
+		private MarkupReadStatus _status = MarkupReadStatus.Complete;
+
+		public void Opaque() => Raise(MarkupReadStatus.Opaque);
+
+		public void Damage(string diagnostic) => Add(MarkupReadStatus.Damaged, diagnostic);
+
+		public void Unsupported(string diagnostic) => Add(MarkupReadStatus.Unsupported, diagnostic);
+
+		/// <summary>Something well formed the reader does not keep: unsupported, not damaged.</summary>
+		public void Loss(string diagnostic) => Add(MarkupReadStatus.Unsupported, diagnostic);
+
+		private void Add(MarkupReadStatus status, string diagnostic)
+		{
+			_diagnostics.Add(diagnostic);
+			Raise(status);
+		}
+
+		private void Raise(MarkupReadStatus status)
+		{
+			if (status > _status) _status = status;
+		}
+
+		public MarkupReadResult Result(MarkupText? value) => new(_status, value, [.. _diagnostics]);
 	}
 }
