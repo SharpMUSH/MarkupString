@@ -138,6 +138,14 @@ text.Map(part => part.Trim(TrimType.TrimBoth)); // each run and each plain gap o
 returns plain text, because the run positions no longer mean anything. `Map` hands you each styled
 run and each unmarked gap as its own `MarkupText` and concatenates what you return.
 
+```csharp
+text.WithoutVisualMarkup();   // the plain text, with data layers (IDataMarkup) kept
+```
+
+`WithoutVisualMarkup` is what stripping colour means when some layers are data: the result is
+`ToPlainText()`'s text, points dropped with their carriers, and every `IDataMarkup` layer still on
+the characters it covered. Text with no data comes back plain.
+
 ## Comparing
 
 ```csharp

@@ -154,6 +154,45 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 	/// </summary>
 	public string ToPlainText() => _plainText ??= WithoutPoints();
 
+	/// <summary>
+	/// The text with every visual layer taken off and its data layers (<see cref="IDataMarkup"/>) kept: what
+	/// <see cref="ToPlainText"/> gives, plus the data. Points go with their carriers, as they do there.
+	/// </summary>
+	public MarkupText WithoutVisualMarkup()
+	{
+		if (Runs.IsDefaultOrEmpty) return this;
+
+		var hasData = false;
+		foreach (var run in Runs)
+		{
+			foreach (var markup in run.Markups)
+			{
+				if (markup is not IDataMarkup) continue;
+				hasData = true;
+				break;
+			}
+			if (hasData) break;
+		}
+		if (!hasData) return Plain(ToPlainText());
+
+		var parts = new List<MarkupText>(Runs.Length * 2 + 1);
+		var position = 0;
+		foreach (var run in Runs)
+		{
+			if (run.Start > position) parts.Add(Plain(Text[position..run.Start]));
+			position = run.End;
+			if (IsPoint(run)) continue;
+
+			var data = new List<IMarkup>();
+			foreach (var markup in run.Markups)
+				if (markup is IDataMarkup) data.Add(markup);
+			var body = Text.Substring(run.Start, run.Length);
+			parts.Add(data.Count == 0 ? Plain(body) : Wrap(MarkupSet.Of(data), body));
+		}
+		if (position < Text.Length) parts.Add(Plain(Text[position..]));
+		return Concat(parts);
+	}
+
 	/// <summary>The same as <see cref="ToPlainText"/>.</summary>
 	public override string ToString() => ToPlainText();
 	public bool Equals(MarkupText? other) => other is not null && string.Equals(ToPlainText(), other.ToPlainText(), StringComparison.Ordinal);

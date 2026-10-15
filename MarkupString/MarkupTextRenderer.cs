@@ -379,7 +379,13 @@ public static class MarkupTextRenderer
 		IBufferWriter<char> output)
 	{
 		var body = content.Slice(run.Start, run.Length);
-		var markups = run.Markups;
+		// Data is not drawn: no emitter sees it, and text that carries nothing else is written as plain text.
+		var markups = WithoutData(run.Markups);
+		if (markups is null)
+		{
+			EncodeStretch(content, run.Start, run.End, format.Encoding, output);
+			return false;
+		}
 		var points = CountPoints(markups);
 
 		var front = new PooledCharWriter(body.Length + 16);
@@ -497,6 +503,21 @@ public static class MarkupTextRenderer
 		}
 
 		return written;
+	}
+
+	/// <summary>The run's layers with its data layers taken out, or null when it carried nothing else.</summary>
+	private static MarkupSet? WithoutData(MarkupSet markups)
+	{
+		var data = 0;
+		foreach (var markup in markups)
+			if (markup is IDataMarkup) data++;
+		if (data == 0) return markups;
+		if (data == markups.Count) return null;
+
+		var rest = new List<IMarkup>(markups.Count - data);
+		foreach (var markup in markups)
+			if (markup is not IDataMarkup) rest.Add(markup);
+		return MarkupSet.Of(rest);
 	}
 
 	/// <summary>The run's layers with the points taken out, or null when it carried nothing else.</summary>

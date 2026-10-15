@@ -1,3 +1,5 @@
 #nullable enable
 MarkupString.TextEncoding.Markdown = 4 -> MarkupString.TextEncoding
 static readonly MarkupString.MarkupFormat.Markdown -> MarkupString.MarkupFormat!
+MarkupString.IDataMarkup
+MarkupString.MarkupText.WithoutVisualMarkup() -> MarkupString.MarkupText!

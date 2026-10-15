@@ -19,6 +19,22 @@ using MarkupString;
 public sealed record SpoilerMarkup(string? Reason) : IMarkup;
 ```
 
+### Data markup
+
+A layer that says what the text *is*, rather than how it looks, implements `IDataMarkup` instead:
+that a character separates the items of a list, say, and is not part of one.
+
+```csharp
+public sealed record ListSeparator : IDataMarkup;
+```
+
+A data layer has a codec and no emitters. The renderer takes it off a run before any emitter sees
+the run, so the text is written as the layers around it write it, and an emitter registered for a
+data type is never called. `WithoutVisualMarkup()` takes every other layer off and keeps the data
+([Transforming](text-operations.md#transforming)). Everything else treats it as any layer: slicing,
+concatenation and joining carry it, equality ignores it, and a reader without its codec keeps it as
+an `UnknownMarkup`.
+
 ## 2. The emitters
 
 Two shapes, and the difference matters:
