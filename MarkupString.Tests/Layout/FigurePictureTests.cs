@@ -151,12 +151,13 @@ public class FigurePictureTests
 	}
 
 	[Test]
-	public async Task PuebloAndBBCodeWriteThePictureOnce()
+	public async Task PuebloBBCodeAndMarkdownWriteThePictureOnce()
 	{
 		var laid = BlockLayout.Build(new Figure(Cat, Art), 20);
 
 		await Assert.That(Count(laid.Render(MarkupFormat.Pueblo, Registry), "<img ")).IsEqualTo(1);
 		await Assert.That(Count(laid.Render(MarkupFormat.BBCode, Registry), "[img]")).IsEqualTo(1);
+		await Assert.That(Count(laid.Render(MarkupFormat.Markdown, Registry), "![")).IsEqualTo(1);
 	}
 
 	[Test]

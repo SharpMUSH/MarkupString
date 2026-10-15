@@ -82,6 +82,7 @@ public class FormatSnapshotTests
 	[Arguments("pueblo")]
 	[Arguments("mxp")]
 	[Arguments("bbcode")]
+	[Arguments("markdown")]
 	public async Task EveryFixture_RendersStably(string formatName)
 	{
 		var format = MarkupFormat.TryParse(formatName)

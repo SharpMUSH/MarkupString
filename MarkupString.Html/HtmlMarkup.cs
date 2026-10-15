@@ -139,16 +139,16 @@ public sealed record HtmlMarkup(string TagName, string? Attributes) : IMarkup, I
 
 	/// <inheritdoc/>
 	/// <remarks>
-	/// Only <see cref="MarkupFormat.Ansi"/> and <see cref="MarkupFormat.BBCode"/> have a terminal
-	/// equivalent for a handful of tags — <c>b</c>/<c>strong</c>, <c>i</c>/<c>em</c>, <c>u</c>, and
-	/// <c>s</c>/<c>strike</c>/<c>del</c> — so those tags fold into the run's style there. Every other
-	/// tag, and every tag in Html/Pueblo/Mxp, answers <see langword="false"/>: Html/Pueblo/Mxp
-	/// render the tag itself through <see cref="HtmlTagEmitter"/>, and an unknown tag in
-	/// Ansi/BBCode leaves its body untouched.
+	/// Only <see cref="MarkupFormat.Ansi"/>, <see cref="MarkupFormat.BBCode"/> and
+	/// <see cref="MarkupFormat.Markdown"/> have a terminal equivalent for a handful of tags —
+	/// <c>b</c>/<c>strong</c>, <c>i</c>/<c>em</c>, <c>u</c>, and <c>s</c>/<c>strike</c>/<c>del</c> — so
+	/// those tags fold into the run's style there. Every other tag, and every tag in Html/Pueblo/Mxp,
+	/// answers <see langword="false"/>: Html/Pueblo/Mxp render the tag itself through
+	/// <see cref="HtmlTagEmitter"/>, and an unknown tag in Ansi/BBCode/Markdown leaves its body untouched.
 	/// </remarks>
 	public bool TryGetAnsiStyle(MarkupFormat format, out AnsiStyle style)
 	{
-		if (format != MarkupFormat.Ansi && format != MarkupFormat.BBCode)
+		if (format != MarkupFormat.Ansi && format != MarkupFormat.BBCode && format != MarkupFormat.Markdown)
 		{
 			style = AnsiStyle.None;
 			return false;

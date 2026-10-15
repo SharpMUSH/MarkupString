@@ -43,6 +43,7 @@ public class BellTests
 
 		await Assert.That(Render(text, MarkupFormat.Plain)).IsEqualTo("Hey");
 		await Assert.That(Render(text, MarkupFormat.BBCode)).IsEqualTo("Hey");
+		await Assert.That(Render(text, MarkupFormat.Markdown)).IsEqualTo("Hey");
 	}
 
 	[Test]

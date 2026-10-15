@@ -31,7 +31,7 @@
     <Authors>SharpMUSH</Authors>
     <Company>SharpMUSH</Company>
     <Copyright>Copyright © MarkupString Contributors 2024-$([System.DateTime]::Now.ToString(yyyy))</Copyright>
-    <PackageTags>markup;ansi;terminal;html;mxp;pueblo;bbcode;styled-text;mud;mush</PackageTags>
+    <PackageTags>markup;ansi;terminal;html;mxp;pueblo;bbcode;markdown;styled-text;mud;mush</PackageTags>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/SharpMUSH/MarkupString</PackageProjectUrl>
