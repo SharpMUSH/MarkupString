@@ -6,7 +6,20 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 2.20.0 — Unreleased
+## 2.21.0 — Unreleased
+
+### Added
+
+- **Data markup.** `IDataMarkup` marks a layer that says what the text is rather than how it looks,
+  such as a list separator. No format draws it: the renderer takes it off each run before any emitter
+  sees the run, so the text is written as the layers around it write it. It is stored, carried and
+  compared like any other layer. See [Data markup](docs/custom-markup.md#data-markup).
+- **`MarkupText.WithoutVisualMarkup()`**: the plain text with every data layer kept, for stripping
+  colour from text that also carries data.
+- **`MarkupText.WithoutDataMarkup()`**: the text with every data layer taken off and its visual
+  markup and points kept, for text whose data must not be trusted.
+
+## 2.20.0
 
 ### Added
 
