@@ -193,6 +193,39 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 		return Concat(parts);
 	}
 
+	/// <summary>
+	/// The text with every data layer (<see cref="IDataMarkup"/>) taken off and everything else kept: the
+	/// counterpart of <see cref="WithoutVisualMarkup"/>, for text whose data must not be trusted.
+	/// </summary>
+	public MarkupText WithoutDataMarkup()
+	{
+		if (Runs.IsDefaultOrEmpty) return this;
+
+		var hasData = false;
+		foreach (var run in Runs)
+		{
+			foreach (var markup in run.Markups)
+			{
+				if (markup is not IDataMarkup) continue;
+				hasData = true;
+				break;
+			}
+			if (hasData) break;
+		}
+		if (!hasData) return this;
+
+		var builder = ImmutableArray.CreateBuilder<Run>(Runs.Length);
+		foreach (var run in Runs)
+		{
+			var kept = new List<IMarkup>(run.Markups.Count);
+			foreach (var markup in run.Markups)
+				if (markup is not IDataMarkup) kept.Add(markup);
+			if (kept.Count == run.Markups.Count) builder.Add(run);
+			else if (kept.Count > 0) builder.Add(run with { Markups = MarkupSet.Of(kept) });
+		}
+		return new MarkupText(Text, builder.ToImmutable());
+	}
+
 	/// <summary>The same as <see cref="ToPlainText"/>.</summary>
 	public override string ToString() => ToPlainText();
 	public bool Equals(MarkupText? other) => other is not null && string.Equals(ToPlainText(), other.ToPlainText(), StringComparison.Ordinal);

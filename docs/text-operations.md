@@ -146,6 +146,13 @@ text.WithoutVisualMarkup();   // the plain text, with data layers (IDataMarkup) 
 `ToPlainText()`'s text, points dropped with their carriers, and every `IDataMarkup` layer still on
 the characters it covered. Text with no data comes back plain.
 
+```csharp
+text.WithoutDataMarkup();     // the same text and colour, with every data layer taken off
+```
+
+`WithoutDataMarkup` is the other half: it keeps the visual layers and points and drops the data, for
+text from someone who should not be able to say what it is.
+
 ## Comparing
 
 ```csharp

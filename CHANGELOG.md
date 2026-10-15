@@ -16,6 +16,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   compared like any other layer. See [Data markup](docs/custom-markup.md#data-markup).
 - **`MarkupText.WithoutVisualMarkup()`**: the plain text with every data layer kept, for stripping
   colour from text that also carries data.
+- **`MarkupText.WithoutDataMarkup()`**: the text with every data layer taken off and its visual
+  markup and points kept, for text whose data must not be trusted.
 
 ## 2.20.0
 

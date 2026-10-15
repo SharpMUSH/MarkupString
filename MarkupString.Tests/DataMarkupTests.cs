@@ -118,6 +118,40 @@ public class DataMarkupTests
 	}
 
 	[Test]
+	public async Task WithoutDataMarkup_KeepsTheColourAndDropsTheData()
+	{
+		var text = MarkupText.Concat([MarkupText.Wrap(Red, "a"), MarkupText.Wrap(Red, Marked("|")), MarkupText.Plain("b"), Marked("|")]);
+
+		var unmarked = text.WithoutDataMarkup();
+
+		await Assert.That(unmarked.Text).IsEqualTo("a|b|");
+		await Assert.That(IsData(unmarked, 1)).IsFalse();
+		await Assert.That(IsData(unmarked, 3)).IsFalse();
+		await Assert.That(unmarked.Render(MarkupFormat.Ansi, Registry))
+			.IsEqualTo(MarkupText.Concat([MarkupText.Wrap(Red, "a|"), MarkupText.Plain("b|")]).Render(MarkupFormat.Ansi, Registry));
+	}
+
+	[Test]
+	public async Task WithoutDataMarkup_KeepsPoints()
+	{
+		var text = MarkupText.Concat([Marked("|"), MarkupText.Bell(), MarkupText.Plain("b")]);
+
+		var unmarked = text.WithoutDataMarkup();
+
+		await Assert.That(unmarked.Text).IsEqualTo(text.Text);
+		await Assert.That(unmarked.ToPlainText()).IsEqualTo("|b");
+		await Assert.That(IsData(unmarked, 0)).IsFalse();
+	}
+
+	[Test]
+	public async Task WithoutDataMarkup_WithNoData_IsTheSameText()
+	{
+		var text = MarkupText.Concat([MarkupText.Wrap(Red, "a"), MarkupText.Plain("b")]);
+
+		await Assert.That(ReferenceEquals(text.WithoutDataMarkup(), text)).IsTrue();
+	}
+
+	[Test]
 	public async Task DataIsIgnoredByEquality()
 		=> await Assert.That(MarkupText.Concat([MarkupText.Plain("a"), Marked("|")])).IsEqualTo(MarkupText.Plain("a|"));
 
