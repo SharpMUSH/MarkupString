@@ -5,8 +5,8 @@ public static class HtmlRegistration
 {
 	/// <summary>
 	/// Returns a registry that renders <see cref="HtmlMarkup"/> as its own tag in Html, Pueblo and
-	/// Mxp, and serialises it under kind <c>"html"</c>. Plain and BBCode need no emitter here — Plain
-	/// passes the body through untouched, and BBCode's formatting for the handful of tags
+	/// Mxp, and serialises it under kind <c>"html"</c>. Plain, BBCode and Markdown need no emitter here —
+	/// Plain passes the body through untouched, and BBCode's and Markdown's formatting for the handful of tags
 	/// <see cref="HtmlMarkup"/> understands (bold, italic, underline, strikethrough) comes from the
 	/// Ansi package's fold via <see cref="HtmlMarkup.TryGetAnsiStyle"/>, which requires
 	/// <c>WithAnsi()</c> to already be applied.

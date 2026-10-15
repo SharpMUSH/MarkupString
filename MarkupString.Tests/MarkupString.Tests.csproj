@@ -9,6 +9,9 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CsCheck" Version="4.9.1" />
+    <!-- A GitHub-flavoured Markdown reader, so the Markdown tests check what a reader makes of the output
+         rather than only the characters written. -->
+    <PackageReference Include="Markdig" Version="1.4.0" />
     <PackageReference Include="TUnit" Version="1.72.16" />
     <!-- Verify.TUnit carries a floor on TUnit.Core. Bump the two together: if NuGet lifts
          TUnit.Core past the TUnit.Engine this project asks for, the split versions fault at

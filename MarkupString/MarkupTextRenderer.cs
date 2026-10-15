@@ -34,6 +34,18 @@ public static class MarkupTextRenderer
 	/// <summary><see cref="ControlsAndHtml"/> plus the line endings <see cref="TextEncoding.HtmlLineBreaks"/> rewrites.</summary>
 	private static readonly SearchValues<char> ControlsHtmlAndLines = SearchValues.Create(ControlCharacters + HtmlCharacters + "\r\n");
 
+	/// <summary>
+	/// The characters that start Markdown syntax wherever they stand: an escape, code, emphasis,
+	/// strikethrough, a link or image, raw HTML or an autolink, and a table cell's edge.
+	/// </summary>
+	private const string MarkdownCharacters = "\\`*_[]<|~";
+
+	/// <summary>
+	/// <see cref="Controls"/>, the line endings, the characters Markdown escapes everywhere, and <c>&amp;</c>,
+	/// which it escapes where an entity would start.
+	/// </summary>
+	private static readonly SearchValues<char> ControlsAndMarkdown = SearchValues.Create(ControlCharacters + MarkdownCharacters + "&\r\n");
+
 	/// <summary>Writes <paramref name="text"/> to <paramref name="output"/> under <paramref name="encoding"/>.</summary>
 	public static void EncodeText(ReadOnlySpan<char> text, TextEncoding encoding, IBufferWriter<char> output)
 	{
@@ -48,6 +60,9 @@ public static class MarkupTextRenderer
 				break;
 			case TextEncoding.HtmlLineBreaks:
 				HtmlEncode(text, output, lineBreaks: true);
+				break;
+			case TextEncoding.Markdown:
+				MarkdownEncode(text, LinePosition.Unknown, output);
 				break;
 			default:
 				output.Write(text);
@@ -102,6 +117,128 @@ public static class MarkupTextRenderer
 			}
 			text = text[(index + 1)..];
 		}
+	}
+
+	/// <summary>Where a stretch of text starts, as far as the Markdown encoder can tell.</summary>
+	private enum LinePosition
+	{
+		/// <summary>Anywhere: a stretch given to <see cref="EncodeText"/> alone, with nothing known of what is before it.</summary>
+		Unknown,
+
+		/// <summary>At the start of a line, or after nothing but indentation.</summary>
+		LineStart,
+
+		/// <summary>After text on its line.</summary>
+		MidLine,
+	}
+
+	private static void MarkdownEncode(ReadOnlySpan<char> text, LinePosition position, IBufferWriter<char> output)
+	{
+		var lineStart = position != LinePosition.MidLine;
+		while (!text.IsEmpty)
+		{
+			if (lineStart)
+			{
+				lineStart = false;
+
+				// Indentation means nothing to a Markdown reader but code, at four columns, and the inside of a
+				// list item, so a line's own is dropped. A stretch that may start partway along a line keeps one
+				// space, which is all a reader shows there anyway.
+				var indent = text.IndexOfAnyExcept(' ', '\t');
+				if (indent != 0 && position == LinePosition.Unknown) output.Write(" ");
+				position = LinePosition.LineStart;
+				if (indent < 0) return;
+				text = text[indent..];
+				if (LineMarker(text) is { } marker)
+				{
+					output.Write(text[..marker]);
+					output.Write("\\");
+					output.Write(text.Slice(marker, 1));
+					text = text[(marker + 1)..];
+					continue;
+				}
+			}
+
+			var index = text.IndexOfAny(ControlsAndMarkdown);
+			if (index < 0)
+			{
+				output.Write(text);
+				return;
+			}
+			output.Write(text[..index]);
+			switch (text[index])
+			{
+				case '\n':
+					output.Write("\n");
+					lineStart = true;
+					break;
+
+				// A CRLF is one line ending, and a lone CR still ends a line; either is written as a newline.
+				case '\r':
+					output.Write("\n");
+					if (index + 1 < text.Length && text[index + 1] == '\n') index++;
+					lineStart = true;
+					break;
+
+				// &amp; is markup only where it starts an entity: a name or a number.
+				case '&':
+					output.Write(index + 1 < text.Length && (char.IsAsciiLetter(text[index + 1]) || text[index + 1] == '#') ? "\\&" : "&");
+					break;
+				case var c when MarkdownCharacters.Contains(c):
+					output.Write("\\");
+					output.Write(text.Slice(index, 1));
+					break;
+				default: break;   // a control character: dropped
+			}
+			text = text[(index + 1)..];
+		}
+	}
+
+	/// <summary>
+	/// Encodes <c>content[start..end]</c>, a stretch of a text being rendered, for which the Markdown encoding
+	/// can see where on its line the stretch starts.
+	/// </summary>
+	private static void EncodeStretch(ReadOnlySpan<char> content, int start, int end, TextEncoding encoding, IBufferWriter<char> output)
+	{
+		if (encoding != TextEncoding.Markdown)
+		{
+			EncodeText(content[start..end], encoding, output);
+			return;
+		}
+
+		// The newline of a CRLF split between two stretches ended its line with the CR already.
+		if (start > 0 && start < end && content[start - 1] == '\r' && content[start] == '\n') start++;
+		MarkdownEncode(content[start..end], StartsLine(content, start) ? LinePosition.LineStart : LinePosition.MidLine, output);
+	}
+
+	/// <summary>
+	/// Whether nothing a Markdown reader would show stands between the start of <paramref name="index"/>'s line
+	/// and it: only indentation, and characters the encoding drops — a point's carrier, a control character.
+	/// </summary>
+	private static bool StartsLine(ReadOnlySpan<char> content, int index)
+	{
+		for (var i = index - 1; i >= 0; i--)
+		{
+			var c = content[i];
+			if (c is '\n' or '\r') return true;
+			if (c is not (' ' or '\t') && !char.IsControl(c) && c != MarkupText.PointCarrier[0]) return false;
+		}
+		return true;
+	}
+
+	/// <summary>
+	/// Where the character that makes the start of a line Markdown syntax stands — a heading, a quote, a list
+	/// item, a setext underline, the <c>.</c> or <c>)</c> after a list number — or null when none does.
+	/// </summary>
+	private static int? LineMarker(ReadOnlySpan<char> line)
+	{
+		if (line[0] is '#' or '>' or '-' or '+' or '=') return 0;
+
+		// A number of up to nine digits, then . or ), then whitespace or the end, starts a numbered list. The
+		// end of the stretch counts: the space may be the first character of the next one.
+		var digits = line.IndexOfAnyExceptInRange('0', '9');
+		if (digits is < 1 or > 9 || line[digits] is not ('.' or ')')) return null;
+		return digits + 1 == line.Length || line[digits + 1] is ' ' or '\t' or '\r' or '\n' ? digits : null;
 	}
 
 	/// <summary>Renders <paramref name="text"/> in <paramref name="format"/> to <paramref name="output"/>.</summary>
@@ -172,7 +309,7 @@ public static class MarkupTextRenderer
 		for (var i = 0; i < runs.Length; i++)
 		{
 			var run = runs[i];
-			if (run.Start > position) EncodeText(content[position..run.Start], format.Encoding, output);
+			if (run.Start > position) EncodeStretch(content, position, run.Start, format.Encoding, output);
 			if (registry.HasBlockEmitters && TryRenderBlock(text, i, format, registry, output) is { } last)
 			{
 				anyRunEmitted = true;
@@ -190,10 +327,10 @@ public static class MarkupTextRenderer
 				IsFirstRun = i == 0,
 				IsLastRun = i == runs.Length - 1,
 			};
-			anyRunEmitted |= RenderRun(run, content.Slice(run.Start, run.Length), format, registry, context, output);
+			anyRunEmitted |= RenderRun(run, content, format, registry, context, output);
 			position = run.End;
 		}
-		if (position < content.Length) EncodeText(content[position..], format.Encoding, output);
+		if (position < content.Length) EncodeStretch(content, position, content.Length, format.Encoding, output);
 
 		return anyRunEmitted;
 	}
@@ -215,7 +352,17 @@ public static class MarkupTextRenderer
 			var last = Layout.BlockRegions.Extent(runs, first, block);
 			var region = Layout.BlockRegions.Describe(text, runs[first].Start, runs[last].End, block);
 			if (!region.Intact || !region.Standalone) return null;
-			return emitter.TryEmit(block, text.Substring(region.Start, region.End - region.Start), registry, output) ? last : null;
+			var content = text.Substring(region.Start, region.End - region.Start);
+			if (format.Encoding != TextEncoding.Markdown) return emitter.TryEmit(block, content, registry, output) ? last : null;
+
+			// A Markdown block stands apart: a line of text against it would join it — a rule under the
+			// line would make it a heading, and a line after a table a row of it.
+			using var drawn = new PooledCharWriter(content.Length * 2);
+			if (!emitter.TryEmit(block, content, registry, drawn)) return null;
+			if (region.Start > 0) output.Write("\n");
+			output.Write(drawn.WrittenSpan);
+			if (region.End < text.Length) output.Write("\n");
+			return last;
 		}
 		return null;
 	}
@@ -225,12 +372,13 @@ public static class MarkupTextRenderer
 	/// layer being unregistered and the body passing through unchanged.</summary>
 	private static bool RenderRun(
 		Run run,
-		ReadOnlySpan<char> body,
+		ReadOnlySpan<char> content,
 		MarkupFormat format,
 		MarkupRegistry registry,
 		in EmitContext context,
 		IBufferWriter<char> output)
 	{
+		var body = content.Slice(run.Start, run.Length);
 		var markups = run.Markups;
 		var points = CountPoints(markups);
 
@@ -252,7 +400,7 @@ public static class MarkupTextRenderer
 			}
 			else
 			{
-				EncodeText(body, EncodingFor(markups, format, registry), front);
+				EncodeStretch(content, run.Start, run.End, EncodingFor(markups, format, registry), front);
 			}
 
 			var setEmitter = registry.FindSetEmitter(format);

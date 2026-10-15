@@ -4,13 +4,14 @@ namespace MarkupString.Ansi;
 public static class AnsiRegistration
 {
 	/// <summary>
-	/// Returns a registry that renders <see cref="AnsiMarkup"/> in all six formats and serialises
+	/// Returns a registry that renders <see cref="AnsiMarkup"/> in all seven formats and serialises
 	/// it under kind <c>"ansi"</c>. Plain needs nothing: the body passes through. It also writes the
-	/// bell, a <see cref="ClearScreenMarkup"/> for a terminal, and an <see cref="ImageMarkup"/> as
-	/// BBCode's <c>[img]</c>.
+	/// bell, a <see cref="ClearScreenMarkup"/> for a terminal, an <see cref="ImageMarkup"/> as
+	/// BBCode's <c>[img]</c> and Markdown's <c>![]()</c>, and a laid-out block as Markdown's own
+	/// structure — a table, a list, a rule.
 	/// </summary>
 	/// <remarks>
-	/// The five emitters are <see cref="IMarkupSetEmitter"/>s — one per format, claiming the whole
+	/// The six emitters are <see cref="IMarkupSetEmitter"/>s — one per format, claiming the whole
 	/// run — because the layers of a run have to fold into a single sequence or element. Layers
 	/// this package does not own are delegated to their own emitters, so composing this with
 	/// another package's registration works in either order.
@@ -25,17 +26,22 @@ public static class AnsiRegistration
 			.With(new AnsiPuebloEmitter())
 			.With(new AnsiMxpEmitter())
 			.With(new AnsiBBCodeEmitter())
+			.With(new AnsiMarkdownEmitter())
 			.With(new AnsiMarkupCodec())
 			// A bell is not ANSI styling, but it is the same audience: a client that reads a control
-			// character, or an HTML page that reads an element. BBCode and Plain have neither, and drop
+			// character, or an HTML page that reads an element. BBCode, Markdown and Plain have neither, and drop
 			// the character with every other control.
 			.With(new BellEmitter(MarkupFormat.Ansi))
 			.With(new BellEmitter(MarkupFormat.Pueblo))
 			.With(new BellEmitter(MarkupFormat.Mxp))
 			.With(new BellEmitter(MarkupFormat.Html))
-			// From the shared vocabulary, what a terminal and BBCode can express.
+			// From the shared vocabulary, what a terminal, BBCode and Markdown can express.
 			.With(new ClearScreenAnsiEmitter())
-			.With(new ImageBBCodeEmitter());
+			.With(new ImageBBCodeEmitter())
+			.With(new ImageMarkdownEmitter())
+			// A layout as Markdown's own structure. Markdown has no styling this package does not already
+			// fold, so the whole of the format is here, as BBCode's is.
+			.With(LayoutMarkdownEmitter.Instance);
 	}
 
 	/// <summary>

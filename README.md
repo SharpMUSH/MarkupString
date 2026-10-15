@@ -30,14 +30,14 @@
 ---
 
 `MarkupText` pairs a plain string with immutable, layered markup runs. The same value can render
-as ANSI, HTML, Pueblo, MXP, BBCode, or plain text—and round-trip through JSON without discarding
+as ANSI, HTML, Pueblo, MXP, BBCode, Markdown, or plain text—and round-trip through JSON without discarding
 markup a reader does not understand.
 
 ```text
                   ┌─ ANSI
                   ├─ HTML
 plain text + runs ┼─ MXP / Pueblo
-                  ├─ BBCode
+                  ├─ BBCode / Markdown
                   └─ plain text
 ```
 

@@ -13,7 +13,7 @@
          it back straight after. -->
     <EnablePackageValidation>true</EnablePackageValidation>
     <PackageValidationBaselineVersion>2.18.0</PackageValidationBaselineVersion>
-    <Description>Terminal styling for MarkupString: colours (16, 256 and truecolor), text attributes and links, an ansi() code parser, and emitters that fold a run's layers into one SGR sequence, HTML span, Pueblo/MXP tag or BBCode tag.</Description>
+    <Description>Terminal styling for MarkupString: colours (16, 256 and truecolor), text attributes and links, an ansi() code parser, and emitters that fold a run's layers into one SGR sequence, HTML span, Pueblo/MXP tag, BBCode tag or Markdown, which also draws a layout as tables and lists.</Description>
   </PropertyGroup>
 
   <ItemGroup>

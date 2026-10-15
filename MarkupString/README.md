@@ -1,7 +1,7 @@
 # MarkupString
 
 Immutable styled text for terminals and the web: a plain string plus layered markup runs over it.
-One value renders to ANSI, HTML, Pueblo, MXP, BBCode or plain text, and round-trips through JSON
+One value renders to ANSI, HTML, Pueblo, MXP, BBCode, Markdown or plain text, and round-trips through JSON
 without losing a layer it does not understand.
 
 Slicing, padding, wrapping and the rest of the string operations work in display cells (wide CJK,
@@ -38,7 +38,7 @@ var back = MarkupTextSerializer.Deserialize(json);
 
 ## Formats
 
-`Plain`, `Ansi`, `Html`, `Pueblo`, `Mxp`, `BBCode`. `MarkupFormat.Custom(name, encoding)` declares
+`Plain`, `Ansi`, `Html`, `Pueblo`, `Mxp`, `BBCode`, `Markdown`. `MarkupFormat.Custom(name, encoding)` declares
 one of your own; a registry keyed by it renders through your emitters like any built-in.
 
 ## Extension points

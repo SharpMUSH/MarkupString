@@ -279,6 +279,7 @@ public class RendererTests
 	[Arguments("Pueblo")]
 	[Arguments("mxp")]
 	[Arguments("BBCode")]
+	[Arguments("Markdown")]
 	public async Task Format_Custom_RejectsANameThatMatchesABuiltIn(string name)
 		=> await Assert.That(() => MarkupFormat.Custom(name, TextEncoding.None)).Throws<ArgumentException>();
 
@@ -297,6 +298,7 @@ public class RendererTests
 	[Arguments("Pueblo", TextEncoding.HtmlLineBreaks)]
 	[Arguments("mxp", TextEncoding.Html)]
 	[Arguments("bbcode", TextEncoding.StripControls)]
+	[Arguments("MARKDOWN", TextEncoding.Markdown)]
 	public async Task Format_TryParse_ResolvesBuiltInsCaseInsensitively(string name, TextEncoding encoding)
 	{
 		var format = MarkupFormat.TryParse(name);
