@@ -135,7 +135,7 @@ internal static class AnsiEmitterSupport
 	}
 
 	/// <summary>Whether any layer is one this package does not fold and something else can write.</summary>
-	private static bool HasDelegatedLayer(MarkupSet set, in EmitContext context)
+	internal static bool HasDelegatedLayer(MarkupSet set, in EmitContext context)
 	{
 		for (var i = 0; i < set.Count; i++)
 			if (!ClaimsStyle(set[i], context.Format, out _)

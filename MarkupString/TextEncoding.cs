@@ -31,4 +31,25 @@ public enum TextEncoding
 	/// Nor is it MXP's, whose clients are line-oriented and read a newline as a break already.
 	/// </remarks>
 	HtmlLineBreaks,
+
+	/// <summary>
+	/// GitHub-flavoured Markdown: <see cref="StripControls"/>, a line ending is a newline (the <c>\r</c> of a
+	/// <c>\r\n</c> dropped), and every character that would start Markdown syntax is escaped with a backslash,
+	/// so the text reads back as itself. <c>\</c>, <c>`</c>, <c>*</c>, <c>_</c>, <c>[</c>, <c>]</c>, <c>&lt;</c>,
+	/// <c>|</c> and <c>~</c> are escaped wherever they are; <c>&amp;</c> where it would start an entity; and at the
+	/// start of a line <c>#</c>, <c>&gt;</c>, <c>-</c>, <c>+</c>, <c>=</c> and the <c>.</c> or <c>)</c> of a
+	/// number that would start a numbered list. Indentation, which a reader would take for code or for the
+	/// inside of a list item and shows none of, is dropped.
+	/// </summary>
+	/// <remarks>
+	/// <para>A render knows where on its line each stretch of text starts. A stretch given to
+	/// <see cref="MarkupTextRenderer.EncodeText"/> alone may start partway along one, so its start is escaped as
+	/// a line's would be, which is more than a reader needs and never less, and its indentation is one space.</para>
+	/// <para>Markdown keeps whitespace no more than HTML does: a run of it reads as one space. A single line
+	/// ending is a soft break, which a reader joins into the paragraph, and a blank line ends the paragraph.</para>
+	/// <para>A block a format draws as its own structure — a layout's table, list or rule — is set apart from
+	/// the text before and after it by a blank line, without which a rule under a line of text would make it a
+	/// heading, and a line after a table a row of it.</para>
+	/// </remarks>
+	Markdown,
 }

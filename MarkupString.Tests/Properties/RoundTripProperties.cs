@@ -24,7 +24,7 @@ public class RoundTripProperties
 	private static readonly MarkupFormat[] Formats =
 	[
 		MarkupFormat.Plain, MarkupFormat.Ansi, MarkupFormat.Html,
-		MarkupFormat.Pueblo, MarkupFormat.Mxp, MarkupFormat.BBCode,
+		MarkupFormat.Pueblo, MarkupFormat.Mxp, MarkupFormat.BBCode, MarkupFormat.Markdown,
 	];
 
 	// ── Generators ───────────────────────────────────────────────────────────────

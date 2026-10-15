@@ -2,6 +2,7 @@ using System.Buffers;
 using MarkupString;
 using MarkupString.Ansi;
 using MarkupString.Html;
+using MarkupString.Layout;
 using MarkupString.Mxp;
 using MarkupString.Pueblo;
 
@@ -53,7 +54,8 @@ MarkupFormat[] formats =
 	MarkupFormat.Html,
 	MarkupFormat.Pueblo,
 	MarkupFormat.Mxp,
-	MarkupFormat.BBCode
+	MarkupFormat.BBCode,
+	MarkupFormat.Markdown
 ];
 
 var failures = new List<string>();
@@ -102,6 +104,15 @@ Expect(rendered["pueblo"], "<img xch_sound=\"play\" href=\"door.wav\">", "pueblo
 Expect(rendered["html"], "<audio class=\"ms-sound\"", "html");
 Expect(rendered["bbcode"], "[img]map.png[/img]", "bbcode");
 Expect(rendered["ansi"], "A mapgate", "ansi");
+Expect(rendered["markdown"], "[example](https://example.com/)", "markdown");
+Expect(rendered["markdown"], "![A map](map.png)gate", "markdown");
+
+// A layout is drawn from its tree where a format has a structure for it: Markdown writes a table as a
+// pipe table, its cells escaped, and lays nothing out to a width.
+var table = BlockLayout.Build(new Table(
+	[new TableColumn(MarkupText.Plain("a")), new TableColumn(MarkupText.Plain("b")) { Alignment = Alignment.Right }],
+	[[new TextBlock(MarkupText.Plain("x|y")), new TextBlock(MarkupText.Wrap(AnsiMarkup.Create(bold: true), "1"))]]), 30);
+Expect(table.Render(MarkupFormat.Markdown), "| a | b |\n| --- | ---: |\n| x\\|y | **1** |", "markdown");
 
 var graphemeSource = MarkupText.Wrap(HtmlMarkup.Create("b"),
 	MarkupText.Wrap(AnsiMarkup.Create(underlined: true), "界e\u0301😀"));

@@ -3,7 +3,7 @@ namespace MarkupString;
 /// <summary>
 /// An output format a <see cref="MarkupText"/> can be rendered to. Two formats are equal when
 /// their <see cref="Name"/>s match ordinally, ignoring case. <see cref="Custom"/> refuses a name
-/// that matches one of the six built-ins, so a caller cannot accidentally address a built-in's
+/// that matches one of the seven built-ins, so a caller cannot accidentally address a built-in's
 /// registry slots under a different <see cref="Encoding"/>.
 /// </summary>
 public sealed class MarkupFormat : IEquatable<MarkupFormat>
@@ -24,7 +24,10 @@ public sealed class MarkupFormat : IEquatable<MarkupFormat>
 	public static readonly MarkupFormat Mxp = new("mxp", TextEncoding.Html);
 	public static readonly MarkupFormat BBCode = new("bbcode", TextEncoding.StripControls);
 
-	/// <summary>Declares a format outside the built-in six.</summary>
+	/// <summary>GitHub-flavoured Markdown, as a wiki or a README stores it. See <see cref="TextEncoding.Markdown"/>.</summary>
+	public static readonly MarkupFormat Markdown = new("markdown", TextEncoding.Markdown);
+
+	/// <summary>Declares a format outside the built-in seven.</summary>
 	/// <exception cref="ArgumentException"><paramref name="name"/> matches a built-in format's name, ignoring case.</exception>
 	public static MarkupFormat Custom(string name, TextEncoding encoding)
 	{
@@ -37,7 +40,7 @@ public sealed class MarkupFormat : IEquatable<MarkupFormat>
 		return new MarkupFormat(name, encoding);
 	}
 
-	/// <summary>Resolves one of the six built-in formats by name, ignoring case. Unknown names give <see langword="null"/>.</summary>
+	/// <summary>Resolves one of the seven built-in formats by name, ignoring case. Unknown names give <see langword="null"/>.</summary>
 	public static MarkupFormat? TryParse(string name) => name switch
 	{
 		null => null,
@@ -47,6 +50,7 @@ public sealed class MarkupFormat : IEquatable<MarkupFormat>
 		_ when name.Equals(Pueblo.Name, StringComparison.OrdinalIgnoreCase) => Pueblo,
 		_ when name.Equals(Mxp.Name, StringComparison.OrdinalIgnoreCase) => Mxp,
 		_ when name.Equals(BBCode.Name, StringComparison.OrdinalIgnoreCase) => BBCode,
+		_ when name.Equals(Markdown.Name, StringComparison.OrdinalIgnoreCase) => Markdown,
 		_ => null,
 	};
 

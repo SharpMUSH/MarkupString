@@ -13,7 +13,7 @@
          it back straight after. -->
     <EnablePackageValidation>true</EnablePackageValidation>
     <PackageValidationBaselineVersion>2.18.0</PackageValidationBaselineVersion>
-    <Description>Immutable styled text: a string plus layered markup runs, rendered to ANSI, HTML, Pueblo, MXP, BBCode or plain text through a registry of emitters, and round-tripped through JSON.</Description>
+    <Description>Immutable styled text: a string plus layered markup runs, rendered to ANSI, HTML, Pueblo, MXP, BBCode, Markdown or plain text through a registry of emitters, and round-tripped through JSON.</Description>
   </PropertyGroup>
 
   <ItemGroup>

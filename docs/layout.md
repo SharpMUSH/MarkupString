@@ -288,7 +288,9 @@ var text = BlockLayout.Build(finger, 78);
 That is `text.ToPlainText()` and what every terminal format writes. `Render(MarkupFormat.Html)`
 draws the same tree as a `<fieldset>` with a legend, a divider, and a flex row whose items ask for
 35 and 36 `ch` and wrap onto rows of their own on a narrower page. Include `LayoutCss.Fixed`, or
-your own copy of its rules, on the page.
+your own copy of its rules, on the page. `Render(MarkupFormat.Markdown)` writes it for a wiki or a
+README, with nothing laid out to a width: the title in bold, each column as a paragraph of its lines,
+and the quote under its own bold title — see [Markdown](formats.md#markdown).
 
 ### Several titles in one edge
 
@@ -338,22 +340,23 @@ a flex row with the line drawn between them.
 - **Modifiers wrap any block.** `Bordered`, `Sized`, `Aligned`, `Shaded`, `Colored` and `Themed` are
   extension methods that return a wrapping block, so they chain.
 - **Formats plug in per block.** The terminal text comes from the block. HTML comes from a renderer
-  registered for its type; a block with none is shown as its lines in a `<pre>`. JSON comes from a
-  `BlockCodec`.
+  registered for its type; a block with none is shown as its lines in a `<pre>`. Markdown comes from
+  the tree too, with nothing laid out to a width; a block it does not know is its lines in a fenced
+  code block. JSON comes from a `BlockCodec`.
 
-| Block | Terminal | HTML |
-|---|---|---|
-| `Frame` (`.Bordered(title, border)`) | the frame, its titles set into the top and bottom edges | `<fieldset>` and `<legend>` |
-| `Rule` | a line of the border's top edge with its titles in it; inside a frame, a divider meeting the sides | a line drawn in CSS |
-| `Flex` | items side by side at widths shared from their `Sized` bases, stacked when one would fall under its `Min` | a wrapping flex row |
-| `Figure` | the text art, with `Beside` flowing round it; MXP and Pueblo write the picture on its first row and keep its cells blank | an `<img>` floated beside it |
-| `Fields` | labels in one column, values lined up in the next, a long value wrapping under itself | a `<dl>` laid out as a two-column grid |
-| `Tree` | items under their parents, joined by guide lines | nested `<ul>` with the guides drawn in CSS |
-| `Gauge` | a bar filled to its share of the width, with its figures | a `<meter>` |
-| `Bullets` | items with a bullet or number, wrapped lines hanging under the text | `<ul>` or `<ol>` |
-| `Grid` | short items in as many columns as fit, down each column or across each row | a CSS multi-column or grid list |
-| `Table` | columns sized to their widest cell, wrapping and then leaving out columns when narrow | a `<table>` that hides low-priority columns on a narrow page |
-| `TextBlock`, `Stack` | wrapped text; children in order | the same, as blocks |
+| Block | Terminal | HTML | Markdown |
+|---|---|---|---|
+| `Frame` (`.Bordered(title, border)`) | the frame, its titles set into the top and bottom edges | `<fieldset>` and `<legend>` | its titles in bold, then what it holds, then its bottom titles |
+| `Rule` | a line of the border's top edge with its titles in it; inside a frame, a divider meeting the sides | a line drawn in CSS | `---`, or its titles in bold |
+| `Flex` | items side by side at widths shared from their `Sized` bases, stacked when one would fall under its `Min` | a wrapping flex row | the items one after the other |
+| `Figure` | the text art, with `Beside` flowing round it; MXP and Pueblo write the picture on its first row and keep its cells blank | an `<img>` floated beside it | `![description](address)`, then `Beside` |
+| `Fields` | labels in one column, values lined up in the next, a long value wrapping under itself | a `<dl>` laid out as a two-column grid | a list of `**Label:** value` |
+| `Tree` | items under their parents, joined by guide lines | nested `<ul>` with the guides drawn in CSS | a nested list |
+| `Gauge` | a bar filled to its share of the width, with its figures | a `<meter>` | its figures, as a screen reader hears them |
+| `Bullets` | items with a bullet or number, wrapped lines hanging under the text | `<ul>` or `<ol>` | a `-` list, or a numbered one for numbers, letters and numerals |
+| `Grid` | short items in as many columns as fit, down each column or across each row | a CSS multi-column or grid list | a `-` list |
+| `Table` | columns sized to their widest cell, wrapping and then leaving out columns when narrow | a `<table>` that hides low-priority columns on a narrow page | a pipe table, every column, aligned as its column is |
+| `TextBlock`, `Stack` | wrapped text; children in order | the same, as blocks | paragraphs, line endings kept as hard breaks; children in order |
 
 | Modifier | What it does |
 |---|---|
@@ -637,4 +640,5 @@ var registry = MarkupRegistry.Empty.WithAnsi().WithHtml()
 
 Without the codec, a dice block is written to JSON as the text it draws, so it still shows. A
 reader that meets a kind it has no codec for leaves the whole layout as its text and never lays it
-out again. Without the HTML renderer, it shows in a page as its lines in a `<pre>`.
+out again. Without the HTML renderer, it shows in a page as its lines in a `<pre>`, and in Markdown
+as its lines in a fenced code block.

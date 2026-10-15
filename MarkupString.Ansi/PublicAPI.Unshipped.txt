@@ -1,1 +1,5 @@
 #nullable enable
+MarkupString.Ansi.AnsiMarkdownEmitter
+MarkupString.Ansi.AnsiMarkdownEmitter.AnsiMarkdownEmitter() -> void
+MarkupString.Ansi.AnsiMarkdownEmitter.Format.get -> MarkupString.MarkupFormat!
+MarkupString.Ansi.AnsiMarkdownEmitter.TryEmit(MarkupString.MarkupSet! set, System.ReadOnlySpan<char> body, in MarkupString.EmitContext context, System.Buffers.IBufferWriter<char>! output) -> bool

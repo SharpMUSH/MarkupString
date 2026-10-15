@@ -40,6 +40,7 @@ public class SharedVocabularyTests
 	[Arguments("ansi")]
 	[Arguments("plain")]
 	[Arguments("bbcode")]
+	[Arguments("markdown")]
 	public async Task AFormatWithNoSoundWritesNothing_CarrierIncluded(string format)
 	{
 		var line = MarkupText.Concat(MarkupText.Sound("door.wav"), Creaks);
@@ -92,6 +93,7 @@ public class SharedVocabularyTests
 		await Assert.That(Render(map, MarkupFormat.Html))
 			.IsEqualTo("<img class=\"ms-image\" src=\"map.png\" alt=\"A map of the city\" width=\"200\">");
 		await Assert.That(Render(map, MarkupFormat.BBCode)).IsEqualTo("[img]map.png[/img]");
+		await Assert.That(Render(map, MarkupFormat.Markdown)).IsEqualTo("![A map of the city](map.png)");
 		await Assert.That(Render(map, MarkupFormat.Ansi)).IsEqualTo("A map of the city");
 		await Assert.That(Render(map, MarkupFormat.Plain)).IsEqualTo("A map of the city");
 	}

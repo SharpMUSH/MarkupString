@@ -51,3 +51,31 @@ internal sealed class ImageBBCodeEmitter : IMarkupEmitter
 		if (image.Row is not null) output.Write(new string(' ', DisplayWidth.Of(body)));
 	}
 }
+
+/// <summary>
+/// A picture as Markdown's <c>![description](address)</c>, in place of the text a terminal is shown; the text
+/// itself where the address is not one a page may load.
+/// </summary>
+internal sealed class ImageMarkdownEmitter : IMarkupEmitter
+{
+	public Type MarkupType => typeof(ImageMarkup);
+
+	public MarkupFormat Format => MarkupFormat.Markdown;
+
+	public void Emit(IMarkup markup, ReadOnlySpan<char> body, in EmitContext context, IBufferWriter<char> output)
+	{
+		ArgumentNullException.ThrowIfNull(output);
+
+		var image = (ImageMarkup)markup;
+		if (MarkdownSyntax.ImageSource(image.Source) is not { } source)
+		{
+			output.Write(body);
+			return;
+		}
+
+		if (image.StartsPicture(context)) MarkdownSyntax.WriteImage(image.Description, source, output);
+
+		// A figure's rows keep their cells, so what is beside the picture stays where it was.
+		if (image.Row is not null) output.Write(new string(' ', DisplayWidth.Of(body)));
+	}
+}

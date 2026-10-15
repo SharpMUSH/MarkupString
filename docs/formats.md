@@ -12,7 +12,7 @@ text.RenderTo(MarkupFormat.Ansi, bufferWriter);  // straight into a buffer, no s
 `ToString()` is always the plain text. There is no `ToAnsi()` or `ToHtml()`: rendering is a
 decision about an audience, and it is made where that audience is known.
 
-## The six built-in formats
+## The seven built-in formats
 
 | Format | Text encoding | What `MarkupString.Ansi` writes | What `MarkupString.Html` writes |
 |---|---|---|---|
@@ -22,6 +22,7 @@ decision about an audience, and it is made where that audience is known.
 | `Pueblo` | HTML-escaped, and a line ending becomes `<BR>` | SGR sequences (Pueblo reads ANSI), plus `<A XCH_CMD>` / `<A HREF>` for a link | the tag itself |
 | `Mxp` | HTML-escaped | SGR sequences, plus `<SEND HREF>` / `<A HREF>` for a link | the tag itself |
 | `BBCode` | control characters stripped | `[color]`, `[b]`, `[i]`, `[u]`, `[s]` | nothing — the body passes through |
+| `Markdown` | control characters stripped, Markdown escaped | `**`, `*`, `~~`, `[text](url)`; a layout as tables and lists | nothing — the body passes through |
 
 ```csharp
 var link = MarkupText.Wrap(
@@ -33,6 +34,7 @@ link.Render(MarkupFormat.Pueblo);  // \e[1;31m<A XCH_CMD="north" XCH_HINT="Go no
 link.Render(MarkupFormat.Mxp);     // \e[1;31m<SEND HREF="north" HINT="Go north">north</SEND>\e[0m
 link.Render(MarkupFormat.Ansi);    // \e[1;31mnorth\e[0m
 link.Render(MarkupFormat.BBCode);  // [color=#ff5555]north[/color]
+link.Render(MarkupFormat.Markdown); // north
 link.Render(MarkupFormat.Plain);   // north
 ```
 
@@ -77,11 +79,11 @@ line.Render(MarkupFormat.Html);    // <audio class="ms-sound" …></audio><img c
 line.Render(MarkupFormat.Ansi);    // A map of the city The door creaks.
 ```
 
-| Factory | MXP (`WithMxp`) | Pueblo (`WithPueblo`) | HTML (`WithHtml`) | ANSI / BBCode (`WithAnsi`) and Plain |
+| Factory | MXP (`WithMxp`) | Pueblo (`WithPueblo`) | HTML (`WithHtml`) | ANSI / BBCode / Markdown (`WithAnsi`) and Plain |
 |---|---|---|---|---|
 | `Sound`, `Music` | `<SOUND>`, `<MUSIC>` | `<img xch_sound="play">`, or `"loop"` | `<audio preload="none">` | nothing |
 | `StopSound` | `<SOUND Off>` / `<MUSIC Off>` | `<img xch_sound="stop" xch_device>` | `ms-sound-stop` | nothing |
-| `Image` | `<IMAGE>` | `<img>` | `<img>` | the description, or the address; BBCode `[img]` |
+| `Image` | `<IMAGE>` | `<img>` | `<img>` | the description, or the address; BBCode `[img]`, Markdown `![description](address)` |
 | `Pane` | `<FRAME name><DEST name>…</DEST>` | `<xch_pane action="redirect">…` and back to `_previous` | `ms-pane` around the text | the text |
 | `ClearScreen` | nothing | `<xch_page clear="text">` | `ms-clear` | ANSI `ESC[H ESC[2J` |
 | `Prefetch` | nothing | `<xch_prefetch href xch_prob>` | `<link rel="prefetch">` | nothing |
@@ -180,6 +182,60 @@ A wrapping markup covers as many runs as its content has, so the emitters ask
 one per run. A stretch continues only while the layers enclosing it do, so regions nest rather than
 cross.
 
+## Markdown
+
+`MarkupFormat.Markdown` writes GitHub-flavoured Markdown, for a wiki page or a README that stores it.
+`WithAnsi()` registers the whole format, as it does BBCode.
+
+```csharp
+var line = MarkupText.Concat([
+  MarkupText.Wrap(AnsiMarkup.Create(bold: true), "Note:"),
+  MarkupText.Plain(" see "),
+  MarkupText.Wrap(AnsiMarkup.Create(linkUrl: "https://example.com/rules"), "the rules"),
+  MarkupText.Plain(" for *everything*.")]);
+
+line.Render(MarkupFormat.Markdown);  // **Note:** see [the rules](https://example.com/rules) for \*everything\*.
+```
+
+- **Styling** is what GitHub's Markdown has: bold `**`, italic `*`, strikethrough `~~`. Colour,
+  underline, faint, blink, overline and reverse video are dropped and the text kept, and `HtmlMarkup`'s
+  `b`, `i`, `s` and their kin fold in as they do for BBCode. Styling that carries on from one run into the
+  next is written once round both (`**a *b***`), kept off the whitespace at either end, and closed and
+  opened again round a line ending, since emphasis cannot cross a blank line. Markdown itself does not
+  read a delimiter between punctuation and a letter, as in `**Note:**text`; leave a space there.
+- **Links**: a URL link is `[text](address)`, its address percent-encoded where Markdown would end it
+  early (a space, parentheses, angle brackets, a backslash, a pipe); an address `UrlSafety` refuses, and a
+  command link, are their text. A picture is `![description](address)` when its address is http(s) or
+  relative, and its text otherwise; a picture inside a link is a linked image. Points — sounds, a bell, a
+  clear — write nothing, and the rest of the shared vocabulary writes its text.
+- **Escaping** (`TextEncoding.Markdown`): `\`, `` ` ``, `*`, `_`, `[`, `]`, `<`, `|` and `~` are escaped
+  wherever they are, `&` where it would start an entity, and `#`, `>`, `-`, `+`, `=` and the `.` or `)` of a
+  list number at the start of a line, so stored text reads back as itself. Indentation at the start of a
+  line, which a reader would take for code, is dropped. A line ending is written `\n`, which Markdown
+  reads as a soft break inside a paragraph; a blank line is a new paragraph.
+
+A layout is drawn from its tree, with nothing laid out to a width: a `Table` is a pipe table, its delimiter
+row carrying each column's alignment and its cells escaped, a line ending in a cell written as `<br>`.
+
+```csharp
+var scores = new Table(
+  [new TableColumn(MarkupText.Plain("Name")), new TableColumn(MarkupText.Plain("Score")) { Alignment = Alignment.Right }],
+  [[new TextBlock(MarkupText.Plain("Lyra")), new TextBlock(MarkupText.Plain("10"))],
+   [new TextBlock(MarkupText.Plain("Bo|Ash")), new TextBlock(MarkupText.Empty)]]);
+
+BlockLayout.Build(scores, 78).Render(MarkupFormat.Markdown);
+// | Name | Score |
+// | --- | ---: |
+// | Lyra | 10 |
+// | Bo\|Ash | |
+```
+
+Lists are lists, a rule is `---`, and a box or a titled rule is its title in bold over what it holds; the
+[layout table](layout.md#how-it-fits-together) has every block. A cell holds one line, so a block in one is
+its lines joined by `<br>`, and a table in one is its rows as labelled values. Two lists in a row are written
+with different markers (`-` then `*`, `.` then `)`) so that a reader keeps them apart, and a block is set
+apart from the text around it by a blank line.
+
 ## Colour fidelity
 
 `AnsiColor` is a closed union — `Default`, `Standard(index, bright)`, `Xterm(index)`, `Rgb(r,g,b)`
@@ -269,7 +325,7 @@ text.Render(Latex, registry);
 ```
 
 Formats compare by name, case-insensitively, and `Custom` refuses a name that matches one of the
-six built-ins — otherwise you could address a built-in's registry slots under a different
+seven built-ins — otherwise you could address a built-in's registry slots under a different
 `TextEncoding` and get output that is escaped for the wrong medium.
 
 Writing the emitters themselves is [Custom markup kinds](custom-markup.md).

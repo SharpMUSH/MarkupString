@@ -38,8 +38,10 @@ var back = MarkupTextSerializer.Deserialize(json);
 
 ## Formats
 
-`WithAnsi()` registers emitters for `Ansi`, `Html`, `Pueblo`, `Mxp` and `BBCode`. `Plain` needs
-none: the body passes through.
+`WithAnsi()` registers emitters for `Ansi`, `Html`, `Pueblo`, `Mxp`, `BBCode` and `Markdown`. `Plain`
+needs none: the body passes through. For `Markdown` it also draws a layout from its tree — a table as a
+pipe table, lists as lists — so a page made with `BlockLayout` can be stored in a wiki. See
+[Markdown](../docs/formats.md#markdown).
 
 A command link (`linkKind: LinkKind.Command`) is written in each client's own dialect: `<A XCH_CMD>`
 for Pueblo, `<SEND HREF>` for MXP, an `ms-cmd-link` anchor carrying `xch_cmd` for HTML, and the bare
