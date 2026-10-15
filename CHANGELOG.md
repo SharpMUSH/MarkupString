@@ -6,7 +6,32 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 2.20.0 — Unreleased
+
+### Added
+
+- **A Markdown format.** `MarkupFormat.Markdown` writes GitHub-flavoured Markdown, for a wiki page or a
+  README that stores it, and `WithAnsi()` registers the whole of it, as it does BBCode
+  (`AnsiMarkdownEmitter`). Bold, italic and strikethrough are `**`, `*` and `~~`, written once round runs
+  that share them and kept off the whitespace at their ends; colour, underline and the rest of what
+  Markdown cannot say are dropped with the text kept. A URL link is `[text](address)` and a command link
+  its text; a picture is `![description](address)`; points write nothing. See
+  [Markdown](docs/formats.md#markdown).
+- **A layout in Markdown is drawn from its tree**, with nothing laid out to a width: a `Table` as a pipe
+  table whose delimiter row carries each column's alignment, its cells escaped and a line ending in a cell
+  written as `<br>`; `Bullets`, `Tree`, `Grid` and `Fields` as lists (`**Label:** value`); a `Rule` as
+  `---`; a `Frame` or a titled rule as its title in bold over what it holds; a `Flex` as its items in
+  order; a `Gauge` as its figures; a `Figure` as an image. A block of your own is its lines in a fenced
+  code block. A block is set apart from the text around it by a blank line.
+- **`TextEncoding.Markdown`** escapes what would start Markdown syntax, so stored text reads back as
+  itself: `\`, `` ` ``, `*`, `_`, `[`, `]`, `<`, `|` and `~` anywhere, `&` where it starts an entity, and a
+  heading, quote, list or setext marker at the start of a line. It drops control characters, writes a line
+  ending as `\n`, and drops indentation at the start of a line, which a reader would take for code.
+
+### Changed
+
+- **`HtmlMarkup`'s `b`, `i`, `u` and `s` tags and their kin fold into the styling in Markdown** as they do in
+  ANSI and BBCode: `b`, `i` and `s` come out as `**`, `*` and `~~`, and `u` as its text.
 
 ## 2.19.0 — 2026-10-13
 

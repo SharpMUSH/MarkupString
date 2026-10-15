@@ -10,7 +10,7 @@ dotnet add package MarkupString.Html
 
 `MarkupString` alone gives you the text type and every operation on it, but it renders nothing:
 emitters live in the kind packages. Take `MarkupString.Ansi` for terminal styling (which also
-covers HTML, Pueblo, MXP and BBCode output of that styling, and links), and `MarkupString.Html` if
+covers HTML, Pueblo, MXP, BBCode and Markdown output of that styling, and links), and `MarkupString.Html` if
 you also need raw tags such as `<pre>` or a `<span class>`.
 
 Requires .NET 10 or later.
