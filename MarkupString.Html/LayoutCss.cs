@@ -91,6 +91,7 @@ public static class LayoutCss
 		".ms-grid.ms-down { display: block; }\n" +
 		".ms-grid > li { break-inside: avoid; white-space: pre-wrap; overflow-wrap: anywhere; }\n" +
 		".ms-pre { margin: 0; font: inherit; white-space: pre; overflow-x: auto; }\n" +
+		".ms-shaded:not(:has(.ms-box, .ms-flex, .ms-rule, .ms-divider, .ms-gauge)) { width: fit-content; max-width: 100%; }\n" +
 		".ms-shaded:not(.ms-shade-borders) { -webkit-background-clip: text; background-clip: text; color: transparent; }\n" +
 		".ms-shaded:not(.ms-shade-borders) :is(.ms-box-title, .ms-rule-title, .ms-field > dt, .ms-table th, .ms-bullets .ms-marker) { color: transparent; }\n" +
 		".ms-shaded:not(.ms-shade-text) :is(.ms-box, .ms-gauge-bar), .ms-shaded:not(.ms-shade-text) :is(.ms-rule, .ms-divider)::before, .ms-shaded:not(.ms-shade-text) :is(.ms-rule, .ms-divider)::after, .ms-shaded:not(.ms-shade-text) .ms-line { border-image: var(--ms-shade) 1; }\n" +

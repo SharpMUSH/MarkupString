@@ -26,7 +26,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   itself, and a table's stripe, are still kept.
 - **A gradient runs over what a layout draws, not the padding after it.** A table narrower than the
   width it was laid out at was shaded across that whole width, so `across` and `diagonal` reached
-  only the first few colours over its columns.
+  only the first few colours over its columns. In HTML a shaded block holding nothing that fills the
+  width (no box, rule, flex row or gauge), a table say, is as wide as what it holds, for the same
+  reason.
 
 ## 2.21.0
 
