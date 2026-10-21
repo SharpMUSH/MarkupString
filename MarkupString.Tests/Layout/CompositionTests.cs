@@ -179,6 +179,15 @@ public class CompositionTests
 	}
 
 	[Test]
+	public async Task Shaded_Across_RunsOverWhatIsDrawn_NotThePaddingAfterIt()
+	{
+		var ansi = BlockLayout.Build(P("abc").ToBlock().Shaded(RedToBlue), 40).Render(MarkupFormat.Ansi, Registry);
+
+		await Assert.That(ansi).Contains("\u001b[38;2;255;0;0ma");
+		await Assert.That(ansi).Contains("\u001b[38;2;0;0;255mc");
+	}
+
+	[Test]
 	public async Task Shaded_ColourTheTextSetsItself_IsKept()
 	{
 		var green = MarkupText.Wrap(AnsiMarkup.Create(foreground: new AnsiColor.Rgb(0, 128, 0)), "g");

@@ -40,7 +40,11 @@ public sealed record Shaded(Block Content, ColorGradient Gradient) : Block
 			context.Draw(Content, width, lines);
 			return;
 		}
-		lines.AddRange(Gradient.ShadeLines((context with { Unpainted = true }).Lines(Content, width), Flow, width));
+		// The colours run over what is drawn, not the padding after it: a table narrower than the
+		// screen is shaded across its own columns.
+		var drawn = (context with { Unpainted = true }).Lines(Content, width);
+		var used = drawn.Count == 0 ? width : Math.Max(1, drawn.Max(line => line.Trim(TrimType.TrimEnd).DisplayWidth));
+		lines.AddRange(Gradient.ShadeLines(drawn, Flow, used));
 	}
 }
 

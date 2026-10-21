@@ -15,6 +15,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   block's gradient and won over it, so a box drawn in a game's theme showed the gradient only in its
   plain text. Inside a `Shaded` block those part colours are now left off; colour the text sets
   itself, and a table's stripe, are still kept.
+- **A gradient runs over what a layout draws, not the padding after it.** A table narrower than the
+  width it was laid out at was shaded across that whole width, so `across` and `diagonal` reached
+  only the first few colours over its columns.
 
 ## 2.21.0
 
