@@ -64,6 +64,22 @@ public enum GradientFlow
 	Diagonal,
 }
 
+/// <summary>Which parts of a layout a <see cref="Layout.Shaded"/> block's gradient colours.</summary>
+public enum GradientTarget
+{
+	/// <summary>Everything that shows: borders, rules and text alike.</summary>
+	All,
+
+	/// <summary>
+	/// The box drawing only: borders and the rules across them, table column separators and heading
+	/// rules, tree guides, gauge brackets. The text keeps its own colour, or its theme's.
+	/// </summary>
+	Borders,
+
+	/// <summary>The text only, titles and labels with it. The box drawing keeps its theme's colour.</summary>
+	Text,
+}
+
 /// <summary>
 /// Colours blended one into the next, evenly spaced from 0 to 1. <see cref="At"/> gives the colour
 /// at a point; <see cref="ToCss()"/> the same gradient for a page. Colours are blended in
@@ -137,8 +153,11 @@ public sealed record ColorGradient(ImmutableArray<IColorMarkup> Stops, GradientS
 		return MarkupText.Join(MarkupText.NewLine, ShadeLines(lines, flow, lines.Max(line => line.DisplayWidth)));
 	}
 
-	/// <summary>Each of <paramref name="lines"/> shaded as one block <paramref name="width"/> cells wide.</summary>
-	internal MarkupText[] ShadeLines(IReadOnlyList<MarkupText> lines, GradientFlow flow, int width)
+	/// <summary>
+	/// Each of <paramref name="lines"/> shaded as one block <paramref name="width"/> cells wide; given
+	/// <paramref name="shades"/>, only the characters it says yes to, which alone count along the way.
+	/// </summary>
+	internal MarkupText[] ShadeLines(IReadOnlyList<MarkupText> lines, GradientFlow flow, int width, Func<MarkupText, bool>? shades = null)
 	{
 		if (IsEmpty || lines.Count == 0) return [.. lines];
 
@@ -153,7 +172,7 @@ public sealed record ColorGradient(ImmutableArray<IColorMarkup> Stops, GradientS
 			var inWord = false;
 			foreach (var character in lines[row].EnumerateGraphemes())
 			{
-				var visible = !string.IsNullOrWhiteSpace(character.ToPlainText());
+				var visible = !string.IsNullOrWhiteSpace(character.ToPlainText()) && (shades?.Invoke(character) ?? true);
 				if (visible && !inWord) words++;
 				inWord = visible;
 				cells[row].Add((row, visible ? column : -1, words - 1, character));

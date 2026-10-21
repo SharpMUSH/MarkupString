@@ -53,8 +53,8 @@ public sealed record Gauge(double Value, double Maximum) : Block
 	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines)
 	{
 		var theme = context.Theme;
-		var open = context.Paint(t => t.BorderColor, context.Glyph(Open ?? theme.Piece(t => t.GaugeOpen), "["));
-		var close = context.Paint(t => t.BorderColor, context.Glyph(Close ?? theme.Piece(t => t.GaugeClose), "]"));
+		var open = context.PaintLine(t => t.BorderColor, context.Glyph(Open ?? theme.Piece(t => t.GaugeOpen), "["));
+		var close = context.PaintLine(t => t.BorderColor, context.Glyph(Close ?? theme.Piece(t => t.GaugeClose), "]"));
 		var filled = context.Glyph(Filled ?? theme.Piece(t => t.GaugeFilled), "#");
 		var empty = context.Glyph(Empty ?? theme.Piece(t => t.GaugeEmpty), "-");
 		var label = Label is { Length: > 0 } text ? MarkupText.Concat([text, MarkupText.Space]) : MarkupText.Empty;

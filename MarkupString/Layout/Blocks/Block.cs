@@ -96,11 +96,16 @@ public sealed record LayoutContext
 	public LayoutTheme Theme { get; init; } = LayoutTheme.Default;
 
 	/// <summary>
-	/// Whether the theme's part colours are left off: inside a <see cref="Shaded"/> block, whose gradient
-	/// colours the borders, titles and labels the theme would otherwise colour first. A stripe is a
-	/// background, and stays.
+	/// Inside a <see cref="Shaded"/> block, the parts its gradient colours; null outside one. The theme's
+	/// colours for those parts are left off, as they would otherwise win over the gradient, and while only
+	/// some parts are shaded the box drawing is marked (<see cref="Line"/>) so the gradient can tell it
+	/// from the text. A stripe is a background, and stays.
 	/// </summary>
-	internal bool Unpainted { get; init; }
+	internal GradientTarget? Shading { get; init; }
+
+	private bool ShadesText => Shading is GradientTarget.All or GradientTarget.Text;
+
+	private bool ShadesLines => Shading is GradientTarget.All or GradientTarget.Borders;
 
 	/// <summary>Where text with no alignment of its own sits: a table column's, or one set with <see cref="BlockExtensions.Aligned"/>.</summary>
 	public Alignment TextAlignment { get; init; } = Alignment.Left;
@@ -158,7 +163,7 @@ public sealed record LayoutContext
 
 	/// <summary>
 	/// <paramref name="text"/> in the theme's colour for <paramref name="part"/>, or as it is when the theme
-	/// sets none or the block is <see cref="Unpainted"/>. Colour the text sets itself wins.
+	/// sets none or a gradient shades the text (<see cref="Shading"/>). Colour the text sets itself wins.
 	/// </summary>
 	/// <param name="part">The part's colour: <c>theme =&gt; theme.BorderColor</c>.</param>
 	/// <param name="text">The piece.</param>
@@ -166,8 +171,23 @@ public sealed record LayoutContext
 	{
 		ArgumentNullException.ThrowIfNull(part);
 		ArgumentNullException.ThrowIfNull(text);
-		return !Unpainted && part(Theme) is { } markup && text.Length > 0 ? MarkupText.Wrap(markup, text) : text;
+		return !ShadesText && part(Theme) is { } markup && text.Length > 0 ? MarkupText.Wrap(markup, text) : text;
 	}
+
+	/// <summary>
+	/// A piece of box drawing outside a border (a gauge's bracket, a table's column separator or heading rule), in
+	/// the theme's colour for <paramref name="part"/> as <see cref="Paint(Func{LayoutTheme, IMarkup?}, MarkupText)"/>
+	/// draws it, unless a gradient shades the box drawing, and marked as box drawing (<see cref="Line"/>).
+	/// </summary>
+	internal MarkupText PaintLine(Func<LayoutTheme, IMarkup?> part, MarkupText text) =>
+		Line(!ShadesLines && part(Theme) is { } markup && text.Length > 0 ? MarkupText.Wrap(markup, text) : text);
+
+	/// <summary>
+	/// <paramref name="piece"/> marked as box drawing while a gradient shades only the box drawing or
+	/// only the text (<see cref="LinePiece"/>); as it is otherwise.
+	/// </summary>
+	internal MarkupText Line(MarkupText piece) =>
+		Shading is GradientTarget.Borders or GradientTarget.Text && piece.Length > 0 ? MarkupText.Wrap(LinePiece.Instance, piece) : piece;
 
 	/// <summary>
 	/// The lines from <paramref name="first"/> on, a row of a striped table or list, laid on the theme's
@@ -184,8 +204,9 @@ public sealed record LayoutContext
 	/// <summary><paramref name="style"/> with every piece in the theme's border colour.</summary>
 	internal BorderStyle Paint(BorderStyle style)
 	{
-		if (Unpainted || Theme.BorderColor is not { } markup) return style;
-		MarkupText Piece(MarkupText piece) => piece.Length > 0 ? MarkupText.Wrap(markup, piece) : piece;
+		var markup = ShadesLines ? null : Theme.BorderColor;
+		if (markup is null && Shading is null or GradientTarget.All) return style;
+		MarkupText Piece(MarkupText piece) => Line(markup is not null && piece.Length > 0 ? MarkupText.Wrap(markup, piece) : piece);
 		return style with
 		{
 			TopLeft = Piece(style.TopLeft),
@@ -206,8 +227,9 @@ public sealed record LayoutContext
 	/// <summary><paramref name="guide"/> with every piece in the theme's guide colour.</summary>
 	internal TreeGuide Paint(TreeGuide guide)
 	{
-		if (Unpainted || Theme.GuideColor is not { } markup) return guide;
-		MarkupText Piece(MarkupText piece) => piece.Length > 0 ? MarkupText.Wrap(markup, piece) : piece;
+		var markup = ShadesLines ? null : Theme.GuideColor;
+		if (markup is null && Shading is null or GradientTarget.All) return guide;
+		MarkupText Piece(MarkupText piece) => Line(markup is not null && piece.Length > 0 ? MarkupText.Wrap(markup, piece) : piece);
 		return guide with { Branch = Piece(guide.Branch), Last = Piece(guide.Last), Pipe = Piece(guide.Pipe), Blank = Piece(guide.Blank) };
 	}
 }

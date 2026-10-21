@@ -6,7 +6,16 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 2.21.1 — Unreleased
+## 2.22.0 — Unreleased
+
+### Added
+
+- **`Shaded.Target`**: what a gradient over a layout falls on. `GradientTarget.All` (the default)
+  shades everything, `Borders` only the box drawing (borders and the rules across them, table column
+  separators and heading rules, tree guides, gauge brackets) and `Text` only the text, titles and
+  labels with it. The part left out keeps its own colour or its theme's. The HTML writes
+  `ms-shade-borders` or `ms-shade-text` beside `ms-shaded`, and the stylesheet clips only that part to
+  the gradient.
 
 ### Fixed
 

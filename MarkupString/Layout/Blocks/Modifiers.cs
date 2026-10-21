@@ -32,6 +32,9 @@ public sealed record Shaded(Block Content, ColorGradient Gradient) : Block
 	/// <summary>Which way the colours run.</summary>
 	public GradientFlow Flow { get; init; } = GradientFlow.Across;
 
+	/// <summary>Which parts the colours fall on: everything, the box drawing only, or the text only.</summary>
+	public GradientTarget Target { get; init; } = GradientTarget.All;
+
 	/// <inheritdoc/>
 	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines)
 	{
@@ -42,9 +45,16 @@ public sealed record Shaded(Block Content, ColorGradient Gradient) : Block
 		}
 		// The colours run over what is drawn, not the padding after it: a table narrower than the
 		// screen is shaded across its own columns.
-		var drawn = (context with { Unpainted = true }).Lines(Content, width);
+		var drawn = (context with { Shading = Target }).Lines(Content, width);
 		var used = drawn.Count == 0 ? width : Math.Max(1, drawn.Max(line => line.Trim(TrimType.TrimEnd).DisplayWidth));
-		lines.AddRange(Gradient.ShadeLines(drawn, Flow, used));
+		if (Target == GradientTarget.All)
+		{
+			lines.AddRange(Gradient.ShadeLines(drawn, Flow, used));
+			return;
+		}
+		var borders = Target == GradientTarget.Borders;
+		foreach (var line in Gradient.ShadeLines(drawn, Flow, used, character => LinePiece.Marks(character) == borders))
+			lines.Add(LinePiece.Unmark(line));
 	}
 }
 
@@ -133,4 +143,20 @@ public static class BlockExtensions
 
 	/// <summary>Blocks side by side.</summary>
 	public static Flex InRow(this IEnumerable<Block> blocks) => new([.. blocks]);
+}
+
+/// <summary>
+/// Marks a piece of box drawing while a <see cref="Shaded"/> block that shades only the box drawing, or
+/// only the text, is drawn, so its gradient can tell the two apart. Taken off again once it is shaded.
+/// </summary>
+internal sealed record LinePiece : IDataMarkup
+{
+	public static LinePiece Instance { get; } = new();
+
+	/// <summary>Whether <paramref name="character"/> is box drawing.</summary>
+	public static bool Marks(MarkupText character) =>
+		!character.Runs.IsDefaultOrEmpty && character.Runs.Any(run => run.Markups.Any(markup => markup is LinePiece));
+
+	/// <summary><paramref name="line"/> without the mark.</summary>
+	public static MarkupText Unmark(MarkupText line) => line.WithoutMarkup(markup => markup is LinePiece);
 }
