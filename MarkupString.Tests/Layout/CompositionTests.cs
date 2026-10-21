@@ -166,6 +166,81 @@ public class CompositionTests
 	}
 
 	[Test]
+	public async Task Shaded_ATheme_ColoursNoneOfTheParts_SoTheGradientShows()
+	{
+		var green = AnsiMarkup.Create(foreground: new AnsiColor.Rgb(0, 128, 0));
+		var theme = new LayoutTheme { BorderColor = green, TitleColor = green };
+		var box = P("hi").ToBlock().Bordered(P("T"), BorderStyle.Ascii).Themed(theme).Shaded(RedToBlue);
+		var ansi = BlockLayout.Build(box, 8).Render(MarkupFormat.Ansi, Registry);
+
+		await Assert.That(ansi).DoesNotContain("38;2;0;128;0");
+		await Assert.That(ansi).Contains("\u001b[38;2;255;0;0m+");
+		await Assert.That(ansi).Contains("\u001b[38;2;0;0;255m+");
+	}
+
+	[Test]
+	public async Task Shaded_Across_RunsOverWhatIsDrawn_NotThePaddingAfterIt()
+	{
+		var ansi = BlockLayout.Build(P("abc").ToBlock().Shaded(RedToBlue), 40).Render(MarkupFormat.Ansi, Registry);
+
+		await Assert.That(ansi).Contains("\u001b[38;2;255;0;0ma");
+		await Assert.That(ansi).Contains("\u001b[38;2;0;0;255mc");
+	}
+
+	[Test]
+	public async Task Shaded_Borders_ColoursTheBoxDrawingAndLeavesTheTextInItsTheme()
+	{
+		var green = AnsiMarkup.Create(foreground: new AnsiColor.Rgb(0, 128, 0));
+		var box = P("hi").ToBlock().Bordered(P("T"), BorderStyle.Ascii).Themed(new LayoutTheme { BorderColor = green, TitleColor = green })
+			.Shaded(RedToBlue) with
+		{ Target = GradientTarget.Borders };
+		var text = BlockLayout.Build(box, 8);
+		var ansi = text.Render(MarkupFormat.Ansi, Registry);
+
+		await Assert.That(ansi).Contains("\u001b[38;2;255;0;0m+");
+		await Assert.That(ansi).Contains("\u001b[38;2;0;0;255m+");
+		await Assert.That(ansi).Contains("\u001b[38;2;0;128;0mT");
+		await Assert.That(ansi).Contains("\u001b[0m hi");
+		await Assert.That(text.Render(MarkupFormat.Html, Registry)).Contains("<div class=\"ms-shaded ms-shade-borders\" style=\"--ms-shade:linear-gradient(to right, #ff0000, ");
+		await Assert.That(text.Render(MarkupFormat.Html, Registry)).DoesNotContain("background-image");
+	}
+
+	[Test]
+	public async Task Shaded_Text_ColoursTheTextAndLeavesTheBoxDrawingInItsTheme()
+	{
+		var green = AnsiMarkup.Create(foreground: new AnsiColor.Rgb(0, 128, 0));
+		var table = new Table([new TableColumn(P("A")), new TableColumn(P("B"))], [[P("ab"), P("cd")]]) { Separator = P("|") };
+		var shaded = table.Themed(new LayoutTheme { SeparatorColor = green, HeaderRuleColor = green }).Shaded(RedToBlue) with { Target = GradientTarget.Text };
+		var text = BlockLayout.Build(shaded, 7);
+		var ansi = text.Render(MarkupFormat.Ansi, Registry);
+
+		await Assert.That(ansi).Contains("\u001b[38;2;0;128;0m|");
+		await Assert.That(ansi).Contains("\u001b[38;2;0;128;0m-");
+		await Assert.That(ansi).Contains("\u001b[38;2;255;0;0mA");
+		await Assert.That(ansi).Contains("\u001b[38;2;0;0;255md");
+		await Assert.That(text.Runs.SelectMany(run => run.Markups).OfType<IDataMarkup>()).IsEmpty();
+	}
+
+	[Test]
+	public async Task Shaded_Target_IsKeptThroughTheWire()
+	{
+		var box = P("hi").ToBlock().Bordered(border: BorderStyle.Ascii).Shaded(RedToBlue) with { Target = GradientTarget.Text };
+		var read = MarkupTextSerializer.Deserialize(MarkupTextSerializer.Serialize(BlockLayout.Build(box, 6), Registry), Registry);
+
+		await Assert.That(BlockLayout.AsBlock(read)).IsTypeOf<Shaded>();
+		await Assert.That(((Shaded)BlockLayout.AsBlock(read)).Target).IsEqualTo(GradientTarget.Text);
+	}
+
+	[Test]
+	public async Task Shaded_ColourTheTextSetsItself_IsKept()
+	{
+		var green = MarkupText.Wrap(AnsiMarkup.Create(foreground: new AnsiColor.Rgb(0, 128, 0)), "g");
+		var ansi = BlockLayout.Build(new TextBlock(MarkupText.Concat([P("a"), green, P("b")])).Shaded(RedToBlue), 3).Render(MarkupFormat.Ansi, Registry);
+
+		await Assert.That(ansi).Contains("\u001b[38;2;0;128;0mg");
+	}
+
+	[Test]
 	public async Task Shaded_InHtml_ClipsTheGradientToTheText()
 	{
 		var html = BlockLayout.Build(P("hi").ToBlock().Shaded(RedToBlue, GradientFlow.Down), 6).Render(MarkupFormat.Html, Registry);

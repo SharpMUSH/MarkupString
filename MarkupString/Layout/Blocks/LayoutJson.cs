@@ -261,8 +261,13 @@ internal static class LayoutJson
 				w.Block("c", b.Content);
 				w.Gradient("gr", b.Gradient);
 				w.Enum("fl", b.Flow, GradientFlow.Across);
+				w.Enum("tg", b.Target);
 			},
-			r => new Shaded(r.Block("c") ?? new Stack([]), r.Gradient("gr") ?? new ColorGradient([])) { Flow = r.Enum("fl", GradientFlow.Across) }),
+			r => new Shaded(r.Block("c") ?? new Stack([]), r.Gradient("gr") ?? new ColorGradient([]))
+			{
+				Flow = r.Enum("fl", GradientFlow.Across),
+				Target = r.Enum("tg", GradientTarget.All),
+			}),
 		BlockCodec.Create<Colored>("colored",
 			(b, w) =>
 			{

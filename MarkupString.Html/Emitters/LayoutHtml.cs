@@ -595,10 +595,19 @@ internal static class LayoutHtml
 			GradientFlow.Diagonal => "to bottom right",
 			_ => "to right",
 		};
-		html.Write("<div class=\"ms-shaded\" style=\"--ms-shade:");
+		html.Write(shaded.Target switch
+		{
+			GradientTarget.Borders => "<div class=\"ms-shaded ms-shade-borders\" style=\"--ms-shade:",
+			GradientTarget.Text => "<div class=\"ms-shaded ms-shade-text\" style=\"--ms-shade:",
+			_ => "<div class=\"ms-shaded\" style=\"--ms-shade:",
+		});
 		html.Write(shaded.Gradient.ToCss(9, direction));
-		html.Write(";background-image:var(--ms-shade);background-image:");
-		html.Write(shaded.Gradient.ToCss(direction));
+		// Shading the box drawing alone, the text is not clipped to the gradient, so nothing is painted behind it.
+		if (shaded.Target != GradientTarget.Borders)
+		{
+			html.Write(";background-image:var(--ms-shade);background-image:");
+			html.Write(shaded.Gradient.ToCss(direction));
+		}
 		html.Write("\">");
 		html.Block(shaded.Content);
 		html.Write("</div>");

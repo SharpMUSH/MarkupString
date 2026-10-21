@@ -47,7 +47,7 @@ public sealed record Table(ImmutableArray<TableColumn> Columns, ImmutableArray<I
 	{
 		if (Columns.IsDefaultOrEmpty) return;
 		// Measured as drawn: an ASCII reader's separator may be the wider " | " stand-in.
-		var divider = Separator is { } drawn ? context.Paint(theme => theme.SeparatorColor, context.Glyph(drawn, " | ")) : BlockText.Blank(Gap);
+		var divider = Separator is { } drawn ? context.PaintLine(theme => theme.SeparatorColor, context.Glyph(drawn, " | ")) : BlockText.Blank(Gap);
 		if (Widths(context, width, divider.DisplayWidth) is not { } widths)
 		{
 			DrawCards(context, width, lines);
@@ -61,7 +61,7 @@ public sealed record Table(ImmutableArray<TableColumn> Columns, ImmutableArray<I
 
 		lines.Add(Join(shown.Select(c => BlockText.Fit(context.Paint(theme => theme.HeadingColor, Columns[c].Header).FormatColumn(BlockText.Column(widths[c], Columns[c].Alignment))[0], widths[c]))));
 		var rule = HeaderRule ?? context.Theme.Piece(theme => theme.HeaderRule);
-		if (rule.Length > 0) lines.Add(BlockText.Fit(context.Paint(theme => theme.HeaderRuleColor, BlockText.Run(context.Glyph(rule, "-"), tableWidth)), width));
+		if (rule.Length > 0) lines.Add(BlockText.Fit(context.PaintLine(theme => theme.HeaderRuleColor, BlockText.Run(context.Glyph(rule, "-"), tableWidth)), width));
 
 		var cellLines = new List<MarkupText>[Columns.Length];
 		var index = 0;

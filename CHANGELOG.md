@@ -6,7 +6,31 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 2.21.0 — Unreleased
+## 2.22.0 — Unreleased
+
+### Added
+
+- **`Shaded.Target`**: what a gradient over a layout falls on. `GradientTarget.All` (the default)
+  shades everything, `Borders` only the box drawing (borders and the rules across them, table column
+  separators and heading rules, tree guides, gauge brackets) and `Text` only the text, titles and
+  labels with it. The part left out keeps its own colour or its theme's. The HTML writes
+  `ms-shade-borders` or `ms-shade-text` beside `ms-shaded`, and the stylesheet clips only that part to
+  the gradient.
+
+### Fixed
+
+- **A gradient over a themed layout shades the whole of it.** The colours a `LayoutTheme` gives a
+  layout's parts (its border, title, labels, headings, bullets, guides) were laid inside a `Shaded`
+  block's gradient and won over it, so a box drawn in a game's theme showed the gradient only in its
+  plain text. Inside a `Shaded` block those part colours are now left off; colour the text sets
+  itself, and a table's stripe, are still kept.
+- **A gradient runs over what a layout draws, not the padding after it.** A table narrower than the
+  width it was laid out at was shaded across that whole width, so `across` and `diagonal` reached
+  only the first few colours over its columns. In HTML a shaded block holding nothing that fills the
+  width (no box, rule, flex row or gauge), a table say, is as wide as what it holds, for the same
+  reason.
+
+## 2.21.0
 
 ### Added
 

@@ -197,29 +197,32 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 	/// The text with every data layer (<see cref="IDataMarkup"/>) taken off and everything else kept: the
 	/// counterpart of <see cref="WithoutVisualMarkup"/>, for text whose data must not be trusted.
 	/// </summary>
-	public MarkupText WithoutDataMarkup()
+	public MarkupText WithoutDataMarkup() => WithoutMarkup(static markup => markup is IDataMarkup);
+
+	/// <summary>The text with every layer <paramref name="drop"/> says yes to taken off and everything else kept.</summary>
+	internal MarkupText WithoutMarkup(Func<IMarkup, bool> drop)
 	{
 		if (Runs.IsDefaultOrEmpty) return this;
 
-		var hasData = false;
+		var dropping = false;
 		foreach (var run in Runs)
 		{
 			foreach (var markup in run.Markups)
 			{
-				if (markup is not IDataMarkup) continue;
-				hasData = true;
+				if (!drop(markup)) continue;
+				dropping = true;
 				break;
 			}
-			if (hasData) break;
+			if (dropping) break;
 		}
-		if (!hasData) return this;
+		if (!dropping) return this;
 
 		var builder = ImmutableArray.CreateBuilder<Run>(Runs.Length);
 		foreach (var run in Runs)
 		{
 			var kept = new List<IMarkup>(run.Markups.Count);
 			foreach (var markup in run.Markups)
-				if (markup is not IDataMarkup) kept.Add(markup);
+				if (!drop(markup)) kept.Add(markup);
 			if (kept.Count == run.Markups.Count) builder.Add(run);
 			else if (kept.Count > 0) builder.Add(run with { Markups = MarkupSet.Of(kept) });
 		}
