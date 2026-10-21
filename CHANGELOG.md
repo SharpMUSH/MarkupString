@@ -6,7 +6,17 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 2.21.0 — Unreleased
+## 2.21.1 — Unreleased
+
+### Fixed
+
+- **A gradient over a themed layout shades the whole of it.** The colours a `LayoutTheme` gives a
+  layout's parts (its border, title, labels, headings, bullets, guides) were laid inside a `Shaded`
+  block's gradient and won over it, so a box drawn in a game's theme showed the gradient only in its
+  plain text. Inside a `Shaded` block those part colours are now left off; colour the text sets
+  itself, and a table's stripe, are still kept.
+
+## 2.21.0
 
 ### Added
 

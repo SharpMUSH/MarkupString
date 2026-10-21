@@ -95,6 +95,13 @@ public sealed record LayoutContext
 	/// <summary>The look a block takes where it sets none of its own.</summary>
 	public LayoutTheme Theme { get; init; } = LayoutTheme.Default;
 
+	/// <summary>
+	/// Whether the theme's part colours are left off: inside a <see cref="Shaded"/> block, whose gradient
+	/// colours the borders, titles and labels the theme would otherwise colour first. A stripe is a
+	/// background, and stays.
+	/// </summary>
+	internal bool Unpainted { get; init; }
+
 	/// <summary>Where text with no alignment of its own sits: a table column's, or one set with <see cref="BlockExtensions.Aligned"/>.</summary>
 	public Alignment TextAlignment { get; init; } = Alignment.Left;
 
@@ -151,7 +158,7 @@ public sealed record LayoutContext
 
 	/// <summary>
 	/// <paramref name="text"/> in the theme's colour for <paramref name="part"/>, or as it is when the theme
-	/// sets none. Colour the text sets itself wins.
+	/// sets none or the block is <see cref="Unpainted"/>. Colour the text sets itself wins.
 	/// </summary>
 	/// <param name="part">The part's colour: <c>theme =&gt; theme.BorderColor</c>.</param>
 	/// <param name="text">The piece.</param>
@@ -159,7 +166,7 @@ public sealed record LayoutContext
 	{
 		ArgumentNullException.ThrowIfNull(part);
 		ArgumentNullException.ThrowIfNull(text);
-		return part(Theme) is { } markup && text.Length > 0 ? MarkupText.Wrap(markup, text) : text;
+		return !Unpainted && part(Theme) is { } markup && text.Length > 0 ? MarkupText.Wrap(markup, text) : text;
 	}
 
 	/// <summary>
@@ -177,7 +184,7 @@ public sealed record LayoutContext
 	/// <summary><paramref name="style"/> with every piece in the theme's border colour.</summary>
 	internal BorderStyle Paint(BorderStyle style)
 	{
-		if (Theme.BorderColor is not { } markup) return style;
+		if (Unpainted || Theme.BorderColor is not { } markup) return style;
 		MarkupText Piece(MarkupText piece) => piece.Length > 0 ? MarkupText.Wrap(markup, piece) : piece;
 		return style with
 		{
@@ -199,7 +206,7 @@ public sealed record LayoutContext
 	/// <summary><paramref name="guide"/> with every piece in the theme's guide colour.</summary>
 	internal TreeGuide Paint(TreeGuide guide)
 	{
-		if (Theme.GuideColor is not { } markup) return guide;
+		if (Unpainted || Theme.GuideColor is not { } markup) return guide;
 		MarkupText Piece(MarkupText piece) => piece.Length > 0 ? MarkupText.Wrap(markup, piece) : piece;
 		return guide with { Branch = Piece(guide.Branch), Last = Piece(guide.Last), Pipe = Piece(guide.Pipe), Blank = Piece(guide.Blank) };
 	}

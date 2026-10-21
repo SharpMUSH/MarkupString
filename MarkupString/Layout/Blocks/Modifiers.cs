@@ -18,7 +18,8 @@ public sealed record Aligned(Block Content, Alignment Alignment) : Block
 
 /// <summary>
 /// <paramref name="Content"/> drawn in the colours of <paramref name="Gradient"/>: its borders, rules
-/// and text alike. Spaces are left alone, and colour the content sets itself is kept.
+/// and text alike. Spaces are left alone, and colour the content sets itself is kept; the colours a
+/// theme gives its parts are not, so a themed box is shaded borders and all.
 /// </summary>
 /// <param name="Content">What is shaded.</param>
 /// <param name="Gradient">The colours.</param>
@@ -32,8 +33,15 @@ public sealed record Shaded(Block Content, ColorGradient Gradient) : Block
 	public GradientFlow Flow { get; init; } = GradientFlow.Across;
 
 	/// <inheritdoc/>
-	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines) =>
-		lines.AddRange(Gradient.ShadeLines(context.Lines(Content, width), Flow, width));
+	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines)
+	{
+		if (Gradient.IsEmpty)
+		{
+			context.Draw(Content, width, lines);
+			return;
+		}
+		lines.AddRange(Gradient.ShadeLines((context with { Unpainted = true }).Lines(Content, width), Flow, width));
+	}
 }
 
 /// <summary><paramref name="Content"/> drawn under <paramref name="Markup"/> — a colour, say — which colour it sets itself overrides.</summary>

@@ -166,6 +166,28 @@ public class CompositionTests
 	}
 
 	[Test]
+	public async Task Shaded_ATheme_ColoursNoneOfTheParts_SoTheGradientShows()
+	{
+		var green = AnsiMarkup.Create(foreground: new AnsiColor.Rgb(0, 128, 0));
+		var theme = new LayoutTheme { BorderColor = green, TitleColor = green };
+		var box = P("hi").ToBlock().Bordered(P("T"), BorderStyle.Ascii).Themed(theme).Shaded(RedToBlue);
+		var ansi = BlockLayout.Build(box, 8).Render(MarkupFormat.Ansi, Registry);
+
+		await Assert.That(ansi).DoesNotContain("38;2;0;128;0");
+		await Assert.That(ansi).Contains("\u001b[38;2;255;0;0m+");
+		await Assert.That(ansi).Contains("\u001b[38;2;0;0;255m+");
+	}
+
+	[Test]
+	public async Task Shaded_ColourTheTextSetsItself_IsKept()
+	{
+		var green = MarkupText.Wrap(AnsiMarkup.Create(foreground: new AnsiColor.Rgb(0, 128, 0)), "g");
+		var ansi = BlockLayout.Build(new TextBlock(MarkupText.Concat([P("a"), green, P("b")])).Shaded(RedToBlue), 3).Render(MarkupFormat.Ansi, Registry);
+
+		await Assert.That(ansi).Contains("\u001b[38;2;0;128;0mg");
+	}
+
+	[Test]
 	public async Task Shaded_InHtml_ClipsTheGradientToTheText()
 	{
 		var html = BlockLayout.Build(P("hi").ToBlock().Shaded(RedToBlue, GradientFlow.Down), 6).Render(MarkupFormat.Html, Registry);
