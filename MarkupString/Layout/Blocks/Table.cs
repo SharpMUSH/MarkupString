@@ -98,7 +98,8 @@ public sealed record Table(ImmutableArray<TableColumn> Columns, ImmutableArray<I
 		{
 			if (r > 0 && !context.Linear) lines.Add(MarkupText.Empty);
 			var row = rows[r];
-			cards.Draw(new Fields([.. Enumerable.Range(0, Columns.Length).Select(c => new Field(Columns[c].Header, Cell(row, c)))]), width, lines);
+			// A header's outer spaces line its column up with the next; as a label they would sit before the colon.
+			cards.Draw(new Fields([.. Enumerable.Range(0, Columns.Length).Select(c => new Field(Columns[c].Header.Trim(TrimType.TrimBoth), Cell(row, c)))]), width, lines);
 		}
 	}
 
