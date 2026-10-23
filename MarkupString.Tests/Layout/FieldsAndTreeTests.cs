@@ -94,6 +94,16 @@ public class FieldsAndTreeTests
 		=> await Assert.That(Lines(Sheet(Character[..2]) with { Columns = 2 }, 40, new LayoutContext { Linear = true }))
 			.IsEquivalentTo(new[] { "Sex: Male", "Species: Human" });
 
+	[Test]
+	public async Task Table_Linear_LabelsEachCellWithoutTheHeadingsPadding()
+	{
+		var table = new Table(
+			[new TableColumn(P("Player")), new TableColumn(P("Idle ")) { Alignment = Alignment.Right }],
+			[[new TextBlock(P("Mannaz")), new TextBlock(P("59s"))]]);
+
+		await Assert.That(Lines(table, 40, new LayoutContext { Linear = true })).IsEquivalentTo(new[] { "Player: Mannaz", "Idle: 59s" });
+	}
+
 	private static Tree Channels(TreeGuide guide) => new(
 	[
 		new TreeItem(P("Channels"),

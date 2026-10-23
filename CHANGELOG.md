@@ -6,6 +6,14 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.22.1 — Unreleased
+
+### Fixed
+
+- A `Table` read as cards (linear, or too narrow for its columns) trims the spaces around each heading
+  before using it as a label, so a heading padded for its column, such as `"Idle "`, reads `Idle: 59s`
+  instead of `Idle : 59s`.
+
 ## 2.22.0 — Unreleased
 
 ### Added
