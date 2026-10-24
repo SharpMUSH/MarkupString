@@ -177,6 +177,30 @@ public class AsciiFoldTests
 	}
 
 	[Test]
+	public async Task StandIn_KeepsThePointsItCovers()
+	{
+		var after = AsciiFold.Default.Fold(MarkupText.StandIn(MarkupText.Concat([MarkupText.Plain("📌"), MarkupText.Sound("ping.wav")]), "P"));
+		var before = AsciiFold.Default.Fold(MarkupText.StandIn(MarkupText.Concat([MarkupText.Sound("ping.wav"), MarkupText.Plain("📌")]), "P"));
+
+		await Assert.That(after.Text).IsEqualTo("P" + MarkupText.PointCarrier);
+		await Assert.That(after.Runs.Any(run => run.Start == 1 && run.Length == 1 && run.Markups.Any(m => m is SoundMarkup))).IsTrue();
+		await Assert.That(before.Text).IsEqualTo(MarkupText.PointCarrier + "P");
+		await Assert.That(before.Runs.Any(run => run.Start == 0 && run.Length == 1 && run.Markups.Any(m => m is SoundMarkup))).IsTrue();
+	}
+
+	[Test]
+	public async Task StandIn_IsIgnoredWhenItsTextIsNotPrintableAscii()
+		=> await Assert.That(AsciiFold.Default.Fold(MarkupText.Wrap(new StandInMarkup("é"), MarkupText.Plain("📌"))).Text).IsEqualTo("??");
+
+	[Test]
+	public async Task StandIn_ReplacesEachOfMany()
+	{
+		var text = MarkupText.Concat(Enumerable.Range(0, 1000).SelectMany(_ => new[] { MarkupText.StandIn(MarkupText.Plain("📌"), "P"), MarkupText.Plain(" ") }));
+
+		await Assert.That(AsciiFold.Default.Fold(text).Text).IsEqualTo(string.Concat(Enumerable.Repeat("P ", 1000)));
+	}
+
+	[Test]
 	public async Task StandIn_RefusesTextThatIsNotPrintableAscii()
 		=> await Assert.That(() => MarkupText.StandIn(MarkupText.Plain("📌"), "é")).Throws<ArgumentException>();
 }

@@ -89,24 +89,33 @@ public sealed class AsciiFold
 		// Where each index of the old text lands in the new one, so the runs can follow.
 		var map = new int[source.Length + 1];
 		var changed = false;
-		// The end of the stand-in being skipped, once its text is written.
+		// The end of the stand-in being replaced, and its text until it is written.
 		var skipTo = 0;
+		string? pending = null;
+		// The first stand-in that may still start here; they are in order, as the graphemes are.
+		var nextStandIn = 0;
 		foreach (var range in Graphemes.Enumerate(span))
 		{
 			var (start, end) = (range.Start.Value, range.End.Value);
-			if (start < skipTo)
+			if (start >= skipTo && StandInAt(standIns, ref nextStandIn, start) is var (standInEnd, standIn)
+				&& NeedsFold(span[start..standInEnd], points, start))
 			{
-				// After the stand-in's text, so its first character's run is the one that holds it.
-				for (var i = start; i < end; i++) map[i] = builder.Length;
-				continue;
+				skipTo = standInEnd;
+				pending = standIn;
+				changed = true;
 			}
 
-			if (StandInAt(standIns, start) is var (standInEnd, standIn) && NeedsFold(span[start..standInEnd], points, start))
+			if (start < skipTo)
 			{
+				// A point keeps its carrier. The first character that is not one is written as the stand-in's
+				// text, so its run holds the text, and the rest are left out.
 				for (var i = start; i < end; i++) map[i] = builder.Length;
-				builder.Append(standIn);
-				skipTo = standInEnd;
-				changed = true;
+				if (InPoint(points, start)) builder.Append(span[start..end]);
+				else if (pending is not null)
+				{
+					builder.Append(pending);
+					pending = null;
+				}
 				continue;
 			}
 
@@ -264,8 +273,10 @@ public sealed class AsciiFold
 		foreach (var run in runs)
 		{
 			StandInMarkup? found = null;
+			// One whose text is not printable ASCII (built directly, or read from the wire) is ignored, so the
+			// covered text folds as any other would.
 			foreach (var markup in run.Markups)
-				if (markup is StandInMarkup standIn)
+				if (markup is StandInMarkup standIn && IsPrintableAscii(standIn.Text))
 				{
 					found = standIn;
 					break;
@@ -285,12 +296,12 @@ public sealed class AsciiFold
 	}
 
 	/// <summary>The end and text of the stand-in that starts at <paramref name="index"/>, or null.</summary>
-	private static (int End, string Text)? StandInAt(List<(int Start, int End, string Text)>? standIns, int index)
+	/// <remarks><paramref name="next"/> moves past every stand-in that starts before <paramref name="index"/>.</remarks>
+	private static (int End, string Text)? StandInAt(List<(int Start, int End, string Text)>? standIns, ref int next, int index)
 	{
 		if (standIns is null) return null;
-		foreach (var (start, end, text) in standIns)
-			if (start == index) return (end, text);
-		return null;
+		while (next < standIns.Count && standIns[next].Start < index) next++;
+		return next < standIns.Count && standIns[next].Start == index ? (standIns[next].End, standIns[next].Text) : null;
 	}
 
 	/// <summary>Whether this fold would replace any character of <paramref name="text"/>, which starts at <paramref name="offset"/>.</summary>
