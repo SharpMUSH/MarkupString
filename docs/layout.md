@@ -515,6 +515,11 @@ first, such as `·` to `" - "` or `…` to `"..."`; each key is one character ou
 printable ASCII. `fold.Fold(text)` folds a string or a `MarkupText`, whose markup stays on the
 characters it was on.
 
+A text can carry its own stand-in: `MarkupText.StandIn(MarkupText.Plain("📌"), "P")` is sent as `P` to a
+reader who cannot show the pin, where the built-in fold would send `??`. The whole covered text is
+replaced when any character in it would be, and kept when the reader shows all of it. It comes before
+the fold's own translations, and no format writes anything for it (`StandInMarkup` is an `IDataMarkup`).
+
 Given as `LayoutContext.Fold`, the fold reaches the text inside every block (`Block.MapText`) before
 the block is measured, so a stand-in of another width still lines up. The tree a block carries is
 not changed. Text outside blocks is the caller's to fold.

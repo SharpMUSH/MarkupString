@@ -113,6 +113,9 @@ internal static class ElementCodecs
 				if (m.Caption is not null) w.WriteString("ca", m.Caption);
 			},
 			static e => new StatusMarkup(String(e, "n") ?? string.Empty, String(e, "m"), String(e, "ca"))),
+		new Codec<StandInMarkup>("standin",
+			static (w, m) => w.WriteString("t", m.Text),
+			static e => new StandInMarkup(String(e, "t") ?? string.Empty)),
 	];
 
 	private static readonly Dictionary<Type, IMarkupCodec> ByType = All.ToDictionary(c => c.MarkupType);

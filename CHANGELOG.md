@@ -6,6 +6,16 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.23.0 — Unreleased
+
+### Added
+
+- **`MarkupText.StandIn(content, text)`** (`StandInMarkup`): the ASCII text a reader whose client cannot
+  show `content` is sent instead, so a 📌 can reach an ASCII client as `P` rather than `??`.
+  `AsciiFold` replaces the whole covered text when any character in it would be replaced, before a
+  game's translations and the built-in stand-ins, and leaves it alone for a reader who shows all of
+  it. No format writes anything for it, and it is stored on the wire as `standin`.
+
 ## 2.22.1 — Unreleased
 
 ### Fixed

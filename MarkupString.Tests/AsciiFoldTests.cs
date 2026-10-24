@@ -117,4 +117,90 @@ public class AsciiFoldTests
 		var layout = relaid.Runs.SelectMany(run => run.Markups).OfType<LayoutMarkup>().Single();
 		await Assert.That(((Rule)layout.Root).Title!.ToPlainText()).IsEqualTo("a · b");
 	}
+	[Test]
+	public async Task StandIn_ReplacesTheWholeTextForAReaderWhoCannotShowIt()
+	{
+		var text = MarkupText.Concat([MarkupText.StandIn(MarkupText.Plain("📌"), "P"), MarkupText.Plain(" Rules")]);
+
+		await Assert.That(AsciiFold.Default.Fold(text).Text).IsEqualTo("P Rules");
+		await Assert.That(AsciiFold.Default.Fold(MarkupText.StandIn(MarkupText.Plain("✓ done"), "[x] done")).Text).IsEqualTo("[x] done");
+		await Assert.That(AsciiFold.Default.Fold(MarkupText.StandIn(MarkupText.Plain("✨"), "")).Text).IsEqualTo("");
+	}
+
+	[Test]
+	public async Task StandIn_ComesBeforeTheGamesStandIns()
+		=> await Assert.That(new AsciiFold([new("📌", "*")]).Fold(MarkupText.StandIn(MarkupText.Plain("📌"), "P")).Text).IsEqualTo("P");
+
+	[Test]
+	public async Task StandIn_LeavesTextTheReaderShows()
+	{
+		var text = MarkupText.Concat([MarkupText.StandIn(MarkupText.Plain("café"), "cafe!"), MarkupText.Plain(" ·")]);
+
+		await Assert.That(new AsciiFold(latin1: true).Fold(text).Text).IsEqualTo("café ·");
+		await Assert.That(AsciiFold.Default.Fold(text).Text).IsEqualTo("cafe! *");
+	}
+
+	[Test]
+	public async Task StandIn_IsOneAcrossAColourChangeAndCarriesTheFirstCharactersMarkup()
+	{
+		var text = MarkupText.Concat([MarkupText.Plain("a"), MarkupText.StandIn(MarkupText.Concat([MarkupText.Wrap(Red, "→"), MarkupText.Plain("…")]), "->"), MarkupText.Plain("b")]);
+		var folded = AsciiFold.Default.Fold(text);
+
+		await Assert.That(folded.Text).IsEqualTo("a->b");
+		await Assert.That(folded.Runs.Any(run => run.Start == 1 && run.Length == 2 && run.Markups.Contains(Red))).IsTrue();
+	}
+
+	[Test]
+	public async Task StandIn_SurvivesTheWire()
+	{
+		var text = MarkupText.StandIn(MarkupText.Plain("📌"), "P");
+		var read = MarkupTextSerializer.Deserialize(MarkupTextSerializer.Serialize(text));
+
+		await Assert.That(AsciiFold.Default.Fold(read).Text).IsEqualTo("P");
+		await Assert.That(read.Runs.Single().Markups.Contains(new StandInMarkup("P"))).IsTrue();
+	}
+
+	[Test]
+	public async Task StandIn_LaysOutAtItsOwnWidth()
+	{
+		var table = new Table([new TableColumn(MarkupText.Plain("")), new TableColumn(MarkupText.Plain("Title"))],
+		[
+			[MarkupText.StandIn(MarkupText.Plain("📌"), "P"), MarkupText.Plain("Rules")],
+			[MarkupText.Plain("U"), MarkupText.Plain("News")],
+		]);
+		var context = new LayoutContext { AsciiOnly = true, Fold = AsciiFold.Default };
+
+		var lines = BlockLayout.Lines(table, 30, context).Select(line => line.ToPlainText()).ToArray();
+
+		await Assert.That(lines.Single(line => line.Contains("Rules")).IndexOf("Rules")).IsEqualTo(lines.Single(line => line.Contains("News")).IndexOf("News"));
+		await Assert.That(lines.Any(line => line.TrimStart().StartsWith("P"))).IsTrue();
+	}
+
+	[Test]
+	public async Task StandIn_KeepsThePointsItCovers()
+	{
+		var after = AsciiFold.Default.Fold(MarkupText.StandIn(MarkupText.Concat([MarkupText.Plain("📌"), MarkupText.Sound("ping.wav")]), "P"));
+		var before = AsciiFold.Default.Fold(MarkupText.StandIn(MarkupText.Concat([MarkupText.Sound("ping.wav"), MarkupText.Plain("📌")]), "P"));
+
+		await Assert.That(after.Text).IsEqualTo("P" + MarkupText.PointCarrier);
+		await Assert.That(after.Runs.Any(run => run.Start == 1 && run.Length == 1 && run.Markups.Any(m => m is SoundMarkup))).IsTrue();
+		await Assert.That(before.Text).IsEqualTo(MarkupText.PointCarrier + "P");
+		await Assert.That(before.Runs.Any(run => run.Start == 0 && run.Length == 1 && run.Markups.Any(m => m is SoundMarkup))).IsTrue();
+	}
+
+	[Test]
+	public async Task StandIn_IsIgnoredWhenItsTextIsNotPrintableAscii()
+		=> await Assert.That(AsciiFold.Default.Fold(MarkupText.Wrap(new StandInMarkup("é"), MarkupText.Plain("📌"))).Text).IsEqualTo("??");
+
+	[Test]
+	public async Task StandIn_ReplacesEachOfMany()
+	{
+		var text = MarkupText.Concat(Enumerable.Range(0, 1000).SelectMany(_ => new[] { MarkupText.StandIn(MarkupText.Plain("📌"), "P"), MarkupText.Plain(" ") }));
+
+		await Assert.That(AsciiFold.Default.Fold(text).Text).IsEqualTo(string.Concat(Enumerable.Repeat("P ", 1000)));
+	}
+
+	[Test]
+	public async Task StandIn_RefusesTextThatIsNotPrintableAscii()
+		=> await Assert.That(() => MarkupText.StandIn(MarkupText.Plain("📌"), "é")).Throws<ArgumentException>();
 }
