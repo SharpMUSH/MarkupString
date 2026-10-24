@@ -10,3 +10,16 @@ MarkupString.GradientTarget.Borders = 1 -> MarkupString.GradientTarget
 MarkupString.GradientTarget.Text = 2 -> MarkupString.GradientTarget
 MarkupString.Layout.Shaded.Target.get -> MarkupString.GradientTarget
 MarkupString.Layout.Shaded.Target.init -> void
+MarkupString.StandInMarkup
+MarkupString.StandInMarkup.<Clone>$() -> MarkupString.StandInMarkup!
+MarkupString.StandInMarkup.Deconstruct(out string! Text) -> void
+MarkupString.StandInMarkup.Equals(MarkupString.StandInMarkup? other) -> bool
+MarkupString.StandInMarkup.StandInMarkup(string! Text) -> void
+MarkupString.StandInMarkup.Text.get -> string!
+MarkupString.StandInMarkup.Text.init -> void
+override MarkupString.StandInMarkup.Equals(object? obj) -> bool
+override MarkupString.StandInMarkup.GetHashCode() -> int
+override MarkupString.StandInMarkup.ToString() -> string!
+static MarkupString.StandInMarkup.operator !=(MarkupString.StandInMarkup? left, MarkupString.StandInMarkup? right) -> bool
+static MarkupString.StandInMarkup.operator ==(MarkupString.StandInMarkup? left, MarkupString.StandInMarkup? right) -> bool
+static MarkupString.MarkupText.StandIn(MarkupString.MarkupText! content, string! text) -> MarkupString.MarkupText!

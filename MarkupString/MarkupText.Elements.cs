@@ -139,6 +139,20 @@ public sealed partial class MarkupText
 	}
 
 	/// <summary>
+	/// <paramref name="content"/>, sent as <paramref name="text"/> to a reader whose client cannot show it.
+	/// See <see cref="StandInMarkup"/>.
+	/// </summary>
+	/// <exception cref="ArgumentException"><paramref name="text"/> is not printable ASCII.</exception>
+	public static MarkupText StandIn(MarkupText content, string text)
+	{
+		ArgumentNullException.ThrowIfNull(content);
+		ArgumentNullException.ThrowIfNull(text);
+		foreach (var c in text)
+			if (c is < ' ' or > '~') throw new ArgumentException("A stand-in is printable ASCII.", nameof(text));
+		return Wrap(new StandInMarkup(text), content);
+	}
+
+	/// <summary>
 	/// <paramref name="variable"/> in the client's status bar, standing in <paramref name="content"/>
 	/// for a client with none. See <see cref="StatusMarkup"/>.
 	/// </summary>

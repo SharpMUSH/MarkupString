@@ -21,7 +21,8 @@ namespace MarkupString;
 /// </para>
 /// <para>
 /// Markup is kept: a replacement carries the markup of the character it replaces. A point
-/// (<see cref="IPointMarkup"/>) keeps its carrier.
+/// (<see cref="IPointMarkup"/>) keeps its carrier. Text under a <see cref="StandInMarkup"/> is replaced
+/// whole by its stand-in when any of it would be replaced.
 /// </para>
 /// </remarks>
 public sealed class AsciiFold
@@ -82,14 +83,33 @@ public sealed class AsciiFold
 		if (IsAscii(source)) return text;
 
 		var points = PointRanges(text.Runs);
+		var standIns = StandInRanges(text.Runs);
 		var span = source.AsSpan();
 		var builder = new StringBuilder(source.Length);
 		// Where each index of the old text lands in the new one, so the runs can follow.
 		var map = new int[source.Length + 1];
 		var changed = false;
+		// The end of the stand-in being skipped, once its text is written.
+		var skipTo = 0;
 		foreach (var range in Graphemes.Enumerate(span))
 		{
 			var (start, end) = (range.Start.Value, range.End.Value);
+			if (start < skipTo)
+			{
+				// After the stand-in's text, so its first character's run is the one that holds it.
+				for (var i = start; i < end; i++) map[i] = builder.Length;
+				continue;
+			}
+
+			if (StandInAt(standIns, start) is var (standInEnd, standIn) && NeedsFold(span[start..standInEnd], points, start))
+			{
+				for (var i = start; i < end; i++) map[i] = builder.Length;
+				builder.Append(standIn);
+				skipTo = standInEnd;
+				changed = true;
+				continue;
+			}
+
 			var cluster = span[start..end];
 			var replacement = InPoint(points, start) ? null : Translate(cluster);
 			for (var i = start; i < end; i++) map[i] = builder.Length;
@@ -231,6 +251,54 @@ public sealed class AsciiFold
 					break;
 				}
 		return ranges;
+	}
+
+	/// <summary>
+	/// The stretches of <paramref name="runs"/> under a <see cref="StandInMarkup"/>, in order, with touching runs
+	/// under the same one joined: a colour change inside a stand-in does not split it.
+	/// </summary>
+	private static List<(int Start, int End, string Text)>? StandInRanges(ImmutableArray<Run> runs)
+	{
+		List<(int Start, int End, string Text)>? ranges = null;
+		StandInMarkup? last = null;
+		foreach (var run in runs)
+		{
+			StandInMarkup? found = null;
+			foreach (var markup in run.Markups)
+				if (markup is StandInMarkup standIn)
+				{
+					found = standIn;
+					break;
+				}
+			if (found is null)
+			{
+				last = null;
+				continue;
+			}
+
+			ranges ??= [];
+			if (found.Equals(last) && ranges[^1].End == run.Start) ranges[^1] = ranges[^1] with { End = run.End };
+			else ranges.Add((run.Start, run.End, found.Text));
+			last = found;
+		}
+		return ranges;
+	}
+
+	/// <summary>The end and text of the stand-in that starts at <paramref name="index"/>, or null.</summary>
+	private static (int End, string Text)? StandInAt(List<(int Start, int End, string Text)>? standIns, int index)
+	{
+		if (standIns is null) return null;
+		foreach (var (start, end, text) in standIns)
+			if (start == index) return (end, text);
+		return null;
+	}
+
+	/// <summary>Whether this fold would replace any character of <paramref name="text"/>, which starts at <paramref name="offset"/>.</summary>
+	private bool NeedsFold(ReadOnlySpan<char> text, List<(int Start, int End)>? points, int offset)
+	{
+		foreach (var range in Graphemes.Enumerate(text))
+			if (!InPoint(points, offset + range.Start.Value) && Translate(text[range]) is not null) return true;
+		return false;
 	}
 
 	private static bool InPoint(List<(int Start, int End)>? points, int index)
