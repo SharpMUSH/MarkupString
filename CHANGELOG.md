@@ -6,6 +6,15 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.24.0 — Unreleased
+
+### Changed
+
+- **A `Table` read linearly is one line per row**: its labelled values, comma-separated
+  (`Player Name: Dave, On For: 4s`), where it was one line per cell. A cell with nothing in it is left
+  out with its label, so a screen reader no longer reads a bare `Doing:`. A column with no heading reads
+  its value alone. A table too narrow for its columns still draws its rows as cards.
+
 ## 2.23.0 — Unreleased
 
 ### Added
