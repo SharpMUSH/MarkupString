@@ -101,7 +101,24 @@ public class FieldsAndTreeTests
 			[new TableColumn(P("Player")), new TableColumn(P("Idle ")) { Alignment = Alignment.Right }],
 			[[new TextBlock(P("Mannaz")), new TextBlock(P("59s"))]]);
 
-		await Assert.That(Lines(table, 40, new LayoutContext { Linear = true })).IsEquivalentTo(new[] { "Player: Mannaz", "Idle: 59s" });
+		await Assert.That(Lines(table, 40, new LayoutContext { Linear = true })).IsEquivalentTo(new[] { "Player: Mannaz, Idle: 59s" });
+	}
+
+	[Test]
+	public async Task Table_Linear_ReadsEachRowAsOneLine_LeavingEmptyCellsOut()
+	{
+		var table = new Table(
+			[new TableColumn(P("Player Name")), new TableColumn(P("On For")), new TableColumn(P("Doing")), new TableColumn(P(""))],
+			[
+				[new TextBlock(P("Dave")), new TextBlock(P("4s")), new TextBlock(P("")), new TextBlock(P("[To do]"))],
+				[new TextBlock(P("Bob")), new TextBlock(P("1m")), new TextBlock(P("Exploring"))],
+			]);
+
+		await Assert.That(Lines(table, 60, new LayoutContext { Linear = true })).IsEquivalentTo(new[]
+		{
+			"Player Name: Dave, On For: 4s, [To do]",
+			"Player Name: Bob, On For: 1m, Doing: Exploring",
+		});
 	}
 
 	private static Tree Channels(TreeGuide guide) => new(

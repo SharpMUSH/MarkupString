@@ -82,10 +82,25 @@ public sealed record Table(ImmutableArray<TableColumn> Columns, ImmutableArray<I
 		}
 	}
 
-	/// <inheritdoc/>
+	/// <summary>
+	/// Each row as one line of labelled values, comma-separated, so a screen reader hears a row where the eye
+	/// sees one. A cell with nothing in it is left out with its label: a reader saying "Doing:" says nothing.
+	/// A column with no heading reads its value alone.
+	/// </summary>
 	public override void DrawLinear(LayoutContext context, int width, IList<MarkupText> lines)
 	{
-		if (!Columns.IsDefaultOrEmpty) DrawCards(context, width, lines);
+		if (Columns.IsDefaultOrEmpty) return;
+		var values = context with { TextAlignment = Alignment.Left };
+		foreach (var row in AllRows)
+		{
+			var parts = Enumerable.Range(0, Columns.Length)
+				.Select(c => (Label: Columns[c].Header.Trim(TrimType.TrimBoth), Value: MarkupText.Join(MarkupText.Plain(" "), values.Lines(Cell(row, c), int.MaxValue / 2).Select(line => line.Trim(TrimType.TrimBoth)))))
+				.Where(part => part.Value.ToPlainText().Trim().Length > 0)
+				.Select(part => part.Label.Length == 0 ? part.Value : MarkupText.Concat([part.Label, MarkupText.Plain(": "), part.Value]));
+			var line = MarkupText.Join(MarkupText.Plain(", "), parts);
+			if (line.Length == 0) continue;
+			foreach (var wrapped in values.Lines(new TextBlock(line), width)) lines.Add(wrapped);
+		}
 	}
 
 	/// <summary>Each row as a card of labelled values, the way a phone shows a table too wide for it.</summary>
