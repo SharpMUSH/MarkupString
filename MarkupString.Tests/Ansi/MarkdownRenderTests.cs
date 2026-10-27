@@ -298,7 +298,7 @@ public class MarkdownRenderTests
 	[Test]
 	public void PlainTextReadsBackAsItself()
 	{
-		var gen = Gen.OneOfConst(Pieces).Array[0, 12].Select(string.Concat);
+		var gen = Gen.OneOf(Pieces).Array[0, 12].Select(string.Concat);
 		Check.Sample(gen, text =>
 		{
 			var markdown = Render(MarkupText.Plain(text));
@@ -318,7 +318,7 @@ public class MarkdownRenderTests
 	public void StyledTextReadsBackAsItsWords()
 	{
 		var styles = new[] { Bold, Italic, AnsiMarkup.Create(strikeThrough: true), AnsiMarkup.Create(bold: true, italic: true) };
-		var gen = Gen.Select(Gen.OneOfConst(Pieces).Array[1, 4].Select(string.Concat), Gen.Int[-1, styles.Length - 1])
+		var gen = Gen.Select(Gen.OneOf(Pieces).Array[1, 4].Select(string.Concat), Gen.Int[-1, styles.Length - 1])
 			.Array[1, 5]
 			.Select(parts => MarkupText.Join(MarkupText.Plain(" "), parts.Select(part => part.Item2 < 0 ? MarkupText.Plain(part.Item1) : MarkupText.Wrap(styles[part.Item2], part.Item1))));
 		Check.Sample(gen, text =>

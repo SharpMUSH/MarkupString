@@ -74,7 +74,7 @@ public class RoundTripProperties
 	/// Links are rare (the no-link case is weighted five to one) and cover both kinds, an
 	/// unsafe scheme, a hint, and a target that needs encoding.
 	/// </summary>
-	private static readonly Gen<(string? Url, string? Text, LinkKind Kind)> GenLink = Gen.OneOfConst(
+	private static readonly Gen<(string? Url, string? Text, LinkKind Kind)> GenLink = Gen.OneOf(
 		((string?)null, (string?)null, LinkKind.Url),
 		(null, null, LinkKind.Url),
 		(null, null, LinkKind.Url),
@@ -105,8 +105,8 @@ public class RoundTripProperties
 			clear: flag[8]));
 
 	private static readonly Gen<IMarkup> GenHtmlMarkup = Gen.Select(
-		Gen.OneOfConst("b", "i", "u", "s", "send", "div"),
-		Gen.OneOfConst<string?>(null, null, "class=\"x\"", "href=\"north\" hint=\"Go north\""),
+		Gen.OneOf("b", "i", "u", "s", "send", "div"),
+		Gen.OneOf<string?>(null, null, "class=\"x\"", "href=\"north\" hint=\"Go north\""),
 		(tag, attributes) => (IMarkup)HtmlMarkup.Create(tag, attributes));
 
 	private static readonly Gen<MarkupSet> GenSet =
@@ -221,7 +221,7 @@ public class RoundTripProperties
 		};
 
 		Check.Sample(
-			Gen.Select(GenMarkupText, Gen.Int[0, 60], Gen.OneOfConst('.', '-', '*', ' ')),
+			Gen.Select(GenMarkupText, Gen.Int[0, 60], Gen.OneOf('.', '-', '*', ' ')),
 			property, seed: Seed, iter: 5000);
 	}
 
