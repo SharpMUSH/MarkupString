@@ -65,7 +65,7 @@ public sealed record Gauge(double Value, double Maximum) : Block
 		var bar = BarWidth > 0 ? Math.Min(BarWidth, Math.Max(1, room)) : Math.Max(1, room);
 		var full = (int)Math.Round(bar * Ratio);
 		var fill = BlockText.Run(filled, full);
-		if (Gradient is { IsEmpty: false } gradient)
+		if (Gradient is { } given && context.Toned(given) is { IsEmpty: false } gradient)
 			fill = Shade == GaugeShade.Value ? gradient.Paint(fill, Ratio) : gradient.ShadeLines([fill], GradientFlow.Across, bar)[0];
 		else fill = context.Paint(t => t.GaugeFilledColor, fill);
 		var rest = context.Paint(t => t.GaugeEmptyColor, BlockText.Run(empty, bar - full));

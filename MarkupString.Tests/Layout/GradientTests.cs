@@ -169,4 +169,40 @@ public class GradientTests
 		await Assert.That(json).Contains("\"fs\":2");
 		await Assert.That(MarkupTextSerializer.Serialize(read, Registry)).IsEqualTo(json);
 	}
+
+	/// <summary>A gradient from the theme's primary colour (red when written) to blue, in a box.</summary>
+	private static MarkupText TonedBox() =>
+		BlockLayout.Build(new TextBlock(MarkupText.Plain("abc")).Bordered()
+			.Shaded(new ColorGradient([Red, Blue]) { Roles = [ThemeRole.Primary, null] }, GradientFlow.Characters), 0);
+
+	[Test]
+	public async Task AStopNamingAThemeColour_TakesTheReadersColour_AfterTheSerializer()
+	{
+		var read = MarkupTextSerializer.Deserialize(MarkupTextSerializer.Serialize(TonedBox(), Registry), Registry);
+		var context = LayoutContext.Default with { Tones = role => role == ThemeRole.Primary ? Lime : null };
+
+		var output = BlockLayout.Relayout(read, 0, context).Render(MarkupFormat.Ansi, Registry);
+
+		await Assert.That(output).Contains("38;2;0;255;0m");
+		await Assert.That(output).DoesNotContain("38;2;255;0;0m");
+		await Assert.That(output).Contains("38;2;0;0;255m");
+	}
+
+	[Test]
+	public async Task AStopNamingAThemeColour_KeepsItsOwn_ForAReaderWithoutATheme()
+	{
+		var read = MarkupTextSerializer.Deserialize(MarkupTextSerializer.Serialize(TonedBox(), Registry), Registry);
+
+		await Assert.That(BlockLayout.Relayout(read, 0, LayoutContext.Default).Render(MarkupFormat.Ansi, Registry))
+			.IsEqualTo(TonedBox().Render(MarkupFormat.Ansi, Registry));
+	}
+
+	[Test]
+	public async Task AStopNamingAThemeColour_IsItsVariable_OnAPage()
+	{
+		var gradient = new ColorGradient([Red, Blue]) { Roles = [ThemeRole.Primary, null] };
+
+		await Assert.That(gradient.ToCss()).IsEqualTo("linear-gradient(to right in oklch, var(--ms-tone-primary, #ff0000), #0000ff)");
+		await Assert.That(TonedBox().Render(MarkupFormat.Html, Registry)).Contains("--ms-shade:linear-gradient(to right in oklch, var(--ms-tone-primary, #ff0000), #0000ff)");
+	}
 }

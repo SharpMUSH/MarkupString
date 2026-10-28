@@ -601,7 +601,8 @@ internal static class LayoutHtml
 			GradientTarget.Text => "<div class=\"ms-shaded ms-shade-text\" style=\"--ms-shade:",
 			_ => "<div class=\"ms-shaded\" style=\"--ms-shade:",
 		});
-		html.Write(shaded.Gradient.ToCss(9, direction));
+		// A stop that names a theme colour is written as its variable, which a sampled gradient cannot keep.
+		html.Write(shaded.Gradient.HasRoles ? shaded.Gradient.ToCss(direction) : shaded.Gradient.ToCss(9, direction));
 		// Shading the box drawing alone, the text is not clipped to the gradient, so nothing is painted behind it.
 		if (shaded.Target != GradientTarget.Borders)
 		{

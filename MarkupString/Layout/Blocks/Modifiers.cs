@@ -38,7 +38,8 @@ public sealed record Shaded(Block Content, ColorGradient Gradient) : Block
 	/// <inheritdoc/>
 	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines)
 	{
-		if (Gradient.IsEmpty)
+		var gradient = context.Toned(Gradient);
+		if (gradient.IsEmpty)
 		{
 			context.Draw(Content, width, lines);
 			return;
@@ -49,11 +50,11 @@ public sealed record Shaded(Block Content, ColorGradient Gradient) : Block
 		var used = drawn.Count == 0 ? width : Math.Max(1, drawn.Max(line => line.Trim(TrimType.TrimEnd).DisplayWidth));
 		if (Target == GradientTarget.All)
 		{
-			lines.AddRange(Gradient.ShadeLines(drawn, Flow, used));
+			lines.AddRange(gradient.ShadeLines(drawn, Flow, used));
 			return;
 		}
 		var borders = Target == GradientTarget.Borders;
-		foreach (var line in Gradient.ShadeLines(drawn, Flow, used, character => LinePiece.Marks(character) == borders))
+		foreach (var line in gradient.ShadeLines(drawn, Flow, used, character => LinePiece.Marks(character) == borders))
 			lines.Add(LinePiece.Unmark(line));
 	}
 }

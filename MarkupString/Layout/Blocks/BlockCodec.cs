@@ -176,6 +176,14 @@ public sealed class BlockWriter
 		foreach (var stop in gradient.Stops.IsDefault ? [] : gradient.Stops)
 			MarkupTextSerializer.Write(_json, MarkupText.Wrap(stop, "#"), _registry);
 		_json.WriteEndArray();
+		if (gradient.HasRoles)
+		{
+			_json.WriteStartArray("ro");
+			foreach (var role in gradient.Roles)
+				if (role is { } named) _json.WriteStringValue(ThemePalette.RoleName(named));
+				else _json.WriteNullValue();
+			_json.WriteEndArray();
+		}
 		_json.WriteEndObject();
 	}
 
@@ -313,6 +321,13 @@ public sealed class BlockReader
 			? [.. list.EnumerateArray().Where(item => item.ValueKind == JsonValueKind.Object).Select(item => MarkupTextSerializer.Read(item, _state.Registry))]
 			: [];
 
+	/// <summary>The theme colour each of a gradient's stops names, null for one that names none; empty when there are none.</summary>
+	internal ImmutableArray<ThemeRole?> Roles(string name) =>
+		TryGet(name, JsonValueKind.Array, out var list)
+			? [.. list.EnumerateArray().Select(item =>
+				item.ValueKind == JsonValueKind.String && ThemePalette.TryParseRole(item.GetString()!, out var role) ? role : (ThemeRole?)null)]
+			: [];
+
 	/// <summary>A child block.</summary>
 	public Block? Block(string name) =>
 		_element.ValueKind == JsonValueKind.Object && _element.TryGetProperty(name, out var value) ? Inner(value).Object() : null;
@@ -371,6 +386,7 @@ public sealed class BlockReader
 		{
 			Mirror = inner.Bool("mi"),
 			Repeat = inner.Int("re", 1, 1, 1000),
+			Roles = inner.Roles("ro"),
 		};
 	}
 

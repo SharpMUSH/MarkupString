@@ -8,6 +8,14 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## 2.24.0 — Unreleased
 
+### Added
+
+- **`ColorGradient.Roles`**: the theme colour each stop stands for (`ThemeRole?`, by position). Where a
+  layout is drawn for a reader with a theme of their own, `LayoutContext.Tones` gives the colour for
+  each role, and a `Shaded` block or a gauge is shaded in those colours rather than the ones the stops
+  were written with (`ColorGradient.Toned`). A reader with no theme keeps the written colours. A page
+  writes such a stop as `var(--ms-tone-<role>, <colour>)`. The roles are stored on the wire as `ro`.
+
 ### Changed
 
 - **A `Table` read linearly is one line per row**: its labelled values, comma-separated
