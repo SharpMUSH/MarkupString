@@ -379,14 +379,18 @@ public sealed class BlockReader
 	{
 		if (!TryGet(name, JsonValueKind.Object, out var value)) return null;
 		var inner = Inner(value);
-		var stops = inner.Texts("st")
-			.SelectMany(text => text.Runs.SelectMany(run => run.Markups).OfType<IColorMarkup>().Take(1))
-			.ToImmutableArray();
-		return new ColorGradient(stops, inner.Enum("sp", GradientSpace.Oklch))
+		var roles = inner.Roles("ro");
+		// A stop this reader has no codec for is left out, and the theme colour it named with it, so the rest keep theirs.
+		var read = inner.Texts("st")
+			.Select((text, i) => (Stop: text.Runs.SelectMany(run => run.Markups).OfType<IColorMarkup>().FirstOrDefault(),
+				Role: i < roles.Length ? roles[i] : null))
+			.Where(stop => stop.Stop is not null)
+			.ToArray();
+		return new ColorGradient([.. read.Select(stop => stop.Stop!)], inner.Enum("sp", GradientSpace.Oklch))
 		{
 			Mirror = inner.Bool("mi"),
 			Repeat = inner.Int("re", 1, 1, 1000),
-			Roles = inner.Roles("ro"),
+			Roles = roles.IsEmpty ? [] : [.. read.Select(stop => stop.Role)],
 		};
 	}
 

@@ -95,6 +95,8 @@ public static class LayoutCss
 		".ms-shaded:not(.ms-shade-borders) { -webkit-background-clip: text; background-clip: text; color: transparent; }\n" +
 		".ms-shaded:not(.ms-shade-borders) :is(.ms-box-title, .ms-rule-title, .ms-field > dt, .ms-table th, .ms-bullets .ms-marker) { color: transparent; }\n" +
 		".ms-shaded:not(.ms-shade-text) :is(.ms-box, .ms-gauge-bar), .ms-shaded:not(.ms-shade-text) :is(.ms-rule, .ms-divider)::before, .ms-shaded:not(.ms-shade-text) :is(.ms-rule, .ms-divider)::after, .ms-shaded:not(.ms-shade-text) .ms-line { border-image: var(--ms-shade) 1; }\n" +
+		".ms-shaded.ms-toned:not(.ms-shade-borders) { background-image: var(--ms-shade); }\n" +
+		"@supports (background-image: linear-gradient(in oklch, red, blue)) { .ms-shaded.ms-toned:not(.ms-shade-borders) { background-image: var(--ms-shade-toned); } .ms-shaded.ms-toned:not(.ms-shade-text) :is(.ms-box, .ms-gauge-bar), .ms-shaded.ms-toned:not(.ms-shade-text) :is(.ms-rule, .ms-divider)::before, .ms-shaded.ms-toned:not(.ms-shade-text) :is(.ms-rule, .ms-divider)::after, .ms-shaded.ms-toned:not(.ms-shade-text) .ms-line { border-image: var(--ms-shade-toned) 1; } .ms-gauge-fill.ms-toned { background-image: var(--ms-shade-toned) !important; } }\n" +
 		".ms-table-wrap { max-width: 100%; overflow-x: auto; }\n" +
 		".ms-table { border-collapse: collapse; }\n" +
 		".ms-table.ms-fill { width: 100%; }\n" +

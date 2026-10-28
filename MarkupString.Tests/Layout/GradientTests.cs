@@ -203,6 +203,28 @@ public class GradientTests
 		var gradient = new ColorGradient([Red, Blue]) { Roles = [ThemeRole.Primary, null] };
 
 		await Assert.That(gradient.ToCss()).IsEqualTo("linear-gradient(to right in oklch, var(--ms-tone-primary, #ff0000), #0000ff)");
-		await Assert.That(TonedBox().Render(MarkupFormat.Html, Registry)).Contains("--ms-shade:linear-gradient(to right in oklch, var(--ms-tone-primary, #ff0000), #0000ff)");
+	}
+
+	[Test]
+	public async Task AStopThatCannotBeRead_TakesItsThemeColourWithIt()
+	{
+		var json = MarkupTextSerializer.Serialize(TonedBox(), Registry);
+		var unreadable = new System.Text.RegularExpressions.Regex("\"st\":\\[\\{\"t\":\"#\",\"p\":\\[null,\\[\\{\"k\":\"ansi\"")
+			.Replace(json, "\"st\":[{\"t\":\"#\",\"p\":[null,[{\"k\":\"nosuch\"");
+		var read = MarkupTextSerializer.Deserialize(unreadable, Registry);
+		var context = LayoutContext.Default with { Tones = role => role == ThemeRole.Primary ? Lime : null };
+
+		await Assert.That(unreadable).IsNotEqualTo(json);
+		await Assert.That(BlockLayout.Relayout(read, 0, context).Render(MarkupFormat.Ansi, Registry)).DoesNotContain("38;2;0;255;0m");
+	}
+
+	[Test]
+	public async Task AStopNamingAThemeColour_IsUsedOnAPage_OnlyWhereTheBrowserCanBlendIt()
+	{
+		var html = TonedBox().Render(MarkupFormat.Html, Registry);
+
+		await Assert.That(html).Contains("class=\"ms-shaded ms-toned\" style=\"--ms-shade:linear-gradient(to right, #");
+		await Assert.That(html).Contains(";--ms-shade-toned:linear-gradient(to right in oklch, var(--ms-tone-primary, #ff0000), #0000ff)");
+		await Assert.That(html).DoesNotContain("background-image:");
 	}
 }

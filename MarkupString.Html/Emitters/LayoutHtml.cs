@@ -416,7 +416,8 @@ internal static class LayoutHtml
 		html.Write(Decimal(value));
 		html.Write("\"");
 		BarWidth(gauge, html);
-		html.Write("><div class=\"ms-gauge-fill\" style=\"width:");
+		var toned = gauge.Shade != GaugeShade.Value && gradient.HasRoles;
+		html.Write(toned ? "><div class=\"ms-gauge-fill ms-toned\" style=\"width:" : "><div class=\"ms-gauge-fill\" style=\"width:");
 		html.Write(Decimal(Math.Round(ratio * 100, 2)));
 		html.Write("%;");
 		if (gauge.Shade == GaugeShade.Value)
@@ -428,7 +429,9 @@ internal static class LayoutHtml
 		{
 			html.Write("background-image:");
 			html.Write(gradient.ToCss(9));
-			html.Write(";background-image:");
+			// A theme colour's var() would leave the declaration invalid, not dropped, in a browser that cannot blend in
+			// the space; the stylesheet puts it in place only where it can (as for a shaded block).
+			html.Write(toned ? ";--ms-shade-toned:" : ";background-image:");
 			html.Write(gradient.ToCss());
 			html.Write(";background-size:");
 			html.Write(Decimal(Math.Round(100 / ratio, 2)));
@@ -595,16 +598,25 @@ internal static class LayoutHtml
 			GradientFlow.Diagonal => "to bottom right",
 			_ => "to right",
 		};
+		var toned = shaded.Gradient.HasRoles;
 		html.Write(shaded.Target switch
 		{
-			GradientTarget.Borders => "<div class=\"ms-shaded ms-shade-borders\" style=\"--ms-shade:",
-			GradientTarget.Text => "<div class=\"ms-shaded ms-shade-text\" style=\"--ms-shade:",
-			_ => "<div class=\"ms-shaded\" style=\"--ms-shade:",
+			GradientTarget.Borders => "<div class=\"ms-shaded ms-shade-borders",
+			GradientTarget.Text => "<div class=\"ms-shaded ms-shade-text",
+			_ => "<div class=\"ms-shaded",
 		});
-		// A stop that names a theme colour is written as its variable, which a sampled gradient cannot keep.
-		html.Write(shaded.Gradient.HasRoles ? shaded.Gradient.ToCss(direction) : shaded.Gradient.ToCss(9, direction));
+		html.Write(toned ? " ms-toned\" style=\"--ms-shade:" : "\" style=\"--ms-shade:");
+		html.Write(shaded.Gradient.ToCss(9, direction));
+		if (toned)
+		{
+			// A stop that names a theme colour is written as its variable, which only the unsampled gradient keeps. Its
+			// var() would leave the declaration invalid in a browser that cannot blend in the space, rather than dropped,
+			// so the stylesheet uses it only where the space is supported, and the sampled colours elsewhere.
+			html.Write(";--ms-shade-toned:");
+			html.Write(shaded.Gradient.ToCss(direction));
+		}
 		// Shading the box drawing alone, the text is not clipped to the gradient, so nothing is painted behind it.
-		if (shaded.Target != GradientTarget.Borders)
+		else if (shaded.Target != GradientTarget.Borders)
 		{
 			html.Write(";background-image:var(--ms-shade);background-image:");
 			html.Write(shaded.Gradient.ToCss(direction));
