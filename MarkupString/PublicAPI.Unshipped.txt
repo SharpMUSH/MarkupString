@@ -23,3 +23,9 @@ override MarkupString.StandInMarkup.ToString() -> string!
 static MarkupString.StandInMarkup.operator !=(MarkupString.StandInMarkup? left, MarkupString.StandInMarkup? right) -> bool
 static MarkupString.StandInMarkup.operator ==(MarkupString.StandInMarkup? left, MarkupString.StandInMarkup? right) -> bool
 static MarkupString.MarkupText.StandIn(MarkupString.MarkupText! content, string! text) -> MarkupString.MarkupText!
+MarkupString.ColorGradient.HasRoles.get -> bool
+MarkupString.ColorGradient.Roles.get -> System.Collections.Immutable.ImmutableArray<MarkupString.ThemeRole?>
+MarkupString.ColorGradient.Roles.init -> void
+MarkupString.ColorGradient.Toned(System.Func<MarkupString.ThemeRole, MarkupString.IColorMarkup?>! tones) -> MarkupString.ColorGradient!
+MarkupString.Layout.LayoutContext.Tones.get -> System.Func<MarkupString.ThemeRole, MarkupString.IColorMarkup?>?
+MarkupString.Layout.LayoutContext.Tones.init -> void

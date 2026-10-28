@@ -176,6 +176,14 @@ public sealed class BlockWriter
 		foreach (var stop in gradient.Stops.IsDefault ? [] : gradient.Stops)
 			MarkupTextSerializer.Write(_json, MarkupText.Wrap(stop, "#"), _registry);
 		_json.WriteEndArray();
+		if (gradient.HasRoles)
+		{
+			_json.WriteStartArray("ro");
+			foreach (var role in gradient.Roles)
+				if (role is { } named) _json.WriteStringValue(ThemePalette.RoleName(named));
+				else _json.WriteNullValue();
+			_json.WriteEndArray();
+		}
 		_json.WriteEndObject();
 	}
 
@@ -313,6 +321,13 @@ public sealed class BlockReader
 			? [.. list.EnumerateArray().Where(item => item.ValueKind == JsonValueKind.Object).Select(item => MarkupTextSerializer.Read(item, _state.Registry))]
 			: [];
 
+	/// <summary>The theme colour each of a gradient's stops names, null for one that names none; empty when there are none.</summary>
+	internal ImmutableArray<ThemeRole?> Roles(string name) =>
+		TryGet(name, JsonValueKind.Array, out var list)
+			? [.. list.EnumerateArray().Select(item =>
+				item.ValueKind == JsonValueKind.String && ThemePalette.TryParseRole(item.GetString()!, out var role) ? role : (ThemeRole?)null)]
+			: [];
+
 	/// <summary>A child block.</summary>
 	public Block? Block(string name) =>
 		_element.ValueKind == JsonValueKind.Object && _element.TryGetProperty(name, out var value) ? Inner(value).Object() : null;
@@ -364,13 +379,18 @@ public sealed class BlockReader
 	{
 		if (!TryGet(name, JsonValueKind.Object, out var value)) return null;
 		var inner = Inner(value);
-		var stops = inner.Texts("st")
-			.SelectMany(text => text.Runs.SelectMany(run => run.Markups).OfType<IColorMarkup>().Take(1))
-			.ToImmutableArray();
-		return new ColorGradient(stops, inner.Enum("sp", GradientSpace.Oklch))
+		var roles = inner.Roles("ro");
+		// A stop this reader has no codec for is left out, and the theme colour it named with it, so the rest keep theirs.
+		var read = inner.Texts("st")
+			.Select((text, i) => (Stop: text.Runs.SelectMany(run => run.Markups).OfType<IColorMarkup>().FirstOrDefault(),
+				Role: i < roles.Length ? roles[i] : null))
+			.Where(stop => stop.Stop is not null)
+			.ToArray();
+		return new ColorGradient([.. read.Select(stop => stop.Stop!)], inner.Enum("sp", GradientSpace.Oklch))
 		{
 			Mirror = inner.Bool("mi"),
 			Repeat = inner.Int("re", 1, 1, 1000),
+			Roles = roles.IsEmpty ? [] : [.. read.Select(stop => stop.Role)],
 		};
 	}
 

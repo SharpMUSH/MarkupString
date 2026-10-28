@@ -107,6 +107,16 @@ public sealed record LayoutContext
 
 	private bool ShadesLines => Shading is GradientTarget.All or GradientTarget.Borders;
 
+	/// <summary>
+	/// For a reader with a theme of their own, the colour it gives each theme colour, or null where it gives
+	/// none; null for a reader without one. A gradient stop that names a theme colour
+	/// (<see cref="ColorGradient.Roles"/>) is drawn in it.
+	/// </summary>
+	public Func<ThemeRole, IColorMarkup?>? Tones { get; init; }
+
+	/// <summary><paramref name="gradient"/> in this reader's theme colours (<see cref="Tones"/>).</summary>
+	internal ColorGradient Toned(ColorGradient gradient) => Tones is { } tones ? gradient.Toned(tones) : gradient;
+
 	/// <summary>Where text with no alignment of its own sits: a table column's, or one set with <see cref="BlockExtensions.Aligned"/>.</summary>
 	public Alignment TextAlignment { get; init; } = Alignment.Left;
 

@@ -101,6 +101,27 @@ public sealed record ColorGradient(ImmutableArray<IColorMarkup> Stops, GradientS
 	/// <summary>How many times the colours run over the length, one after the other.</summary>
 	public int Repeat { get; init; } = 1;
 
+	/// <summary>
+	/// The theme colour each stop stands for, by position, or null for a stop that is only its colour; empty
+	/// when none does. A stop that names one is drawn in the reader's colour for it where a layout is drawn
+	/// for a reader (<see cref="Layout.LayoutContext.Tones"/>), and a page writes it as the CSS variable
+	/// <c>--ms-tone-&lt;role&gt;</c>, with its own colour as the fallback.
+	/// </summary>
+	public ImmutableArray<ThemeRole?> Roles { get; init; } = [];
+
+	/// <summary>
+	/// The gradient with each stop that names a theme colour (<see cref="Roles"/>) in the colour
+	/// <paramref name="tones"/> gives it; a stop it gives no colour keeps its own.
+	/// </summary>
+	public ColorGradient Toned(Func<ThemeRole, IColorMarkup?> tones)
+	{
+		ArgumentNullException.ThrowIfNull(tones);
+		if (Roles.IsDefaultOrEmpty || Stops.IsDefaultOrEmpty) return this;
+		var stops = Stops.Select((stop, i) =>
+			i < Roles.Length && Roles[i] is { } role && tones(role) is { Foreground: not null } toned ? toned : stop);
+		return this with { Stops = [.. stops] };
+	}
+
 	private int Cycles => Math.Clamp(Repeat, 1, 1000);
 
 	/// <summary>Where along the stops <paramref name="position"/> falls, once repeated and mirrored.</summary>
@@ -223,19 +244,19 @@ public sealed record ColorGradient(ImmutableArray<IColorMarkup> Stops, GradientS
 	/// <summary>The gradient as a CSS <c>linear-gradient</c> running <paramref name="direction"/>, <c>to bottom</c> say, in its own space.</summary>
 	public string ToCss(string direction)
 	{
-		var colors = Colors;
+		var colors = CssColors;
 		if (colors.Length == 0) return string.Empty;
 		if (colors.Length == 1) colors = [colors[0], colors[0]];
 		var space = Space.ToString().ToLowerInvariant();
 		if (!Mirror && Cycles == 1)
-			return $"linear-gradient({direction} in {space}, {string.Join(", ", colors.Select(color => color.ToHex()))})";
+			return $"linear-gradient({direction} in {space}, {string.Join(", ", colors)})";
 
 		// Each run of the colours over its own stretch; a mirrored run goes there and back.
 		var run = Mirror ? [.. colors, .. colors.Reverse().Skip(1)] : colors;
 		var stops = new List<string>();
 		for (var cycle = 0; cycle < Cycles; cycle++)
 			for (var i = 0; i < run.Length; i++)
-				stops.Add($"{run[i].ToHex()} {Percent((cycle + i / (double)(run.Length - 1)) / Cycles)}");
+				stops.Add($"{run[i]} {Percent((cycle + i / (double)(run.Length - 1)) / Cycles)}");
 		return $"linear-gradient({direction} in {space}, {string.Join(", ", stops)})";
 	}
 
@@ -255,13 +276,25 @@ public sealed record ColorGradient(ImmutableArray<IColorMarkup> Stops, GradientS
 		return $"linear-gradient({direction}, {list})";
 	}
 
+	/// <summary>The stops' colours for a page: a stop that names a theme colour as its CSS variable, its own colour the fallback.</summary>
+	private string[] CssColors => [.. (Stops.IsDefault ? [] : Stops)
+		.Select((stop, i) => (stop.Foreground, Role: !Roles.IsDefault && i < Roles.Length ? Roles[i] : null))
+		.Where(stop => stop.Foreground is not null)
+		.Select(stop => stop.Role is { } role
+			? $"var(--ms-tone-{ThemePalette.RoleName(role)}, {stop.Foreground!.Value.ToHex()})"
+			: stop.Foreground!.Value.ToHex())];
+
+	/// <summary>Whether any stop names a theme colour (<see cref="Roles"/>).</summary>
+	public bool HasRoles => !Roles.IsDefault && Roles.Any(role => role is not null);
+
 	private static string Percent(double fraction) =>
 		(Math.Round(fraction * 100, 2)).ToString("0.##", CultureInfo.InvariantCulture) + "%";
 
 	/// <inheritdoc/>
 	public bool Equals(ColorGradient? other) =>
 		other is not null && Space == other.Space && Mirror == other.Mirror && Cycles == other.Cycles
-		&& (Stops.IsDefault ? [] : Stops).SequenceEqual(other.Stops.IsDefault ? [] : other.Stops);
+		&& (Stops.IsDefault ? [] : Stops).SequenceEqual(other.Stops.IsDefault ? [] : other.Stops)
+		&& (Roles.IsDefault ? [] : Roles).SequenceEqual(other.Roles.IsDefault ? [] : other.Roles);
 
 	/// <inheritdoc/>
 	public override int GetHashCode()
@@ -271,6 +304,7 @@ public sealed record ColorGradient(ImmutableArray<IColorMarkup> Stops, GradientS
 		hash.Add(Mirror);
 		hash.Add(Cycles);
 		foreach (var stop in Stops.IsDefault ? [] : Stops) hash.Add(stop);
+		foreach (var role in Roles.IsDefault ? [] : Roles) hash.Add(role);
 		return hash.ToHashCode();
 	}
 
