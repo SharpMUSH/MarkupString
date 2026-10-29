@@ -188,6 +188,13 @@ public class WidgetLayoutTests
 	}
 
 	[Test]
+	public async Task Table_InHtml_LaysACellsOneTextInline()
+	{
+		// A browser copies a block as a line of its own: a cell's only text inline keeps a copied row on one line.
+		await Assert.That(LayoutCss.Fixed).Contains(".ms-table :is(th, td) > .ms-text:only-child { display: inline-block; width: 100%; }");
+	}
+
+	[Test]
 	public async Task Table_InHtml_NoWrapWithoutPriority_HasOnlyItsClass()
 	{
 		var table = new Table([new TableColumn(P("When")) { Wrap = false }], [[P("Thu Oct 8")]]);
