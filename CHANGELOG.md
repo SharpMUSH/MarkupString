@@ -6,6 +6,14 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.24.2 — Unreleased
+
+### Fixed
+
+- **A table's heading rule matches its border**: unless a theme names its own, the line under a table's
+  headings is `─` (the default `LayoutTheme.Defaults.HeaderRule`), and `-` under an ASCII border or for an
+  ASCII reader. It was always `-`, so a table in a Unicode box had an ASCII rule under its headings.
+
 ## 2.24.1 — Unreleased
 
 ### Fixed

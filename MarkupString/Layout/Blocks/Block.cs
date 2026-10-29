@@ -261,7 +261,8 @@ public sealed record LayoutTheme
 
 	/// <summary>
 	/// What every unset piece ends up as: light box lines, light tree guides, <c>[█████░░░░░]</c>
-	/// gauges, <c>•</c> bullets, <c>": "</c> after a label and <c>-</c> under table headings.
+	/// gauges, <c>•</c> bullets, <c>": "</c> after a label and <c>─</c> under table headings (<c>-</c> under an
+	/// ASCII border).
 	/// </summary>
 	public static LayoutTheme Defaults { get; } = new()
 	{
@@ -273,7 +274,7 @@ public sealed record LayoutTheme
 		GaugeClose = MarkupText.Plain("]"),
 		Bullet = MarkupText.Plain("•"),
 		FieldSeparator = MarkupText.Plain(": "),
-		HeaderRule = MarkupText.Plain("-"),
+		HeaderRule = MarkupText.Plain("─"),
 	};
 
 	/// <summary>Boxes and rules.</summary>

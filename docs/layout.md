@@ -475,12 +475,13 @@ widest cell. When the table is too wide, the columns that wrap give way, widest 
 least width; then the column with the highest `Priority` number is left out, and so on. A column that
 does not wrap is shown whole or not at all. When not even the most important column fits, each row
 becomes a card of labelled values. In HTML, a column of priority 2 carries `ms-p2` and one of 3 or
-more `ms-p3`, which `LayoutCss.Fixed` hides on narrow pages.
+more `ms-p3`, which `LayoutCss.Fixed` hides on narrow pages. The rule under the headings is the
+theme's `HeaderRule`, or `─` when it names none (`-` under an ASCII border or for an ASCII reader).
 
 ```
 At 30:                            At 18:
 Name    Idle  Doing               Name    Idle
-------------------------------    ------------
+──────────────────────────────    ────────────
 Mannaz    0s  Hooooo?             Mannaz    0s
 Raya      5m  Writing a scene     Raya      5m
               in the garden

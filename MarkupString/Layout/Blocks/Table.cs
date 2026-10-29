@@ -26,7 +26,10 @@ public sealed record Table(ImmutableArray<TableColumn> Columns, ImmutableArray<I
 	/// <summary>Drawn between two columns on every line instead of the gap.</summary>
 	public MarkupText? Separator { get; init; }
 
-	/// <summary>The line under the headings, repeated; empty for none; unset, the theme's (<c>-</c>).</summary>
+	/// <summary>
+	/// The line under the headings, repeated; empty for none; unset, the theme's, or <c>─</c> (<c>-</c> under an
+	/// ASCII border) when the theme names none.
+	/// </summary>
 	public MarkupText? HeaderRule { get; init; }
 
 	/// <summary>
@@ -60,7 +63,7 @@ public sealed record Table(ImmutableArray<TableColumn> Columns, ImmutableArray<I
 		MarkupText Join(IEnumerable<MarkupText> cells) => BlockText.Fit(MarkupText.Join(divider, cells), width);
 
 		lines.Add(Join(shown.Select(c => BlockText.Fit(context.Paint(theme => theme.HeadingColor, Columns[c].Header).FormatColumn(BlockText.Column(widths[c], Columns[c].Alignment))[0], widths[c]))));
-		var rule = HeaderRule ?? context.Theme.Piece(theme => theme.HeaderRule);
+		var rule = HeaderRule ?? context.Theme.HeaderRule ?? DefaultRule(context);
 		if (rule.Length > 0) lines.Add(BlockText.Fit(context.PaintLine(theme => theme.HeaderRuleColor, BlockText.Run(context.Glyph(rule, "-"), tableWidth)), width));
 
 		var cellLines = new List<MarkupText>[Columns.Length];
@@ -102,6 +105,10 @@ public sealed record Table(ImmutableArray<TableColumn> Columns, ImmutableArray<I
 			foreach (var wrapped in values.Lines(new TextBlock(line), width)) lines.Add(wrapped);
 		}
 	}
+
+	/// <summary>The default rule under the headings, ASCII when the border it sits among is.</summary>
+	private static MarkupText DefaultRule(LayoutContext context) =>
+		context.Border(null).IsAscii ? MarkupText.Plain("-") : LayoutTheme.Defaults.HeaderRule!;
 
 	/// <summary>Each row as a card of labelled values, the way a phone shows a table too wide for it.</summary>
 	private void DrawCards(LayoutContext context, int width, IList<MarkupText> lines)

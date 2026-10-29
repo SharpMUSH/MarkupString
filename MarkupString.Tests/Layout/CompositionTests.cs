@@ -215,7 +215,7 @@ public class CompositionTests
 		var ansi = text.Render(MarkupFormat.Ansi, Registry);
 
 		await Assert.That(ansi).Contains("\u001b[38;2;0;128;0m|");
-		await Assert.That(ansi).Contains("\u001b[38;2;0;128;0m-");
+		await Assert.That(ansi).Contains("\u001b[38;2;0;128;0m─");
 		await Assert.That(ansi).Contains("\u001b[38;2;255;0;0mA");
 		await Assert.That(ansi).Contains("\u001b[38;2;0;0;255md");
 		await Assert.That(text.Runs.SelectMany(run => run.Markups).OfType<IDataMarkup>()).IsEmpty();
