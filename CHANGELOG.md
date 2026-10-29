@@ -6,6 +6,14 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.24.1 — Unreleased
+
+### Fixed
+
+- **A copied table keeps its rows**: a cell's text is no longer a block of its own, which a browser copied
+  as a line per cell. A cell that holds one text is laid out inline, so a copied row is its cells with tabs
+  between them.
+
 ## 2.24.0 — Unreleased
 
 ### Added

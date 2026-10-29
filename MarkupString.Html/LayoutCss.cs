@@ -101,6 +101,9 @@ public static class LayoutCss
 		".ms-table { border-collapse: collapse; }\n" +
 		".ms-table.ms-fill { width: 100%; }\n" +
 		".ms-table th, .ms-table td { padding: 0 1ch; vertical-align: top; text-align: left; }\n" +
+		// A block inside a cell is copied as a line of its own, so a cell of one text is laid out inline: a copied
+		// row is its cells with tabs between, as a table with bare text in its cells copies.
+		".ms-table :is(th, td) > .ms-text:only-child { display: inline-block; width: 100%; }\n" +
 		".ms-table th { border-bottom: 1px solid var(--ms-header-rule, var(--ms-header-rule-default, currentColor)); color: var(--ms-heading, var(--ms-heading-default, inherit)); }\n" +
 		".ms-table.ms-striped > tbody > tr:nth-child(even) { background: var(--ms-stripe, var(--ms-stripe-default, rgba(127, 127, 127, 0.12))); }\n" +
 		".ms-table .ms-nowrap, .ms-table .ms-nowrap .ms-text { white-space: pre; overflow-wrap: normal; }\n" +
