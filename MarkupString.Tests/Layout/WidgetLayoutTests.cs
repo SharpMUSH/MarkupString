@@ -112,6 +112,16 @@ public class WidgetLayoutTests
 		=> await Assert.That(BlockLayout.Build(new Grid(Names), 32).Render(MarkupFormat.Html, Registry))
 			.Contains("<ul class=\"ms-grid ms-down\" style=\"columns:8ch;column-gap:2ch\"><li>Mannaz</li>");
 
+	/// <summary>The rule under the headings is drawn like the border around it: <c>-</c> under an ASCII one or for an ASCII reader.</summary>
+	[Test]
+	public async Task Table_HeaderRule_FollowsTheBorder()
+	{
+		await Assert.That(Lines(Who(), 60)[1]).IsEqualTo(new string('─', 43));
+		await Assert.That(Lines(Who(), 60, Ascii)[1]).IsEqualTo(new string('-', 43));
+		await Assert.That(Lines(Who().Themed(new LayoutTheme { Border = BorderStyle.Ascii }), 60)[1]).IsEqualTo(new string('-', 43));
+		await Assert.That(Lines(Who().Themed(new LayoutTheme { Border = BorderStyle.Ascii, HeaderRule = P("=") }), 60)[1]).IsEqualTo(new string('=', 43));
+	}
+
 	private static Table Who(int nameMin = 6) => new(
 	[
 		new TableColumn(P("Name")) { Min = nameMin },
@@ -128,7 +138,7 @@ public class WidgetLayoutTests
 		=> await Assert.That(Lines(Who(), 60)).IsEquivalentTo(new[]
 		{
 			"Name    Idle  Doing",
-			"-------------------------------------------",
+			"───────────────────────────────────────────",
 			"Mannaz    0s  Hooooo?",
 			"Raya      5m  Writing a scene in the garden",
 		});
@@ -138,7 +148,7 @@ public class WidgetLayoutTests
 		=> await Assert.That(Lines(Who(), 30)).IsEquivalentTo(new[]
 		{
 			"Name    Idle  Doing",
-			"------------------------------",
+			"──────────────────────────────",
 			"Mannaz    0s  Hooooo?",
 			"Raya      5m  Writing a scene",
 			"              in the garden",
@@ -149,7 +159,7 @@ public class WidgetLayoutTests
 		=> await Assert.That(Lines(Who(), 18)).IsEquivalentTo(new[]
 		{
 			"Name    Idle",
-			"------------",
+			"────────────",
 			"Mannaz    0s",
 			"Raya      5m",
 		});
@@ -165,7 +175,7 @@ public class WidgetLayoutTests
 
 	[Test]
 	public async Task Table_AColumnThatDoesNotWrap_IsWholeOrLeftOut()
-		=> await Assert.That(Lines(Who(), 10)).IsEquivalentTo(new[] { "Name", "------", "Mannaz", "Raya" });
+		=> await Assert.That(Lines(Who(), 10)).IsEquivalentTo(new[] { "Name", "──────", "Mannaz", "Raya" });
 
 	[Test]
 	public async Task Table_InHtml_IsATableThatDropsColumnsWhenNarrow()
@@ -218,7 +228,7 @@ public class WidgetLayoutTests
 	{
 		var lines = BlockLayout.Build(Growing(0, 1), 60).ToPlainText().Split('\n');
 
-		await Assert.That(lines[1]).IsEqualTo(new string('-', 60)).Because("the heading rule spans the table, which now spans its width");
+		await Assert.That(lines[1]).IsEqualTo(new string('─', 60)).Because("the heading rule spans the table, which now spans its width");
 		await Assert.That(lines[0].TrimEnd()).IsEqualTo("Name    Idle  Doing");
 		await Assert.That(lines[3].TrimEnd()).IsEqualTo("Raya      5m  Writing a scene in the garden");
 	}
@@ -233,7 +243,7 @@ public class WidgetLayoutTests
 	{
 		var table = Growing(0, 1) with { Columns = [.. Growing(0, 1).Columns.SetItem(2, Growing(0, 1).Columns[2] with { Max = 35 })] };
 
-		await Assert.That(Lines(table, 60)[1]).IsEqualTo(new string('-', 49)).Because("Doing grows from 29 to its 35 and no further");
+		await Assert.That(Lines(table, 60)[1]).IsEqualTo(new string('─', 49)).Because("Doing grows from 29 to its 35 and no further");
 	}
 
 	[Test]
