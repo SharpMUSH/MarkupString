@@ -6,6 +6,18 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.24.3 — Unreleased
+
+### Changed
+
+- **Splitting and joining text with no markup allocate less.** `Substring` of a text with no runs no longer
+  builds a run list to clip, `Split` counts its delimiters first and sizes the result exactly, and
+  `Join` with one separator writes the parts and separators straight into the result instead of
+  collecting them into a list, copying it to an array and copying that again. `Concat` no longer copies
+  its parts, and skips the run builder when none of them has runs. Splitting a 100-item list on spaces
+  went from 8.7 µs and 28,336 B to 4.2 µs and 8,752 B; joining 100 items with a space from 2.7 µs and
+  8,232 B to 1.6 µs and 656 B. Results are unchanged, runs and all.
+
 ## 2.24.2 — Unreleased
 
 ### Fixed

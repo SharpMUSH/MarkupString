@@ -25,6 +25,33 @@ public class AllocationTests
 		// measurement ever reads zero, which would let a broken probe pass vacuously.
 		await Assert.That(perInstance).IsBetween(32, 300);
 	}
+
+	/// <summary>
+	/// A softcode list is split into its items and joined back after every <c>map()</c>. For text with no
+	/// markup that costs the segments themselves and the joined result, not a run builder per segment or
+	/// an interleaved copy of the parts.
+	/// </summary>
+	[Test]
+	public async Task SplittingAndJoiningPlainText_AllocatesOnlyTheResults()
+	{
+		const int iterations = 2_000;
+		var list = MarkupText.Plain(string.Join(" ", Enumerable.Range(1, 100)));
+		var items = list.Split(" ");
+		for (var i = 0; i < 100; i++) GC.KeepAlive(MarkupText.Join(MarkupText.Space, list.Split(" ")));
+
+		var before = GC.GetAllocatedBytesForCurrentThread();
+		for (var i = 0; i < iterations; i++) GC.KeepAlive(list.Split(" "));
+		var perSplit = (GC.GetAllocatedBytesForCurrentThread() - before) / iterations;
+
+		before = GC.GetAllocatedBytesForCurrentThread();
+		for (var i = 0; i < iterations; i++) GC.KeepAlive(MarkupText.Join(MarkupText.Space, items));
+		var perJoin = (GC.GetAllocatedBytesForCurrentThread() - before) / iterations;
+
+		// 100 segments: the array, and a string and a MarkupText each (about 8.7 KB); a run builder per
+		// segment came to more than three times that. The join is its string and its MarkupText.
+		await Assert.That(perSplit).IsBetween(4_000, 12_000);
+		await Assert.That(perJoin).IsBetween(300, 1_200);
+	}
 }
 
 public class AnsiAllocationTests

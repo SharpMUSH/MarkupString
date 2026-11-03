@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Runtime.InteropServices;
 namespace MarkupString;
 
 /// <summary>
@@ -114,30 +115,37 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 		}
 		if (nonEmpty == 0) return Empty;
 		if (nonEmpty == 1) return last!;
-		var runs = ImmutableArray.CreateBuilder<Run>(totalRuns);
-		var text = string.Create(totalLength, (parts: parts.ToArray(), runs), static (span, state) =>
+		var text = string.Create(totalLength, parts, static (span, parts) =>
 		{
 			var offset = 0;
-			foreach (var p in state.parts)
+			foreach (var p in parts)
 			{
-				if (p.Length == 0) continue;
 				p.Text.AsSpan().CopyTo(span[offset..]);
-				foreach (var run in p.Runs) state.runs.Add(run with { Start = run.Start + offset });
 				offset += p.Length;
 			}
 		});
-		return new MarkupText(text, runs.ToImmutable());
+		if (totalRuns == 0) return new MarkupText(text, ImmutableArray<Run>.Empty);
+
+		var runs = ImmutableArray.CreateBuilder<Run>(totalRuns);
+		var start = 0;
+		foreach (var p in parts)
+		{
+			foreach (var run in p.Runs) runs.Add(run with { Start = run.Start + start });
+			start += p.Length;
+		}
+		return new MarkupText(text, runs.MoveToImmutable());
 	}
 
-	public static MarkupText Concat(IEnumerable<MarkupText> parts) =>
-		parts is MarkupText[] array ? Concat(array.AsSpan()) : Concat(parts.ToArray().AsSpan());
+	public static MarkupText Concat(IEnumerable<MarkupText> parts) => Concat(AsSpan(parts));
 
 	public static MarkupText Join(MarkupText separator, IEnumerable<MarkupText> parts) =>
-		Join(_ => separator, parts);
+		Join(separator, AsSpan(parts));
 
 	public static MarkupText Join(Func<int, MarkupText> separator, IEnumerable<MarkupText> parts)
 	{
-		var list = new List<MarkupText>();
+		var list = parts.TryGetNonEnumeratedCount(out var count)
+			? new List<MarkupText>(Math.Max(0, count * 2 - 1))
+			: [];
 		var i = 0;
 		foreach (var part in parts)
 		{
@@ -145,8 +153,81 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 			list.Add(part);
 			i++;
 		}
-		return Concat(list.ToArray().AsSpan());
+		return Concat(CollectionsMarshal.AsSpan(list));
 	}
+
+	/// <summary>
+	/// <paramref name="parts"/> with <paramref name="separator"/> between each two, written straight into
+	/// the result: what <see cref="Concat(ReadOnlySpan{MarkupText})"/> of the interleaved parts makes,
+	/// without building them.
+	/// </summary>
+	private static MarkupText Join(MarkupText separator, ReadOnlySpan<MarkupText> parts)
+	{
+		if (parts.Length == 0) return Empty;
+		if (separator.Length == 0) return Concat(parts);
+
+		var separators = parts.Length - 1;
+		var totalLength = separator.Length * separators;
+		var totalRuns = separator.Runs.Length * separators;
+		var nonEmpty = 0;
+		MarkupText? last = null;
+		foreach (var p in parts)
+		{
+			if (p.Length == 0) continue;
+			totalLength += p.Length;
+			totalRuns += p.Runs.Length;
+			nonEmpty++;
+			last = p;
+		}
+		// The one non-empty piece is returned as it is, as Concat returns it.
+		if (nonEmpty + separators == 1) return last ?? separator;
+		if (nonEmpty + separators == 0) return Empty;
+
+		var text = string.Create(totalLength, new JoinState(parts, separator.Text), static (span, state) =>
+		{
+			var offset = 0;
+			for (var i = 0; i < state.Parts.Length; i++)
+			{
+				if (i > 0)
+				{
+					state.Separator.AsSpan().CopyTo(span[offset..]);
+					offset += state.Separator.Length;
+				}
+				var part = state.Parts[i].Text;
+				part.AsSpan().CopyTo(span[offset..]);
+				offset += part.Length;
+			}
+		});
+		if (totalRuns == 0) return new MarkupText(text, ImmutableArray<Run>.Empty);
+
+		var runs = ImmutableArray.CreateBuilder<Run>(totalRuns);
+		var start = 0;
+		for (var i = 0; i < parts.Length; i++)
+		{
+			if (i > 0)
+			{
+				foreach (var run in separator.Runs) runs.Add(run with { Start = run.Start + start });
+				start += separator.Length;
+			}
+			foreach (var run in parts[i].Runs) runs.Add(run with { Start = run.Start + start });
+			start += parts[i].Length;
+		}
+		return new MarkupText(text, runs.MoveToImmutable());
+	}
+
+	private readonly ref struct JoinState(ReadOnlySpan<MarkupText> parts, string separator)
+	{
+		public ReadOnlySpan<MarkupText> Parts { get; } = parts;
+		public string Separator { get; } = separator;
+	}
+
+	/// <summary>The parts as a span: in place for an array or a list, copied once otherwise.</summary>
+	private static ReadOnlySpan<MarkupText> AsSpan(IEnumerable<MarkupText> parts) => parts switch
+	{
+		MarkupText[] array => array,
+		List<MarkupText> list => CollectionsMarshal.AsSpan(list),
+		_ => parts.ToArray(),
+	};
 
 	/// <summary>
 	/// The text as a reader sees it: <see cref="Text"/> without the carriers points ride on

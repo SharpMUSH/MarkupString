@@ -74,6 +74,8 @@ public sealed partial class MarkupText
 	private MarkupText ExtractRange(int from, int to)
 	{
 		if (from == 0 && to == Length) return this;
+		// Text with no runs has none to clip: no builder to fill, and an empty array to share.
+		if (Runs.IsDefaultOrEmpty) return new MarkupText(Text[from..to], ImmutableArray<Run>.Empty);
 
 		var runs = ImmutableArray.CreateBuilder<Run>();
 		ClipInto(from, to, -from, runs);
@@ -183,23 +185,17 @@ public sealed partial class MarkupText
 		if (Length == 0) return [];
 		if (delimiter.Length == 0) return [this];
 
-		List<int>? positions = null;
-		var position = 0;
-		while (position <= Length - delimiter.Length)
-		{
-			var found = Text.IndexOf(delimiter, position, StringComparison.Ordinal);
-			if (found < 0) break;
-			(positions ??= []).Add(found);
-			position = found + delimiter.Length;
-		}
-		if (positions is null) return [this];
+		// Counting first sizes the result exactly, so there is no list of positions to grow and copy.
+		var count = Text.AsSpan().Count(delimiter.AsSpan());
+		if (count == 0) return [this];
 
-		var segments = new MarkupText[positions.Count + 1];
+		var segments = new MarkupText[count + 1];
 		var cursor = 0;
-		for (var i = 0; i < positions.Count; i++)
+		for (var i = 0; i < count; i++)
 		{
-			segments[i] = Substring(cursor, positions[i] - cursor);
-			cursor = positions[i] + delimiter.Length;
+			var found = Text.IndexOf(delimiter, cursor, StringComparison.Ordinal);
+			segments[i] = Substring(cursor, found - cursor);
+			cursor = found + delimiter.Length;
 		}
 		segments[^1] = Substring(cursor);
 		return segments;
