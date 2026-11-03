@@ -6,7 +6,7 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 2.24.3 — Unreleased
+## 2.25.0 — 2026-11-02
 
 ### Changed
 
@@ -18,7 +18,7 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   went from 8.7 µs and 28,336 B to 4.2 µs and 8,752 B; joining 100 items with a space from 2.7 µs and
   8,232 B to 1.6 µs and 656 B. Results are unchanged, runs and all.
 
-## 2.24.2 — Unreleased
+## 2.24.2 — 2026-10-29
 
 ### Fixed
 
@@ -26,7 +26,7 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   headings is `─` (the default `LayoutTheme.Defaults.HeaderRule`), and `-` under an ASCII border or for an
   ASCII reader. It was always `-`, so a table in a Unicode box had an ASCII rule under its headings.
 
-## 2.24.1 — Unreleased
+## 2.24.1 — 2026-10-29
 
 ### Fixed
 
@@ -34,7 +34,7 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   as a line per cell. A cell that holds one text is laid out inline, so a copied row is its cells with tabs
   between them.
 
-## 2.24.0 — Unreleased
+## 2.24.0 — 2026-10-28
 
 ### Added
 
@@ -53,7 +53,7 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   out with its label, so a screen reader no longer reads a bare `Doing:`. A column with no heading reads
   its value alone. A table too narrow for its columns still draws its rows as cards.
 
-## 2.23.0 — Unreleased
+## 2.23.0 — 2026-10-23
 
 ### Added
 
@@ -63,7 +63,7 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   game's translations and the built-in stand-ins, and leaves it alone for a reader who shows all of
   it. No format writes anything for it, and it is stored on the wire as `standin`.
 
-## 2.22.1 — Unreleased
+## 2.22.1 — 2026-10-23
 
 ### Fixed
 
@@ -71,7 +71,7 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   before using it as a label, so a heading padded for its column, such as `"Idle "`, reads `Idle: 59s`
   instead of `Idle : 59s`.
 
-## 2.22.0 — Unreleased
+## 2.22.0 — 2026-10-20
 
 ### Added
 
@@ -95,7 +95,7 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   width (no box, rule, flex row or gauge), a table say, is as wide as what it holds, for the same
   reason.
 
-## 2.21.0
+## 2.21.0 — 2026-10-15
 
 ### Added
 
@@ -108,7 +108,7 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - **`MarkupText.WithoutDataMarkup()`**: the text with every data layer taken off and its visual
   markup and points kept, for text whose data must not be trusted.
 
-## 2.20.0
+## 2.20.0 — 2026-10-14
 
 ### Added
 
