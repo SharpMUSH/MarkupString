@@ -673,3 +673,56 @@ MarkupString.Decoding.DecodeDiagnostics.LimitsReached.set -> void
 MarkupString.Decoding.DecodeDiagnostics.PicturesFailed.set -> void
 MarkupString.Decoding.DecodeDiagnostics.UnhandledControls.set -> void
 MarkupString.Decoding.DecodeDiagnostics.UnhandledSequences.set -> void
+MarkupString.Decoding.ITagSink
+MarkupString.Decoding.ITagSink.Entity(System.ReadOnlySpan<char> name) -> void
+MarkupString.Decoding.ITagSink.ReadsMarkup.get -> bool
+MarkupString.Decoding.ITagSink.Tag(System.ReadOnlySpan<char> body) -> void
+MarkupString.Decoding.ITagSink.Text(System.ReadOnlySpan<char> text) -> void
+MarkupString.Decoding.ParsedTag
+MarkupString.Decoding.ParsedTag.<Clone>$() -> MarkupString.Decoding.ParsedTag!
+MarkupString.Decoding.ParsedTag.Arguments.get -> System.Collections.Generic.IReadOnlyList<MarkupString.Decoding.TagArgument>!
+MarkupString.Decoding.ParsedTag.Arguments.init -> void
+MarkupString.Decoding.ParsedTag.Closing.get -> bool
+MarkupString.Decoding.ParsedTag.Closing.init -> void
+MarkupString.Decoding.ParsedTag.Deconstruct(out string! Name, out bool Closing, out System.Collections.Generic.IReadOnlyList<MarkupString.Decoding.TagArgument>! Arguments) -> void
+MarkupString.Decoding.ParsedTag.Equals(MarkupString.Decoding.ParsedTag? other) -> bool
+MarkupString.Decoding.ParsedTag.Get(string! name, int position = -1) -> string?
+MarkupString.Decoding.ParsedTag.Has(string! name) -> bool
+MarkupString.Decoding.ParsedTag.Name.get -> string!
+MarkupString.Decoding.ParsedTag.Name.init -> void
+MarkupString.Decoding.ParsedTag.ParsedTag(string! Name, bool Closing, System.Collections.Generic.IReadOnlyList<MarkupString.Decoding.TagArgument>! Arguments) -> void
+MarkupString.Decoding.ParsedTag.SelfClosing.get -> bool
+MarkupString.Decoding.ParsedTag.SelfClosing.init -> void
+MarkupString.Decoding.TagArgument
+MarkupString.Decoding.TagArgument.Deconstruct(out string? Name, out string! Value) -> void
+MarkupString.Decoding.TagArgument.Equals(MarkupString.Decoding.TagArgument other) -> bool
+MarkupString.Decoding.TagArgument.Name.get -> string?
+MarkupString.Decoding.TagArgument.Name.init -> void
+MarkupString.Decoding.TagArgument.TagArgument() -> void
+MarkupString.Decoding.TagArgument.TagArgument(string? Name, string! Value) -> void
+MarkupString.Decoding.TagArgument.Value.get -> string!
+MarkupString.Decoding.TagArgument.Value.init -> void
+MarkupString.Decoding.TagScanner
+MarkupString.Decoding.TagScanner.Feed(System.ReadOnlySpan<char> text, MarkupString.Decoding.ITagSink! sink) -> void
+MarkupString.Decoding.TagScanner.Flush(MarkupString.Decoding.ITagSink! sink) -> void
+MarkupString.Decoding.TagScanner.InMarkup.get -> bool
+MarkupString.Decoding.TagScanner.MaxEntityLength.get -> int
+MarkupString.Decoding.TagScanner.MaxEntityLength.init -> void
+MarkupString.Decoding.TagScanner.MaxTagLength.get -> int
+MarkupString.Decoding.TagScanner.MaxTagLength.init -> void
+MarkupString.Decoding.TagScanner.Reset() -> void
+MarkupString.Decoding.TagScanner.TagScanner() -> void
+MarkupString.Decoding.TagSyntax
+override MarkupString.Decoding.ParsedTag.Equals(object? obj) -> bool
+override MarkupString.Decoding.ParsedTag.GetHashCode() -> int
+override MarkupString.Decoding.ParsedTag.ToString() -> string!
+override MarkupString.Decoding.TagArgument.GetHashCode() -> int
+static MarkupString.Decoding.ParsedTag.operator !=(MarkupString.Decoding.ParsedTag? left, MarkupString.Decoding.ParsedTag? right) -> bool
+static MarkupString.Decoding.ParsedTag.operator ==(MarkupString.Decoding.ParsedTag? left, MarkupString.Decoding.ParsedTag? right) -> bool
+static MarkupString.Decoding.TagArgument.operator !=(MarkupString.Decoding.TagArgument left, MarkupString.Decoding.TagArgument right) -> bool
+static MarkupString.Decoding.TagArgument.operator ==(MarkupString.Decoding.TagArgument left, MarkupString.Decoding.TagArgument right) -> bool
+static MarkupString.Decoding.TagSyntax.Decode(string! text, System.Func<string!, string?>? entity = null) -> string!
+static MarkupString.Decoding.TagSyntax.Entity(System.ReadOnlySpan<char> name, System.Func<string!, string?>? entity = null) -> string?
+static MarkupString.Decoding.TagSyntax.Parse(System.ReadOnlySpan<char> body, System.Func<string!, string?>? entity = null) -> MarkupString.Decoding.ParsedTag?
+~override MarkupString.Decoding.TagArgument.Equals(object obj) -> bool
+~override MarkupString.Decoding.TagArgument.ToString() -> string
