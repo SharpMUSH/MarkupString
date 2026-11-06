@@ -7,7 +7,7 @@ output can show, through one decoder and one model.
 **Spec:** `docs/superpowers/specs/2026-11-06-display-pipeline-design.md`. This plan works out the conversions the spec
 leaves open, in particular pictures, and orders the work.
 
-**Status:** draft for review, 2026-11-06.
+**Status:** accepted 2026-11-06.
 
 ## 1. The rule: decode, never pass through
 

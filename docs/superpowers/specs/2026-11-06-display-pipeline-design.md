@@ -1,6 +1,6 @@
 # Display pipeline: decoding wire protocols and rendering them per output — design
 
-Status: draft for review, 2026-11-06. Nothing here is implemented yet.
+Status: accepted 2026-11-06. Nothing here is implemented yet.
 
 ## Problem
 
