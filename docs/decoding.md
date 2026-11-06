@@ -178,7 +178,7 @@ Decoder.DecodeAll("\e(0lqqk\e(B ok", registry)[0].Content;  // ┌──┐ ok
 | `110`, `111`, `112` | Reset them |
 | `52;sel;base64` | `ClipboardEvent` with the decoded text, or a null text for `?`. Invalid base64 is dropped. |
 | `8;params;uri` | A link over the text that follows, until an empty uri. An address longer than 2083 characters, or one `UrlSafety.IsSafeNavigableUrl` refuses (`javascript:` and the like), ends the link instead. |
-| `68;1;SEND;command` | An MSLP command link over the underlined text that follows. Turning the underline off ends it. |
+| `68;1;SEND;command` | An MSLP command link over the underlined text that follows. Turning the underline off ends it, and so does the end of the line. |
 
 Colours are X11 specs: `rgb:r/g/b` with one to four hex digits a channel, or `#rgb`, `#rrggbb`,
 `#rrrgggbbb`, `#rrrrggggbbbb`. `OscPlugin.ParseColor` and `FormatColor` are public. Links are
@@ -210,9 +210,11 @@ place. A progress bar redrawn over itself ends as its last state.
 | `hello world\r\e[Kbye` | `bye` |
 | `a\tb` | `a       b` |
 | `a\e[10Gb` | `a        b` |
+| `漢字\rX` | `X 字` |
 
 Moving the cursor past the end of the line pads with spaces only when text follows, so a tab at the
-end of a line leaves no trailing blanks. The style of overwritten cells is replaced with the new text's.
+end of a line leaves no trailing blanks. The style of overwritten cells is replaced with the new text's. A wide character that is only partly
+overwritten is blanked where it is not covered, as a terminal blanks it.
 
 ## Limits and diagnostics
 
@@ -233,7 +235,7 @@ so a bare `ESC ]` typed into a channel cannot swallow the rest of the session.
 | Property | Default | |
 |---|---|---|
 | `MaxOpenElements` | 64 | Elements a text protocol may have open at once |
-| `MaxLineLength` | 65536 | Characters in a line. Text that would take the line past it is dropped. |
+| `MaxLineLength` | 65536 | Characters in a line. A longer line is ended at the limit and the rest starts the next line. |
 
 `decoder.Diagnostics` counts what was dropped:
 
@@ -245,7 +247,7 @@ decoder.Feed("\e[?25lHello\e]0;never closed\nworld\u0001\n");
 // UnhandledControls  = 1   U+0001
 ```
 
-`LimitsReached` counts text and elements dropped at a limit. `PicturesFailed` counts pictures that
+`LimitsReached` counts lines broken at the limit and elements refused. `PicturesFailed` counts pictures that
 could not be decoded.
 
 ## Client identity and answers
@@ -460,6 +462,136 @@ The SGR reset inside the element ends the red pen, not the bold element. `EndLin
 element left open, so the next line starts plain. `EnableProtocol` returns false when the registry
 offers no protocol of that name; `ActiveProtocol` names the one that is on.
 
-## Pictures, MXP and Pueblo
+## Pictures
 
-These plugins are covered in their own sections.
+`WithPictures()` adds `PicturesPlugin`, which reads Kitty graphics (`APC G`), iTerm2 inline images
+(`OSC 1337 File=`, and `MultipartFile=`/`FilePart=`/`FileEnd`) and sixel (`DCS q`). Each picture
+becomes an `ImageMarkup` over the cells it covers, one `PictureRow` per line, so a cell renderer
+draws it and the ANSI writer can send it on to another terminal in whatever way that terminal
+draws pictures. Kitty to Kitty, sixel to Kitty, and iTerm2 to half blocks all go through the same
+markup.
+
+```csharp
+var registry = DecoderRegistry.Empty.WithVt().WithPictures();
+var decoder = registry.CreateDecoder(new DecoderOptions
+{
+    Identity = new ClientIdentity { CellWidth = 8, CellHeight = 16, Columns = 100 },
+});
+
+var lines = decoder.Feed(wire);
+var store = decoder.Pictures();                       // this connection's PictureStore
+foreach (var image in lines.SelectMany(l => l.Content.Runs).SelectMany(r => r.Markups).OfType<ImageMarkup>())
+{
+    if (store.TryGet(image, out var picture)) Console.WriteLine($"{picture.Width}x{picture.Height} {picture.MediaType}");
+}
+```
+
+The pixels live in the decoder's `PictureStore`, and an image's `Source` is `picture:` and a key
+(a hash of the picture, so the same picture sent twice is stored once). The store:
+
+- keeps `Budget` bytes (64 MiB), dropping the least recently used first. A line whose picture is gone
+  shows its text instead.
+- refuses a picture of more than `MaxPixels` (4096 × 4096).
+- is the `ITerminalPictureSource` to give `AnsiOutputOptions.Pictures`, so decoded pictures can be
+  written to a terminal again.
+- gives `StoredPicture.ToDataUrl()` for an `<img>`, and raises `Added` so a host can serve pictures
+  from its own address instead.
+
+PNG and sixel are decoded here, and Kitty's raw RGB and RGBA, zlib-compressed or not. A GIF, JPEG or
+WebP sent as an iTerm2 image is kept as the file with no pixels: a browser shows it, a terminal gets
+its text.
+
+A picture's size in cells comes from its pixels and `ClientIdentity.CellWidth` and `CellHeight`,
+unless the sequence says otherwise (Kitty `c` and `r`, iTerm2 `width` and `height` in cells, `px`
+or `%`). It is never wider than `ClientIdentity.Columns`.
+
+Placement follows the terminal: the first row beside the text already on the line, each further row
+on its own line, the cursor below the picture afterwards. A picture drawn between `ESC 7` and
+`ESC 8`, or Kitty's `C=1`, is drawn over the lines that follow instead, which is how a server writes
+a picture beside text and how this package's own ANSI writer sends iTerm2 and sixel pictures.
+
+Kitty specifics:
+
+- Only `t=d` (the picture in the sequence) is read. A file, temporary file or shared memory is
+  refused with `EINVAL`, since the server's files are not the client's.
+- `a=t`, `a=T`, `a=p`, `a=q` and `a=d` are read; animation frames are not, so a moving picture is its
+  first frame.
+- Unicode placeholders (U+10EEEE with row and column diacritics, the image id in the foreground
+  colour) draw a picture transmitted with `U=1`. That is how this package's writer sends Kitty
+  pictures, so its output reads back cell for cell.
+- Replies (`\e_Gi=…;OK\e\\`) follow `q` and need `ClientAnswers.Pictures`. A picture sent with
+  neither `i` nor `I` gets none.
+
+An iTerm2 file with `inline=0` is not shown: a `DownloadEvent` says it was offered. Nothing is saved.
+
+## MXP
+
+`MarkupString.Mxp` adds `WithMxp()` for a `DecoderRegistry`. MXP is a text protocol, off until the
+host turns it on after telnet negotiates option 91:
+
+```csharp
+using MarkupString.Mxp.Decoding;
+
+var registry = DecoderRegistry.Empty.WithVt().WithMxp();
+var decoder = registry.CreateDecoder();
+decoder.EnableProtocol(MxpDecoding.Protocol);
+
+decoder.Feed("\e[1z<SEND href=\"buy sword|look sword\" hint=\"Sword|Buy|Look\">sword</SEND>\n");
+```
+
+Line modes (`ESC [ n z`) decide what a line may use. Until MXP is on they are claimed and ignored.
+
+| Mode | |
+|---|---|
+| `0`, `1`, `2` | This line is open, secure or locked |
+| `3` | Close every MXP element and go back to open |
+| `4` | The next tag is secure |
+| `5`, `6`, `7` | Open, secure or locked from now on |
+| `10`, `11`, `12`, `19` | This line is a room name, description, exits or welcome text: an `MxpFlagMarkup` over it |
+| `20`–`99` | This line is the element the server tied to that number with `TAG=` |
+
+On an open line only the open tags work: `B`, `I`, `U`, `S`, `H`, `C`/`COLOR`, `FONT`, `BR`, `SBR`,
+`P`, `NOBR`. A secure tag there is dropped and counted in `UnhandledSequences`. On a locked line `<`
+and `&` are text. Elements opened on an open line close at its end.
+
+What the tags become:
+
+| Tag | Markup |
+|---|---|
+| `B`, `I`, `U`, `S`, `H`, `COLOR`, `FONT` | An `AnsiMarkup`. SGR inside an MXP colour wins, as in an MXP client. |
+| `A href hint` | A URL link, when `UrlSafety` allows the address |
+| `SEND href hint prompt` | A command link. With several commands (`a\|b`) or `PROMPT`, a `CommandMenuMarkup` as well. With no `href`, or `&text;` in it, the command is the tag's text. |
+| `IMAGE fname url w h align` | An `ImageMarkup`. Sized in cells (`W=4c H=2c`), it is drawn over the cells the server leaves for it. |
+| `SOUND`, `MUSIC` | `SoundMarkup` or `SoundStopMarkup` points |
+| `FRAME`, `DEST` | A `PaneMarkup` over the text in `DEST`, titled from its `FRAME` |
+| `VAR name` | A `VariableMarkup` over its text, and a `VariableEvent` |
+| `EXPIRE`, `RELOCATE`, `USER`, `PASSWORD` | Their points |
+| `VERSION`, `SUPPORT` | Answered (`\e[1z<VERSION …>`, `\e[1z<SUPPORTS +send …>`) when `ClientAnswers.Mxp` allows |
+
+`<!ELEMENT>` defines an element from other tags, with `ATT` attributes substituted for `&name;`,
+`FLAG` for an `MxpFlagMarkup`, `OPEN`, `EMPTY` and `TAG`. `<!ENTITY>` defines an entity, used as
+`&name;` and published as a `VariableEvent` unless `PRIVATE`. `<!ATTLIST>` and `<!TAG>` are read
+too. To serialise lines with `MxpFlagMarkup`, add `MxpDecoding.FlagCodec` to the `MarkupRegistry`.
+
+What `MarkupFormat.Mxp` writes reads back to the same markup.
+
+## Pueblo
+
+`MarkupString.Pueblo` adds `WithPueblo()`. Turn the protocol on when the server greets the client
+(`PuebloDecoding.IsGreeting(line)`) and the client has answered `PUEBLOCLIENT`.
+
+The server starts in MUD text, where tags are text. `</xch_mudtext>` or `<img xch_mode=html>`
+switches to HTML, where a line ends at `<br>` and a bare line feed is whitespace; `<xch_mudtext>`
+switches back, and its region is a `PreformattedMarkup`. ANSI is read in both.
+
+| Tag | Markup |
+|---|---|
+| `b`, `i`, `u`, `s`, `font color` | An `AnsiMarkup` |
+| `a xch_cmd xch_hint`, `a href` | A command or URL link |
+| `img src alt` | An `ImageMarkup` over the alt text |
+| `img xch_sound=play\|loop\|stop href xch_volume` | `SoundMarkup` or `SoundStopMarkup` |
+| `xch_pane action=redirect name panetitle` | A `PaneMarkup` until the next redirect |
+| `xch_page clear=text`, `xch_prefetch href` | `ClearScreenMarkup`, `PrefetchMarkup` |
+| `br`, `p`, `hr`, `pre` | Line breaks, and a `PreformattedMarkup` for `pre` |
+
+What `MarkupFormat.Pueblo` writes reads back to the same markup.

@@ -179,6 +179,7 @@ var text = Decoder.DecodeAll("\e[31mred\e[0m \e[34;44msame\e[0m", decoders)[0].C
 - **Colours.** At `ColorLevel.Attributes` or `None` both colours are dropped. Above that, every colour
   is already RGB, so the level does not reduce it further here.
 - **Attributes.** Those the output lacks are dropped. At `ColorLevel.None` every attribute is.
+- **Prompts.** A `CommandMenuMarkup` with `Prompt` set is a `Prompt` interaction.
 - **Inverse.** With colour, foreground and background are swapped, filling in `DefaultForeground` and
   `DefaultBackground`; `Inverse` stays set for information. At `Attributes` the flag is kept for the
   output to draw when it has `TextAttributes.Inverse`, and dropped when it does not.
@@ -228,7 +229,7 @@ and `Point` set. Text no markup covers is `DisplayStyle.Plain`.
 
 `SpanRenderer.Css(style)` is inline CSS: `color`, `background-color`, `font-weight:bold`,
 `opacity:0.6` for faint, `font-style:italic`, `text-decoration` for underline, overline and
-line-through, and `color:transparent` for conceal. `CssClasses(style)` gives the classes a page
+line-through, and `color:transparent` for conceal, in place of the text's colour. `CssClasses(style)` gives the classes a page
 styles itself:
 
 | Class | When |
@@ -238,6 +239,7 @@ styles itself:
 | `ms-link`, `ms-command`, `ms-prompt` | The interaction's kind |
 | `ms-menu` | An interaction with more than one choice |
 | `ms-picture` | A picture |
+| `ms-invert` | Inverse with no colours to swap, at `ColorLevel.Attributes`; `AnsiCss.Fixed` styles it |
 
 `SpanRenderer.Hex(color)` writes `#rrggbb`.
 
