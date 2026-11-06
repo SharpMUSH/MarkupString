@@ -142,7 +142,7 @@ public sealed class AnsiStyles : IStyleContributor
 			{
 				style.Interaction = new Interaction(InteractionKind.Command, folded.LinkUrl) { Hint = folded.LinkText };
 			}
-			else if (UrlSafety.IsSafeNavigableUrl(folded.LinkUrl))
+			else if (options.Links.IsAllowed(folded.LinkUrl))
 			{
 				style.Interaction = new Interaction(InteractionKind.Url, folded.LinkUrl) { Hint = folded.LinkText };
 			}

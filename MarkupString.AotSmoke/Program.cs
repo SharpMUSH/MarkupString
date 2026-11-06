@@ -4,12 +4,15 @@ using MarkupString.Ansi;
 using MarkupString.Ansi.Decoding;
 using MarkupString.Decoding;
 using MarkupString.Display;
+using MarkupString.Extensions.DependencyInjection;
 using MarkupString.Html;
 using MarkupString.Layout;
 using MarkupString.Mxp;
 using MarkupString.Mxp.Decoding;
 using MarkupString.Pueblo;
 using MarkupString.Pueblo.Decoding;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 // Native-AOT smoke test. It is published with PublishAot and run in CI: the publish must produce no
 // IL2xxx/IL3xxx warning, and the binary must exit 0. What it exercises is the whole pipeline that a
@@ -148,6 +151,22 @@ if (SpanRenderer.Render(decoded[1].Content, AnsiDisplay.Default, new DisplayOpti
 if (decoder.Pictures().Count != 1
 	|| CellRenderer.Layout(decoded[2].Content, 80, AnsiDisplay.Default, new DisplayOptions()).Rows[0].Cells[0].Style.Picture is null)
 	failures.Add("decoding a sixel picture failed");
+
+// Dependency injection, with options bound from configuration by the source-generated binder.
+var configuration = new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+{
+	["MarkupString:LinkSchemes:0"] = "mudclient",
+	["MarkupString:Display:Colors"] = "Standard",
+}).Build();
+using (var services = new ServiceCollection().AddSingleton<IConfiguration>(configuration)
+	.AddMarkupString().BindConfiguration().AddDecoders(registry => registry.WithMxp()).Services.BuildServiceProvider())
+{
+	var injected = services.GetRequiredService<IDecoderFactory>().CreateDecoder();
+	var linked = injected.Feed("\e]8;;mudclient://look\e\\look\e]8;;\e\\\n");
+	var shown = SpanRenderer.Render(linked[0].Content, services.GetRequiredService<IStyleResolver>(), services.GetRequiredService<DisplayOptions>());
+	if (shown[0].Style.Interaction?.Target != "mudclient://look" || services.GetRequiredService<DisplayOptions>().Capabilities.Colors != ColorLevel.Standard)
+		failures.Add("dependency injection failed");
+}
 
 if (failures.Count > 0)
 {

@@ -177,7 +177,7 @@ Decoder.DecodeAll("\e(0lqqk\e(B ok", registry)[0].Content;  // ┌──┐ ok
 | `10`, `11`, `12` | Set the foreground, background, cursor colour, or answer `?` (10 and 11 only). `10;a;b` sets 10 and 11 at once. |
 | `110`, `111`, `112` | Reset them |
 | `52;sel;base64` | `ClipboardEvent` with the decoded text, or a null text for `?`. Invalid base64 is dropped. |
-| `8;params;uri` | A link over the text that follows, until an empty uri. An address longer than 2083 characters, or one `UrlSafety.IsSafeNavigableUrl` refuses (`javascript:` and the like), ends the link instead. An `id=` among the params becomes a `LinkGroupMarkup`, and so `Interaction.Group`: the text under it is one link even across lines. |
+| `8;params;uri` | A link over the text that follows, until an empty uri. An address longer than 2083 characters, or one `UrlSafety.IsSafeNavigableUrl` refuses (`javascript:` and the like), ends the link instead. The address must pass `DecoderOptions.Links` (`UrlPolicy.Safe` unless set). An `id=` among the params becomes a `LinkGroupMarkup`, and so `Interaction.Group`: the text under it is one link even across lines. |
 | `68;1;SEND;command` | An MSLP command link over the underlined text that follows. Turning the underline off ends it, and so does the end of the line. |
 
 Colours are X11 specs: `rgb:r/g/b` with one to four hex digits a channel, or `#rgb`, `#rrggbb`,
@@ -236,6 +236,8 @@ so a bare `ESC ]` typed into a channel cannot swallow the rest of the session.
 |---|---|---|
 | `MaxOpenElements` | 64 | Elements a text protocol may have open at once |
 | `MaxLineLength` | 65536 | Characters in a line. A longer line is ended at the limit and the rest starts the next line. |
+| `Links` | `UrlPolicy.Safe` | Which link addresses a server's links may have; any other is read as text |
+| `Meters` | null | The `IMeterFactory` the diagnostics are reported to; null uses a shared meter |
 
 `decoder.Diagnostics` counts what was dropped:
 
@@ -248,7 +250,11 @@ decoder.Feed("\e[?25lHello\e]0;never closed\nworld\u0001\n");
 ```
 
 `LimitsReached` counts lines broken at the limit and elements refused. `PicturesFailed` counts pictures that
-could not be decoded.
+could not be decoded. Each count is also reported as the metric `markupstring.decoding.dropped` on the
+`MarkupString.Decoding` meter, tagged with its `kind`; see [Dependency injection](dependency-injection.md#metrics).
+
+`DecoderRegistry` is an `IDecoderFactory`, so code that makes decoders can take the interface and a
+test or host can give it another.
 
 ## Client identity and answers
 

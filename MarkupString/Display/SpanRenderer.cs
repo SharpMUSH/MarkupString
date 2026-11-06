@@ -21,7 +21,7 @@ public readonly record struct DisplaySpan(string Text, DisplayStyle Style)
 public static class SpanRenderer
 {
 	/// <summary>The spans of <paramref name="text"/>, in order.</summary>
-	public static IReadOnlyList<DisplaySpan> Render(MarkupText text, DisplayRegistry registry, DisplayOptions options)
+	public static IReadOnlyList<DisplaySpan> Render(MarkupText text, IStyleResolver registry, DisplayOptions options)
 	{
 		ArgumentNullException.ThrowIfNull(text);
 		ArgumentNullException.ThrowIfNull(registry);

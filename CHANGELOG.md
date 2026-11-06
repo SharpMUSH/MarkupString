@@ -33,6 +33,15 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   models. See [Display](docs/display.md).
 - `CommandMenuMarkup` (a menu of commands, or a prompt), `HighlightMarkup` (a background) and `LinkGroupMarkup`
   (an OSC 8 `id`, which becomes `Interaction.Group`) in core, with codecs.
+- **`MarkupString.Extensions.DependencyInjection`**: `AddMarkupString()` registers the markup, decoder and display
+  registries, a shared picture cache, an `IDecoderFactory`, default `DisplayOptions` and the link policy as singletons,
+  configured in code or with `BindConfiguration()` (`MarkupStringOptions`, AOT-safe). See
+  [Dependency injection](docs/dependency-injection.md).
+- Interfaces to inject: `IDecoderFactory` (a `DecoderRegistry` is one), `IStyleResolver` (a `DisplayRegistry` is one;
+  `SpanRenderer` and `CellRenderer` take it), and `IUrlPolicy` with `UrlPolicy.Safe` and `UrlPolicy.WithSchemes`, set as
+  `DecoderOptions.Links` and `DisplayOptions.Links`.
+- Decode diagnostics are reported on the `MarkupString.Decoding` meter (`markupstring.decoding.dropped`, by `kind`),
+  through `DecoderOptions.Meters` when a host gives its `IMeterFactory`.
 - `IPictureCache` and `MemoryPictureCache`: `WithPictures(cache)` shares decoded pictures between connections, and a
   host can keep them in a cache of its own.
 - Kitty animation frames (`a=f`, and frame times with `a=a`) decode into a moving `StoredPicture`, given as a GIF.

@@ -384,7 +384,7 @@ internal sealed class MxpReader : ITextProtocol, ITagSink
 			case "A":
 				{
 					var href = tag.Get("HREF", 0);
-					IMarkup? link = href is not null && UrlSafety.IsSafeNavigableUrl(href)
+					IMarkup? link = href is not null && Context.Options.Links.IsAllowed(href)
 						? new AnsiMarkup(new AnsiStyle { LinkUrl = href, LinkKind = LinkKind.Url, LinkText = tag.Get("HINT", 1) })
 						: null;
 					OpenElement(tag.Name, link is null ? [] : [link], openMode);

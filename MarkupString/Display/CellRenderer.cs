@@ -95,7 +95,7 @@ public static class CellRenderer
 	/// <param name="registry">The styles.</param>
 	/// <param name="options">The output.</param>
 	/// <param name="wordWrap">Wrap at the last space that fits, rather than at the last cell.</param>
-	public static CellLayout Layout(MarkupText text, int columns, DisplayRegistry registry, DisplayOptions options, bool wordWrap = false)
+	public static CellLayout Layout(MarkupText text, int columns, IStyleResolver registry, DisplayOptions options, bool wordWrap = false)
 	{
 		ArgumentNullException.ThrowIfNull(text);
 		ArgumentNullException.ThrowIfNull(registry);

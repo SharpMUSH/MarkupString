@@ -144,7 +144,11 @@ per markup set in a text.
 | `Colors` | null | An `IColorResolver`; null uses the xterm palette |
 | `DefaultForeground` | `(229, 229, 229)` | Used when inverse text has no colour of its own |
 | `DefaultBackground` | `(0, 0, 0)` | Used when inverse text has no background of its own |
+| `Links` | `UrlPolicy.Safe` | Which link addresses are drawn as clickable; any other stays text |
 | `TabWidth` | 8 | Cells between tab stops, in `CellRenderer` |
+
+`SpanRenderer` and `CellRenderer` take an `IStyleResolver`, which a `DisplayRegistry` is, so a host can
+give them its own.
 
 An `IColorResolver` decides what "red" is. Subclass `AnsiColors` to change part of the palette:
 

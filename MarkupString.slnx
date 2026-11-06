@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="MarkupString.Ansi/MarkupString.Ansi.csproj" />
   <Project Path="MarkupString.AotSmoke/MarkupString.AotSmoke.csproj" />
+  <Project Path="MarkupString.Extensions.DependencyInjection/MarkupString.Extensions.DependencyInjection.csproj" />
   <Project Path="MarkupString.Html/MarkupString.Html.csproj" />
   <Project Path="MarkupString.Mxp/MarkupString.Mxp.csproj" />
   <Project Path="MarkupString.Pueblo/MarkupString.Pueblo.csproj" />

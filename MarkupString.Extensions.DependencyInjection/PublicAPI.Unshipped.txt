@@ -1,0 +1,50 @@
+#nullable enable
+MarkupString.Extensions.DependencyInjection.DecodingSettings
+MarkupString.Extensions.DependencyInjection.DecodingSettings.AnswerCursorPosition.get -> bool
+MarkupString.Extensions.DependencyInjection.DecodingSettings.AnswerCursorPosition.set -> void
+MarkupString.Extensions.DependencyInjection.DecodingSettings.DecodingSettings() -> void
+MarkupString.Extensions.DependencyInjection.DecodingSettings.MaxLineLength.get -> int
+MarkupString.Extensions.DependencyInjection.DecodingSettings.MaxLineLength.set -> void
+MarkupString.Extensions.DependencyInjection.DecodingSettings.MaxOpenElements.get -> int
+MarkupString.Extensions.DependencyInjection.DecodingSettings.MaxOpenElements.set -> void
+MarkupString.Extensions.DependencyInjection.DisplaySettings
+MarkupString.Extensions.DependencyInjection.DisplaySettings.BoldIsBright.get -> bool
+MarkupString.Extensions.DependencyInjection.DisplaySettings.BoldIsBright.set -> void
+MarkupString.Extensions.DependencyInjection.DisplaySettings.Colors.get -> MarkupString.Display.ColorLevel?
+MarkupString.Extensions.DependencyInjection.DisplaySettings.Colors.set -> void
+MarkupString.Extensions.DependencyInjection.DisplaySettings.DisplaySettings() -> void
+MarkupString.Extensions.DependencyInjection.DisplaySettings.Output.get -> string!
+MarkupString.Extensions.DependencyInjection.DisplaySettings.Output.set -> void
+MarkupString.Extensions.DependencyInjection.MarkupDecoderFactory
+MarkupString.Extensions.DependencyInjection.MarkupDecoderFactory.CreateDecoder(MarkupString.Decoding.DecoderOptions? options = null) -> MarkupString.Decoding.Decoder!
+MarkupString.Extensions.DependencyInjection.MarkupDecoderFactory.Defaults.get -> MarkupString.Decoding.DecoderOptions!
+MarkupString.Extensions.DependencyInjection.MarkupDecoderFactory.MarkupDecoderFactory(MarkupString.Decoding.DecoderRegistry! registry, MarkupString.Extensions.DependencyInjection.MarkupStringOptions! options, MarkupString.IUrlPolicy! links, System.Diagnostics.Metrics.IMeterFactory? meters = null) -> void
+MarkupString.Extensions.DependencyInjection.MarkupStringBuilder
+MarkupString.Extensions.DependencyInjection.MarkupStringBuilder.AddDecoders(System.Func<MarkupString.Decoding.DecoderRegistry!, MarkupString.Decoding.DecoderRegistry!>! configure) -> MarkupString.Extensions.DependencyInjection.MarkupStringBuilder!
+MarkupString.Extensions.DependencyInjection.MarkupStringBuilder.AddDisplay(System.Func<MarkupString.Display.DisplayRegistry!, MarkupString.Display.DisplayRegistry!>! configure) -> MarkupString.Extensions.DependencyInjection.MarkupStringBuilder!
+MarkupString.Extensions.DependencyInjection.MarkupStringBuilder.AddMarkup(System.Func<MarkupString.MarkupRegistry!, MarkupString.MarkupRegistry!>! configure) -> MarkupString.Extensions.DependencyInjection.MarkupStringBuilder!
+MarkupString.Extensions.DependencyInjection.MarkupStringBuilder.BindConfiguration(string! path = "MarkupString") -> MarkupString.Extensions.DependencyInjection.MarkupStringBuilder!
+MarkupString.Extensions.DependencyInjection.MarkupStringBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+MarkupString.Extensions.DependencyInjection.MarkupStringBuilder.UsePictureCache<TCache>() -> MarkupString.Extensions.DependencyInjection.MarkupStringBuilder!
+MarkupString.Extensions.DependencyInjection.MarkupStringBuilder.UseUrlPolicy<TPolicy>() -> MarkupString.Extensions.DependencyInjection.MarkupStringBuilder!
+MarkupString.Extensions.DependencyInjection.MarkupStringOptions
+MarkupString.Extensions.DependencyInjection.MarkupStringOptions.Decoding.get -> MarkupString.Extensions.DependencyInjection.DecodingSettings!
+MarkupString.Extensions.DependencyInjection.MarkupStringOptions.Decoding.set -> void
+MarkupString.Extensions.DependencyInjection.MarkupStringOptions.Display.get -> MarkupString.Extensions.DependencyInjection.DisplaySettings!
+MarkupString.Extensions.DependencyInjection.MarkupStringOptions.Display.set -> void
+MarkupString.Extensions.DependencyInjection.MarkupStringOptions.LinkSchemes.get -> System.Collections.Generic.List<string!>!
+MarkupString.Extensions.DependencyInjection.MarkupStringOptions.LinkSchemes.set -> void
+MarkupString.Extensions.DependencyInjection.MarkupStringOptions.MarkupStringOptions() -> void
+MarkupString.Extensions.DependencyInjection.MarkupStringOptions.Pictures.get -> MarkupString.Extensions.DependencyInjection.PictureSettings!
+MarkupString.Extensions.DependencyInjection.MarkupStringOptions.Pictures.set -> void
+MarkupString.Extensions.DependencyInjection.PictureSettings
+MarkupString.Extensions.DependencyInjection.PictureSettings.Budget.get -> long
+MarkupString.Extensions.DependencyInjection.PictureSettings.Budget.set -> void
+MarkupString.Extensions.DependencyInjection.PictureSettings.Enabled.get -> bool
+MarkupString.Extensions.DependencyInjection.PictureSettings.Enabled.set -> void
+MarkupString.Extensions.DependencyInjection.PictureSettings.MaxPixels.get -> long
+MarkupString.Extensions.DependencyInjection.PictureSettings.MaxPixels.set -> void
+MarkupString.Extensions.DependencyInjection.PictureSettings.PictureSettings() -> void
+MarkupString.Extensions.DependencyInjection.ServiceCollectionExtensions
+static MarkupString.Extensions.DependencyInjection.ServiceCollectionExtensions.AddMarkupString(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<MarkupString.Extensions.DependencyInjection.MarkupStringOptions!>? configure = null) -> MarkupString.Extensions.DependencyInjection.MarkupStringBuilder!
+MarkupString.Extensions.DependencyInjection.MarkupDecoderFactory.CreateDecoderFor(MarkupString.Decoding.ClientIdentity! identity) -> MarkupString.Decoding.Decoder!

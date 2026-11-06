@@ -23,6 +23,7 @@ public sealed class Decoder
 		Registry = registry;
 		Options = options;
 		Identity = options.Identity;
+		Diagnostics = new DecodeDiagnostics(DecodeMetrics.For(options.Meters));
 		_tokenizer = new VtTokenizer(options.Limits);
 		Context = new DecodeContext(this);
 		_sink = new Sink(this);
@@ -38,7 +39,7 @@ public sealed class Decoder
 	public ClientIdentity Identity { get; set; }
 
 	/// <summary>Counts of what was dropped, for a diagnostics view.</summary>
-	public DecodeDiagnostics Diagnostics { get; } = new();
+	public DecodeDiagnostics Diagnostics { get; }
 
 	/// <summary>Raised for each event, as it is found.</summary>
 	public event Action<DecodeEvent>? EventRaised;
@@ -224,21 +225,79 @@ public sealed class Decoder
 	}
 }
 
-/// <summary>Counts of what a decoder dropped.</summary>
+/// <summary>
+/// Counts of what a decoder dropped. Each is also reported on the <c>MarkupString.Decoding</c> meter, as the
+/// counter <c>markupstring.decoding.dropped</c> tagged with its <c>kind</c>.
+/// </summary>
 public sealed class DecodeDiagnostics
 {
+	private readonly DecodeMetrics? _metrics;
+	private int _abandoned, _unhandled, _controls, _limits, _pictures;
+
+	/// <summary>Counts that are not reported anywhere.</summary>
+	public DecodeDiagnostics()
+	{
+	}
+
+	internal DecodeDiagnostics(DecodeMetrics metrics) => _metrics = metrics;
+
 	/// <summary>Sequences that were malformed, too long, or cut off by a line ending.</summary>
-	public int AbandonedSequences { get; set; }
+	public int AbandonedSequences
+	{
+		get => _abandoned;
+		set => _abandoned = Report(_abandoned, value, "abandoned-sequence");
+	}
 
 	/// <summary>Well-formed sequences no handler claimed.</summary>
-	public int UnhandledSequences { get; set; }
+	public int UnhandledSequences
+	{
+		get => _unhandled;
+		set => _unhandled = Report(_unhandled, value, "unhandled-sequence");
+	}
 
 	/// <summary>Control characters no handler claimed.</summary>
-	public int UnhandledControls { get; set; }
+	public int UnhandledControls
+	{
+		get => _controls;
+		set => _controls = Report(_controls, value, "unhandled-control");
+	}
 
 	/// <summary>Things dropped because a limit was reached: an element stack, a line length, a picture size.</summary>
-	public int LimitsReached { get; set; }
+	public int LimitsReached
+	{
+		get => _limits;
+		set => _limits = Report(_limits, value, "limit");
+	}
 
 	/// <summary>Pictures that could not be decoded.</summary>
-	public int PicturesFailed { get; set; }
+	public int PicturesFailed
+	{
+		get => _pictures;
+		set => _pictures = Report(_pictures, value, "picture");
+	}
+
+	private int Report(int before, int after, string kind)
+	{
+		if (after > before) _metrics?.Dropped(after - before, kind);
+		return after;
+	}
+}
+
+/// <summary>The decoding meter, one for each meter factory.</summary>
+internal sealed class DecodeMetrics
+{
+	public const string MeterName = "MarkupString.Decoding";
+
+	private static readonly DecodeMetrics Shared = new(new System.Diagnostics.Metrics.Meter(MeterName));
+	private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<System.Diagnostics.Metrics.IMeterFactory, DecodeMetrics> ByFactory = [];
+
+	private readonly System.Diagnostics.Metrics.Counter<long> _dropped;
+
+	private DecodeMetrics(System.Diagnostics.Metrics.Meter meter) =>
+		_dropped = meter.CreateCounter<long>("markupstring.decoding.dropped", "{item}", "What decoders dropped, by kind.");
+
+	public static DecodeMetrics For(System.Diagnostics.Metrics.IMeterFactory? factory) =>
+		factory is null ? Shared : ByFactory.GetValue(factory, static f => new DecodeMetrics(f.Create(new System.Diagnostics.Metrics.MeterOptions(MeterName))));
+
+	public void Dropped(int count, string kind) => _dropped.Add(count, new KeyValuePair<string, object?>("kind", kind));
 }

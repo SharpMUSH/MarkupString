@@ -126,6 +126,13 @@ public interface IStyleContributor
 	void Contribute(MarkupSet markups, StyleBuilder style, DisplayOptions options);
 }
 
+/// <summary>Turns a run's markup into the style an output draws it with: a <see cref="DisplayRegistry"/>, or a host's own.</summary>
+public interface IStyleResolver
+{
+	/// <summary>Folds <paramref name="markups"/> into one style, degraded to what <paramref name="options"/> can show.</summary>
+	DisplayStyle Resolve(MarkupSet? markups, DisplayOptions options);
+}
+
 /// <summary>Turns a palette colour into RGB, so a client's theme decides what "red" is.</summary>
 public interface IColorResolver
 {
@@ -150,6 +157,9 @@ public sealed record DisplayOptions
 
 	/// <summary>How palette colours become RGB, or null for the xterm palette.</summary>
 	public IColorResolver? Colors { get; init; }
+
+	/// <summary>Which link addresses become clickable; one that may not stays text. <see cref="UrlPolicy.Safe"/> unless set.</summary>
+	public IUrlPolicy Links { get; init; } = UrlPolicy.Safe;
 
 	/// <summary>The default text colour, used when inverse text has no colour of its own.</summary>
 	public RgbColor DefaultForeground { get; init; } = new(229, 229, 229);

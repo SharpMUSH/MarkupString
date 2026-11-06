@@ -640,7 +640,6 @@ static MarkupString.Display.Cell.operator !=(MarkupString.Display.Cell left, Mar
 static MarkupString.Display.Cell.operator ==(MarkupString.Display.Cell left, MarkupString.Display.Cell right) -> bool
 static MarkupString.Display.CellPoint.operator !=(MarkupString.Display.CellPoint left, MarkupString.Display.CellPoint right) -> bool
 static MarkupString.Display.CellPoint.operator ==(MarkupString.Display.CellPoint left, MarkupString.Display.CellPoint right) -> bool
-static MarkupString.Display.CellRenderer.Layout(MarkupString.MarkupText! text, int columns, MarkupString.Display.DisplayRegistry! registry, MarkupString.Display.DisplayOptions! options, bool wordWrap = false) -> MarkupString.Display.CellLayout!
 static MarkupString.Display.DisplayOptions.operator !=(MarkupString.Display.DisplayOptions? left, MarkupString.Display.DisplayOptions? right) -> bool
 static MarkupString.Display.DisplayOptions.operator ==(MarkupString.Display.DisplayOptions? left, MarkupString.Display.DisplayOptions? right) -> bool
 static MarkupString.Display.DisplayRegistry.Core.get -> MarkupString.Display.DisplayRegistry!
@@ -655,7 +654,6 @@ static MarkupString.Display.Interaction.operator ==(MarkupString.Display.Interac
 static MarkupString.Display.SpanRenderer.Css(MarkupString.Display.DisplayStyle style) -> string!
 static MarkupString.Display.SpanRenderer.CssClasses(MarkupString.Display.DisplayStyle style) -> string!
 static MarkupString.Display.SpanRenderer.Hex(MarkupString.RgbColor color) -> string!
-static MarkupString.Display.SpanRenderer.Render(MarkupString.MarkupText! text, MarkupString.Display.DisplayRegistry! registry, MarkupString.Display.DisplayOptions! options) -> System.Collections.Generic.IReadOnlyList<MarkupString.Display.DisplaySpan>!
 static MarkupString.Display.VocabularyStyles.Instance.get -> MarkupString.Display.VocabularyStyles!
 static MarkupString.HighlightMarkup.operator !=(MarkupString.HighlightMarkup? left, MarkupString.HighlightMarkup? right) -> bool
 static MarkupString.HighlightMarkup.operator ==(MarkupString.HighlightMarkup? left, MarkupString.HighlightMarkup? right) -> bool
@@ -739,3 +737,22 @@ override MarkupString.LinkGroupMarkup.GetHashCode() -> int
 override MarkupString.LinkGroupMarkup.ToString() -> string!
 static MarkupString.LinkGroupMarkup.operator !=(MarkupString.LinkGroupMarkup? left, MarkupString.LinkGroupMarkup? right) -> bool
 static MarkupString.LinkGroupMarkup.operator ==(MarkupString.LinkGroupMarkup? left, MarkupString.LinkGroupMarkup? right) -> bool
+MarkupString.Decoding.DecoderOptions.Links.get -> MarkupString.IUrlPolicy!
+MarkupString.Decoding.DecoderOptions.Links.init -> void
+MarkupString.Decoding.DecoderOptions.Meters.get -> System.Diagnostics.Metrics.IMeterFactory?
+MarkupString.Decoding.DecoderOptions.Meters.init -> void
+MarkupString.Decoding.IDecoderFactory
+MarkupString.Decoding.IDecoderFactory.CreateDecoder(MarkupString.Decoding.DecoderOptions? options = null) -> MarkupString.Decoding.Decoder!
+MarkupString.Display.DisplayOptions.Links.get -> MarkupString.IUrlPolicy!
+MarkupString.Display.DisplayOptions.Links.init -> void
+MarkupString.Display.IStyleResolver
+MarkupString.Display.IStyleResolver.Resolve(MarkupString.MarkupSet? markups, MarkupString.Display.DisplayOptions! options) -> MarkupString.Display.DisplayStyle
+MarkupString.IUrlPolicy
+MarkupString.IUrlPolicy.IsAllowed(string! url) -> bool
+MarkupString.UrlPolicy
+MarkupString.UrlPolicy.IsAllowed(string! url) -> bool
+MarkupString.UrlPolicy.Schemes.get -> System.Collections.Generic.IReadOnlyCollection<string!>!
+static MarkupString.Display.CellRenderer.Layout(MarkupString.MarkupText! text, int columns, MarkupString.Display.IStyleResolver! registry, MarkupString.Display.DisplayOptions! options, bool wordWrap = false) -> MarkupString.Display.CellLayout!
+static MarkupString.Display.SpanRenderer.Render(MarkupString.MarkupText! text, MarkupString.Display.IStyleResolver! registry, MarkupString.Display.DisplayOptions! options) -> System.Collections.Generic.IReadOnlyList<MarkupString.Display.DisplaySpan>!
+static MarkupString.UrlPolicy.Safe.get -> MarkupString.UrlPolicy!
+static MarkupString.UrlPolicy.WithSchemes(params System.Collections.Generic.IEnumerable<string!>! schemes) -> MarkupString.UrlPolicy!

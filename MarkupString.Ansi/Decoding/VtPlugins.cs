@@ -394,7 +394,7 @@ public sealed class OscPlugin : IDecoderPlugin
 				}
 
 				var target = uri.ToString();
-				var safe = UrlSafety.IsSafeNavigableUrl(target);
+				var safe = context.Options.Links.IsAllowed(target);
 				context.SetPen(VtPens.Link, safe ? new AnsiMarkup(new AnsiStyle { LinkUrl = target, LinkKind = LinkKind.Url }) : null);
 				var id = safe ? LinkId(payload[..separator]) : null;
 				context.SetPen(VtPens.LinkGroup, id is null ? null : new LinkGroupMarkup(id));

@@ -157,7 +157,7 @@ internal readonly record struct CsiKey(char Prefix, string Intermediates, char F
 /// The protocols a decoder reads, built once and shared. Each connection makes its own <see cref="Decoder"/> from
 /// it, which holds that connection's state.
 /// </summary>
-public sealed class DecoderRegistry
+public sealed class DecoderRegistry : IDecoderFactory
 {
 	private readonly IDecoderPlugin[] _plugins;
 
@@ -226,4 +226,20 @@ public sealed record DecoderOptions
 
 	/// <summary>The longest line, in characters; a longer line is ended there and the rest starts a new one.</summary>
 	public int MaxLineLength { get; init; } = 64 * 1024;
+
+	/// <summary>Which link addresses a server may send; one it may not is read as text. <see cref="UrlPolicy.Safe"/> unless set.</summary>
+	public IUrlPolicy Links { get; init; } = UrlPolicy.Safe;
+
+	/// <summary>
+	/// Where <see cref="DecodeDiagnostics"/> are reported as metrics (the <c>MarkupString.Decoding</c> meter), or null
+	/// for the shared meter. Pass the host's, as ASP.NET Core registers one.
+	/// </summary>
+	public System.Diagnostics.Metrics.IMeterFactory? Meters { get; init; }
+}
+
+/// <summary>Makes a <see cref="Decoder"/> for each connection: a <see cref="DecoderRegistry"/>, or a host's own.</summary>
+public interface IDecoderFactory
+{
+	/// <summary>A decoder for one connection.</summary>
+	Decoder CreateDecoder(DecoderOptions? options = null);
 }

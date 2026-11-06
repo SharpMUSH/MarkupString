@@ -4,7 +4,7 @@ namespace MarkupString.Display;
 /// The style contributors a structured renderer folds markup with. Immutable; build one once with
 /// <c>With(...)</c> and share it.
 /// </summary>
-public sealed class DisplayRegistry
+public sealed class DisplayRegistry : IStyleResolver
 {
 	private readonly IStyleContributor[] _contributors;
 

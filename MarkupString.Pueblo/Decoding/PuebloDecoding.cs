@@ -198,7 +198,7 @@ internal sealed class PuebloReader : ITextProtocol, ITagSink
 					{
 						link = new AnsiStyle { LinkUrl = command, LinkKind = LinkKind.Command, LinkText = hint };
 					}
-					else if (tag.Get("href") is { } href && UrlSafety.IsSafeNavigableUrl(href))
+					else if (tag.Get("href") is { } href && Context.Options.Links.IsAllowed(href))
 					{
 						link = new AnsiStyle { LinkUrl = href, LinkKind = LinkKind.Url, LinkText = hint };
 					}
