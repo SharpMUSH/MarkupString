@@ -1,10 +1,15 @@
 using System.Buffers;
 using MarkupString;
 using MarkupString.Ansi;
+using MarkupString.Ansi.Decoding;
+using MarkupString.Decoding;
+using MarkupString.Display;
 using MarkupString.Html;
 using MarkupString.Layout;
 using MarkupString.Mxp;
+using MarkupString.Mxp.Decoding;
 using MarkupString.Pueblo;
+using MarkupString.Pueblo.Decoding;
 
 // Native-AOT smoke test. It is published with PublishAot and run in CI: the publish must produce no
 // IL2xxx/IL3xxx warning, and the binary must exit 0. What it exercises is the whole pipeline that a
@@ -128,6 +133,21 @@ var longCluster = "e" + new string('\u0301', 1024);
 if (Graphemes.SnapStart(longCluster, 1000) != 0
 	|| Graphemes.SnapEnd(longCluster, 1000) != longCluster.Length)
 	failures.Add("long cluster snapping failed");
+
+// Decoding: terminal text, a sixel picture and MXP, rendered for a page and for a cell grid.
+var decoders = DecoderRegistry.Empty.WithVt().WithPictures().WithMxp().WithPueblo();
+var decoder = decoders.CreateDecoder();
+decoder.EnableProtocol(MxpDecoding.Protocol);
+var decoded = new List<DisplayLine>(decoder.Feed(
+	"\e[1;31mred\e[0m \e]8;;https://example.com\e\\link\e]8;;\e\\\n\e[1z<SEND look>look</SEND>\n\eP0;1q#1;2;100;0;0#1~~\e\\\n"));
+var spans = SpanRenderer.Render(decoded[0].Content, AnsiDisplay.Default, new DisplayOptions());
+if (spans[0].Style.Foreground != new RgbColor(170, 0, 0) || spans[^1].Style.Interaction?.Kind != InteractionKind.Url)
+	failures.Add("decoding ANSI failed");
+if (SpanRenderer.Render(decoded[1].Content, AnsiDisplay.Default, new DisplayOptions())[0].Style.Interaction?.Target != "look")
+	failures.Add("decoding MXP failed");
+if (decoder.Pictures().Count != 1
+	|| CellRenderer.Layout(decoded[2].Content, 80, AnsiDisplay.Default, new DisplayOptions()).Rows[0].Cells[0].Style.Picture is null)
+	failures.Add("decoding a sixel picture failed");
 
 if (failures.Count > 0)
 {
