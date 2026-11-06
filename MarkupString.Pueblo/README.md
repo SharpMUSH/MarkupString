@@ -30,6 +30,11 @@ line.Render(MarkupFormat.Pueblo, registry);
 // <img xch_sound="play" href="door.wav" xch_volume="80"><xch_pane action="redirect" name="map" panetitle="The Map">North: the gate<xch_pane action="redirect" name="_previous">
 ```
 
+## Reading Pueblo
+
+`WithPueblo()` on a `DecoderRegistry` reads Pueblo's HTML from a server. Turn it on with
+`decoder.EnableProtocol(PuebloDecoding.Protocol)` after the greeting. See [Decoding](https://github.com/SharpMUSH/MarkupString/blob/main/docs/decoding.md#pueblo).
+
 ## Line endings
 
 A Pueblo connection is in HTML mode, where a newline is whitespace, so `MarkupFormat.Pueblo` writes a

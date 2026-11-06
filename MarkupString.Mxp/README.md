@@ -33,6 +33,12 @@ line.Render(MarkupFormat.Mxp, registry);
 These are MXP's secure elements, which a client acts on only on a line opened in secure mode, so render
 through a registry with `WithMxpSecureLines()`.
 
+## Reading MXP
+
+`WithMxp()` on a `DecoderRegistry` reads MXP from a server: line modes, open and secure tags, `SEND`
+menus, custom elements and entities. Turn it on with `decoder.EnableProtocol(MxpDecoding.Protocol)`
+once telnet negotiates it. See [Decoding](https://github.com/SharpMUSH/MarkupString/blob/main/docs/decoding.md#mxp).
+
 ## What the client supports
 
 MXP lets a server ask which elements a client renders (`<SUPPORT>`), and a client that answered

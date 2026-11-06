@@ -138,6 +138,13 @@ confirmed: several terminals read Kitty graphics without the Unicode placeholder
 Kitty support is unannounced, so it is drawn for with its own protocol. Windows Terminal and Alacritty do
 not answer XTVERSION, so only a player can name them.
 
+## Reading terminal output
+
+`DecoderRegistry.Empty.WithVt().WithPictures()` reads SGR, the C0 controls, OSC links, titles and
+palette, terminal queries, and Kitty, iTerm2 and sixel pictures into `MarkupText` lines.
+`DisplayRegistry.Core.WithAnsi()` resolves them for a web page or a cell grid. See
+[Decoding](https://github.com/SharpMUSH/MarkupString/blob/main/docs/decoding.md) and [Display](https://github.com/SharpMUSH/MarkupString/blob/main/docs/display.md).
+
 ## Styling the HTML output
 
 The HTML-family emitters write `ms-*` classes for the attributes with a fixed rendering (bold,
