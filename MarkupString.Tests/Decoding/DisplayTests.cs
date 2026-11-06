@@ -23,6 +23,33 @@ public class DisplayTests
 	}
 
 	[Test]
+	public async Task Resolve_ReducesColours_ToWhatTheOutputShows()
+	{
+		var orange = AnsiMarkup.Create(foreground: new AnsiColor.Rgb(250, 130, 10), background: new AnsiColor.Rgb(10, 10, 120));
+		var sixteen = new DisplayOptions { Capabilities = OutputCapabilities.Browser with { Colors = ColorLevel.Standard } };
+		var xterm = new DisplayOptions { Capabilities = OutputCapabilities.Browser with { Colors = ColorLevel.Xterm256 } };
+
+		var reduced = AnsiDisplay.Default.Resolve(MarkupSet.Of(orange), sixteen);
+		await Assert.That(reduced.Foreground).IsEqualTo(new RgbColor(255, 85, 85));
+		await Assert.That(reduced.Background).IsEqualTo(new RgbColor(0, 0, 170));
+
+		var cube = AnsiDisplay.Default.Resolve(MarkupSet.Of(orange), xterm);
+		await Assert.That(cube.Foreground).IsEqualTo(new RgbColor(255, 135, 0));
+		await Assert.That(cube.Background).IsEqualTo(new RgbColor(0, 0, 135));
+
+		var full = AnsiDisplay.Default.Resolve(MarkupSet.Of(orange), Browser);
+		await Assert.That(full.Foreground).IsEqualTo(new RgbColor(250, 130, 10));
+	}
+
+	[Test]
+	public async Task Resolve_LinkGroup_NamesTheInteraction()
+	{
+		var style = AnsiDisplay.Default.Resolve(MarkupSet.Of([new LinkGroupMarkup("inner"), Link, new LinkGroupMarkup("outer")]), Browser);
+		await Assert.That(style.Interaction).IsEqualTo(new Interaction(InteractionKind.Command, "look") { Group = "inner" });
+		await Assert.That(AnsiDisplay.Default.Resolve(MarkupSet.Of(new LinkGroupMarkup("alone")), Browser).Interaction).IsNull();
+	}
+
+	[Test]
 	public async Task Resolve_PromptBecomesCommand_WhenPromptsAreNotShown()
 	{
 		var menu = new CommandMenuMarkup([new CommandChoice("look", "look")], Prompt: false);

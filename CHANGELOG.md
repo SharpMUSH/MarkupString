@@ -31,7 +31,10 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   grid (wide characters, tabs, wrapping, picture cells, hit testing). `DisplayRegistry.Core.WithAnsi()` folds
   terminal styles; `TerminalProfile.ToOutputCapabilities` and `ToTerminalFeatures` convert between the two
   models. See [Display](docs/display.md).
-- `CommandMenuMarkup` (a menu of commands, or a prompt) and `HighlightMarkup` (a background) in core, with codecs.
+- `CommandMenuMarkup` (a menu of commands, or a prompt), `HighlightMarkup` (a background) and `LinkGroupMarkup`
+  (an OSC 8 `id`, which becomes `Interaction.Group`) in core, with codecs.
+- Kitty animation frames (`a=f`, and frame times with `a=a`) decode into a moving `StoredPicture`, given as a GIF.
+- Spans and cells at `ColorLevel.Standard` or `Xterm256` get the nearest colour of that palette.
 - `AnsiStyle.Concealed` (SGR 8), written as SGR 8 and as `ms-conceal` in HTML.
 - `PictureRow.FirstColumn`, for a picture row shown from a column other than its first.
 

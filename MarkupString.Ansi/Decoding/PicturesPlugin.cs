@@ -118,10 +118,14 @@ public sealed class PicturesPlugin : IDecoderPlugin
 				}
 
 				return;
-			case 't' or 'T' or 'q':
+			case 't' or 'T' or 'q' or 'f':
 				break;
+			case 'a':
+				Animate(keys, state);
+				return;
 			default:
-				// Animation (a=f, a=a, a=c): a moving picture is read as its first frame.
+				// Composing frames (a=c) is not read.
+				context.Diagnostics.UnhandledSequences++;
 				return;
 		}
 
@@ -134,6 +138,19 @@ public sealed class PicturesPlugin : IDecoderPlugin
 
 		var bytes = FromBase64(base64);
 		if (bytes is not null && keys.Compression == 'z') bytes = Inflate(bytes, state.Store.MaxPixels * 4 + 1024);
+		if (keys.Action == 'f')
+		{
+			if (bytes is null || DecodePixels(keys, bytes, state.Store.MaxPixels) is not { } frame || !AddFrame(keys, frame, state))
+			{
+				context.Diagnostics.PicturesFailed++;
+				KittyReply(context, keys, "ENOENT:no such image, or a frame that could not be read");
+				return;
+			}
+
+			KittyReply(context, keys, null);
+			return;
+		}
+
 		var picture = bytes is null ? null : DecodeKitty(keys, bytes, state.Store);
 		if (picture is null)
 		{
@@ -151,7 +168,11 @@ public sealed class PicturesPlugin : IDecoderPlugin
 		var (cellColumns, cellRows) = Cells(picture.Width, picture.Height, keys.Columns, keys.Rows, context.Identity);
 		var id = keys.Id;
 		if (id == 0 && keys.Number != 0) id = state.NextKittyId++;
-		if (id != 0) state.KittyImages[id] = new KittyImage(picture.Key, cellColumns, cellRows);
+		if (id != 0)
+		{
+			state.KittyImages[id] = new KittyImage(picture.Key, cellColumns, cellRows);
+			state.Animations.Remove(id);
+		}
 
 		if (keys.Action == 'T' && !keys.Virtual) Place(context, picture, cellColumns, cellRows, cursorRight: true, keys.StayPut);
 		KittyReply(context, keys with { Id = id }, null);
@@ -159,15 +180,26 @@ public sealed class PicturesPlugin : IDecoderPlugin
 
 	private static StoredPicture? DecodeKitty(KittyKeys keys, byte[] bytes, PictureStore store)
 	{
+		if (DecodePixels(keys, bytes, store.MaxPixels) is not { } pixels) return null;
+		var picture = keys.Format == 100
+			? store.Add(pixels.Width, pixels.Height, pixels.Rgba, bytes, "image/png")
+			: store.Add(pixels.Width, pixels.Height, pixels.Rgba);
+
+		// The same picture sent again starts over as one frame; its frames follow again if it moves.
+		if (picture.IsMoving) store.ReplacePixels(picture, new TerminalPicture(picture.Key, pixels.Width, pixels.Height, pixels.Rgba));
+		return picture;
+	}
+
+	/// <summary>The pixels a Kitty transmission carries: a PNG, or raw RGB or RGBA <c>s</c> × <c>v</c>.</summary>
+	private static (int Width, int Height, byte[] Rgba)? DecodePixels(KittyKeys keys, byte[] bytes, long maxPixels)
+	{
 		switch (keys.Format)
 		{
 			case 100:
-				return PngDecoder.TryDecode(bytes, store.MaxPixels, out var width, out var height, out var rgba)
-					? store.Add(width, height, rgba, bytes, "image/png")
-					: null;
+				return PngDecoder.TryDecode(bytes, maxPixels, out var width, out var height, out var rgba) ? (width, height, rgba) : null;
 			case 24 or 32:
 				{
-					if (keys.Width <= 0 || keys.Height <= 0 || (long)keys.Width * keys.Height > store.MaxPixels) return null;
+					if (keys.Width <= 0 || keys.Height <= 0 || (long)keys.Width * keys.Height > maxPixels) return null;
 					var channels = keys.Format / 8;
 					if (bytes.Length < (long)keys.Width * keys.Height * channels) return null;
 					var pixels = new byte[keys.Width * keys.Height * 4];
@@ -179,10 +211,167 @@ public sealed class PicturesPlugin : IDecoderPlugin
 						pixels[i * 4 + 3] = channels == 4 ? bytes[i * 4 + 3] : (byte)255;
 					}
 
-					return store.Add(keys.Width, keys.Height, pixels);
+					return (keys.Width, keys.Height, pixels);
 				}
 			default:
 				return null;
+		}
+	}
+
+	// ── Kitty animation ─────────────────────────────────────────────────────────
+
+	/// <summary>The default gap between frames, as Kitty has it.</summary>
+	private const int DefaultGap = 40;
+
+	/// <summary>The most frames a moving picture is read with; later ones are dropped.</summary>
+	public const int MaxFrames = 1000;
+
+	/// <summary>
+	/// <c>a=f</c>: a frame, made on a copy of frame <c>c</c> (or blank, filled with <c>Y</c>) or written over frame
+	/// <c>r</c>, with the data put at <c>x</c>, <c>y</c>, blended over what is there unless <c>X=1</c>.
+	/// </summary>
+	private static bool AddFrame(KittyKeys keys, (int Width, int Height, byte[] Rgba) data, PictureState state)
+	{
+		if (!state.KittyImages.TryGetValue(keys.Id, out var known) || !state.Store.TryGet(known.Key, out var stored)
+			|| stored.Pixels is not { } pixels)
+		{
+			return false;
+		}
+
+		var animation = Animation(keys.Id, stored, pixels, state);
+		var size = stored.Width * stored.Height * 4;
+
+		// For a frame, c and r are frame numbers (from 1), not cells.
+		var edit = keys.Rows;
+		var baseFrame = keys.Columns;
+		byte[] canvas;
+		if (edit > 0 && edit <= animation.Frames.Count)
+		{
+			canvas = (byte[])animation.Frames[edit - 1].Clone();
+		}
+		else if (baseFrame > 0 && baseFrame <= animation.Frames.Count)
+		{
+			canvas = (byte[])animation.Frames[baseFrame - 1].Clone();
+		}
+		else
+		{
+			canvas = new byte[size];
+			if (keys.Background != 0)
+			{
+				var fill = keys.Background;
+				for (var i = 0; i < canvas.Length; i += 4)
+				{
+					canvas[i] = (byte)(fill >> 24);
+					canvas[i + 1] = (byte)(fill >> 16);
+					canvas[i + 2] = (byte)(fill >> 8);
+					canvas[i + 3] = (byte)fill;
+				}
+			}
+		}
+
+		Composite(canvas, stored.Width, stored.Height, data, keys.X, keys.Y, keys.Replace);
+
+		if (edit > 0 && edit <= animation.Frames.Count)
+		{
+			animation.Frames[edit - 1] = canvas;
+			if (keys.Gap != 0) animation.Gaps[edit - 1] = keys.Gap;
+		}
+		else
+		{
+			if (animation.Frames.Count >= MaxFrames) return true;
+			animation.Frames.Add(canvas);
+			animation.Gaps.Add(keys.Gap != 0 ? keys.Gap : DefaultGap);
+		}
+
+		Publish(stored, animation, state.Store);
+		return true;
+	}
+
+	/// <summary><c>a=a</c>: a frame's gap (<c>r</c>, <c>z</c>). Playing, stopping and looping are the client's.</summary>
+	private static void Animate(KittyKeys keys, PictureState state)
+	{
+		if (!state.KittyImages.TryGetValue(keys.Id, out var known) || !state.Store.TryGet(known.Key, out var stored)
+			|| stored.Pixels is not { } pixels)
+		{
+			return;
+		}
+
+		var frame = keys.Rows;
+		if (frame <= 0 || keys.Gap == 0) return;
+		var animation = Animation(keys.Id, stored, pixels, state);
+		if (frame > animation.Frames.Count) return;
+		animation.Gaps[frame - 1] = keys.Gap;
+		Publish(stored, animation, state.Store);
+	}
+
+	private static KittyAnimation Animation(uint id, StoredPicture stored, TerminalPicture pixels, PictureState state)
+	{
+		if (state.Animations.TryGetValue(id, out var animation)) return animation;
+		animation = new KittyAnimation();
+		if (pixels.Frames.Count > 0)
+		{
+			foreach (var frame in pixels.Frames)
+			{
+				animation.Frames.Add(frame.Rgba.ToArray());
+				animation.Gaps.Add((int)frame.Duration.TotalMilliseconds);
+			}
+		}
+		else
+		{
+			animation.Frames.Add(pixels.Rgba.ToArray());
+			animation.Gaps.Add(DefaultGap);
+		}
+
+		state.Animations[id] = animation;
+		return animation;
+	}
+
+	private static void Publish(StoredPicture stored, KittyAnimation animation, PictureStore store)
+	{
+		// A negative gap is a frame Kitty skips; it is left out.
+		var frames = new List<TerminalPictureFrame>(animation.Frames.Count);
+		for (var i = 0; i < animation.Frames.Count; i++)
+		{
+			if (animation.Gaps[i] < 0 && i > 0) continue;
+			frames.Add(new TerminalPictureFrame(animation.Frames[i], TimeSpan.FromMilliseconds(Math.Max(0, animation.Gaps[i]))));
+		}
+
+		store.ReplacePixels(stored, new TerminalPicture(stored.Key, stored.Width, stored.Height, frames));
+	}
+
+	private static void Composite(byte[] canvas, int width, int height, (int Width, int Height, byte[] Rgba) data, int left, int top, bool replace)
+	{
+		for (var y = 0; y < data.Height; y++)
+		{
+			var cy = top + y;
+			if (cy < 0 || cy >= height) continue;
+			for (var x = 0; x < data.Width; x++)
+			{
+				var cx = left + x;
+				if (cx < 0 || cx >= width) continue;
+				var s = (y * data.Width + x) * 4;
+				var d = (cy * width + cx) * 4;
+				var alpha = data.Rgba[s + 3];
+				if (replace || alpha == 255)
+				{
+					Array.Copy(data.Rgba, s, canvas, d, 4);
+					continue;
+				}
+
+				if (alpha == 0) continue;
+
+				// Source over destination, straight alpha.
+				var a = alpha / 255.0;
+				var da = canvas[d + 3] / 255.0;
+				var oa = a + da * (1 - a);
+				for (var c = 0; c < 3; c++)
+				{
+					var value = (data.Rgba[s + c] * a + canvas[d + c] * da * (1 - a)) / oa;
+					canvas[d + c] = (byte)Math.Round(value);
+				}
+
+				canvas[d + 3] = (byte)Math.Round(oa * 255);
+			}
 		}
 	}
 
@@ -192,12 +381,11 @@ public sealed class PicturesPlugin : IDecoderPlugin
 		{
 			case 'a' or 'A' or '\0':
 				state.KittyImages.Clear();
+				state.Animations.Clear();
 				break;
-			case 'i' or 'I':
+			case 'i' or 'I' or 'n' or 'N':
 				state.KittyImages.Remove(keys.Id);
-				break;
-			case 'n' or 'N':
-				state.KittyImages.Remove(keys.Id);
+				state.Animations.Remove(keys.Id);
 				break;
 		}
 	}
@@ -575,6 +763,13 @@ public sealed class PicturesPlugin : IDecoderPlugin
 
 	internal readonly record struct KittyImage(string Key, int Columns, int Rows);
 
+	internal sealed class KittyAnimation
+	{
+		public List<byte[]> Frames { get; } = [];
+
+		public List<int> Gaps { get; } = [];
+	}
+
 	internal sealed class Overlay(ImageMarkup image, int rows, int columns, int column)
 	{
 		public ImageMarkup Image { get; } = image;
@@ -620,6 +815,16 @@ public sealed class PicturesPlugin : IDecoderPlugin
 
 		public bool StayPut { get; init; }
 
+		public int X { get; init; }
+
+		public int Y { get; init; }
+
+		public bool Replace { get; init; }
+
+		public uint Background { get; init; }
+
+		public int Gap { get; init; }
+
 		public static KittyKeys Parse(ReadOnlySpan<char> control)
 		{
 			var keys = new KittyKeys { Action = 't', Medium = 'd', Format = 32 };
@@ -646,6 +851,11 @@ public sealed class PicturesPlugin : IDecoderPlugin
 					'm' => keys with { More = number == 1 },
 					'U' => keys with { Virtual = number == 1 },
 					'C' => keys with { StayPut = number == 1 },
+					'x' => keys with { X = number },
+					'y' => keys with { Y = number },
+					'X' => keys with { Replace = number == 1 },
+					'Y' => keys with { Background = uint.TryParse(value, NumberStyles.None, CultureInfo.InvariantCulture, out var fill) ? fill : 0 },
+					'z' => keys with { Gap = number },
 					_ => keys,
 				};
 			}
@@ -722,6 +932,8 @@ internal sealed class PictureState
 	public PictureStore Store { get; } = new();
 
 	public Dictionary<uint, PicturesPlugin.KittyImage> KittyImages { get; } = [];
+
+	public Dictionary<uint, PicturesPlugin.KittyAnimation> Animations { get; } = [];
 
 	public uint NextKittyId { get; set; } = 0x7F000000;
 

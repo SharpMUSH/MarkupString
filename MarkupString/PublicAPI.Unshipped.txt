@@ -727,3 +727,15 @@ static MarkupString.Decoding.TagSyntax.Parse(System.ReadOnlySpan<char> body, Sys
 ~override MarkupString.Decoding.TagArgument.Equals(object obj) -> bool
 ~override MarkupString.Decoding.TagArgument.ToString() -> string
 MarkupString.Decoding.DecodeContext.LineIsEmpty.get -> bool
+MarkupString.LinkGroupMarkup
+MarkupString.LinkGroupMarkup.<Clone>$() -> MarkupString.LinkGroupMarkup!
+MarkupString.LinkGroupMarkup.Deconstruct(out string! Group) -> void
+MarkupString.LinkGroupMarkup.Equals(MarkupString.LinkGroupMarkup? other) -> bool
+MarkupString.LinkGroupMarkup.Group.get -> string!
+MarkupString.LinkGroupMarkup.Group.init -> void
+MarkupString.LinkGroupMarkup.LinkGroupMarkup(string! Group) -> void
+override MarkupString.LinkGroupMarkup.Equals(object? obj) -> bool
+override MarkupString.LinkGroupMarkup.GetHashCode() -> int
+override MarkupString.LinkGroupMarkup.ToString() -> string!
+static MarkupString.LinkGroupMarkup.operator !=(MarkupString.LinkGroupMarkup? left, MarkupString.LinkGroupMarkup? right) -> bool
+static MarkupString.LinkGroupMarkup.operator ==(MarkupString.LinkGroupMarkup? left, MarkupString.LinkGroupMarkup? right) -> bool

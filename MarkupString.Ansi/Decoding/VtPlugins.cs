@@ -34,6 +34,9 @@ public static class VtPens
 
 	/// <summary>The OSC 8 or MSLP link, an <see cref="AnsiMarkup"/> with only a link.</summary>
 	public const string Link = "link";
+
+	/// <summary>The OSC 8 link's <c>id</c>, a <see cref="LinkGroupMarkup"/>, set and cleared with <see cref="Link"/>.</summary>
+	public const string LinkGroup = "link-group";
 }
 
 /// <summary>SGR (<c>CSI … m</c>): colours and attributes, colon subparameters included.</summary>
@@ -350,6 +353,18 @@ public sealed class OscPlugin : IDecoderPlugin
 	/// <summary>The longest OSC 8 address taken, as kitty and VTE cap it.</summary>
 	public const int MaxUriLength = 2083;
 
+	/// <summary>The <c>id</c> among OSC 8's params (<c>key=value</c> pairs split by <c>:</c>), or null.</summary>
+	private static string? LinkId(ReadOnlySpan<char> parameters)
+	{
+		foreach (var range in parameters.Split(':'))
+		{
+			var pair = parameters[range];
+			if (pair.StartsWith("id=", StringComparison.Ordinal) && pair.Length > 3 && pair.Length <= 256) return pair[3..].ToString();
+		}
+
+		return null;
+	}
+
 	/// <summary>The one instance.</summary>
 	public static OscPlugin Instance { get; } = new();
 
@@ -374,13 +389,15 @@ public sealed class OscPlugin : IDecoderPlugin
 				if (uri.IsEmpty || uri.Length > MaxUriLength)
 				{
 					context.SetPen(VtPens.Link, null);
+					context.SetPen(VtPens.LinkGroup, null);
 					return true;
 				}
 
 				var target = uri.ToString();
-				context.SetPen(VtPens.Link, UrlSafety.IsSafeNavigableUrl(target)
-					? new AnsiMarkup(new AnsiStyle { LinkUrl = target, LinkKind = LinkKind.Url })
-					: null);
+				var safe = UrlSafety.IsSafeNavigableUrl(target);
+				context.SetPen(VtPens.Link, safe ? new AnsiMarkup(new AnsiStyle { LinkUrl = target, LinkKind = LinkKind.Url }) : null);
+				var id = safe ? LinkId(payload[..separator]) : null;
+				context.SetPen(VtPens.LinkGroup, id is null ? null : new LinkGroupMarkup(id));
 				return true;
 			})
 			.OnOsc(68, static (payload, context) =>
@@ -390,6 +407,7 @@ public sealed class OscPlugin : IDecoderPlugin
 				if (parts is not ["1", var type, var command] || command.Length == 0) return false;
 				if (!type.Equals("SEND", StringComparison.OrdinalIgnoreCase)) return false;
 				context.SetPen(VtPens.Link, new AnsiMarkup(new AnsiStyle { LinkUrl = command, LinkKind = LinkKind.Command }));
+				context.SetPen(VtPens.LinkGroup, null);
 				context.State<VtState>().MslpUnderlined = false;
 				return true;
 			})

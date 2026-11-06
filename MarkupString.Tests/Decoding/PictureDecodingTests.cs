@@ -178,6 +178,61 @@ public class PictureDecodingTests
 	}
 
 	[Test]
+	public async Task Kitty_MovingPicture_RoundTrip()
+	{
+		var red = RedBlue(2, 2).Rgba.ToArray();
+		var blue = red.Reverse().ToArray();
+		var picture = new TerminalPicture("moving", 2, 2,
+			[new TerminalPictureFrame(red, TimeSpan.FromMilliseconds(100)), new TerminalPictureFrame(blue, TimeSpan.FromMilliseconds(250))]);
+		var (lines, decoder) = Decode(Wire(TerminalFeatures.KittyGraphics | TerminalFeatures.MovingPictures, picture));
+
+		var image = lines.SelectMany(line => line.Content.Runs).SelectMany(run => run.Markups).OfType<ImageMarkup>().First();
+		await Assert.That(decoder.Pictures().TryGet(image, out var stored)).IsTrue();
+		await Assert.That(stored!.IsMoving).IsTrue();
+		var frames = stored.Pixels!.Frames;
+		await Assert.That(frames.Select(frame => frame.Duration.TotalMilliseconds)).IsEquivalentTo([100.0, 250.0]);
+		await Assert.That(frames[0].Rgba.ToArray()).IsEquivalentTo(red);
+		await Assert.That(frames[1].Rgba.ToArray()).IsEquivalentTo(blue);
+		await Assert.That(stored.MediaType).IsEqualTo("image/gif");
+		await Assert.That(stored.ToDataUrl()).StartsWith("data:image/gif;base64,R0lGOD");
+		await Assert.That(decoder.Diagnostics.PicturesFailed).IsEqualTo(0);
+	}
+
+	[Test]
+	public async Task Kitty_Frame_BlendsOverItsBase_AndEditsInPlace()
+	{
+		// A 2 × 1 black root frame; frame 2 puts half-transparent white over its right pixel; then frame 2's left pixel is
+		// replaced with red.
+		var decoder = Registry.CreateDecoder();
+		decoder.Feed($"\e_Ga=t,i=3,f=32,s=2,v=1;{Convert.ToBase64String([0, 0, 0, 255, 0, 0, 0, 255])}\e\\");
+		decoder.Feed($"\e_Ga=f,i=3,f=32,s=1,v=1,x=1,c=1,z=70;{Convert.ToBase64String([255, 255, 255, 128])}\e\\");
+		decoder.Feed($"\e_Ga=f,i=3,f=32,s=1,v=1,r=2,X=1;{Convert.ToBase64String([255, 0, 0, 255])}\e\\");
+		decoder.Feed("\e_Ga=a,i=3,r=1,z=500\e\\");
+
+		var stored = decoder.Pictures().TryGet(KeyOf(decoder), out var found) ? found : null;
+		var frames = stored!.Pixels!.Frames;
+		await Assert.That(frames.Count).IsEqualTo(2);
+		await Assert.That(frames[0].Rgba.ToArray()).IsEquivalentTo(new byte[] { 0, 0, 0, 255, 0, 0, 0, 255 });
+		await Assert.That(frames[1].Rgba.ToArray()).IsEquivalentTo(new byte[] { 255, 0, 0, 255, 128, 128, 128, 255 });
+		await Assert.That(frames.Select(frame => frame.Duration.TotalMilliseconds)).IsEquivalentTo([500.0, 70.0]);
+		await Assert.That(decoder.Diagnostics.PicturesFailed).IsEqualTo(0);
+	}
+
+	[Test]
+	public async Task Kitty_Frame_ForAnUnknownImage_Fails()
+	{
+		var decoder = Registry.CreateDecoder();
+		decoder.Feed($"\e_Ga=f,i=4,f=32,s=1,v=1;{Convert.ToBase64String(new byte[4])}\e\\");
+		await Assert.That(decoder.Diagnostics.PicturesFailed).IsEqualTo(1);
+	}
+
+	private static string KeyOf(Decoder decoder)
+	{
+		var placed = decoder.Feed("\e_Ga=p,i=3,c=2,r=1\e\\\n");
+		return placed.SelectMany(line => line.Content.Runs).SelectMany(run => run.Markups).OfType<ImageMarkup>().First().Source[PictureStore.Scheme.Length..];
+	}
+
+	[Test]
 	public async Task InlineImage_NotInline_IsADownload()
 	{
 		var decoder = Registry.CreateDecoder();

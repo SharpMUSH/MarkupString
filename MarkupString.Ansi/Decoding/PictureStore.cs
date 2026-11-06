@@ -8,16 +8,18 @@ namespace MarkupString.Ansi.Decoding;
 /// </summary>
 public sealed class StoredPicture
 {
+	private readonly ReadOnlyMemory<byte> _file;
+	private readonly string? _fileType;
 	private ReadOnlyMemory<byte> _encoded;
 
-	internal StoredPicture(string key, int width, int height, TerminalPicture? pixels, ReadOnlyMemory<byte> encoded, string? mediaType)
+	internal StoredPicture(string key, int width, int height, TerminalPicture? pixels, ReadOnlyMemory<byte> file, string? fileType)
 	{
 		Key = key;
 		Width = width;
 		Height = height;
 		Pixels = pixels;
-		_encoded = encoded;
-		MediaType = encoded.IsEmpty ? null : mediaType;
+		_file = file;
+		_fileType = file.IsEmpty ? null : fileType;
 	}
 
 	/// <summary>What identifies it: a hash of its contents, so the same picture sent twice is stored once.</summary>
@@ -29,30 +31,54 @@ public sealed class StoredPicture
 	/// <summary>Its height in pixels.</summary>
 	public int Height { get; }
 
-	/// <summary>Its pixels, or null for a file this package cannot decode (a JPEG, a GIF), which only a browser can show.</summary>
-	public TerminalPicture? Pixels { get; }
-
-	/// <summary>The file's media type, such as <c>image/png</c>, or null when the server sent bare pixels.</summary>
-	public string? MediaType { get; }
-
 	/// <summary>What an <see cref="ImageMarkup.Source"/> that shows it says: <c>picture:</c> and the key.</summary>
 	public string Source => PictureStore.Scheme + Key;
 
-	/// <summary>How many bytes it holds.</summary>
-	public long Size => _encoded.Length + (Pixels?.Rgba.Length ?? 0);
+	/// <summary>
+	/// Its pixels, or null for a file this package cannot decode (a JPEG, a GIF), which only a browser can show. A
+	/// moving picture's frames are in <see cref="TerminalPicture.Frames"/>; they can grow after the picture is first
+	/// stored, as the server sends them.
+	/// </summary>
+	public TerminalPicture? Pixels { get; private set; }
 
-	/// <summary>The file as the server sent it, or, for bare pixels, the pixels as a PNG.</summary>
+	/// <summary>Whether it moves: it has more than one frame.</summary>
+	public bool IsMoving => Pixels is { Frames.Count: > 1 };
+
+	/// <summary>
+	/// The type of <see cref="Encoded"/>: the file's own, such as <c>image/png</c>; <c>image/gif</c> for a moving
+	/// picture sent as frames; <c>image/png</c> for still pixels.
+	/// </summary>
+	public string MediaType => IsMoving ? "image/gif" : _fileType ?? "image/png";
+
+	/// <summary>What the server sent, as a file: its own for a file, a looping GIF for frames, a PNG for still pixels.</summary>
 	public ReadOnlyMemory<byte> Encoded
 	{
 		get
 		{
-			if (_encoded.IsEmpty && Pixels is { } pixels) _encoded = PngWriter.Encode(pixels.Rgba.Span, pixels.Width, pixels.Height);
-			return _encoded;
+			if (!_encoded.IsEmpty) return _encoded;
+			if (IsMoving) return _encoded = GifWriter.Encode(Pixels!.Frames, Width, Height);
+			if (!_file.IsEmpty) return _file;
+			return _encoded = Pixels is { } pixels ? PngWriter.Encode(pixels.Rgba.Span, pixels.Width, pixels.Height) : default;
 		}
 	}
 
+	/// <summary>What the server sent as the file, or empty when it sent bare pixels.</summary>
+	public ReadOnlyMemory<byte> File => _file;
+
+	/// <summary>How many bytes it holds.</summary>
+	public long Size => _file.Length + PixelBytes(Pixels);
+
 	/// <summary>The picture as a <c>data:</c> address, for an <c>&lt;img&gt;</c>.</summary>
-	public string ToDataUrl() => $"data:{MediaType ?? "image/png"};base64,{Convert.ToBase64String(Encoded.Span)}";
+	public string ToDataUrl() => $"data:{MediaType};base64,{Convert.ToBase64String(Encoded.Span)}";
+
+	internal void ReplacePixels(TerminalPicture pixels)
+	{
+		Pixels = pixels;
+		_encoded = default;
+	}
+
+	internal static long PixelBytes(TerminalPicture? pixels) =>
+		pixels is null ? 0 : pixels.Frames.Count > 0 ? pixels.Frames.Sum(frame => (long)frame.Rgba.Length) : pixels.Rgba.Length;
 }
 
 /// <summary>
@@ -109,6 +135,17 @@ public sealed class PictureStore : ITerminalPictureSource
 		while (Used > Budget && _order.Count > 1) Remove(_order.Last!.Value.Key);
 		Added?.Invoke(picture);
 		return picture;
+	}
+
+	/// <summary>Replaces a held picture's pixels, as when a moving picture gains a frame.</summary>
+	internal void ReplacePixels(StoredPicture picture, TerminalPicture pixels)
+	{
+		var held = _pictures.ContainsKey(picture.Key);
+		if (held) Used -= picture.Size;
+		picture.ReplacePixels(pixels);
+		if (!held) return;
+		Used += picture.Size;
+		while (Used > Budget && _order.Count > 1 && _order.Last!.Value != picture) Remove(_order.Last.Value.Key);
 	}
 
 	/// <summary>The picture with <paramref name="key"/>, if it is still held.</summary>

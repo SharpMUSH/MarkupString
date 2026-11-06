@@ -34,6 +34,17 @@ public sealed class DisplayRegistry
 
 		var builder = new StyleBuilder();
 		foreach (var contributor in _contributors) contributor.Contribute(markups, builder, options);
+		if (builder.Interaction is { Group: null } interaction)
+		{
+			// The innermost group names the link, whichever contributor made it.
+			for (var i = 0; i < markups.Count; i++)
+			{
+				if (markups[i] is not LinkGroupMarkup group) continue;
+				builder.Interaction = interaction with { Group = group.Group };
+				break;
+			}
+		}
+
 		return Degrade(builder, options);
 	}
 
@@ -61,9 +72,13 @@ public sealed class DisplayRegistry
 			}
 		}
 
+		var level = capabilities.Colors;
+		style.Background = Reduce(style.Background, level, options.Colors);
+		style.Foreground = Reduce(style.Foreground, level, options.Colors);
 		if (style.Foreground is { } foreground && options.Colors is { } resolver)
 		{
-			style.Foreground = resolver.Legible(foreground, style.Background ?? options.DefaultBackground);
+			// The client's change for legibility is reduced too, as the output can only show its palette.
+			style.Foreground = Reduce(resolver.Legible(foreground, style.Background ?? options.DefaultBackground), level, resolver);
 		}
 
 		if (style.Interaction is { } interaction) style.Interaction = Degrade(interaction, capabilities.Interactions);
@@ -71,6 +86,56 @@ public sealed class DisplayRegistry
 		if (!capabilities.Panes) style.Pane = null;
 
 		return style.Build();
+	}
+
+	/// <summary>
+	/// <paramref name="color"/> as an output of <paramref name="level"/> shows it: the nearest of its sixteen or 256
+	/// colours, by redmean distance, as <paramref name="resolver"/> draws them (or the xterm palette).
+	/// </summary>
+	private static RgbColor? Reduce(RgbColor? color, ColorLevel level, IColorResolver? resolver)
+	{
+		if (color is not { } rgb || level is not (ColorLevel.Standard or ColorLevel.Xterm256)) return color;
+		var count = level == ColorLevel.Standard ? 16 : 256;
+		var best = rgb;
+		var nearest = double.MaxValue;
+		for (var i = 0; i < count; i++)
+		{
+			var entry = Palette(i, resolver);
+			var distance = Redmean(rgb, entry);
+			if (distance >= nearest) continue;
+			(nearest, best) = (distance, entry);
+			if (distance == 0) break;
+		}
+
+		return best;
+	}
+
+	private static RgbColor Palette(int index, IColorResolver? resolver)
+	{
+		if (index < 16) return resolver?.Standard(index & 7, index >= 8) ?? ColorMath.StandardColor(index);
+		return resolver?.Xterm(index) ?? XtermColor(index);
+	}
+
+	private static ReadOnlySpan<byte> CubeLevels => [0, 95, 135, 175, 215, 255];
+
+	private static RgbColor XtermColor(int index)
+	{
+		if (index >= 232)
+		{
+			var grey = (byte)(8 + 10 * (index - 232));
+			return new RgbColor(grey, grey, grey);
+		}
+
+		var offset = index - 16;
+		return new RgbColor(CubeLevels[offset / 36], CubeLevels[offset / 6 % 6], CubeLevels[offset % 6]);
+	}
+
+	/// <summary>The "redmean" distance, squared: a cheap measure of how different two colours look.</summary>
+	private static double Redmean(RgbColor a, RgbColor b)
+	{
+		var mean = (a.R + b.R) / 2.0;
+		double r = a.R - b.R, g = a.G - b.G, bl = a.B - b.B;
+		return (2 + mean / 256) * r * r + 4 * g * g + (2 + (255 - mean) / 256) * bl * bl;
 	}
 
 	private static Interaction? Degrade(Interaction interaction, InteractionKinds allowed)

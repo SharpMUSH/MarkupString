@@ -38,3 +38,10 @@ public sealed record CommandMenuMarkup(IReadOnlyList<CommandChoice> Choices, str
 /// </summary>
 /// <param name="Color">The background.</param>
 public sealed record HighlightMarkup(RgbColor Color) : IMarkup;
+
+/// <summary>
+/// Makes the link it wraps one link with every other stretch in the same group, even across lines, as an OSC 8
+/// <c>id</c> does. It becomes <see cref="Display.Interaction.Group"/>.
+/// </summary>
+/// <param name="Group">The group's name.</param>
+public sealed record LinkGroupMarkup(string Group) : IMarkup;

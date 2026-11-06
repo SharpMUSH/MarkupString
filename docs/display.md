@@ -176,13 +176,17 @@ var text = Decoder.DecodeAll("\e[31mred\e[0m \e[34;44msame\e[0m", decoders)[0].C
 
 `Resolve` drops what the output cannot show, in this order:
 
-- **Colours.** At `ColorLevel.Attributes` or `None` both colours are dropped. Above that, every colour
-  is already RGB, so the level does not reduce it further here.
+- **Colours.** At `ColorLevel.Attributes` or `None` both colours are dropped. At `Standard` each colour
+  becomes the nearest of the sixteen, and at `Xterm256` the nearest of the 256 (after the inverse swap
+  below), by redmean distance, as `Colors` draws them (the xterm palette when it is null). The colour
+  `Legible` returns is reduced the same way. At `TrueColor` RGB passes through.
 - **Attributes.** Those the output lacks are dropped. At `ColorLevel.None` every attribute is.
 - **Prompts.** A `CommandMenuMarkup` with `Prompt` set is a `Prompt` interaction.
 - **Inverse.** With colour, foreground and background are swapped, filling in `DefaultForeground` and
   `DefaultBackground`; `Inverse` stays set for information. At `Attributes` the flag is kept for the
   output to draw when it has `TextAttributes.Inverse`, and dropped when it does not.
+- **Link groups.** A `LinkGroupMarkup` (as an OSC 8 `id` makes) sets the `Group` of the interaction
+  it is over, the innermost winning, whichever contributor made the link.
 - **Interactions.** Menu choices go when the output has no `Menu`. A prompt link becomes a command
   link on an output with `Command` but not `Prompt`. Any other interaction the output lacks is dropped,
   and the text stays.

@@ -161,6 +161,18 @@ public class VtDecodingTests
 	}
 
 	[Test]
+	public async Task Osc8_Id_GroupsTheLinkAcrossLines()
+	{
+		var lines = Decode("\e]8;foo=1:id=menu;https://example.com\e\\one\ntwo\e]8;;\e\\ three \e]8;;https://example.com\e\\x\e]8;;\e\\\n");
+		var first = Spans(lines[0].Content).Single().Style.Interaction;
+		var second = Spans(lines[1].Content);
+		await Assert.That(first).IsEqualTo(new Interaction(InteractionKind.Url, "https://example.com") { Group = "menu" });
+		await Assert.That(second[0].Style.Interaction).IsEqualTo(first);
+		await Assert.That(second[1].Style.Interaction).IsNull();
+		await Assert.That(second[2].Style.Interaction).IsEqualTo(new Interaction(InteractionKind.Url, "https://example.com"));
+	}
+
+	[Test]
 	public async Task Osc8_UnsafeScheme_IsText()
 	{
 		var lines = Decode("\e]8;;javascript:alert(1)\e\\x\e]8;;\e\\\n");

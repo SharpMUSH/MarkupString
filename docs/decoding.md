@@ -177,12 +177,12 @@ Decoder.DecodeAll("\e(0lqqk\e(B ok", registry)[0].Content;  // ┌──┐ ok
 | `10`, `11`, `12` | Set the foreground, background, cursor colour, or answer `?` (10 and 11 only). `10;a;b` sets 10 and 11 at once. |
 | `110`, `111`, `112` | Reset them |
 | `52;sel;base64` | `ClipboardEvent` with the decoded text, or a null text for `?`. Invalid base64 is dropped. |
-| `8;params;uri` | A link over the text that follows, until an empty uri. An address longer than 2083 characters, or one `UrlSafety.IsSafeNavigableUrl` refuses (`javascript:` and the like), ends the link instead. |
+| `8;params;uri` | A link over the text that follows, until an empty uri. An address longer than 2083 characters, or one `UrlSafety.IsSafeNavigableUrl` refuses (`javascript:` and the like), ends the link instead. An `id=` among the params becomes a `LinkGroupMarkup`, and so `Interaction.Group`: the text under it is one link even across lines. |
 | `68;1;SEND;command` | An MSLP command link over the underlined text that follows. Turning the underline off ends it, and so does the end of the line. |
 
 Colours are X11 specs: `rgb:r/g/b` with one to four hex digits a channel, or `#rgb`, `#rrggbb`,
 `#rrrgggbbb`, `#rrrrggggbbbb`. `OscPlugin.ParseColor` and `FormatColor` are public. Links are
-written under the `VtPens.Link` pen.
+written under the `VtPens.Link` pen, an OSC 8 `id` under `VtPens.LinkGroup`.
 
 ### `AnswersPlugin`
 
@@ -514,8 +514,13 @@ Kitty specifics:
 
 - Only `t=d` (the picture in the sequence) is read. A file, temporary file or shared memory is
   refused with `EINVAL`, since the server's files are not the client's.
-- `a=t`, `a=T`, `a=p`, `a=q` and `a=d` are read; animation frames are not, so a moving picture is its
-  first frame.
+- `a=t`, `a=T`, `a=p`, `a=q` and `a=d` are read, and so are animation frames. `a=f` adds a frame,
+  or edits frame `r`: built on a copy of frame `c` (or a blank filled with `Y`), its data put at `x`,
+  `y` and blended over what is there unless `X=1`, shown for `z` ms (40 unless given). `a=a` with `r`
+  and `z` sets a frame's time. Playing, stopping and looping are left to the client, and so is
+  composing (`a=c`), which is counted as unhandled. At most `PicturesPlugin.MaxFrames` (1000) frames
+  are kept. A picture with frames is a `StoredPicture` whose `IsMoving` is true; its `Pixels.Frames`
+  grow as frames arrive, and `Encoded` and `ToDataUrl()` give it as a looping GIF.
 - Unicode placeholders (U+10EEEE with row and column diacritics, the image id in the foreground
   colour) draw a picture transmitted with `U=1`. That is how this package's writer sends Kitty
   pictures, so its output reads back cell for cell.
