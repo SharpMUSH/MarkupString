@@ -1,12 +1,12 @@
 # Changelog
 
-All notable changes to `MarkupString`, `MarkupString.Ansi`, `MarkupString.Html`, `MarkupString.Mxp`
-and `MarkupString.Pueblo`. The packages share one version and are released together.
+All notable changes to `MarkupString`, `MarkupString.Ansi`, `MarkupString.Html`, `MarkupString.Mxp`,
+`MarkupString.Pueblo` and `MarkupString.Extensions.DependencyInjection`. The packages share one version and are released together.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 2.26.0 — 2026-11-06
 
 ### Added
 
