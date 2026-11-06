@@ -436,6 +436,11 @@ can claim those sequences and drive a `ScreenBuffer` of `Cell`s instead of the l
 continuing below the scroll region. It stays opt-in per world, because a stray cursor move from a game that
 assumes 80×24 is worse in a reflowing pane than dropping it.
 
+## Conversions and work plan
+
+What each source becomes on each target, including pictures (Kitty, sixel, iTerm2, MXP), and the order of work, are in
+`docs/superpowers/plans/2026-11-06-display-pipeline.md`.
+
 ## Testing
 
 - Round trip: for every format with an emitter, `Decode(Render(x, f)) ≈ x` as a property over generated
