@@ -46,12 +46,15 @@ public sealed record HtmlTagPolicy
 
 	/// <summary>
 	/// The attributes whose value this policy checks as an address: each must be one
-	/// <see cref="UrlSafety.IsSafeNavigableUrl"/> accepts, with no whitespace or control character in it.
+	/// <see cref="Links"/> accepts, with no whitespace or control character in it.
 	/// Empty by default — which addresses a client of yours may be sent to is your decision, not this
 	/// library's. <see cref="AddressAttributes"/> is the list of attributes HTML gives an address to,
 	/// if you want to check them all.
 	/// </summary>
 	public IReadOnlySet<string> UrlAttributes { get; init => field = IgnoringCase(value) ?? throw new ArgumentNullException(nameof(value)); } = FrozenSet<string>.Empty;
+
+	/// <summary>Which addresses <see cref="UrlAttributes"/> may hold. <see cref="UrlPolicy.Safe"/> unless set.</summary>
+	public IUrlPolicy Links { get; init => field = value ?? throw new ArgumentNullException(nameof(value)); } = UrlPolicy.Safe;
 
 	/// <summary>What happens to the attributes when one is not allowed.</summary>
 	public HtmlAttributeViolation OnViolation { get; init; } = HtmlAttributeViolation.DropAttribute;
@@ -115,6 +118,6 @@ public sealed record HtmlTagPolicy
 		_ => set.ToFrozenSet(StringComparer.OrdinalIgnoreCase),
 	};
 
-	private static bool IsSafeAddress(string value) =>
-		!value.Any(c => char.IsControl(c) || char.IsWhiteSpace(c)) && UrlSafety.IsSafeNavigableUrl(value);
+	private bool IsSafeAddress(string value) =>
+		!value.Any(c => char.IsControl(c) || char.IsWhiteSpace(c)) && Links.IsAllowed(value);
 }

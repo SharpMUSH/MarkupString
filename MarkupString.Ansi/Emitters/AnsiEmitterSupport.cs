@@ -197,10 +197,10 @@ internal static class AnsiEmitterSupport
 	/// Writes the body as the link the style carries, in whichever form <paramref name="features"/> allows: a
 	/// navigable URL inside an OSC 8 hyperlink, a command as an MSLP link (<c>ESC ] 68 ; 1 ; SEND ; command BEL</c>
 	/// before the text, which MSLP delimits with underline). Anything else — no link, a form the client does not
-	/// read, a URL with a scheme <see cref="UrlSafety.IsSafeNavigableUrl"/> rejects, a command holding a control
+	/// read, a URL the registry's <see cref="MarkupRegistry.Links"/> rejects, a command holding a control
 	/// character that would end the sequence early — is written as plain text.
 	/// </summary>
-	internal static void WriteLinked(in AnsiStyle style, ReadOnlySpan<char> body, TerminalFeatures features, IBufferWriter<char> output)
+	internal static void WriteLinked(in AnsiStyle style, ReadOnlySpan<char> body, TerminalFeatures features, IUrlPolicy links, IBufferWriter<char> output)
 	{
 		if (style.LinkUrl is not { Length: > 0 } target)
 		{
@@ -208,7 +208,7 @@ internal static class AnsiEmitterSupport
 			return;
 		}
 
-		if (style.LinkKind == LinkKind.Url && (features & TerminalFeatures.Hyperlinks) != 0 && UrlSafety.IsSafeNavigableUrl(target))
+		if (style.LinkKind == LinkKind.Url && (features & TerminalFeatures.Hyperlinks) != 0 && links.IsAllowed(target))
 		{
 			output.Write(Osc8);
 			output.Write(target);
@@ -265,7 +265,7 @@ internal static class AnsiEmitterSupport
 			{
 				var shown = style.AtDepth(colorDepth);
 				SgrWriter.Transition(AnsiStyle.None, shown, segmentOutput);
-				WriteTaggedLink(shown, segment, segmentOutput, flavour);
+				WriteTaggedLink(shown, segment, segmentOutput, flavour, segmentContext.Registry.Links);
 				if (LeavesState(shown)) SgrWriter.Reset(segmentOutput);
 			});
 	}
@@ -278,13 +278,14 @@ internal static class AnsiEmitterSupport
 	internal static bool LeavesState(in AnsiStyle style) =>
 		style.Foreground is not null || style.Background is not null
 		|| style.Bold || style.Faint || style.Italic || style.Underlined
-		|| style.Overlined || style.Blink || style.Inverted || style.StrikeThrough;
+		|| style.Overlined || style.Blink || style.Inverted || style.StrikeThrough || style.Concealed;
 
 	private static void WriteTaggedLink(
 		in AnsiStyle style,
 		ReadOnlySpan<char> body,
 		IBufferWriter<char> output,
-		TagFlavour flavour)
+		TagFlavour flavour,
+		IUrlPolicy links)
 	{
 		if (style.LinkUrl is not { Length: > 0 } url)
 		{
@@ -313,7 +314,7 @@ internal static class AnsiEmitterSupport
 			return;
 		}
 
-		if (!UrlSafety.IsSafeNavigableUrl(url))
+		if (!links.IsAllowed(url))
 		{
 			output.Write(body);
 			return;

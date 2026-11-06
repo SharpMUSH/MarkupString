@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>MarkupString.Extensions.DependencyInjection</AssemblyName>
+    <RootNamespace>MarkupString.Extensions.DependencyInjection</RootNamespace>
+    <PackageId>MarkupString.Extensions.DependencyInjection</PackageId>
+    <Title>MarkupString.Extensions.DependencyInjection</Title>
+    <IsAotCompatible>true</IsAotCompatible>
+    <EnableConfigurationBindingGenerator>true</EnableConfigurationBindingGenerator>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>CS1591</NoWarn>
+    <Description>Microsoft.Extensions.DependencyInjection setup for MarkupString: AddMarkupString() registers the markup, decoder and display registries, a shared picture cache, a decoder factory and the link policy, configured in code or bound from configuration.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="8.0.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="5.6.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MarkupString\MarkupString.csproj" />
+    <ProjectReference Include="..\MarkupString.Ansi\MarkupString.Ansi.csproj" />
+  </ItemGroup>
+</Project>

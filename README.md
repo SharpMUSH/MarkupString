@@ -165,11 +165,13 @@ rendering opinions.
 | [`MarkupString.Html`](https://www.nuget.org/packages/MarkupString.Html) | Checked raw HTML markup with configurable tag policies for trusted and untrusted input. |
 | [`MarkupString.Mxp`](https://www.nuget.org/packages/MarkupString.Mxp) | The shared vocabulary expressed as client-supported MXP elements. |
 | [`MarkupString.Pueblo`](https://www.nuget.org/packages/MarkupString.Pueblo) | The shared vocabulary expressed through Pueblo client extensions. |
+| [`MarkupString.Extensions.DependencyInjection`](https://www.nuget.org/packages/MarkupString.Extensions.DependencyInjection) | `AddMarkupString()` for ASP.NET Core and other `Microsoft.Extensions` hosts, with options bound from configuration. |
 
 ```sh
 dotnet add package MarkupString.Html
 dotnet add package MarkupString.Mxp
 dotnet add package MarkupString.Pueblo
+dotnet add package MarkupString.Extensions.DependencyInjection
 ```
 
 All packages share one version and are released together.
@@ -228,6 +230,9 @@ reflection hidden behind convenience APIs.
 | [Formats and rendering](docs/formats.md) | Built-in formats, shared vocabulary, framers, untrusted tags, and custom formats. |
 | [Custom markup kinds](docs/custom-markup.md) | Implementing an `IMarkup`, emitter, and codec. |
 | [Serialization](docs/serialization.md) | JSON wire format, forward compatibility, and `UnknownMarkup`. |
+| [Decoding](docs/decoding.md) | Reading server output: ANSI and VT sequences, OSC, events, replies, limits, and plugins. |
+| [Display](docs/display.md) | Output capabilities, degrading, spans for a web page, and cell grids with hit testing. |
+| [Dependency injection](docs/dependency-injection.md) | `AddMarkupString()`, configuration, a shared picture cache, link policy, metrics, and the interfaces to replace. |
 | [Releasing](docs/releasing.md) | Versioning and publishing for maintainers. |
 
 ## Requirements

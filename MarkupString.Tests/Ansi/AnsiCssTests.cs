@@ -23,6 +23,7 @@ public class AnsiCssTests
 		AnsiStyle.None with { Overlined = true },
 		AnsiStyle.None with { Blink = true },
 		AnsiStyle.None with { Inverted = true },
+		AnsiStyle.None with { Concealed = true },
 	];
 
 	[Test]

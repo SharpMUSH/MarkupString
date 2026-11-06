@@ -27,5 +27,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MarkupString\MarkupString.csproj" />
+    <ProjectReference Include="..\MarkupString.Ansi\MarkupString.Ansi.csproj" />
   </ItemGroup>
 </Project>

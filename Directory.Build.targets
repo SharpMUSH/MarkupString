@@ -1,7 +1,7 @@
 <Project>
 
   <!-- Keep the package family recognizable with one embedded NuGet icon. -->
-  <PropertyGroup Condition="'$(PackageId)' == 'MarkupString' OR '$(PackageId)' == 'MarkupString.Ansi' OR '$(PackageId)' == 'MarkupString.Html' OR '$(PackageId)' == 'MarkupString.Mxp' OR '$(PackageId)' == 'MarkupString.Pueblo'">
+  <PropertyGroup Condition="'$(PackageId)' == 'MarkupString' OR '$(PackageId)' == 'MarkupString.Ansi' OR '$(PackageId)' == 'MarkupString.Html' OR '$(PackageId)' == 'MarkupString.Mxp' OR '$(PackageId)' == 'MarkupString.Pueblo' OR '$(PackageId)' == 'MarkupString.Extensions.DependencyInjection'">
     <PackageIcon>markupstring-icon.png</PackageIcon>
   </PropertyGroup>
   <ItemGroup Condition="'$(PackageIcon)' == 'markupstring-icon.png'">

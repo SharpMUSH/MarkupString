@@ -1,1 +1,26 @@
 #nullable enable
+MarkupString.Mxp.Decoding.MxpDecoding
+MarkupString.Mxp.Decoding.MxpFlagMarkup
+MarkupString.Mxp.Decoding.MxpFlagMarkup.<Clone>$() -> MarkupString.Mxp.Decoding.MxpFlagMarkup!
+MarkupString.Mxp.Decoding.MxpFlagMarkup.Deconstruct(out string! Flag) -> void
+MarkupString.Mxp.Decoding.MxpFlagMarkup.Equals(MarkupString.Mxp.Decoding.MxpFlagMarkup? other) -> bool
+MarkupString.Mxp.Decoding.MxpFlagMarkup.Flag.get -> string!
+MarkupString.Mxp.Decoding.MxpFlagMarkup.Flag.init -> void
+MarkupString.Mxp.Decoding.MxpFlagMarkup.MxpFlagMarkup(string! Flag) -> void
+MarkupString.Mxp.Decoding.MxpPlugin
+MarkupString.Mxp.Decoding.MxpPlugin.Name.get -> string!
+MarkupString.Mxp.Decoding.MxpPlugin.Register(MarkupString.Decoding.DecoderBuilder! builder) -> void
+const MarkupString.Mxp.Decoding.MxpDecoding.Protocol = "mxp" -> string!
+const MarkupString.Mxp.Decoding.MxpFlagMarkup.RoomDescription = "RoomDesc" -> string!
+const MarkupString.Mxp.Decoding.MxpFlagMarkup.RoomExits = "RoomExit" -> string!
+const MarkupString.Mxp.Decoding.MxpFlagMarkup.RoomName = "RoomName" -> string!
+const MarkupString.Mxp.Decoding.MxpFlagMarkup.Welcome = "Welcome" -> string!
+override MarkupString.Mxp.Decoding.MxpFlagMarkup.Equals(object? obj) -> bool
+override MarkupString.Mxp.Decoding.MxpFlagMarkup.GetHashCode() -> int
+override MarkupString.Mxp.Decoding.MxpFlagMarkup.ToString() -> string!
+static MarkupString.Mxp.Decoding.MxpDecoding.FlagCodec.get -> MarkupString.IMarkupCodec!
+static MarkupString.Mxp.Decoding.MxpDecoding.WithMxp(this MarkupString.Decoding.DecoderRegistry! registry) -> MarkupString.Decoding.DecoderRegistry!
+static MarkupString.Mxp.Decoding.MxpFlagMarkup.operator !=(MarkupString.Mxp.Decoding.MxpFlagMarkup? left, MarkupString.Mxp.Decoding.MxpFlagMarkup? right) -> bool
+static MarkupString.Mxp.Decoding.MxpFlagMarkup.operator ==(MarkupString.Mxp.Decoding.MxpFlagMarkup? left, MarkupString.Mxp.Decoding.MxpFlagMarkup? right) -> bool
+static MarkupString.Mxp.Decoding.MxpPlugin.Instance.get -> MarkupString.Mxp.Decoding.MxpPlugin!
+static MarkupString.Mxp.Decoding.MxpPlugin.Supported.get -> System.Collections.Generic.IReadOnlyList<string!>!

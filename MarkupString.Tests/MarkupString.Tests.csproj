@@ -10,6 +10,10 @@
   <ItemGroup>
     <PackageReference Include="CsCheck" Version="5.0.0" />
     <PackageReference Include="TUnit" Version="1.78.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
     <!-- A GitHub-flavoured Markdown reader, so the Markdown tests check what a reader makes of the output
          rather than only the characters written. -->
     <PackageReference Include="Markdig" Version="1.5.1" />
@@ -21,6 +25,7 @@
   <ItemGroup>
     <ProjectReference Include="..\MarkupString\MarkupString.csproj" />
     <ProjectReference Include="..\MarkupString.Ansi\MarkupString.Ansi.csproj" />
+    <ProjectReference Include="..\MarkupString.Extensions.DependencyInjection\MarkupString.Extensions.DependencyInjection.csproj" />
     <ProjectReference Include="..\MarkupString.Html\MarkupString.Html.csproj" />
     <ProjectReference Include="..\MarkupString.Mxp\MarkupString.Mxp.csproj" />
     <ProjectReference Include="..\MarkupString.Pueblo\MarkupString.Pueblo.csproj" />

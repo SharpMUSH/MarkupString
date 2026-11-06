@@ -29,3 +29,739 @@ MarkupString.ColorGradient.Roles.init -> void
 MarkupString.ColorGradient.Toned(System.Func<MarkupString.ThemeRole, MarkupString.IColorMarkup?>! tones) -> MarkupString.ColorGradient!
 MarkupString.Layout.LayoutContext.Tones.get -> System.Func<MarkupString.ThemeRole, MarkupString.IColorMarkup?>?
 MarkupString.Layout.LayoutContext.Tones.init -> void
+MarkupString.Decoding.ApcHandler
+MarkupString.Decoding.ClientAnswers
+MarkupString.Decoding.ClientAnswers.Colors = 4 -> MarkupString.Decoding.ClientAnswers
+MarkupString.Decoding.ClientAnswers.CursorPosition = 16 -> MarkupString.Decoding.ClientAnswers
+MarkupString.Decoding.ClientAnswers.Default = MarkupString.Decoding.ClientAnswers.Identity | MarkupString.Decoding.ClientAnswers.Size | MarkupString.Decoding.ClientAnswers.Colors | MarkupString.Decoding.ClientAnswers.Pictures | MarkupString.Decoding.ClientAnswers.Mxp -> MarkupString.Decoding.ClientAnswers
+MarkupString.Decoding.ClientAnswers.Identity = 1 -> MarkupString.Decoding.ClientAnswers
+MarkupString.Decoding.ClientAnswers.Mxp = 32 -> MarkupString.Decoding.ClientAnswers
+MarkupString.Decoding.ClientAnswers.None = 0 -> MarkupString.Decoding.ClientAnswers
+MarkupString.Decoding.ClientAnswers.Pictures = 8 -> MarkupString.Decoding.ClientAnswers
+MarkupString.Decoding.ClientAnswers.Size = 2 -> MarkupString.Decoding.ClientAnswers
+MarkupString.Decoding.ClientIdentity
+MarkupString.Decoding.ClientIdentity.<Clone>$() -> MarkupString.Decoding.ClientIdentity!
+MarkupString.Decoding.ClientIdentity.Answers.get -> MarkupString.Decoding.ClientAnswers
+MarkupString.Decoding.ClientIdentity.Answers.init -> void
+MarkupString.Decoding.ClientIdentity.Background.get -> MarkupString.RgbColor?
+MarkupString.Decoding.ClientIdentity.Background.init -> void
+MarkupString.Decoding.ClientIdentity.CellHeight.get -> int
+MarkupString.Decoding.ClientIdentity.CellHeight.init -> void
+MarkupString.Decoding.ClientIdentity.CellWidth.get -> int
+MarkupString.Decoding.ClientIdentity.CellWidth.init -> void
+MarkupString.Decoding.ClientIdentity.ClientIdentity() -> void
+MarkupString.Decoding.ClientIdentity.Columns.get -> int
+MarkupString.Decoding.ClientIdentity.Columns.init -> void
+MarkupString.Decoding.ClientIdentity.Equals(MarkupString.Decoding.ClientIdentity? other) -> bool
+MarkupString.Decoding.ClientIdentity.Foreground.get -> MarkupString.RgbColor?
+MarkupString.Decoding.ClientIdentity.Foreground.init -> void
+MarkupString.Decoding.ClientIdentity.Name.get -> string!
+MarkupString.Decoding.ClientIdentity.Name.init -> void
+MarkupString.Decoding.ClientIdentity.Output.get -> MarkupString.Display.OutputCapabilities!
+MarkupString.Decoding.ClientIdentity.Output.init -> void
+MarkupString.Decoding.ClientIdentity.Rows.get -> int
+MarkupString.Decoding.ClientIdentity.Rows.init -> void
+MarkupString.Decoding.ClientIdentity.ToMtts(bool screenReader = false, bool tls = false) -> MarkupString.Decoding.MttsFlags
+MarkupString.Decoding.ClientIdentity.Version.get -> string!
+MarkupString.Decoding.ClientIdentity.Version.init -> void
+MarkupString.Decoding.ClipboardEvent
+MarkupString.Decoding.ClipboardEvent.ClipboardEvent(string! Selection, string? Text) -> void
+MarkupString.Decoding.ClipboardEvent.Deconstruct(out string! Selection, out string? Text) -> void
+MarkupString.Decoding.ClipboardEvent.Equals(MarkupString.Decoding.ClipboardEvent? other) -> bool
+MarkupString.Decoding.ClipboardEvent.Selection.get -> string!
+MarkupString.Decoding.ClipboardEvent.Selection.init -> void
+MarkupString.Decoding.ClipboardEvent.Text.get -> string?
+MarkupString.Decoding.ClipboardEvent.Text.init -> void
+MarkupString.Decoding.ControlHandler
+MarkupString.Decoding.CsiHandler
+MarkupString.Decoding.CsiSequence
+MarkupString.Decoding.CsiSequence.Count.get -> int
+MarkupString.Decoding.CsiSequence.CsiSequence() -> void
+MarkupString.Decoding.CsiSequence.CsiSequence(char prefix, System.ReadOnlySpan<int> parameters, System.ReadOnlySpan<bool> subparameters, System.ReadOnlySpan<char> intermediates, char final) -> void
+MarkupString.Decoding.CsiSequence.Final.get -> char
+MarkupString.Decoding.CsiSequence.Get(int index, int fallback = 0) -> int
+MarkupString.Decoding.CsiSequence.Intermediates.get -> System.ReadOnlySpan<char>
+MarkupString.Decoding.CsiSequence.Is(char final, char prefix = '\0') -> bool
+MarkupString.Decoding.CsiSequence.IsSubparameter(int index) -> bool
+MarkupString.Decoding.CsiSequence.Parameters.get -> System.ReadOnlySpan<int>
+MarkupString.Decoding.CsiSequence.Prefix.get -> char
+MarkupString.Decoding.DcsHandler
+MarkupString.Decoding.DecodeContext
+MarkupString.Decoding.DecodeContext.Backspace(int cells = 1) -> void
+MarkupString.Decoding.DecodeContext.CarriageReturn() -> void
+MarkupString.Decoding.DecodeContext.Close(MarkupString.IMarkup! markup) -> bool
+MarkupString.Decoding.DecodeContext.CloseTo(int count) -> void
+MarkupString.Decoding.DecodeContext.Column.get -> int
+MarkupString.Decoding.DecodeContext.CurrentMarkup.get -> MarkupString.MarkupSet?
+MarkupString.Decoding.DecodeContext.Destination.get -> string?
+MarkupString.Decoding.DecodeContext.Destination.set -> void
+MarkupString.Decoding.DecodeContext.Diagnostics.get -> MarkupString.Decoding.DecodeDiagnostics!
+MarkupString.Decoding.DecodeContext.DisableProtocol(string! name) -> void
+MarkupString.Decoding.DecodeContext.Elements.get -> System.Collections.Generic.IReadOnlyList<MarkupString.IMarkup!>!
+MarkupString.Decoding.DecodeContext.EnableProtocol(string! name) -> bool
+MarkupString.Decoding.DecodeContext.EndLine() -> void
+MarkupString.Decoding.DecodeContext.EraseLine() -> void
+MarkupString.Decoding.DecodeContext.EraseToEndOfLine() -> void
+MarkupString.Decoding.DecodeContext.EraseToStartOfLine() -> void
+MarkupString.Decoding.DecodeContext.Identity.get -> MarkupString.Decoding.ClientIdentity!
+MarkupString.Decoding.DecodeContext.IsActive(string! name) -> bool
+MarkupString.Decoding.DecodeContext.MoveToColumn(int column) -> void
+MarkupString.Decoding.DecodeContext.Open(MarkupString.IMarkup! markup) -> bool
+MarkupString.Decoding.DecodeContext.Options.get -> MarkupString.Decoding.DecoderOptions!
+MarkupString.Decoding.DecodeContext.Pen(string! slot) -> MarkupString.IMarkup?
+MarkupString.Decoding.DecodeContext.PlacePicture(MarkupString.ImageMarkup! picture, int rows, int columns, bool cursorRight, int firstColumn = 0) -> void
+MarkupString.Decoding.DecodeContext.Point(MarkupString.IPointMarkup! point) -> void
+MarkupString.Decoding.DecodeContext.Print(System.ReadOnlySpan<char> text) -> void
+MarkupString.Decoding.DecodeContext.Raise(MarkupString.Decoding.DecodeEvent! decodeEvent) -> void
+MarkupString.Decoding.DecodeContext.Reply(string! text) -> void
+MarkupString.Decoding.DecodeContext.SetPen(string! slot, MarkupString.IMarkup? markup) -> void
+MarkupString.Decoding.DecodeContext.State<T>() -> T!
+MarkupString.Decoding.DecodeContext.Write(MarkupString.MarkupText! text) -> void
+MarkupString.Decoding.DecodeContext.Write(System.ReadOnlySpan<char> text) -> void
+MarkupString.Decoding.DecodeContext.Write(System.ReadOnlySpan<char> text, MarkupString.IMarkup? inner) -> void
+MarkupString.Decoding.DecodeDiagnostics
+MarkupString.Decoding.DecodeDiagnostics.AbandonedSequences.get -> int
+MarkupString.Decoding.DecodeDiagnostics.DecodeDiagnostics() -> void
+MarkupString.Decoding.DecodeDiagnostics.LimitsReached.get -> int
+MarkupString.Decoding.DecodeDiagnostics.PicturesFailed.get -> int
+MarkupString.Decoding.DecodeDiagnostics.UnhandledControls.get -> int
+MarkupString.Decoding.DecodeDiagnostics.UnhandledSequences.get -> int
+MarkupString.Decoding.DecodeEvent
+MarkupString.Decoding.DecodeEvent.DecodeEvent() -> void
+MarkupString.Decoding.DecodeEvent.DecodeEvent(MarkupString.Decoding.DecodeEvent! original) -> void
+MarkupString.Decoding.Decoder
+MarkupString.Decoding.Decoder.ActiveProtocol.get -> string?
+MarkupString.Decoding.Decoder.Diagnostics.get -> MarkupString.Decoding.DecodeDiagnostics!
+MarkupString.Decoding.Decoder.DisableProtocol(string! name) -> void
+MarkupString.Decoding.Decoder.EnableProtocol(string! name) -> bool
+MarkupString.Decoding.Decoder.EndLine() -> MarkupString.Decoding.DisplayLine!
+MarkupString.Decoding.Decoder.EndPrompt() -> MarkupString.Decoding.DisplayLine?
+MarkupString.Decoding.Decoder.EventRaised -> System.Action<MarkupString.Decoding.DecodeEvent!>?
+MarkupString.Decoding.Decoder.Feed(System.ReadOnlySpan<char> text) -> System.Collections.Generic.IReadOnlyList<MarkupString.Decoding.DisplayLine!>!
+MarkupString.Decoding.Decoder.Feed(string? text) -> System.Collections.Generic.IReadOnlyList<MarkupString.Decoding.DisplayLine!>!
+MarkupString.Decoding.Decoder.HasPendingLine.get -> bool
+MarkupString.Decoding.Decoder.Identity.get -> MarkupString.Decoding.ClientIdentity!
+MarkupString.Decoding.Decoder.Identity.set -> void
+MarkupString.Decoding.Decoder.Options.get -> MarkupString.Decoding.DecoderOptions!
+MarkupString.Decoding.Decoder.PendingLine.get -> MarkupString.MarkupText!
+MarkupString.Decoding.Decoder.Registry.get -> MarkupString.Decoding.DecoderRegistry!
+MarkupString.Decoding.Decoder.Reset() -> void
+MarkupString.Decoding.DecoderBuilder
+MarkupString.Decoding.DecoderBuilder.OnApc(MarkupString.Decoding.ApcHandler! handler) -> MarkupString.Decoding.DecoderBuilder!
+MarkupString.Decoding.DecoderBuilder.OnControl(char control, MarkupString.Decoding.ControlHandler! handler) -> MarkupString.Decoding.DecoderBuilder!
+MarkupString.Decoding.DecoderBuilder.OnCsi(char final, MarkupString.Decoding.CsiHandler! handler, char prefix = '\0', string! intermediates = "") -> MarkupString.Decoding.DecoderBuilder!
+MarkupString.Decoding.DecoderBuilder.OnDcs(char final, MarkupString.Decoding.DcsHandler! handler, char prefix = '\0', string! intermediates = "") -> MarkupString.Decoding.DecoderBuilder!
+MarkupString.Decoding.DecoderBuilder.OnEsc(char final, MarkupString.Decoding.EscHandler! handler, string! intermediates = "") -> MarkupString.Decoding.DecoderBuilder!
+MarkupString.Decoding.DecoderBuilder.OnLineEnd(System.Action<MarkupString.Decoding.DecodeContext!>! handler) -> MarkupString.Decoding.DecoderBuilder!
+MarkupString.Decoding.DecoderBuilder.OnOsc(int command, MarkupString.Decoding.OscHandler! handler) -> MarkupString.Decoding.DecoderBuilder!
+MarkupString.Decoding.DecoderBuilder.OnPrint(MarkupString.Decoding.PrintFilter! filter) -> MarkupString.Decoding.DecoderBuilder!
+MarkupString.Decoding.DecoderBuilder.TextProtocol(string! name, System.Func<MarkupString.Decoding.ITextProtocol!>! create) -> MarkupString.Decoding.DecoderBuilder!
+MarkupString.Decoding.DecoderOptions
+MarkupString.Decoding.DecoderOptions.<Clone>$() -> MarkupString.Decoding.DecoderOptions!
+MarkupString.Decoding.DecoderOptions.DecoderOptions() -> void
+MarkupString.Decoding.DecoderOptions.Equals(MarkupString.Decoding.DecoderOptions? other) -> bool
+MarkupString.Decoding.DecoderOptions.Identity.get -> MarkupString.Decoding.ClientIdentity!
+MarkupString.Decoding.DecoderOptions.Identity.init -> void
+MarkupString.Decoding.DecoderOptions.Limits.get -> MarkupString.Decoding.VtLimits!
+MarkupString.Decoding.DecoderOptions.Limits.init -> void
+MarkupString.Decoding.DecoderOptions.MaxLineLength.get -> int
+MarkupString.Decoding.DecoderOptions.MaxLineLength.init -> void
+MarkupString.Decoding.DecoderOptions.MaxOpenElements.get -> int
+MarkupString.Decoding.DecoderOptions.MaxOpenElements.init -> void
+MarkupString.Decoding.DecoderRegistry
+MarkupString.Decoding.DecoderRegistry.CreateDecoder(MarkupString.Decoding.DecoderOptions? options = null) -> MarkupString.Decoding.Decoder!
+MarkupString.Decoding.DecoderRegistry.Has(string! name) -> bool
+MarkupString.Decoding.DecoderRegistry.HasTextProtocol(string! name) -> bool
+MarkupString.Decoding.DecoderRegistry.Plugins.get -> System.Collections.Generic.IReadOnlyList<MarkupString.Decoding.IDecoderPlugin!>!
+MarkupString.Decoding.DecoderRegistry.With(MarkupString.Decoding.IDecoderPlugin! plugin) -> MarkupString.Decoding.DecoderRegistry!
+MarkupString.Decoding.DisplayLine
+MarkupString.Decoding.DisplayLine.<Clone>$() -> MarkupString.Decoding.DisplayLine!
+MarkupString.Decoding.DisplayLine.Content.get -> MarkupString.MarkupText!
+MarkupString.Decoding.DisplayLine.Content.init -> void
+MarkupString.Decoding.DisplayLine.Deconstruct(out MarkupString.MarkupText! Content, out MarkupString.Decoding.LineKind Kind) -> void
+MarkupString.Decoding.DisplayLine.Destination.get -> string?
+MarkupString.Decoding.DisplayLine.Destination.init -> void
+MarkupString.Decoding.DisplayLine.DisplayLine(MarkupString.MarkupText! Content, MarkupString.Decoding.LineKind Kind) -> void
+MarkupString.Decoding.DisplayLine.Equals(MarkupString.Decoding.DisplayLine? other) -> bool
+MarkupString.Decoding.DisplayLine.Kind.get -> MarkupString.Decoding.LineKind
+MarkupString.Decoding.DisplayLine.Kind.init -> void
+MarkupString.Decoding.DisplayLine.Sequence.get -> long
+MarkupString.Decoding.DisplayLine.Sequence.init -> void
+MarkupString.Decoding.DownloadEvent
+MarkupString.Decoding.DownloadEvent.Deconstruct(out string? Name, out int Size) -> void
+MarkupString.Decoding.DownloadEvent.DownloadEvent(string? Name, int Size) -> void
+MarkupString.Decoding.DownloadEvent.Equals(MarkupString.Decoding.DownloadEvent? other) -> bool
+MarkupString.Decoding.DownloadEvent.Name.get -> string?
+MarkupString.Decoding.DownloadEvent.Name.init -> void
+MarkupString.Decoding.DownloadEvent.Size.get -> int
+MarkupString.Decoding.DownloadEvent.Size.init -> void
+MarkupString.Decoding.EscHandler
+MarkupString.Decoding.EscSequence
+MarkupString.Decoding.EscSequence.EscSequence() -> void
+MarkupString.Decoding.EscSequence.EscSequence(System.ReadOnlySpan<char> intermediates, char final) -> void
+MarkupString.Decoding.EscSequence.Final.get -> char
+MarkupString.Decoding.EscSequence.Intermediates.get -> System.ReadOnlySpan<char>
+MarkupString.Decoding.IDecoderPlugin
+MarkupString.Decoding.IDecoderPlugin.Name.get -> string!
+MarkupString.Decoding.IDecoderPlugin.Register(MarkupString.Decoding.DecoderBuilder! builder) -> void
+MarkupString.Decoding.ITextProtocol
+MarkupString.Decoding.ITextProtocol.EndLine(MarkupString.Decoding.DecodeContext! context) -> void
+MarkupString.Decoding.ITextProtocol.Feed(System.ReadOnlySpan<char> text, MarkupString.Decoding.DecodeContext! context) -> void
+MarkupString.Decoding.ITextProtocol.Reset(MarkupString.Decoding.DecodeContext! context) -> void
+MarkupString.Decoding.IVtTokenSink
+MarkupString.Decoding.IVtTokenSink.Abandoned(MarkupString.Decoding.VtSequenceKind kind) -> void
+MarkupString.Decoding.IVtTokenSink.Apc(System.ReadOnlySpan<char> payload) -> void
+MarkupString.Decoding.IVtTokenSink.Csi(in MarkupString.Decoding.CsiSequence sequence) -> void
+MarkupString.Decoding.IVtTokenSink.Dcs(in MarkupString.Decoding.CsiSequence header, System.ReadOnlySpan<char> data) -> void
+MarkupString.Decoding.IVtTokenSink.Esc(in MarkupString.Decoding.EscSequence sequence) -> void
+MarkupString.Decoding.IVtTokenSink.Execute(char control) -> void
+MarkupString.Decoding.IVtTokenSink.Osc(System.ReadOnlySpan<char> payload) -> void
+MarkupString.Decoding.IVtTokenSink.Print(System.ReadOnlySpan<char> text) -> void
+MarkupString.Decoding.LineKind
+MarkupString.Decoding.LineKind.Output = 0 -> MarkupString.Decoding.LineKind
+MarkupString.Decoding.LineKind.Prompt = 1 -> MarkupString.Decoding.LineKind
+MarkupString.Decoding.MttsFlags
+MarkupString.Decoding.MttsFlags.Ansi = 1 -> MarkupString.Decoding.MttsFlags
+MarkupString.Decoding.MttsFlags.Colors256 = 8 -> MarkupString.Decoding.MttsFlags
+MarkupString.Decoding.MttsFlags.Mnes = 512 -> MarkupString.Decoding.MttsFlags
+MarkupString.Decoding.MttsFlags.MouseTracking = 16 -> MarkupString.Decoding.MttsFlags
+MarkupString.Decoding.MttsFlags.Mslp = 1024 -> MarkupString.Decoding.MttsFlags
+MarkupString.Decoding.MttsFlags.None = 0 -> MarkupString.Decoding.MttsFlags
+MarkupString.Decoding.MttsFlags.OscColorPalette = 32 -> MarkupString.Decoding.MttsFlags
+MarkupString.Decoding.MttsFlags.Proxy = 128 -> MarkupString.Decoding.MttsFlags
+MarkupString.Decoding.MttsFlags.ScreenReader = 64 -> MarkupString.Decoding.MttsFlags
+MarkupString.Decoding.MttsFlags.Ssl = 2048 -> MarkupString.Decoding.MttsFlags
+MarkupString.Decoding.MttsFlags.TrueColor = 256 -> MarkupString.Decoding.MttsFlags
+MarkupString.Decoding.MttsFlags.Utf8 = 4 -> MarkupString.Decoding.MttsFlags
+MarkupString.Decoding.MttsFlags.Vt100 = 2 -> MarkupString.Decoding.MttsFlags
+MarkupString.Decoding.OscHandler
+MarkupString.Decoding.PaletteEvent
+MarkupString.Decoding.PaletteEvent.Color.get -> MarkupString.RgbColor?
+MarkupString.Decoding.PaletteEvent.Color.init -> void
+MarkupString.Decoding.PaletteEvent.Deconstruct(out MarkupString.Decoding.PaletteSlot Slot, out int Index, out MarkupString.RgbColor? Color) -> void
+MarkupString.Decoding.PaletteEvent.Equals(MarkupString.Decoding.PaletteEvent? other) -> bool
+MarkupString.Decoding.PaletteEvent.Index.get -> int
+MarkupString.Decoding.PaletteEvent.Index.init -> void
+MarkupString.Decoding.PaletteEvent.PaletteEvent(MarkupString.Decoding.PaletteSlot Slot, int Index, MarkupString.RgbColor? Color) -> void
+MarkupString.Decoding.PaletteEvent.Slot.get -> MarkupString.Decoding.PaletteSlot
+MarkupString.Decoding.PaletteEvent.Slot.init -> void
+MarkupString.Decoding.PaletteSlot
+MarkupString.Decoding.PaletteSlot.Background = 2 -> MarkupString.Decoding.PaletteSlot
+MarkupString.Decoding.PaletteSlot.Cursor = 3 -> MarkupString.Decoding.PaletteSlot
+MarkupString.Decoding.PaletteSlot.Foreground = 1 -> MarkupString.Decoding.PaletteSlot
+MarkupString.Decoding.PaletteSlot.Index = 0 -> MarkupString.Decoding.PaletteSlot
+MarkupString.Decoding.PrintFilter
+MarkupString.Decoding.ProtocolEvent
+MarkupString.Decoding.ProtocolEvent.Active.get -> bool
+MarkupString.Decoding.ProtocolEvent.Active.init -> void
+MarkupString.Decoding.ProtocolEvent.Deconstruct(out string! Name, out bool Active) -> void
+MarkupString.Decoding.ProtocolEvent.Equals(MarkupString.Decoding.ProtocolEvent? other) -> bool
+MarkupString.Decoding.ProtocolEvent.Name.get -> string!
+MarkupString.Decoding.ProtocolEvent.Name.init -> void
+MarkupString.Decoding.ProtocolEvent.ProtocolEvent(string! Name, bool Active) -> void
+MarkupString.Decoding.ReplyEvent
+MarkupString.Decoding.ReplyEvent.Deconstruct(out string! Text) -> void
+MarkupString.Decoding.ReplyEvent.Equals(MarkupString.Decoding.ReplyEvent? other) -> bool
+MarkupString.Decoding.ReplyEvent.ReplyEvent(string! Text) -> void
+MarkupString.Decoding.ReplyEvent.Text.get -> string!
+MarkupString.Decoding.ReplyEvent.Text.init -> void
+MarkupString.Decoding.TitleEvent
+MarkupString.Decoding.TitleEvent.Deconstruct(out string! Title, out bool Icon) -> void
+MarkupString.Decoding.TitleEvent.Equals(MarkupString.Decoding.TitleEvent? other) -> bool
+MarkupString.Decoding.TitleEvent.Icon.get -> bool
+MarkupString.Decoding.TitleEvent.Icon.init -> void
+MarkupString.Decoding.TitleEvent.Title.get -> string!
+MarkupString.Decoding.TitleEvent.Title.init -> void
+MarkupString.Decoding.TitleEvent.TitleEvent(string! Title, bool Icon) -> void
+MarkupString.Decoding.VariableEvent
+MarkupString.Decoding.VariableEvent.Deconstruct(out string! Name, out string? Value) -> void
+MarkupString.Decoding.VariableEvent.Equals(MarkupString.Decoding.VariableEvent? other) -> bool
+MarkupString.Decoding.VariableEvent.Name.get -> string!
+MarkupString.Decoding.VariableEvent.Name.init -> void
+MarkupString.Decoding.VariableEvent.Value.get -> string?
+MarkupString.Decoding.VariableEvent.Value.init -> void
+MarkupString.Decoding.VariableEvent.VariableEvent(string! Name, string? Value) -> void
+MarkupString.Decoding.VtLimits
+MarkupString.Decoding.VtLimits.<Clone>$() -> MarkupString.Decoding.VtLimits!
+MarkupString.Decoding.VtLimits.Equals(MarkupString.Decoding.VtLimits? other) -> bool
+MarkupString.Decoding.VtLimits.MaxApcLength.get -> int
+MarkupString.Decoding.VtLimits.MaxApcLength.init -> void
+MarkupString.Decoding.VtLimits.MaxParameterValue.get -> int
+MarkupString.Decoding.VtLimits.MaxParameterValue.init -> void
+MarkupString.Decoding.VtLimits.MaxParameters.get -> int
+MarkupString.Decoding.VtLimits.MaxParameters.init -> void
+MarkupString.Decoding.VtLimits.MaxStringLength.get -> int
+MarkupString.Decoding.VtLimits.MaxStringLength.init -> void
+MarkupString.Decoding.VtLimits.VtLimits() -> void
+MarkupString.Decoding.VtSequenceKind
+MarkupString.Decoding.VtSequenceKind.Apc = 4 -> MarkupString.Decoding.VtSequenceKind
+MarkupString.Decoding.VtSequenceKind.Csi = 1 -> MarkupString.Decoding.VtSequenceKind
+MarkupString.Decoding.VtSequenceKind.Dcs = 3 -> MarkupString.Decoding.VtSequenceKind
+MarkupString.Decoding.VtSequenceKind.Escape = 0 -> MarkupString.Decoding.VtSequenceKind
+MarkupString.Decoding.VtSequenceKind.Osc = 2 -> MarkupString.Decoding.VtSequenceKind
+MarkupString.Decoding.VtTokenizer
+MarkupString.Decoding.VtTokenizer.Feed(System.ReadOnlySpan<char> text, MarkupString.Decoding.IVtTokenSink! sink) -> void
+MarkupString.Decoding.VtTokenizer.InSequence.get -> bool
+MarkupString.Decoding.VtTokenizer.Interrupt(MarkupString.Decoding.IVtTokenSink! sink) -> void
+MarkupString.Decoding.VtTokenizer.Reset() -> void
+MarkupString.Decoding.VtTokenizer.VtTokenizer() -> void
+MarkupString.Decoding.VtTokenizer.VtTokenizer(MarkupString.Decoding.VtLimits! limits) -> void
+MarkupString.Display.ColorLevel
+MarkupString.Display.ColorLevel.Attributes = 1 -> MarkupString.Display.ColorLevel
+MarkupString.Display.ColorLevel.None = 0 -> MarkupString.Display.ColorLevel
+MarkupString.Display.ColorLevel.Standard = 2 -> MarkupString.Display.ColorLevel
+MarkupString.Display.ColorLevel.TrueColor = 4 -> MarkupString.Display.ColorLevel
+MarkupString.Display.ColorLevel.Xterm256 = 3 -> MarkupString.Display.ColorLevel
+MarkupString.Display.InteractionKinds
+MarkupString.Display.InteractionKinds.All = MarkupString.Display.InteractionKinds.Url | MarkupString.Display.InteractionKinds.Command | MarkupString.Display.InteractionKinds.Prompt | MarkupString.Display.InteractionKinds.Menu -> MarkupString.Display.InteractionKinds
+MarkupString.Display.InteractionKinds.Command = 2 -> MarkupString.Display.InteractionKinds
+MarkupString.Display.InteractionKinds.Menu = 8 -> MarkupString.Display.InteractionKinds
+MarkupString.Display.InteractionKinds.None = 0 -> MarkupString.Display.InteractionKinds
+MarkupString.Display.InteractionKinds.Prompt = 4 -> MarkupString.Display.InteractionKinds
+MarkupString.Display.InteractionKinds.Url = 1 -> MarkupString.Display.InteractionKinds
+MarkupString.Display.OutputCapabilities
+MarkupString.Display.OutputCapabilities.<Clone>$() -> MarkupString.Display.OutputCapabilities!
+MarkupString.Display.OutputCapabilities.Attributes.get -> MarkupString.Display.TextAttributes
+MarkupString.Display.OutputCapabilities.Attributes.init -> void
+MarkupString.Display.OutputCapabilities.BestPictureMethod.get -> MarkupString.Display.PictureMethods
+MarkupString.Display.OutputCapabilities.Colors.get -> MarkupString.Display.ColorLevel
+MarkupString.Display.OutputCapabilities.Colors.init -> void
+MarkupString.Display.OutputCapabilities.Equals(MarkupString.Display.OutputCapabilities? other) -> bool
+MarkupString.Display.OutputCapabilities.Interactions.get -> MarkupString.Display.InteractionKinds
+MarkupString.Display.OutputCapabilities.Interactions.init -> void
+MarkupString.Display.OutputCapabilities.Intersect(MarkupString.Display.OutputCapabilities! other) -> MarkupString.Display.OutputCapabilities!
+MarkupString.Display.OutputCapabilities.MovingPictures.get -> bool
+MarkupString.Display.OutputCapabilities.MovingPictures.init -> void
+MarkupString.Display.OutputCapabilities.OutputCapabilities() -> void
+MarkupString.Display.OutputCapabilities.Panes.get -> bool
+MarkupString.Display.OutputCapabilities.Panes.init -> void
+MarkupString.Display.OutputCapabilities.Pictures.get -> MarkupString.Display.PictureMethods
+MarkupString.Display.OutputCapabilities.Pictures.init -> void
+MarkupString.Display.OutputCapabilities.Sound.get -> bool
+MarkupString.Display.OutputCapabilities.Sound.init -> void
+MarkupString.Display.OutputCapabilities.Unicode.get -> MarkupString.Display.UnicodeLevel
+MarkupString.Display.OutputCapabilities.Unicode.init -> void
+MarkupString.Display.OutputCapabilities.Union(MarkupString.Display.OutputCapabilities! other) -> MarkupString.Display.OutputCapabilities!
+MarkupString.Display.PictureMethods
+MarkupString.Display.PictureMethods.Bitmap = 1 -> MarkupString.Display.PictureMethods
+MarkupString.Display.PictureMethods.HalfBlocks = 16 -> MarkupString.Display.PictureMethods
+MarkupString.Display.PictureMethods.InlineImages = 4 -> MarkupString.Display.PictureMethods
+MarkupString.Display.PictureMethods.KittyPlaceholders = 2 -> MarkupString.Display.PictureMethods
+MarkupString.Display.PictureMethods.None = 0 -> MarkupString.Display.PictureMethods
+MarkupString.Display.PictureMethods.Sixel = 8 -> MarkupString.Display.PictureMethods
+MarkupString.Display.TextAttributes
+MarkupString.Display.TextAttributes.All = MarkupString.Display.TextAttributes.Bold | MarkupString.Display.TextAttributes.Faint | MarkupString.Display.TextAttributes.Italic | MarkupString.Display.TextAttributes.Underline | MarkupString.Display.TextAttributes.Blink | MarkupString.Display.TextAttributes.Inverse | MarkupString.Display.TextAttributes.Conceal | MarkupString.Display.TextAttributes.Strikethrough | MarkupString.Display.TextAttributes.Overline -> MarkupString.Display.TextAttributes
+MarkupString.Display.TextAttributes.Blink = 16 -> MarkupString.Display.TextAttributes
+MarkupString.Display.TextAttributes.Bold = 1 -> MarkupString.Display.TextAttributes
+MarkupString.Display.TextAttributes.Conceal = 64 -> MarkupString.Display.TextAttributes
+MarkupString.Display.TextAttributes.Faint = 2 -> MarkupString.Display.TextAttributes
+MarkupString.Display.TextAttributes.Inverse = 32 -> MarkupString.Display.TextAttributes
+MarkupString.Display.TextAttributes.Italic = 4 -> MarkupString.Display.TextAttributes
+MarkupString.Display.TextAttributes.None = 0 -> MarkupString.Display.TextAttributes
+MarkupString.Display.TextAttributes.Overline = 256 -> MarkupString.Display.TextAttributes
+MarkupString.Display.TextAttributes.Strikethrough = 128 -> MarkupString.Display.TextAttributes
+MarkupString.Display.TextAttributes.Underline = 8 -> MarkupString.Display.TextAttributes
+MarkupString.Display.UnicodeLevel
+MarkupString.Display.UnicodeLevel.Ascii = 2 -> MarkupString.Display.UnicodeLevel
+MarkupString.Display.UnicodeLevel.Full = 0 -> MarkupString.Display.UnicodeLevel
+MarkupString.Display.UnicodeLevel.Narrow = 1 -> MarkupString.Display.UnicodeLevel
+MarkupString.PictureRow.FirstColumn.get -> int
+MarkupString.PictureRow.FirstColumn.init -> void
+abstract MarkupString.Decoding.DecodeEvent.<Clone>$() -> MarkupString.Decoding.DecodeEvent!
+const MarkupString.Decoding.CsiSequence.Omitted = -1 -> int
+override MarkupString.Decoding.ClientIdentity.Equals(object? obj) -> bool
+override MarkupString.Decoding.ClientIdentity.GetHashCode() -> int
+override MarkupString.Decoding.ClientIdentity.ToString() -> string!
+override MarkupString.Decoding.ClipboardEvent.<Clone>$() -> MarkupString.Decoding.ClipboardEvent!
+override MarkupString.Decoding.ClipboardEvent.Equals(object? obj) -> bool
+override MarkupString.Decoding.ClipboardEvent.GetHashCode() -> int
+override MarkupString.Decoding.ClipboardEvent.ToString() -> string!
+override MarkupString.Decoding.DecodeEvent.Equals(object? obj) -> bool
+override MarkupString.Decoding.DecodeEvent.GetHashCode() -> int
+override MarkupString.Decoding.DecodeEvent.ToString() -> string!
+override MarkupString.Decoding.DecoderOptions.Equals(object? obj) -> bool
+override MarkupString.Decoding.DecoderOptions.GetHashCode() -> int
+override MarkupString.Decoding.DecoderOptions.ToString() -> string!
+override MarkupString.Decoding.DisplayLine.Equals(object? obj) -> bool
+override MarkupString.Decoding.DisplayLine.GetHashCode() -> int
+override MarkupString.Decoding.DisplayLine.ToString() -> string!
+override MarkupString.Decoding.DownloadEvent.<Clone>$() -> MarkupString.Decoding.DownloadEvent!
+override MarkupString.Decoding.DownloadEvent.Equals(object? obj) -> bool
+override MarkupString.Decoding.DownloadEvent.GetHashCode() -> int
+override MarkupString.Decoding.DownloadEvent.ToString() -> string!
+override MarkupString.Decoding.PaletteEvent.<Clone>$() -> MarkupString.Decoding.PaletteEvent!
+override MarkupString.Decoding.PaletteEvent.Equals(object? obj) -> bool
+override MarkupString.Decoding.PaletteEvent.GetHashCode() -> int
+override MarkupString.Decoding.PaletteEvent.ToString() -> string!
+override MarkupString.Decoding.ProtocolEvent.<Clone>$() -> MarkupString.Decoding.ProtocolEvent!
+override MarkupString.Decoding.ProtocolEvent.Equals(object? obj) -> bool
+override MarkupString.Decoding.ProtocolEvent.GetHashCode() -> int
+override MarkupString.Decoding.ProtocolEvent.ToString() -> string!
+override MarkupString.Decoding.ReplyEvent.<Clone>$() -> MarkupString.Decoding.ReplyEvent!
+override MarkupString.Decoding.ReplyEvent.Equals(object? obj) -> bool
+override MarkupString.Decoding.ReplyEvent.GetHashCode() -> int
+override MarkupString.Decoding.ReplyEvent.ToString() -> string!
+override MarkupString.Decoding.TitleEvent.<Clone>$() -> MarkupString.Decoding.TitleEvent!
+override MarkupString.Decoding.TitleEvent.Equals(object? obj) -> bool
+override MarkupString.Decoding.TitleEvent.GetHashCode() -> int
+override MarkupString.Decoding.TitleEvent.ToString() -> string!
+override MarkupString.Decoding.VariableEvent.<Clone>$() -> MarkupString.Decoding.VariableEvent!
+override MarkupString.Decoding.VariableEvent.Equals(object? obj) -> bool
+override MarkupString.Decoding.VariableEvent.GetHashCode() -> int
+override MarkupString.Decoding.VariableEvent.ToString() -> string!
+override MarkupString.Decoding.VtLimits.Equals(object? obj) -> bool
+override MarkupString.Decoding.VtLimits.GetHashCode() -> int
+override MarkupString.Decoding.VtLimits.ToString() -> string!
+override MarkupString.Display.OutputCapabilities.Equals(object? obj) -> bool
+override MarkupString.Display.OutputCapabilities.GetHashCode() -> int
+override MarkupString.Display.OutputCapabilities.ToString() -> string!
+override sealed MarkupString.Decoding.ClipboardEvent.Equals(MarkupString.Decoding.DecodeEvent? other) -> bool
+override sealed MarkupString.Decoding.DownloadEvent.Equals(MarkupString.Decoding.DecodeEvent? other) -> bool
+override sealed MarkupString.Decoding.PaletteEvent.Equals(MarkupString.Decoding.DecodeEvent? other) -> bool
+override sealed MarkupString.Decoding.ProtocolEvent.Equals(MarkupString.Decoding.DecodeEvent? other) -> bool
+override sealed MarkupString.Decoding.ReplyEvent.Equals(MarkupString.Decoding.DecodeEvent? other) -> bool
+override sealed MarkupString.Decoding.TitleEvent.Equals(MarkupString.Decoding.DecodeEvent? other) -> bool
+override sealed MarkupString.Decoding.VariableEvent.Equals(MarkupString.Decoding.DecodeEvent? other) -> bool
+static MarkupString.Decoding.ClientIdentity.operator !=(MarkupString.Decoding.ClientIdentity? left, MarkupString.Decoding.ClientIdentity? right) -> bool
+static MarkupString.Decoding.ClientIdentity.operator ==(MarkupString.Decoding.ClientIdentity? left, MarkupString.Decoding.ClientIdentity? right) -> bool
+static MarkupString.Decoding.ClipboardEvent.operator !=(MarkupString.Decoding.ClipboardEvent? left, MarkupString.Decoding.ClipboardEvent? right) -> bool
+static MarkupString.Decoding.ClipboardEvent.operator ==(MarkupString.Decoding.ClipboardEvent? left, MarkupString.Decoding.ClipboardEvent? right) -> bool
+static MarkupString.Decoding.DecodeEvent.operator !=(MarkupString.Decoding.DecodeEvent? left, MarkupString.Decoding.DecodeEvent? right) -> bool
+static MarkupString.Decoding.DecodeEvent.operator ==(MarkupString.Decoding.DecodeEvent? left, MarkupString.Decoding.DecodeEvent? right) -> bool
+static MarkupString.Decoding.Decoder.DecodeAll(string? text, MarkupString.Decoding.DecoderRegistry! registry, MarkupString.Decoding.DecoderOptions? options = null) -> System.Collections.Generic.IReadOnlyList<MarkupString.Decoding.DisplayLine!>!
+static MarkupString.Decoding.DecoderOptions.operator !=(MarkupString.Decoding.DecoderOptions? left, MarkupString.Decoding.DecoderOptions? right) -> bool
+static MarkupString.Decoding.DecoderOptions.operator ==(MarkupString.Decoding.DecoderOptions? left, MarkupString.Decoding.DecoderOptions? right) -> bool
+static MarkupString.Decoding.DecoderRegistry.Empty.get -> MarkupString.Decoding.DecoderRegistry!
+static MarkupString.Decoding.DisplayLine.operator !=(MarkupString.Decoding.DisplayLine? left, MarkupString.Decoding.DisplayLine? right) -> bool
+static MarkupString.Decoding.DisplayLine.operator ==(MarkupString.Decoding.DisplayLine? left, MarkupString.Decoding.DisplayLine? right) -> bool
+static MarkupString.Decoding.DownloadEvent.operator !=(MarkupString.Decoding.DownloadEvent? left, MarkupString.Decoding.DownloadEvent? right) -> bool
+static MarkupString.Decoding.DownloadEvent.operator ==(MarkupString.Decoding.DownloadEvent? left, MarkupString.Decoding.DownloadEvent? right) -> bool
+static MarkupString.Decoding.PaletteEvent.operator !=(MarkupString.Decoding.PaletteEvent? left, MarkupString.Decoding.PaletteEvent? right) -> bool
+static MarkupString.Decoding.PaletteEvent.operator ==(MarkupString.Decoding.PaletteEvent? left, MarkupString.Decoding.PaletteEvent? right) -> bool
+static MarkupString.Decoding.ProtocolEvent.operator !=(MarkupString.Decoding.ProtocolEvent? left, MarkupString.Decoding.ProtocolEvent? right) -> bool
+static MarkupString.Decoding.ProtocolEvent.operator ==(MarkupString.Decoding.ProtocolEvent? left, MarkupString.Decoding.ProtocolEvent? right) -> bool
+static MarkupString.Decoding.ReplyEvent.operator !=(MarkupString.Decoding.ReplyEvent? left, MarkupString.Decoding.ReplyEvent? right) -> bool
+static MarkupString.Decoding.ReplyEvent.operator ==(MarkupString.Decoding.ReplyEvent? left, MarkupString.Decoding.ReplyEvent? right) -> bool
+static MarkupString.Decoding.TitleEvent.operator !=(MarkupString.Decoding.TitleEvent? left, MarkupString.Decoding.TitleEvent? right) -> bool
+static MarkupString.Decoding.TitleEvent.operator ==(MarkupString.Decoding.TitleEvent? left, MarkupString.Decoding.TitleEvent? right) -> bool
+static MarkupString.Decoding.VariableEvent.operator !=(MarkupString.Decoding.VariableEvent? left, MarkupString.Decoding.VariableEvent? right) -> bool
+static MarkupString.Decoding.VariableEvent.operator ==(MarkupString.Decoding.VariableEvent? left, MarkupString.Decoding.VariableEvent? right) -> bool
+static MarkupString.Decoding.VtLimits.Default.get -> MarkupString.Decoding.VtLimits!
+static MarkupString.Decoding.VtLimits.operator !=(MarkupString.Decoding.VtLimits? left, MarkupString.Decoding.VtLimits? right) -> bool
+static MarkupString.Decoding.VtLimits.operator ==(MarkupString.Decoding.VtLimits? left, MarkupString.Decoding.VtLimits? right) -> bool
+static MarkupString.Display.OutputCapabilities.Browser.get -> MarkupString.Display.OutputCapabilities!
+static MarkupString.Display.OutputCapabilities.CellGrid.get -> MarkupString.Display.OutputCapabilities!
+static MarkupString.Display.OutputCapabilities.PlainText.get -> MarkupString.Display.OutputCapabilities!
+static MarkupString.Display.OutputCapabilities.operator !=(MarkupString.Display.OutputCapabilities? left, MarkupString.Display.OutputCapabilities? right) -> bool
+static MarkupString.Display.OutputCapabilities.operator ==(MarkupString.Display.OutputCapabilities? left, MarkupString.Display.OutputCapabilities? right) -> bool
+virtual MarkupString.Decoding.ApcHandler.Invoke(System.ReadOnlySpan<char> payload, MarkupString.Decoding.DecodeContext! context) -> bool
+virtual MarkupString.Decoding.ControlHandler.Invoke(char control, MarkupString.Decoding.DecodeContext! context) -> bool
+virtual MarkupString.Decoding.CsiHandler.Invoke(in MarkupString.Decoding.CsiSequence sequence, MarkupString.Decoding.DecodeContext! context) -> bool
+virtual MarkupString.Decoding.DcsHandler.Invoke(in MarkupString.Decoding.CsiSequence header, System.ReadOnlySpan<char> data, MarkupString.Decoding.DecodeContext! context) -> bool
+virtual MarkupString.Decoding.DecodeEvent.EqualityContract.get -> System.Type!
+virtual MarkupString.Decoding.DecodeEvent.Equals(MarkupString.Decoding.DecodeEvent? other) -> bool
+virtual MarkupString.Decoding.DecodeEvent.PrintMembers(System.Text.StringBuilder! builder) -> bool
+virtual MarkupString.Decoding.EscHandler.Invoke(in MarkupString.Decoding.EscSequence sequence, MarkupString.Decoding.DecodeContext! context) -> bool
+virtual MarkupString.Decoding.OscHandler.Invoke(System.ReadOnlySpan<char> payload, MarkupString.Decoding.DecodeContext! context) -> bool
+virtual MarkupString.Decoding.PrintFilter.Invoke(System.ReadOnlySpan<char> text, MarkupString.Decoding.DecodeContext! context) -> bool
+MarkupString.CommandChoice
+MarkupString.CommandChoice.<Clone>$() -> MarkupString.CommandChoice!
+MarkupString.CommandChoice.Command.get -> string!
+MarkupString.CommandChoice.Command.init -> void
+MarkupString.CommandChoice.CommandChoice(string! Label, string! Command) -> void
+MarkupString.CommandChoice.Deconstruct(out string! Label, out string! Command) -> void
+MarkupString.CommandChoice.Equals(MarkupString.CommandChoice? other) -> bool
+MarkupString.CommandChoice.Label.get -> string!
+MarkupString.CommandChoice.Label.init -> void
+MarkupString.CommandMenuMarkup
+MarkupString.CommandMenuMarkup.<Clone>$() -> MarkupString.CommandMenuMarkup!
+MarkupString.CommandMenuMarkup.Choices.get -> System.Collections.Generic.IReadOnlyList<MarkupString.CommandChoice!>!
+MarkupString.CommandMenuMarkup.Choices.init -> void
+MarkupString.CommandMenuMarkup.CommandMenuMarkup(System.Collections.Generic.IReadOnlyList<MarkupString.CommandChoice!>! Choices, string? Hint = null, bool Prompt = false) -> void
+MarkupString.CommandMenuMarkup.Deconstruct(out System.Collections.Generic.IReadOnlyList<MarkupString.CommandChoice!>! Choices, out string? Hint, out bool Prompt) -> void
+MarkupString.CommandMenuMarkup.Equals(MarkupString.CommandMenuMarkup? other) -> bool
+MarkupString.CommandMenuMarkup.Hint.get -> string?
+MarkupString.CommandMenuMarkup.Hint.init -> void
+MarkupString.CommandMenuMarkup.Prompt.get -> bool
+MarkupString.CommandMenuMarkup.Prompt.init -> void
+MarkupString.Display.Cell
+MarkupString.Display.Cell.Cell() -> void
+MarkupString.Display.Cell.Cell(string! Text, MarkupString.Display.DisplayStyle Style) -> void
+MarkupString.Display.Cell.Deconstruct(out string! Text, out MarkupString.Display.DisplayStyle Style) -> void
+MarkupString.Display.Cell.Equals(MarkupString.Display.Cell other) -> bool
+MarkupString.Display.Cell.IsContinuation.get -> bool
+MarkupString.Display.Cell.PictureColumn.get -> int
+MarkupString.Display.Cell.PictureColumn.init -> void
+MarkupString.Display.Cell.Style.get -> MarkupString.Display.DisplayStyle
+MarkupString.Display.Cell.Style.init -> void
+MarkupString.Display.Cell.Text.get -> string!
+MarkupString.Display.Cell.Text.init -> void
+MarkupString.Display.Cell.Width.get -> int
+MarkupString.Display.Cell.Width.init -> void
+MarkupString.Display.CellLayout
+MarkupString.Display.CellLayout.At(int row, int column) -> MarkupString.Display.Cell?
+MarkupString.Display.CellLayout.Columns.get -> int
+MarkupString.Display.CellLayout.InteractionAt(int row, int column) -> MarkupString.Display.Interaction?
+MarkupString.Display.CellLayout.Points.get -> System.Collections.Generic.IReadOnlyList<MarkupString.Display.CellPoint>!
+MarkupString.Display.CellLayout.Rows.get -> System.Collections.Generic.IReadOnlyList<MarkupString.Display.CellRow!>!
+MarkupString.Display.CellPoint
+MarkupString.Display.CellPoint.CellPoint() -> void
+MarkupString.Display.CellPoint.CellPoint(int Row, int Column, MarkupString.IPointMarkup! Markup) -> void
+MarkupString.Display.CellPoint.Column.get -> int
+MarkupString.Display.CellPoint.Column.init -> void
+MarkupString.Display.CellPoint.Deconstruct(out int Row, out int Column, out MarkupString.IPointMarkup! Markup) -> void
+MarkupString.Display.CellPoint.Equals(MarkupString.Display.CellPoint other) -> bool
+MarkupString.Display.CellPoint.Markup.get -> MarkupString.IPointMarkup!
+MarkupString.Display.CellPoint.Markup.init -> void
+MarkupString.Display.CellPoint.Row.get -> int
+MarkupString.Display.CellPoint.Row.init -> void
+MarkupString.Display.CellRenderer
+MarkupString.Display.CellRow
+MarkupString.Display.CellRow.Cells.get -> System.Collections.Generic.IReadOnlyList<MarkupString.Display.Cell>!
+MarkupString.Display.CellRow.Wrapped.get -> bool
+MarkupString.Display.DisplayOptions
+MarkupString.Display.DisplayOptions.<Clone>$() -> MarkupString.Display.DisplayOptions!
+MarkupString.Display.DisplayOptions.Capabilities.get -> MarkupString.Display.OutputCapabilities!
+MarkupString.Display.DisplayOptions.Capabilities.init -> void
+MarkupString.Display.DisplayOptions.Colors.get -> MarkupString.Display.IColorResolver?
+MarkupString.Display.DisplayOptions.Colors.init -> void
+MarkupString.Display.DisplayOptions.DefaultBackground.get -> MarkupString.RgbColor
+MarkupString.Display.DisplayOptions.DefaultBackground.init -> void
+MarkupString.Display.DisplayOptions.DefaultForeground.get -> MarkupString.RgbColor
+MarkupString.Display.DisplayOptions.DefaultForeground.init -> void
+MarkupString.Display.DisplayOptions.DisplayOptions() -> void
+MarkupString.Display.DisplayOptions.Equals(MarkupString.Display.DisplayOptions? other) -> bool
+MarkupString.Display.DisplayOptions.TabWidth.get -> int
+MarkupString.Display.DisplayOptions.TabWidth.init -> void
+MarkupString.Display.DisplayRegistry
+MarkupString.Display.DisplayRegistry.Contributors.get -> System.Collections.Generic.IReadOnlyList<MarkupString.Display.IStyleContributor!>!
+MarkupString.Display.DisplayRegistry.Resolve(MarkupString.MarkupSet? markups, MarkupString.Display.DisplayOptions! options) -> MarkupString.Display.DisplayStyle
+MarkupString.Display.DisplayRegistry.With(MarkupString.Display.IStyleContributor! contributor) -> MarkupString.Display.DisplayRegistry!
+MarkupString.Display.DisplaySpan
+MarkupString.Display.DisplaySpan.Deconstruct(out string! Text, out MarkupString.Display.DisplayStyle Style) -> void
+MarkupString.Display.DisplaySpan.DisplaySpan() -> void
+MarkupString.Display.DisplaySpan.DisplaySpan(string! Text, MarkupString.Display.DisplayStyle Style) -> void
+MarkupString.Display.DisplaySpan.Equals(MarkupString.Display.DisplaySpan other) -> bool
+MarkupString.Display.DisplaySpan.Point.get -> MarkupString.IPointMarkup?
+MarkupString.Display.DisplaySpan.Point.init -> void
+MarkupString.Display.DisplaySpan.Style.get -> MarkupString.Display.DisplayStyle
+MarkupString.Display.DisplaySpan.Style.init -> void
+MarkupString.Display.DisplaySpan.Text.get -> string!
+MarkupString.Display.DisplaySpan.Text.init -> void
+MarkupString.Display.DisplayStyle
+MarkupString.Display.DisplayStyle.Attributes.get -> MarkupString.Display.TextAttributes
+MarkupString.Display.DisplayStyle.Attributes.init -> void
+MarkupString.Display.DisplayStyle.Background.get -> MarkupString.RgbColor?
+MarkupString.Display.DisplayStyle.Background.init -> void
+MarkupString.Display.DisplayStyle.DisplayStyle() -> void
+MarkupString.Display.DisplayStyle.Equals(MarkupString.Display.DisplayStyle other) -> bool
+MarkupString.Display.DisplayStyle.Foreground.get -> MarkupString.RgbColor?
+MarkupString.Display.DisplayStyle.Foreground.init -> void
+MarkupString.Display.DisplayStyle.Has(MarkupString.Display.TextAttributes attribute) -> bool
+MarkupString.Display.DisplayStyle.Interaction.get -> MarkupString.Display.Interaction?
+MarkupString.Display.DisplayStyle.Interaction.init -> void
+MarkupString.Display.DisplayStyle.Pane.get -> string?
+MarkupString.Display.DisplayStyle.Pane.init -> void
+MarkupString.Display.DisplayStyle.Picture.get -> MarkupString.ImageMarkup?
+MarkupString.Display.DisplayStyle.Picture.init -> void
+MarkupString.Display.IColorResolver
+MarkupString.Display.IColorResolver.Legible(MarkupString.RgbColor foreground, MarkupString.RgbColor background) -> MarkupString.RgbColor
+MarkupString.Display.IColorResolver.Standard(int index, bool bright) -> MarkupString.RgbColor
+MarkupString.Display.IColorResolver.Xterm(int index) -> MarkupString.RgbColor
+MarkupString.Display.IStyleContributor
+MarkupString.Display.IStyleContributor.Contribute(MarkupString.MarkupSet! markups, MarkupString.Display.StyleBuilder! style, MarkupString.Display.DisplayOptions! options) -> void
+MarkupString.Display.Interaction
+MarkupString.Display.Interaction.<Clone>$() -> MarkupString.Display.Interaction!
+MarkupString.Display.Interaction.Choices.get -> System.Collections.Generic.IReadOnlyList<MarkupString.CommandChoice!>?
+MarkupString.Display.Interaction.Choices.init -> void
+MarkupString.Display.Interaction.Deconstruct(out MarkupString.Display.InteractionKind Kind, out string! Target) -> void
+MarkupString.Display.Interaction.Equals(MarkupString.Display.Interaction? other) -> bool
+MarkupString.Display.Interaction.Group.get -> string?
+MarkupString.Display.Interaction.Group.init -> void
+MarkupString.Display.Interaction.Hint.get -> string?
+MarkupString.Display.Interaction.Hint.init -> void
+MarkupString.Display.Interaction.Interaction(MarkupString.Display.InteractionKind Kind, string! Target) -> void
+MarkupString.Display.Interaction.Kind.get -> MarkupString.Display.InteractionKind
+MarkupString.Display.Interaction.Kind.init -> void
+MarkupString.Display.Interaction.Target.get -> string!
+MarkupString.Display.Interaction.Target.init -> void
+MarkupString.Display.InteractionKind
+MarkupString.Display.InteractionKind.Command = 1 -> MarkupString.Display.InteractionKind
+MarkupString.Display.InteractionKind.Prompt = 2 -> MarkupString.Display.InteractionKind
+MarkupString.Display.InteractionKind.Url = 0 -> MarkupString.Display.InteractionKind
+MarkupString.Display.SpanRenderer
+MarkupString.Display.StyleBuilder
+MarkupString.Display.StyleBuilder.Attributes.get -> MarkupString.Display.TextAttributes
+MarkupString.Display.StyleBuilder.Attributes.set -> void
+MarkupString.Display.StyleBuilder.Background.get -> MarkupString.RgbColor?
+MarkupString.Display.StyleBuilder.Background.set -> void
+MarkupString.Display.StyleBuilder.Foreground.get -> MarkupString.RgbColor?
+MarkupString.Display.StyleBuilder.Foreground.set -> void
+MarkupString.Display.StyleBuilder.Interaction.get -> MarkupString.Display.Interaction?
+MarkupString.Display.StyleBuilder.Interaction.set -> void
+MarkupString.Display.StyleBuilder.Pane.get -> string?
+MarkupString.Display.StyleBuilder.Pane.set -> void
+MarkupString.Display.StyleBuilder.Picture.get -> MarkupString.ImageMarkup?
+MarkupString.Display.StyleBuilder.Picture.set -> void
+MarkupString.Display.StyleBuilder.StyleBuilder() -> void
+MarkupString.Display.VocabularyStyles
+MarkupString.Display.VocabularyStyles.Contribute(MarkupString.MarkupSet! markups, MarkupString.Display.StyleBuilder! style, MarkupString.Display.DisplayOptions! options) -> void
+MarkupString.HighlightMarkup
+MarkupString.HighlightMarkup.<Clone>$() -> MarkupString.HighlightMarkup!
+MarkupString.HighlightMarkup.Color.get -> MarkupString.RgbColor
+MarkupString.HighlightMarkup.Color.init -> void
+MarkupString.HighlightMarkup.Deconstruct(out MarkupString.RgbColor Color) -> void
+MarkupString.HighlightMarkup.Equals(MarkupString.HighlightMarkup? other) -> bool
+MarkupString.HighlightMarkup.HighlightMarkup(MarkupString.RgbColor Color) -> void
+override MarkupString.CommandChoice.Equals(object? obj) -> bool
+override MarkupString.CommandChoice.GetHashCode() -> int
+override MarkupString.CommandChoice.ToString() -> string!
+override MarkupString.CommandMenuMarkup.Equals(object? obj) -> bool
+override MarkupString.CommandMenuMarkup.GetHashCode() -> int
+override MarkupString.CommandMenuMarkup.ToString() -> string!
+override MarkupString.Display.Cell.GetHashCode() -> int
+override MarkupString.Display.CellPoint.GetHashCode() -> int
+override MarkupString.Display.DisplayOptions.Equals(object? obj) -> bool
+override MarkupString.Display.DisplayOptions.GetHashCode() -> int
+override MarkupString.Display.DisplayOptions.ToString() -> string!
+override MarkupString.Display.DisplaySpan.GetHashCode() -> int
+override MarkupString.Display.DisplayStyle.GetHashCode() -> int
+override MarkupString.Display.Interaction.Equals(object? obj) -> bool
+override MarkupString.Display.Interaction.GetHashCode() -> int
+override MarkupString.Display.Interaction.ToString() -> string!
+override MarkupString.HighlightMarkup.Equals(object? obj) -> bool
+override MarkupString.HighlightMarkup.GetHashCode() -> int
+override MarkupString.HighlightMarkup.ToString() -> string!
+static MarkupString.CommandChoice.operator !=(MarkupString.CommandChoice? left, MarkupString.CommandChoice? right) -> bool
+static MarkupString.CommandChoice.operator ==(MarkupString.CommandChoice? left, MarkupString.CommandChoice? right) -> bool
+static MarkupString.CommandMenuMarkup.operator !=(MarkupString.CommandMenuMarkup? left, MarkupString.CommandMenuMarkup? right) -> bool
+static MarkupString.CommandMenuMarkup.operator ==(MarkupString.CommandMenuMarkup? left, MarkupString.CommandMenuMarkup? right) -> bool
+static MarkupString.Display.Cell.operator !=(MarkupString.Display.Cell left, MarkupString.Display.Cell right) -> bool
+static MarkupString.Display.Cell.operator ==(MarkupString.Display.Cell left, MarkupString.Display.Cell right) -> bool
+static MarkupString.Display.CellPoint.operator !=(MarkupString.Display.CellPoint left, MarkupString.Display.CellPoint right) -> bool
+static MarkupString.Display.CellPoint.operator ==(MarkupString.Display.CellPoint left, MarkupString.Display.CellPoint right) -> bool
+static MarkupString.Display.DisplayOptions.operator !=(MarkupString.Display.DisplayOptions? left, MarkupString.Display.DisplayOptions? right) -> bool
+static MarkupString.Display.DisplayOptions.operator ==(MarkupString.Display.DisplayOptions? left, MarkupString.Display.DisplayOptions? right) -> bool
+static MarkupString.Display.DisplayRegistry.Core.get -> MarkupString.Display.DisplayRegistry!
+static MarkupString.Display.DisplayRegistry.Empty.get -> MarkupString.Display.DisplayRegistry!
+static MarkupString.Display.DisplaySpan.operator !=(MarkupString.Display.DisplaySpan left, MarkupString.Display.DisplaySpan right) -> bool
+static MarkupString.Display.DisplaySpan.operator ==(MarkupString.Display.DisplaySpan left, MarkupString.Display.DisplaySpan right) -> bool
+static MarkupString.Display.DisplayStyle.Plain.get -> MarkupString.Display.DisplayStyle
+static MarkupString.Display.DisplayStyle.operator !=(MarkupString.Display.DisplayStyle left, MarkupString.Display.DisplayStyle right) -> bool
+static MarkupString.Display.DisplayStyle.operator ==(MarkupString.Display.DisplayStyle left, MarkupString.Display.DisplayStyle right) -> bool
+static MarkupString.Display.Interaction.operator !=(MarkupString.Display.Interaction? left, MarkupString.Display.Interaction? right) -> bool
+static MarkupString.Display.Interaction.operator ==(MarkupString.Display.Interaction? left, MarkupString.Display.Interaction? right) -> bool
+static MarkupString.Display.SpanRenderer.Css(MarkupString.Display.DisplayStyle style) -> string!
+static MarkupString.Display.SpanRenderer.CssClasses(MarkupString.Display.DisplayStyle style) -> string!
+static MarkupString.Display.SpanRenderer.Hex(MarkupString.RgbColor color) -> string!
+static MarkupString.Display.VocabularyStyles.Instance.get -> MarkupString.Display.VocabularyStyles!
+static MarkupString.HighlightMarkup.operator !=(MarkupString.HighlightMarkup? left, MarkupString.HighlightMarkup? right) -> bool
+static MarkupString.HighlightMarkup.operator ==(MarkupString.HighlightMarkup? left, MarkupString.HighlightMarkup? right) -> bool
+~override MarkupString.Display.Cell.Equals(object obj) -> bool
+~override MarkupString.Display.Cell.ToString() -> string
+~override MarkupString.Display.CellPoint.Equals(object obj) -> bool
+~override MarkupString.Display.CellPoint.ToString() -> string
+~override MarkupString.Display.DisplaySpan.Equals(object obj) -> bool
+~override MarkupString.Display.DisplaySpan.ToString() -> string
+~override MarkupString.Display.DisplayStyle.Equals(object obj) -> bool
+~override MarkupString.Display.DisplayStyle.ToString() -> string
+MarkupString.Decoding.Decoder.State<T>() -> T!
+MarkupString.Decoding.DecodeDiagnostics.AbandonedSequences.set -> void
+MarkupString.Decoding.DecodeDiagnostics.LimitsReached.set -> void
+MarkupString.Decoding.DecodeDiagnostics.PicturesFailed.set -> void
+MarkupString.Decoding.DecodeDiagnostics.UnhandledControls.set -> void
+MarkupString.Decoding.DecodeDiagnostics.UnhandledSequences.set -> void
+MarkupString.Decoding.ITagSink
+MarkupString.Decoding.ITagSink.Entity(System.ReadOnlySpan<char> name) -> void
+MarkupString.Decoding.ITagSink.ReadsMarkup.get -> bool
+MarkupString.Decoding.ITagSink.Tag(System.ReadOnlySpan<char> body) -> void
+MarkupString.Decoding.ITagSink.Text(System.ReadOnlySpan<char> text) -> void
+MarkupString.Decoding.ParsedTag
+MarkupString.Decoding.ParsedTag.<Clone>$() -> MarkupString.Decoding.ParsedTag!
+MarkupString.Decoding.ParsedTag.Arguments.get -> System.Collections.Generic.IReadOnlyList<MarkupString.Decoding.TagArgument>!
+MarkupString.Decoding.ParsedTag.Arguments.init -> void
+MarkupString.Decoding.ParsedTag.Closing.get -> bool
+MarkupString.Decoding.ParsedTag.Closing.init -> void
+MarkupString.Decoding.ParsedTag.Deconstruct(out string! Name, out bool Closing, out System.Collections.Generic.IReadOnlyList<MarkupString.Decoding.TagArgument>! Arguments) -> void
+MarkupString.Decoding.ParsedTag.Equals(MarkupString.Decoding.ParsedTag? other) -> bool
+MarkupString.Decoding.ParsedTag.Get(string! name, int position = -1) -> string?
+MarkupString.Decoding.ParsedTag.Has(string! name) -> bool
+MarkupString.Decoding.ParsedTag.Name.get -> string!
+MarkupString.Decoding.ParsedTag.Name.init -> void
+MarkupString.Decoding.ParsedTag.ParsedTag(string! Name, bool Closing, System.Collections.Generic.IReadOnlyList<MarkupString.Decoding.TagArgument>! Arguments) -> void
+MarkupString.Decoding.ParsedTag.SelfClosing.get -> bool
+MarkupString.Decoding.ParsedTag.SelfClosing.init -> void
+MarkupString.Decoding.TagArgument
+MarkupString.Decoding.TagArgument.Deconstruct(out string? Name, out string! Value) -> void
+MarkupString.Decoding.TagArgument.Equals(MarkupString.Decoding.TagArgument other) -> bool
+MarkupString.Decoding.TagArgument.Name.get -> string?
+MarkupString.Decoding.TagArgument.Name.init -> void
+MarkupString.Decoding.TagArgument.TagArgument() -> void
+MarkupString.Decoding.TagArgument.TagArgument(string? Name, string! Value) -> void
+MarkupString.Decoding.TagArgument.Value.get -> string!
+MarkupString.Decoding.TagArgument.Value.init -> void
+MarkupString.Decoding.TagScanner
+MarkupString.Decoding.TagScanner.Feed(System.ReadOnlySpan<char> text, MarkupString.Decoding.ITagSink! sink) -> void
+MarkupString.Decoding.TagScanner.Flush(MarkupString.Decoding.ITagSink! sink) -> void
+MarkupString.Decoding.TagScanner.InMarkup.get -> bool
+MarkupString.Decoding.TagScanner.MaxEntityLength.get -> int
+MarkupString.Decoding.TagScanner.MaxEntityLength.init -> void
+MarkupString.Decoding.TagScanner.MaxTagLength.get -> int
+MarkupString.Decoding.TagScanner.MaxTagLength.init -> void
+MarkupString.Decoding.TagScanner.Reset() -> void
+MarkupString.Decoding.TagScanner.TagScanner() -> void
+MarkupString.Decoding.TagSyntax
+override MarkupString.Decoding.ParsedTag.Equals(object? obj) -> bool
+override MarkupString.Decoding.ParsedTag.GetHashCode() -> int
+override MarkupString.Decoding.ParsedTag.ToString() -> string!
+override MarkupString.Decoding.TagArgument.GetHashCode() -> int
+static MarkupString.Decoding.ParsedTag.operator !=(MarkupString.Decoding.ParsedTag? left, MarkupString.Decoding.ParsedTag? right) -> bool
+static MarkupString.Decoding.ParsedTag.operator ==(MarkupString.Decoding.ParsedTag? left, MarkupString.Decoding.ParsedTag? right) -> bool
+static MarkupString.Decoding.TagArgument.operator !=(MarkupString.Decoding.TagArgument left, MarkupString.Decoding.TagArgument right) -> bool
+static MarkupString.Decoding.TagArgument.operator ==(MarkupString.Decoding.TagArgument left, MarkupString.Decoding.TagArgument right) -> bool
+static MarkupString.Decoding.TagSyntax.Decode(string! text, System.Func<string!, string?>? entity = null) -> string!
+static MarkupString.Decoding.TagSyntax.Entity(System.ReadOnlySpan<char> name, System.Func<string!, string?>? entity = null) -> string?
+static MarkupString.Decoding.TagSyntax.Parse(System.ReadOnlySpan<char> body, System.Func<string!, string?>? entity = null) -> MarkupString.Decoding.ParsedTag?
+~override MarkupString.Decoding.TagArgument.Equals(object obj) -> bool
+~override MarkupString.Decoding.TagArgument.ToString() -> string
+MarkupString.Decoding.DecodeContext.LineIsEmpty.get -> bool
+MarkupString.LinkGroupMarkup
+MarkupString.LinkGroupMarkup.<Clone>$() -> MarkupString.LinkGroupMarkup!
+MarkupString.LinkGroupMarkup.Deconstruct(out string! Group) -> void
+MarkupString.LinkGroupMarkup.Equals(MarkupString.LinkGroupMarkup? other) -> bool
+MarkupString.LinkGroupMarkup.Group.get -> string!
+MarkupString.LinkGroupMarkup.Group.init -> void
+MarkupString.LinkGroupMarkup.LinkGroupMarkup(string! Group) -> void
+override MarkupString.LinkGroupMarkup.Equals(object? obj) -> bool
+override MarkupString.LinkGroupMarkup.GetHashCode() -> int
+override MarkupString.LinkGroupMarkup.ToString() -> string!
+static MarkupString.LinkGroupMarkup.operator !=(MarkupString.LinkGroupMarkup? left, MarkupString.LinkGroupMarkup? right) -> bool
+static MarkupString.LinkGroupMarkup.operator ==(MarkupString.LinkGroupMarkup? left, MarkupString.LinkGroupMarkup? right) -> bool
+MarkupString.Decoding.DecoderOptions.Links.get -> MarkupString.IUrlPolicy!
+MarkupString.Decoding.DecoderOptions.Links.init -> void
+MarkupString.Decoding.DecoderOptions.Meters.get -> System.Diagnostics.Metrics.IMeterFactory?
+MarkupString.Decoding.DecoderOptions.Meters.init -> void
+MarkupString.Decoding.IDecoderFactory
+MarkupString.Decoding.IDecoderFactory.CreateDecoder(MarkupString.Decoding.DecoderOptions? options = null) -> MarkupString.Decoding.Decoder!
+MarkupString.Display.DisplayOptions.Links.get -> MarkupString.IUrlPolicy!
+MarkupString.Display.DisplayOptions.Links.init -> void
+MarkupString.Display.IStyleResolver
+MarkupString.Display.IStyleResolver.Resolve(MarkupString.MarkupSet? markups, MarkupString.Display.DisplayOptions! options) -> MarkupString.Display.DisplayStyle
+MarkupString.IUrlPolicy
+MarkupString.IUrlPolicy.IsAllowed(string! url) -> bool
+MarkupString.UrlPolicy
+MarkupString.UrlPolicy.IsAllowed(string! url) -> bool
+MarkupString.UrlPolicy.Schemes.get -> System.Collections.Generic.IReadOnlyCollection<string!>!
+static MarkupString.Display.CellRenderer.Layout(MarkupString.MarkupText! text, int columns, MarkupString.Display.IStyleResolver! registry, MarkupString.Display.DisplayOptions! options, bool wordWrap = false) -> MarkupString.Display.CellLayout!
+static MarkupString.Display.SpanRenderer.Render(MarkupString.MarkupText! text, MarkupString.Display.IStyleResolver! registry, MarkupString.Display.DisplayOptions! options) -> System.Collections.Generic.IReadOnlyList<MarkupString.Display.DisplaySpan>!
+static MarkupString.UrlPolicy.Safe.get -> MarkupString.UrlPolicy!
+static MarkupString.UrlPolicy.WithSchemes(params System.Collections.Generic.IEnumerable<string!>! schemes) -> MarkupString.UrlPolicy!
+MarkupString.MarkupRegistry.Links.get -> MarkupString.IUrlPolicy!
+MarkupString.MarkupRegistry.WithLinks(MarkupString.IUrlPolicy! links) -> MarkupString.MarkupRegistry!
+MarkupString.Decoding.DecodeDiagnostics.Dropped -> System.Action<MarkupString.Decoding.DecodeDrop, int>?
+MarkupString.Decoding.DecodeDrop
+MarkupString.Decoding.DecodeDrop.AbandonedSequence = 0 -> MarkupString.Decoding.DecodeDrop
+MarkupString.Decoding.DecodeDrop.Limit = 3 -> MarkupString.Decoding.DecodeDrop
+MarkupString.Decoding.DecodeDrop.Picture = 4 -> MarkupString.Decoding.DecodeDrop
+MarkupString.Decoding.DecodeDrop.UnhandledControl = 2 -> MarkupString.Decoding.DecodeDrop
+MarkupString.Decoding.DecodeDrop.UnhandledSequence = 1 -> MarkupString.Decoding.DecodeDrop

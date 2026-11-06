@@ -10,15 +10,5 @@ public static class UrlSafety
 	/// carrying one renders as plain text instead. This applies to URL links only — a command link
 	/// carries a MUSH command, never a browser-navigable href.
 	/// </summary>
-	public static bool IsSafeNavigableUrl(string? url)
-	{
-		if (string.IsNullOrWhiteSpace(url)) return false;
-		if (!Uri.TryCreate(url, UriKind.RelativeOrAbsolute, out var uri)) return false;
-
-		// A relative URL or a bare fragment cannot name a scheme, so there is none to distrust.
-		if (!uri.IsAbsoluteUri) return true;
-
-		// Uri.Scheme is already lower-cased, so "JavaScript:" is caught here too.
-		return uri.Scheme is "http" or "https" or "mailto" or "ftp" or "ftps" or "tel";
-	}
+	public static bool IsSafeNavigableUrl(string? url) => url is not null && UrlPolicy.Safe.IsAllowed(url);
 }

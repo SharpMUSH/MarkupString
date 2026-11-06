@@ -45,7 +45,7 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 
 		if (!hasStyle && !hasClasses)
 		{
-			WriteAnchored(style, body, output);
+			WriteAnchored(style, body, context.Registry.Links, output);
 			return;
 		}
 
@@ -76,7 +76,7 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 		}
 
 		output.Write(">");
-		WriteAnchored(style, body, output);
+		WriteAnchored(style, body, context.Registry.Links, output);
 		output.Write("</span>");
 	}
 
@@ -114,7 +114,7 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 	/// </summary>
 	private static bool HasClasses(in AnsiStyle style, bool hasColourStyle) =>
 		style.Bold || style.Faint || style.Italic || style.Underlined
-		|| style.StrikeThrough || style.Overlined || style.Blink
+		|| style.StrikeThrough || style.Overlined || style.Blink || style.Concealed
 		|| (style.Inverted && !hasColourStyle);
 
 	private static void WriteClasses(in AnsiStyle style, bool hasColourStyle, IBufferWriter<char> output)
@@ -127,6 +127,7 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 		AppendClass(style.StrikeThrough, "ms-strike", ref first, output);
 		AppendClass(style.Overlined, "ms-overline", ref first, output);
 		AppendClass(style.Blink, "ms-blink", ref first, output);
+		AppendClass(style.Concealed, "ms-conceal", ref first, output);
 		AppendClass(style.Inverted && !hasColourStyle, "ms-invert", ref first, output);
 	}
 
@@ -143,7 +144,7 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 	/// <c>xch_cmd</c> — so it carries <c>role</c> and <c>tabindex</c> to stay keyboard-reachable. A
 	/// URL link with a scheme <see cref="UrlSafety"/> rejects falls back to plain text.
 	/// </summary>
-	private static void WriteAnchored(in AnsiStyle style, ReadOnlySpan<char> body, IBufferWriter<char> output)
+	private static void WriteAnchored(in AnsiStyle style, ReadOnlySpan<char> body, IUrlPolicy links, IBufferWriter<char> output)
 	{
 		if (style.LinkUrl is not { Length: > 0 } url)
 		{
@@ -157,7 +158,7 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 			output.Write(WebUtility.HtmlEncode(url));
 			output.Write("\"");
 		}
-		else if (UrlSafety.IsSafeNavigableUrl(url))
+		else if (links.IsAllowed(url))
 		{
 			output.Write("<a href=\"");
 			output.Write(WebUtility.HtmlEncode(url));

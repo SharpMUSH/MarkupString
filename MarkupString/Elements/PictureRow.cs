@@ -23,4 +23,10 @@ public readonly record struct PictureRow(int Row, int Rows, int Columns)
 	/// description would be a strip.
 	/// </summary>
 	public bool IsDescription { get; init; }
+
+	/// <summary>
+	/// The column of the picture these cells start at, from 0. A placement that shows part of a picture (a Kitty
+	/// placement cropped by its placeholder text) starts past its left edge; a whole picture starts at 0.
+	/// </summary>
+	public int FirstColumn { get; init; }
 }

@@ -50,6 +50,7 @@ internal static class ElementCodecs
 					w.WriteNumber("rs", row.Rows);
 					w.WriteNumber("c", row.Columns);
 					if (row.IsDescription) w.WriteBoolean("dsc", true);
+					if (row.FirstColumn != 0) w.WriteNumber("fc", row.FirstColumn);
 				}
 			},
 			static e => new ImageMarkup(
@@ -60,7 +61,11 @@ internal static class ElementCodecs
 				Enum.TryParse<ImageAlign>(String(e, "a"), ignoreCase: true, out var align) ? align : null)
 			{
 				Row = Int(e, "r") is { } row && Int(e, "rs") is { } rows && Int(e, "c") is { } columns
-					? new PictureRow(row, rows, columns) { IsDescription = e.TryGetProperty("dsc", out var described) && described.ValueKind == JsonValueKind.True }
+					? new PictureRow(row, rows, columns)
+					{
+						IsDescription = e.TryGetProperty("dsc", out var described) && described.ValueKind == JsonValueKind.True,
+						FirstColumn = Int(e, "fc") ?? 0,
+					}
 					: null,
 			}),
 		new Codec<PaneMarkup>("pane",
@@ -113,6 +118,31 @@ internal static class ElementCodecs
 				if (m.Caption is not null) w.WriteString("ca", m.Caption);
 			},
 			static e => new StatusMarkup(String(e, "n") ?? string.Empty, String(e, "m"), String(e, "ca"))),
+		new Codec<CommandMenuMarkup>("menu",
+			static (w, m) =>
+			{
+				w.WriteStartArray("ch");
+				foreach (var choice in m.Choices)
+				{
+					w.WriteStartArray();
+					w.WriteStringValue(choice.Label);
+					w.WriteStringValue(choice.Command);
+					w.WriteEndArray();
+				}
+				w.WriteEndArray();
+				if (m.Hint is not null) w.WriteString("hi", m.Hint);
+				if (m.Prompt) w.WriteBoolean("p", true);
+			},
+			static e => new CommandMenuMarkup(
+				Choices(e),
+				String(e, "hi"),
+				e.TryGetProperty("p", out var p) && p.ValueKind == JsonValueKind.True)),
+		new Codec<HighlightMarkup>("highlight",
+			static (w, m) => w.WriteString("c", $"#{m.Color.R:x2}{m.Color.G:x2}{m.Color.B:x2}"),
+			static e => new HighlightMarkup(Hex(String(e, "c")))),
+		new Codec<LinkGroupMarkup>("link-group",
+			static (w, m) => w.WriteString("g", m.Group),
+			static e => new LinkGroupMarkup(String(e, "g") ?? string.Empty)),
 		new Codec<StandInMarkup>("standin",
 			static (w, m) => w.WriteString("t", m.Text),
 			static e => new StandInMarkup(String(e, "t") ?? string.Empty)),
@@ -135,6 +165,27 @@ internal static class ElementCodecs
 		element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.Number && value.TryGetInt32(out var number)
 			? number
 			: null;
+
+	private static CommandChoice[] Choices(JsonElement element)
+	{
+		if (!element.TryGetProperty("ch", out var array) || array.ValueKind != JsonValueKind.Array) return [];
+		var choices = new List<CommandChoice>(array.GetArrayLength());
+		foreach (var item in array.EnumerateArray())
+		{
+			if (item.ValueKind != JsonValueKind.Array || item.GetArrayLength() != 2) continue;
+			var label = item[0].ValueKind == JsonValueKind.String ? item[0].GetString() : null;
+			var command = item[1].ValueKind == JsonValueKind.String ? item[1].GetString() : null;
+			if (label is not null && command is not null) choices.Add(new CommandChoice(label, command));
+		}
+
+		return [.. choices];
+	}
+
+	private static RgbColor Hex(string? text) =>
+		text is { Length: 7 } && text[0] == '#'
+		&& int.TryParse(text.AsSpan(1), System.Globalization.NumberStyles.AllowHexSpecifier, System.Globalization.CultureInfo.InvariantCulture, out var value)
+			? new RgbColor((byte)(value >> 16), (byte)(value >> 8), (byte)value)
+			: default;
 
 	private static SoundChannel? Channel(JsonElement element) => String(element, "c") switch
 	{

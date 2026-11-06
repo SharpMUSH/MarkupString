@@ -23,7 +23,7 @@ jobs:
       # SDK (the MSBuild build host crashes). Whitespace rules are syntactic, so nothing is lost.
       - name: Verify formatting
         run: |
-          for dir in MarkupString MarkupString.Ansi MarkupString.Html MarkupString.Mxp MarkupString.Pueblo MarkupString.Tests MarkupString.AotSmoke; do
+          for dir in MarkupString MarkupString.Ansi MarkupString.Extensions.DependencyInjection MarkupString.Html MarkupString.Mxp MarkupString.Pueblo MarkupString.Tests MarkupString.AotSmoke; do
             dotnet format whitespace --folder "$dir" --exclude "**/bin/**" --exclude "**/obj/**" --verify-no-changes
           done
 

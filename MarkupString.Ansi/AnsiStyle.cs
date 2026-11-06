@@ -30,6 +30,9 @@ public readonly record struct AnsiStyle
 	public bool Inverted { get; init; }
 	public bool StrikeThrough { get; init; }
 
+	/// <summary>Hidden (SGR 8): drawn in the background colour, as a password is, but still text to copy.</summary>
+	public bool Concealed { get; init; }
+
 	/// <summary>
 	/// Set by the <c>F</c> code: blink is off in this span, whatever encloses it. See <see cref="Combine"/>.
 	/// </summary>
@@ -87,6 +90,7 @@ public readonly record struct AnsiStyle
 		| (InvertedOff ? 1 << 10 : 0)
 		| (UnderlinedOff ? 1 << 11 : 0)
 		| (Clear ? 1 << 12 : 0)
+		| (Concealed ? 1 << 13 : 0)
 		| ((int)LinkKind << 16);
 
 	/// <summary>Field-by-field equality, written out because a style is compared each time a markup set is looked up.</summary>
@@ -108,7 +112,7 @@ public readonly record struct AnsiStyle
 	/// </summary>
 	public bool HasAnyAttribute =>
 		Foreground is not null || Background is not null ||
-		Bold || Faint || Italic || Underlined || Overlined || Blink || Inverted || StrikeThrough || Clear ||
+		Bold || Faint || Italic || Underlined || Overlined || Blink || Inverted || StrikeThrough || Concealed || Clear ||
 		BlinkOff || BoldOff || InvertedOff || UnderlinedOff;
 
 	/// <summary>
@@ -156,6 +160,7 @@ public readonly record struct AnsiStyle
 			Blink = (outer.Blink || inner.Blink) && !inner.BlinkOff,
 			Inverted = (outer.Inverted || inner.Inverted) && !inner.InvertedOff,
 			StrikeThrough = outer.StrikeThrough || inner.StrikeThrough,
+			Concealed = outer.Concealed || inner.Concealed,
 			// Still off for whatever this span encloses, unless it turns the attribute back on.
 			BlinkOff = inner.BlinkOff || (outer.BlinkOff && !inner.Blink),
 			BoldOff = inner.BoldOff || (outer.BoldOff && !inner.Bold),
