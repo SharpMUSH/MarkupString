@@ -200,7 +200,20 @@ public sealed class DecodeContext
 				set = MarkupSet.Of(layers.AsSpan());
 			}
 		}
-		if (!Line.Write(text.ToString(), set)) Diagnostics.LimitsReached++;
+		// A line too long for the limit is ended where the limit falls, and the rest starts the next.
+		while (Line.Length + text.Length > Line.MaxLength)
+		{
+			var room = Math.Max(0, Line.MaxLength - Line.Length);
+			if (room > 0 && char.IsHighSurrogate(text[room - 1])) room--;
+			if (room == 0 && Line.IsEmpty) room = Math.Min(text.Length, Math.Max(1, Line.MaxLength));
+			if (room > 0) Line.Write(text[..room].ToString(), set);
+			Diagnostics.LimitsReached++;
+			EndLine();
+			text = text[room..];
+			if (text.IsEmpty) return;
+		}
+
+		Line.Write(text.ToString(), set);
 	}
 
 	/// <summary>Writes already built text at the cursor.</summary>

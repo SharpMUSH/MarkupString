@@ -66,7 +66,7 @@ public static class SpanRenderer
 	public static string Css(DisplayStyle style)
 	{
 		var css = new StringBuilder();
-		if (style.Foreground is { } foreground) Append(css, "color", Hex(foreground));
+		if (style.Foreground is { } foreground && !style.Has(TextAttributes.Conceal)) Append(css, "color", Hex(foreground));
 		if (style.Background is { } background) Append(css, "background-color", Hex(background));
 		if (style.Has(TextAttributes.Bold)) Append(css, "font-weight", "bold");
 		if (style.Has(TextAttributes.Faint)) Append(css, "opacity", "0.6");
@@ -84,13 +84,15 @@ public static class SpanRenderer
 
 	/// <summary>
 	/// The class names a page styles itself: <c>ms-blink</c>, <c>ms-conceal</c>, <c>ms-link</c>, <c>ms-command</c>,
-	/// <c>ms-prompt</c>, <c>ms-menu</c> and <c>ms-picture</c>. Empty for plain text.
+	/// <c>ms-prompt</c>, <c>ms-menu</c>, <c>ms-picture</c>, and <c>ms-invert</c> for inverse text with no colours of its own to
+	/// swap (an output that shows attributes but no colour). Empty for plain text.
 	/// </summary>
 	public static string CssClasses(DisplayStyle style)
 	{
 		var classes = new List<string>(3);
 		if (style.Has(TextAttributes.Blink)) classes.Add("ms-blink");
 		if (style.Has(TextAttributes.Conceal)) classes.Add("ms-conceal");
+		if (style.Has(TextAttributes.Inverse) && style.Foreground is null && style.Background is null) classes.Add("ms-invert");
 		if (style.Interaction is { } interaction)
 		{
 			classes.Add(interaction.Kind switch

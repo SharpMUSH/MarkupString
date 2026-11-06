@@ -132,7 +132,7 @@ public sealed class VocabularyStyles : IStyleContributor
 					style.Pane = pane.Name;
 					break;
 				case CommandMenuMarkup menu when menu.Choices.Count > 0:
-					style.Interaction = new Interaction(InteractionKind.Command, menu.Choices[0].Command)
+					style.Interaction = new Interaction(menu.Prompt ? InteractionKind.Prompt : InteractionKind.Command, menu.Choices[0].Command)
 					{
 						Hint = menu.Hint,
 						Choices = menu.Choices,

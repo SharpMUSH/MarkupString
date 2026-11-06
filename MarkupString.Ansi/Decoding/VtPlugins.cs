@@ -393,6 +393,15 @@ public sealed class OscPlugin : IDecoderPlugin
 				context.State<VtState>().MslpUnderlined = false;
 				return true;
 			})
+			.OnLineEnd(static context =>
+			{
+				// An MSLP link is on one line; an OSC 8 link lasts until it is ended.
+				if (context.Pen(VtPens.Link) is AnsiMarkup { Style.LinkKind: LinkKind.Command })
+				{
+					context.SetPen(VtPens.Link, null);
+					context.State<VtState>().MslpUnderlined = false;
+				}
+			})
 			.OnOsc(0, static (payload, context) => Title(payload, context, icon: true))
 			.OnOsc(1, static (payload, context) => Title(payload, context, icon: true))
 			.OnOsc(2, static (payload, context) => Title(payload, context, icon: false))

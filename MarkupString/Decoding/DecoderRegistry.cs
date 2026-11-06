@@ -224,6 +224,6 @@ public sealed record DecoderOptions
 	/// <summary>The most elements a text protocol may have open at once.</summary>
 	public int MaxOpenElements { get; init; } = 64;
 
-	/// <summary>The longest line, in characters; longer lines are broken.</summary>
+	/// <summary>The longest line, in characters; a longer line is ended there and the rest starts a new one.</summary>
 	public int MaxLineLength { get; init; } = 64 * 1024;
 }

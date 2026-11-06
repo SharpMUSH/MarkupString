@@ -25,7 +25,7 @@ public sealed record Interaction(InteractionKind Kind, string Target)
 	public IReadOnlyList<CommandChoice>? Choices { get; init; }
 
 	/// <summary>
-	/// Text with the same group is one link for hover and focus, even across lines (an OSC 8 <c>id</c>). Null groups
+	/// Text with the same group is one link for hover and focus, even across lines (as an OSC 8 <c>id</c> groups them), as a contributor sets it. Null groups
 	/// by <see cref="Target"/> alone.
 	/// </summary>
 	public string? Group { get; init; }

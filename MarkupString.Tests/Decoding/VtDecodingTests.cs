@@ -284,13 +284,29 @@ public class VtDecodingTests
 	}
 
 	[Test]
-	public async Task LineLength_IsCapped()
+	public async Task LineLength_BreaksTheLine()
 	{
 		var decoder = VtDecoding.Terminal.CreateDecoder(new DecoderOptions { MaxLineLength = 4 });
-		decoder.Feed("abc");
-		decoder.Feed("def");
-		await Assert.That(decoder.EndLine().Content.ToPlainText()).IsEqualTo("abc");
-		await Assert.That(decoder.Diagnostics.LimitsReached).IsEqualTo(1);
+		var lines = new List<DisplayLine>(decoder.Feed("abc"));
+		lines.AddRange(decoder.Feed("defghij\n"));
+		await Assert.That(lines.Select(line => line.Content.ToPlainText())).IsEquivalentTo(["abcd", "efgh", "ij"]);
+		await Assert.That(decoder.Diagnostics.LimitsReached).IsEqualTo(2);
+	}
+
+	[Test]
+	public async Task Overwrite_InsideAWideCharacter_BlanksIt()
+	{
+		await Assert.That(Decode("漢字\rX\n")[0].Content.ToPlainText()).IsEqualTo("X 字");
+		await Assert.That(Decode("漢字\e[2GX\n")[0].Content.ToPlainText()).IsEqualTo(" X字");
+		await Assert.That(Decode("ab漢\e[2G字\n")[0].Content.ToPlainText()).IsEqualTo("a字 ");
+	}
+
+	[Test]
+	public async Task Mslp_WithoutUnderline_EndsWithTheLine()
+	{
+		var lines = Decode("\e]68;1;SEND;look\alook\nmore\n");
+		await Assert.That(Spans(lines[0].Content).Single().Style.Interaction).IsNotNull();
+		await Assert.That(Spans(lines[1].Content).Single().Style.Interaction).IsNull();
 	}
 
 	[Test]

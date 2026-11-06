@@ -67,6 +67,23 @@ public class DisplayTests
 	}
 
 	[Test]
+	public async Task Resolve_PromptMenu_IsAPrompt()
+	{
+		var menu = new CommandMenuMarkup([new CommandChoice("Say", "say ")], Prompt: true);
+		var style = AnsiDisplay.Default.Resolve(MarkupSet.Of(menu), Browser);
+		await Assert.That(style.Interaction!.Kind).IsEqualTo(InteractionKind.Prompt);
+		await Assert.That(SpanRenderer.CssClasses(style)).IsEqualTo("ms-prompt");
+	}
+
+	[Test]
+	public async Task Inverse_WithoutColours_IsAClass()
+	{
+		var options = new DisplayOptions { Capabilities = OutputCapabilities.Browser with { Colors = ColorLevel.Attributes } };
+		var style = AnsiDisplay.Default.Resolve(MarkupSet.Of(AnsiMarkup.Create(inverted: true)), options);
+		await Assert.That(SpanRenderer.CssClasses(style)).IsEqualTo("ms-invert");
+	}
+
+	[Test]
 	public async Task Spans_MergeEqualStyles()
 	{
 		var text = MarkupText.Concat([MarkupText.Wrap(Red, "a"), MarkupText.Wrap(AnsiMarkup.Create(foreground: new AnsiColor.Xterm(1)), "b"), MarkupText.Plain("c")]);

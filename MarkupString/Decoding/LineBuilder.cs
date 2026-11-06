@@ -13,6 +13,12 @@ internal sealed class LineBuilder(int maxLength)
 
 	public bool IsEmpty => _parts.Count == 0;
 
+	/// <summary>The characters on the line.</summary>
+	public int Length => _length;
+
+	/// <summary>The longest the line may be.</summary>
+	public int MaxLength => maxLength;
+
 	/// <summary>The column the next text is written at. Past the end, the gap is filled with spaces when text comes.</summary>
 	public int Cursor
 	{
@@ -43,12 +49,36 @@ internal sealed class LineBuilder(int maxLength)
 			return true;
 		}
 
-		// Overwrite the cells from the cursor on.
+		// Overwrite the cells from the cursor on. A wide character the cursor lands inside, or that the new text
+		// only partly covers, is blanked where it is not covered, as a terminal blanks it.
 		var line = Materialise();
 		var before = line.Substring(0, DisplayWidth.IndexAtWidth(line.Text, _cursor));
-		var after = line.Substring(DisplayWidth.IndexAtWidth(line.Text, _cursor + width));
-		Replace(MarkupText.Concat([before, text, after]));
-		_cursor = before.DisplayWidth + width;
+		var leading = _cursor - before.DisplayWidth;
+
+		var end = _cursor + width;
+		var afterIndex = DisplayWidth.IndexAtWidth(line.Text, end);
+		var reached = DisplayWidth.Of(line.Text.AsSpan(0, afterIndex));
+		if (reached < end && afterIndex < line.Length)
+		{
+			var span = line.Text.AsSpan(afterIndex);
+			var enumerator = Graphemes.Enumerate(span);
+			if (enumerator.MoveNext())
+			{
+				var cluster = enumerator.Current.End.GetOffset(span.Length);
+				reached += DisplayWidth.Of(span[..cluster]);
+				afterIndex += cluster;
+			}
+		}
+
+		var trailing = Math.Max(0, reached - end);
+		var after = line.Substring(afterIndex);
+		Replace(MarkupText.Concat([
+			before,
+			leading > 0 ? MarkupText.Plain(new string(' ', leading)) : MarkupText.Empty,
+			text,
+			trailing > 0 ? MarkupText.Plain(new string(' ', trailing)) : MarkupText.Empty,
+			after]));
+		_cursor = end;
 		return true;
 	}
 
