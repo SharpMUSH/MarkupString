@@ -6,6 +6,35 @@ and `MarkupString.Pueblo`. The packages share one version and are released toget
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- **Decoding server output.** `MarkupString.Decoding` reads what a server sends into `MarkupText` lines: a VT
+  tokenizer, a `DecoderRegistry` of plugins (`IDecoderPlugin`, handlers tried newest first), and a `Decoder` per
+  connection with `Feed`, `EndLine` and `EndPrompt`. Carriage return, backspace and erase overwrite in place, so a
+  progress bar ends as its last state. Titles, palette changes, the clipboard, variables and replies to send back
+  are `DecodeEvent`s; `ClientIdentity` says what the client answers, and `ToMtts` gives its MTTS bits. See
+  [Decoding](docs/decoding.md).
+- **Terminal plugins** in `MarkupString.Ansi.Decoding`: `WithVt()` reads SGR (colon subparameters included),
+  the C0 controls, the DEC special graphics set, OSC 8 and MSLP links, titles, palette, clipboard, and answers
+  device attributes, XTVERSION, size and colour queries. The cursor position is not answered unless the host
+  allows it.
+- **Pictures**: `WithPictures()` reads Kitty graphics (placeholders included), iTerm2 inline images and sixel into
+  `ImageMarkup` rows, with PNG and sixel decoders and a per-connection `PictureStore` that is also the
+  `ITerminalPictureSource` to write them out again. What the ANSI writer sends reads back cell for cell.
+- **MXP and Pueblo decoding**: `WithMxp()` in `MarkupString.Mxp` (line modes, open and secure tags, `SEND`
+  menus, custom elements, entities, `VERSION` and `SUPPORT`) and `WithPueblo()` in `MarkupString.Pueblo`. What
+  each package writes reads back to the same markup. `MarkupString.Mxp` now depends on `MarkupString.Ansi`.
+- **Display.** `MarkupString.Display` resolves markup to RGB styles for an output, degraded to its
+  `OutputCapabilities`: `SpanRenderer` for a web page (spans, inline CSS, classes) and `CellRenderer` for a cell
+  grid (wide characters, tabs, wrapping, picture cells, hit testing). `DisplayRegistry.Core.WithAnsi()` folds
+  terminal styles; `TerminalProfile.ToOutputCapabilities` and `ToTerminalFeatures` convert between the two
+  models. See [Display](docs/display.md).
+- `CommandMenuMarkup` (a menu of commands, or a prompt) and `HighlightMarkup` (a background) in core, with codecs.
+- `AnsiStyle.Concealed` (SGR 8), written as SGR 8 and as `ms-conceal` in HTML.
+- `PictureRow.FirstColumn`, for a picture row shown from a column other than its first.
+
 ## 2.25.0 — 2026-11-02
 
 ### Changed
