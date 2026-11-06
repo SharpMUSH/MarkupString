@@ -166,8 +166,10 @@ public sealed class SgrPlugin : IDecoderPlugin
 }
 
 /// <summary>
-/// The C0 controls and line editing: bell, carriage return, backspace, tab, form feed, and <c>CSI K</c>,
-/// <c>CSI J</c>, <c>CSI G</c>, <c>CSI C</c> and <c>CSI D</c>.
+/// The C0 controls and line editing: bell, carriage return, backspace, tab, form feed, vertical tab, <c>CSI K</c>,
+/// <c>CSI J</c>, <c>CSI G</c>, <c>CSI C</c>, <c>CSI D</c>, and saving and restoring the cursor's column
+/// (<c>ESC 7</c>, <c>ESC 8</c>). Cursor up (<c>CSI A</c>), index and reverse index (<c>ESC D</c>, <c>ESC M</c>)
+/// are taken and ignored.
 /// </summary>
 public sealed class ControlsPlugin : IDecoderPlugin
 {
@@ -255,6 +257,24 @@ public sealed class ControlsPlugin : IDecoderPlugin
 			.OnCsi('D', static (in CsiSequence sequence, DecodeContext context) =>
 			{
 				context.Backspace(Math.Max(1, sequence.Get(0, 1)));
+				return true;
+			})
+			// A scrolling pane cannot go back up a line, nor down one without ending it: cursor up, index and
+			// reverse index are taken and do nothing. A picture drawn over the cells after them is placed by the
+			// pictures plugin instead.
+			.OnCsi('A', static (in CsiSequence _, DecodeContext _) => true)
+			.OnEsc('D', static (in EscSequence _, DecodeContext _) => true)
+			.OnEsc('M', static (in EscSequence _, DecodeContext _) => true)
+			.OnEsc('7', static (in EscSequence _, DecodeContext context) =>
+			{
+				context.State<VtState>().SavedColumn = context.Column;
+				return true;
+			})
+			.OnEsc('8', static (in EscSequence _, DecodeContext context) =>
+			{
+				var state = context.State<VtState>();
+				if (state.SavedColumn is { } column) context.MoveToColumn(column);
+				state.SavedColumn = null;
 				return true;
 			});
 	}
@@ -617,4 +637,6 @@ internal sealed class VtState
 	public bool G1Graphics { get; set; }
 
 	public bool ShiftedOut { get; set; }
+
+	public int? SavedColumn { get; set; }
 }

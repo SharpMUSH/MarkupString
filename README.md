@@ -228,6 +228,8 @@ reflection hidden behind convenience APIs.
 | [Formats and rendering](docs/formats.md) | Built-in formats, shared vocabulary, framers, untrusted tags, and custom formats. |
 | [Custom markup kinds](docs/custom-markup.md) | Implementing an `IMarkup`, emitter, and codec. |
 | [Serialization](docs/serialization.md) | JSON wire format, forward compatibility, and `UnknownMarkup`. |
+| [Decoding](docs/decoding.md) | Reading server output: ANSI and VT sequences, OSC, events, replies, limits, and plugins. |
+| [Display](docs/display.md) | Output capabilities, degrading, spans for a web page, and cell grids with hit testing. |
 | [Releasing](docs/releasing.md) | Versioning and publishing for maintainers. |
 
 ## Requirements

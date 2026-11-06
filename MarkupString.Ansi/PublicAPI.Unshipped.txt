@@ -52,3 +52,39 @@ static MarkupString.Ansi.Decoding.VtDecoding.WithVt(this MarkupString.Decoding.D
 virtual MarkupString.Ansi.Decoding.AnsiColors.Legible(MarkupString.RgbColor foreground, MarkupString.RgbColor background) -> MarkupString.RgbColor
 virtual MarkupString.Ansi.Decoding.AnsiColors.Standard(int index, bool bright) -> MarkupString.RgbColor
 virtual MarkupString.Ansi.Decoding.AnsiColors.Xterm(int index) -> MarkupString.RgbColor
+MarkupString.Ansi.Decoding.PictureDecoding
+MarkupString.Ansi.Decoding.PictureStore
+MarkupString.Ansi.Decoding.PictureStore.Add(int width, int height, byte[]! rgba) -> MarkupString.Ansi.Decoding.StoredPicture!
+MarkupString.Ansi.Decoding.PictureStore.Add(int width, int height, byte[]? rgba, System.ReadOnlyMemory<byte> encoded, string? mediaType) -> MarkupString.Ansi.Decoding.StoredPicture!
+MarkupString.Ansi.Decoding.PictureStore.Added -> System.Action<MarkupString.Ansi.Decoding.StoredPicture!>?
+MarkupString.Ansi.Decoding.PictureStore.Budget.get -> long
+MarkupString.Ansi.Decoding.PictureStore.Budget.set -> void
+MarkupString.Ansi.Decoding.PictureStore.Count.get -> int
+MarkupString.Ansi.Decoding.PictureStore.MarkTransmitted(uint imageId) -> bool
+MarkupString.Ansi.Decoding.PictureStore.MaxPixels.get -> long
+MarkupString.Ansi.Decoding.PictureStore.MaxPixels.set -> void
+MarkupString.Ansi.Decoding.PictureStore.PictureStore() -> void
+MarkupString.Ansi.Decoding.PictureStore.Remove(string! key) -> bool
+MarkupString.Ansi.Decoding.PictureStore.TryGet(MarkupString.ImageMarkup! image, out MarkupString.Ansi.Decoding.StoredPicture? picture) -> bool
+MarkupString.Ansi.Decoding.PictureStore.TryGet(string! key, out MarkupString.Ansi.Decoding.StoredPicture? picture) -> bool
+MarkupString.Ansi.Decoding.PictureStore.TryGetPicture(MarkupString.ImageMarkup! image, out MarkupString.Ansi.TerminalPicture? picture) -> bool
+MarkupString.Ansi.Decoding.PictureStore.Used.get -> long
+MarkupString.Ansi.Decoding.PicturesPlugin
+MarkupString.Ansi.Decoding.PicturesPlugin.Name.get -> string!
+MarkupString.Ansi.Decoding.PicturesPlugin.Register(MarkupString.Decoding.DecoderBuilder! builder) -> void
+MarkupString.Ansi.Decoding.StoredPicture
+MarkupString.Ansi.Decoding.StoredPicture.Encoded.get -> System.ReadOnlyMemory<byte>
+MarkupString.Ansi.Decoding.StoredPicture.Height.get -> int
+MarkupString.Ansi.Decoding.StoredPicture.Key.get -> string!
+MarkupString.Ansi.Decoding.StoredPicture.MediaType.get -> string?
+MarkupString.Ansi.Decoding.StoredPicture.Pixels.get -> MarkupString.Ansi.TerminalPicture?
+MarkupString.Ansi.Decoding.StoredPicture.Size.get -> long
+MarkupString.Ansi.Decoding.StoredPicture.Source.get -> string!
+MarkupString.Ansi.Decoding.StoredPicture.ToDataUrl() -> string!
+MarkupString.Ansi.Decoding.StoredPicture.Width.get -> int
+const MarkupString.Ansi.Decoding.PictureStore.Scheme = "picture:" -> string!
+const MarkupString.Ansi.Decoding.PicturesPlugin.MaxTransmission = 16777216 -> int
+static MarkupString.Ansi.Decoding.PictureDecoding.Pictures(this MarkupString.Decoding.Decoder! decoder) -> MarkupString.Ansi.Decoding.PictureStore!
+static MarkupString.Ansi.Decoding.PictureDecoding.WithPictures(this MarkupString.Decoding.DecoderRegistry! registry) -> MarkupString.Decoding.DecoderRegistry!
+static MarkupString.Ansi.Decoding.PicturesPlugin.Instance.get -> MarkupString.Ansi.Decoding.PicturesPlugin!
+static MarkupString.Ansi.Decoding.PicturesPlugin.Pictures(MarkupString.Decoding.Decoder! decoder) -> MarkupString.Ansi.Decoding.PictureStore!

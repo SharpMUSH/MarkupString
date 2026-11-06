@@ -54,6 +54,9 @@ public sealed class Decoder
 
 	internal DecodeContext Context { get; }
 
+	/// <summary>This decoder's instance of a plugin's state, as <see cref="DecodeContext.State{T}"/> gives it to the plugin.</summary>
+	public T State<T>() where T : class, new() => Context.State<T>();
+
 	/// <summary>Reads <paramref name="text"/> and returns the lines it completed.</summary>
 	public IReadOnlyList<DisplayLine> Feed(ReadOnlySpan<char> text)
 	{
@@ -225,17 +228,17 @@ public sealed class Decoder
 public sealed class DecodeDiagnostics
 {
 	/// <summary>Sequences that were malformed, too long, or cut off by a line ending.</summary>
-	public int AbandonedSequences { get; internal set; }
+	public int AbandonedSequences { get; set; }
 
 	/// <summary>Well-formed sequences no handler claimed.</summary>
-	public int UnhandledSequences { get; internal set; }
+	public int UnhandledSequences { get; set; }
 
 	/// <summary>Control characters no handler claimed.</summary>
-	public int UnhandledControls { get; internal set; }
+	public int UnhandledControls { get; set; }
 
 	/// <summary>Things dropped because a limit was reached: an element stack, a line length, a picture size.</summary>
-	public int LimitsReached { get; internal set; }
+	public int LimitsReached { get; set; }
 
 	/// <summary>Pictures that could not be decoded.</summary>
-	public int PicturesFailed { get; internal set; }
+	public int PicturesFailed { get; set; }
 }

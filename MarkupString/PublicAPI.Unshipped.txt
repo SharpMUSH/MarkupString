@@ -667,3 +667,9 @@ static MarkupString.HighlightMarkup.operator ==(MarkupString.HighlightMarkup? le
 ~override MarkupString.Display.DisplaySpan.ToString() -> string
 ~override MarkupString.Display.DisplayStyle.Equals(object obj) -> bool
 ~override MarkupString.Display.DisplayStyle.ToString() -> string
+MarkupString.Decoding.Decoder.State<T>() -> T!
+MarkupString.Decoding.DecodeDiagnostics.AbandonedSequences.set -> void
+MarkupString.Decoding.DecodeDiagnostics.LimitsReached.set -> void
+MarkupString.Decoding.DecodeDiagnostics.PicturesFailed.set -> void
+MarkupString.Decoding.DecodeDiagnostics.UnhandledControls.set -> void
+MarkupString.Decoding.DecodeDiagnostics.UnhandledSequences.set -> void

@@ -17,7 +17,7 @@ internal static class TerminalPictureWriter
 	private const string StringTerminator = "\e\\";
 
 	/// <summary>Kitty's placeholder character.</summary>
-	private const int Placeholder = 0x10EEEE;
+	internal const int Placeholder = 0x10EEEE;
 
 	/// <summary>Kitty's base64 chunk ceiling.</summary>
 	private const int KittyChunk = 4096;
@@ -26,7 +26,7 @@ internal static class TerminalPictureWriter
 	/// The diacritics Kitty reads as a row or column number, in order: the first is 0. From kitty's
 	/// <c>gen/rowcolumn-diacritics.txt</c>; a picture larger than this many cells either way is not drawn.
 	/// </summary>
-	private static readonly int[] Diacritics =
+	internal static readonly int[] Diacritics =
 	[
 		0x0305, 0x030D, 0x030E, 0x0310, 0x0312, 0x033D, 0x033E, 0x033F, 0x0346, 0x034A, 0x034B, 0x034C,
 		0x0350, 0x0351, 0x0352, 0x0357, 0x035B, 0x0363, 0x0364, 0x0365, 0x0366, 0x0367, 0x0368, 0x0369,

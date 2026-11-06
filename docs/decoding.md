@@ -1,0 +1,465 @@
+# Decoding server output
+
+A `Decoder` reads what a server sends (text with ANSI and VT sequences mixed in) and turns it into
+`MarkupText` lines. Styling becomes markup runs, so a decoded line renders, measures, wraps and
+serializes like any other `MarkupText`. Rendering a line for an output is covered in
+[Display](display.md).
+
+```csharp
+using MarkupString;
+using MarkupString.Ansi;
+using MarkupString.Ansi.Decoding;
+using MarkupString.Decoding;
+
+MarkupRegistry.Default = MarkupRegistry.Empty.WithAnsi();
+
+// Once, at startup: which protocols to read.
+var registry = DecoderRegistry.Empty.WithVt();
+
+// One per connection: it holds that connection's style, half-read sequences and pending line.
+var decoder = registry.CreateDecoder(new DecoderOptions
+{
+    Identity = new ClientIdentity { Name = "MyClient", Version = "2.1", Columns = 100, Rows = 40 },
+});
+
+var replies = new List<string>();   // send each of these to the server
+decoder.EventRaised += e =>
+{
+    switch (e)
+    {
+        case ReplyEvent reply: replies.Add(reply.Text); break;
+        case TitleEvent title: Console.WriteLine($"title: {title.Title}"); break;
+    }
+};
+
+foreach (var line in decoder.Feed("\e]2;The Hall\a\e[1;33mWelcome\e[0m back.\r\nExits: north\e[c\r\n> "))
+{
+    Console.WriteLine($"{line.Sequence}: {line.Content.Render(MarkupFormat.Ansi)}");
+}
+
+// The telnet layer saw GA or EOR.
+if (decoder.EndPrompt() is { } prompt) Console.WriteLine($"prompt: {prompt.Content}");
+```
+
+```
+title: The Hall
+0: \e[1;33mWelcome\e[0m back.
+1: Exits: north
+prompt: >
+```
+
+Output in this guide shows ESC as `\e` and BEL as `\a`. Events are raised while `Feed` reads,
+before it returns the lines. The `\e[c` on the second line
+asked for device attributes, so `replies` holds `\e[?62;22c`.
+
+The registry is immutable and shared. A decoder is not safe to use from two threads at once.
+
+## Lines
+
+`Feed` returns the lines its text completed, which may be none. A line ends at a line feed in the
+text. Whatever is left is the pending line (`PendingLine`, `HasPendingLine`), and a sequence cut in
+half by a packet boundary is finished by the next `Feed`:
+
+```csharp
+var decoder = registry.CreateDecoder();
+decoder.Feed("\e[3");             // no lines
+decoder.Feed("1mred\n");          // \e[31mred\e[0m
+decoder.Feed("still red\n");      // \e[31mstill red\e[0m
+```
+
+The style carries from line to line, as it does on a terminal. Each line is rendered closed, so it
+stands alone in scrollback.
+
+Two calls end a line for the host:
+
+| Call | When | Returns |
+|---|---|---|
+| `EndLine()` | Your telnet layer strips line terminators and knows where a line ended | The line, even when empty |
+| `EndPrompt()` | Telnet GA or EOR | The line with `Kind = LineKind.Prompt`, or null when nothing was read |
+
+Both abandon a sequence still in flight. `Decoder.DecodeAll(text, registry)` decodes a whole string
+at once and includes a last line that has no line break:
+
+```csharp
+foreach (var line in Decoder.DecodeAll("one\ntwo", registry))
+    Console.WriteLine($"{line.Kind} {line.Content}");
+```
+
+```
+Output one
+Output two
+```
+
+A `DisplayLine` carries `Content`, `Kind`, `Sequence` (its number within the decoder, from 0, for
+keying a view) and `Destination` (the pane it was sent to, or null for the main output).
+
+`Reset()` forgets the style, open elements, half-read sequences and the pending line. Set
+`decoder.Identity` again when the pane is resized; answers read it each time.
+
+## Events
+
+Anything that is not text to show is raised through `EventRaised`, as it is found.
+
+| Event | Raised for |
+|---|---|
+| `ReplyEvent(Text)` | An answer to a query. Send `Text` to the server exactly as it is. |
+| `TitleEvent(Title, Icon)` | OSC 0, 1, 2. `Icon` is true for 0 and 1. |
+| `PaletteEvent(Slot, Index, Color)` | OSC 4, 10, 11, 12 set a colour; 104, 110, 111, 112 reset one (`Color` null). |
+| `ClipboardEvent(Selection, Text)` | OSC 52. `Text` is null when the server asked to read the clipboard. |
+| `ProtocolEvent(Name, Active)` | A text protocol was turned on or off. |
+| `VariableEvent(Name, Value)` | A server variable (MXP). |
+| `DownloadEvent(Name, Size)` | A file offered to save (iTerm2 `inline=0`). The decoder never saves it. |
+
+The decoder acts on none of these. Refuse a clipboard write unless the player allowed it.
+
+## What the terminal plugins read
+
+`WithVt()` adds five plugins. `VtDecoding.Terminal` is a registry with just these.
+
+### `SgrPlugin` (`CSI … m`)
+
+| Codes | Effect |
+|---|---|
+| empty, `0` | Reset |
+| `1`, `2`, `3` | Bold, faint, italic |
+| `4`, `21` | Underline. `4:0` turns it off; `4:1` to `4:5` are all drawn as one underline. |
+| `5`, `6` | Blink |
+| `7`, `8`, `9` | Inverse, conceal, strikethrough |
+| `22` | Neither bold nor faint |
+| `23`, `24`, `25`, `27`, `28`, `29` | Turn off italic, underline, blink, inverse, conceal, strikethrough |
+| `30`–`37`, `90`–`97` | Standard foreground, bright for 90–97 |
+| `40`–`47`, `100`–`107` | Standard background, bright for 100–107 |
+| `38`, `48` | Extended colour: `5;n`, `2;r;g;b`, and the colon forms `5:n`, `2:r:g:b`, `2::r:g:b`, `2:cs:r:g:b` |
+| `39`, `49` | Default foreground, background |
+| `53`, `55` | Overline on, off |
+| `58` | Underline colour: its parameters are read and dropped |
+
+Any other code is ignored. An extended colour out of range leaves the colour as it was. The style
+is written under the `VtPens.Style` pen as an `AnsiMarkup`.
+
+### `ControlsPlugin`
+
+| Input | Effect |
+|---|---|
+| BEL | A `BellMarkup` point |
+| CR | Cursor to column 0 |
+| BS | Cursor one cell left, stopping at 0 |
+| HT | Cursor to the next multiple of 8 (`ControlsPlugin.TabStop`) |
+| FF | A `ClearScreenMarkup` point |
+| VT | Ends the line |
+| `CSI K` | `0` erase to end of line, `1` blank to the cursor, `2` erase the line. Other values are not claimed. |
+| `CSI J` | `2` or `3` writes a `ClearScreenMarkup` point. `0` and `1` are claimed and do nothing: a scrolling pane has no screen below the cursor. |
+| `CSI G`, ``CSI ` `` | Cursor to column n (from 1) |
+| `CSI C`, `CSI D` | Cursor n cells right, left |
+| `ESC 7`, `ESC 8` | Save the cursor's column, and go back to it |
+| `CSI A`, `ESC D`, `ESC M` | Claimed and ignored: a scrolling pane cannot go up a line, or down one without ending it |
+
+A line feed always ends the line, with or without this plugin. DEL is dropped. C1 controls
+(U+0080 to U+009F) are text, as xterm treats them in UTF-8. CAN and SUB cancel a sequence in flight.
+
+### `CharsetPlugin`
+
+`ESC ( 0` and `ESC ) 0` designate the DEC special graphics set into G0 or G1; `ESC ( B` and
+`ESC ) B` put ASCII back. SO and SI shift between G0 and G1. While graphics is in force, `_` to `~`
+become line drawing and symbols:
+
+```csharp
+Decoder.DecodeAll("\e(0lqqk\e(B ok", registry)[0].Content;  // ┌──┐ ok
+```
+
+### `OscPlugin`
+
+| OSC | Effect |
+|---|---|
+| `0`, `1`, `2` | `TitleEvent`, control characters removed |
+| `4;n;spec…` | `PaletteEvent` for each index and colour pair |
+| `104` | Reset the listed entries, or every entry (`Index = -1`) when empty |
+| `10`, `11`, `12` | Set the foreground, background, cursor colour, or answer `?` (10 and 11 only). `10;a;b` sets 10 and 11 at once. |
+| `110`, `111`, `112` | Reset them |
+| `52;sel;base64` | `ClipboardEvent` with the decoded text, or a null text for `?`. Invalid base64 is dropped. |
+| `8;params;uri` | A link over the text that follows, until an empty uri. An address longer than 2083 characters, or one `UrlSafety.IsSafeNavigableUrl` refuses (`javascript:` and the like), ends the link instead. |
+| `68;1;SEND;command` | An MSLP command link over the underlined text that follows. Turning the underline off ends it. |
+
+Colours are X11 specs: `rgb:r/g/b` with one to four hex digits a channel, or `#rgb`, `#rrggbb`,
+`#rrrgggbbb`, `#rrrrggggbbbb`. `OscPlugin.ParseColor` and `FormatColor` are public. Links are
+written under the `VtPens.Link` pen.
+
+### `AnswersPlugin`
+
+| Query | Reply | Allowed by |
+|---|---|---|
+| `CSI c`, `CSI 0 c` | `\e[?62;22c`, or `\e[?62;4;22c` when `Identity.Output.Pictures` has `Sixel` | `Identity` |
+| `CSI > q` | `\eP>\|Name Version\e\\` (XTVERSION) | `Identity` |
+| `CSI 5 n` | `\e[0n` | `Identity` |
+| `CSI 14 t`, `16 t`, `18 t` | The pane in pixels, a cell in pixels, the pane in cells | `Size` |
+| `OSC 10 ; ?`, `OSC 11 ; ?` | `Identity.Foreground`, `Background` as `rgb:rrrr/gggg/bbbb`, when set | `Colors` |
+| `CSI 6 n` | `\e[{Rows};{column + 1}R` | `CursorPosition` |
+
+A query whose answer is not allowed is still claimed, and nothing is sent.
+
+## Overwriting
+
+A carriage return or backspace moves the cursor back, and what is written next overwrites cells in
+place. A progress bar redrawn over itself ends as its last state.
+
+| Input | Line |
+|---|---|
+| `Loading 10%\rLoading 100%` | `Loading 100%` |
+| `abcdef\rXY` | `XYcdef` |
+| `abc\b\bX` | `aXc` |
+| `hello world\r\e[Kbye` | `bye` |
+| `a\tb` | `a       b` |
+| `a\e[10Gb` | `a        b` |
+
+Moving the cursor past the end of the line pads with spaces only when text follows, so a tab at the
+end of a line leaves no trailing blanks. The style of overwritten cells is replaced with the new text's.
+
+## Limits and diagnostics
+
+Every buffer has a cap. `VtLimits` holds the tokenizer's:
+
+| Property | Default | |
+|---|---|---|
+| `MaxParameters` | 32 | Parameters in a CSI or DCS header, subparameters included |
+| `MaxParameterValue` | 65535 | Larger values are clamped |
+| `MaxStringLength` | 16 MiB | An OSC or DCS payload |
+| `MaxApcLength` | 64 KiB | An APC payload |
+
+A sequence that overflows is read to its end and dropped. A line feed ends any sequence in flight,
+so a bare `ESC ]` typed into a channel cannot swallow the rest of the session.
+
+`DecoderOptions` holds the decoder's:
+
+| Property | Default | |
+|---|---|---|
+| `MaxOpenElements` | 64 | Elements a text protocol may have open at once |
+| `MaxLineLength` | 65536 | Characters in a line. Text that would take the line past it is dropped. |
+
+`decoder.Diagnostics` counts what was dropped:
+
+```csharp
+var decoder = registry.CreateDecoder();
+decoder.Feed("\e[?25lHello\e]0;never closed\nworld\u0001\n");
+// AbandonedSequences = 1   the OSC cut off by the line feed
+// UnhandledSequences = 1   CSI ? 25 l, which no plugin claims
+// UnhandledControls  = 1   U+0001
+```
+
+`LimitsReached` counts text and elements dropped at a limit. `PicturesFailed` counts pictures that
+could not be decoded.
+
+## Client identity and answers
+
+`ClientIdentity` is what the decoder answers with: `Name`, `Version`, `Columns`, `Rows`,
+`CellWidth` and `CellHeight` (8 by 16 by default), `Foreground`, `Background`, and `Output`, the
+`OutputCapabilities` of where the session is shown.
+
+`Answers` says which questions get an answer. `ClientAnswers.Default` is everything except
+`CursorPosition`. A server that sends `CSI 6 n` assumes a full screen it can address, and a scrolling
+pane is not one: the reply always gives the last row. Turn it on for a server you know uses it only
+to find the column:
+
+```csharp
+var decoder = registry.CreateDecoder(new DecoderOptions
+{
+    Identity = new ClientIdentity
+    {
+        Answers = ClientAnswers.Default | ClientAnswers.CursorPosition,
+        Background = new RgbColor(0, 0, 0),
+    },
+});
+decoder.Feed("\e[c\e[>q\e[18t\e]11;?\a> \e[6n");
+```
+
+The replies, in order:
+
+```
+\e[?62;22c
+\eP>|MarkupString 1.0\e\
+\e[8;24;80t
+\e]11;rgb:0000/0000/0000\e\
+\e[24;3R
+```
+
+`ClientAnswers.None` answers nothing.
+
+## MTTS
+
+`ToMtts` gives the bits for the last step of the telnet TTYPE cycle, from `Output`:
+
+| Bit | Set when |
+|---|---|
+| `Vt100`, `Utf8` | Always, but `Utf8` is cleared for `UnicodeLevel.Ascii` |
+| `Ansi` | `Colors` is `Standard` or better |
+| `Colors256`, `OscColorPalette` | `Xterm256` or better |
+| `TrueColor` | `TrueColor` |
+| `Mslp` | `Interactions` has `Command` |
+| `ScreenReader`, `Ssl` | You pass `screenReader: true`, `tls: true` |
+
+```csharp
+var identity = new ClientIdentity { Output = OutputCapabilities.Browser };
+identity.ToMtts(tls: true);        // Ansi, Vt100, Utf8, Colors256, OscColorPalette, TrueColor, Mslp, Ssl
+(int)identity.ToMtts(tls: true);   // 3375, sent as "MTTS 3375"
+```
+
+The default `Output` is `OutputCapabilities.PlainText`, which gives only `Vt100, Utf8`.
+
+## Writing a plugin
+
+A plugin is an `IDecoderPlugin`: a name and a `Register` method that adds handlers to a
+`DecoderBuilder`.
+
+```csharp
+sealed class CursorPlugin : IDecoderPlugin
+{
+    public string Name => "cursor";
+
+    // A scrolling pane has no cursor to show or hide: claim CSI ? 25 h and CSI ? 25 l so they are not counted.
+    public void Register(DecoderBuilder builder) => builder
+        .OnCsi('h', static (in CsiSequence sequence, DecodeContext context) => sequence.Get(0) == 25, prefix: '?')
+        .OnCsi('l', static (in CsiSequence sequence, DecodeContext context) => sequence.Get(0) == 25, prefix: '?');
+}
+
+var registry = DecoderRegistry.Empty.WithVt().With(new CursorPlugin());
+```
+
+| Method | Handles |
+|---|---|
+| `OnCsi(final, handler, prefix, intermediates)` | A control sequence |
+| `OnEsc(final, handler, intermediates)` | An escape sequence |
+| `OnOsc(number, handler)` | An OSC; the handler gets what follows the number and `;` |
+| `OnDcs(final, handler, prefix, intermediates)` | A device control string |
+| `OnApc(handler)` | Every APC, until one handler claims it |
+| `OnControl(c, handler)` | A C0 control |
+| `OnPrint(filter)` | Printable text before it is written; return true when the filter wrote it |
+| `OnLineEnd(action)` | Every line end, after the active text protocol's `EndLine` |
+| `TextProtocol(name, create)` | A protocol carried in the text, such as MXP |
+
+`CsiSequence.Get(index, fallback)` reads a parameter, giving `fallback` when it is missing or empty.
+`IsSubparameter(index)` says whether it followed a `:`. `Is(final, prefix)` tests the sequence's name.
+
+`registry.With(plugin)` replaces a plugin of the same name. `Has(name)` and `Plugins` list what is
+installed.
+
+### Handler order
+
+For one sequence, the newest handler is tried first: handlers from a plugin added later run before
+an earlier plugin's, and within a plugin a later call runs before an earlier one. A handler returns
+true to claim the sequence and false to pass it to the next older handler. A sequence nobody claims
+is counted in `UnhandledSequences`.
+
+This lets a plugin change one case of a sequence and leave the rest alone:
+
+```csharp
+sealed class BellCount
+{
+    public int Rung { get; set; }
+}
+
+sealed class QuietBellPlugin : IDecoderPlugin
+{
+    public string Name => "quiet-bell";
+
+    // Added after WithVt, so it sees each bell before ControlsPlugin does.
+    public void Register(DecoderBuilder builder) => builder.OnControl('\a', static (_, context) =>
+    {
+        var bells = context.State<BellCount>();
+        bells.Rung++;
+        return bells.Rung > 1;   // true swallows it; false lets ControlsPlugin write the bell
+    });
+}
+```
+
+Line end handlers are the exception: they all run, in the order they were added.
+
+### Per-connection state
+
+The plugin instance is shared by every decoder of the registry, so it holds no state of its own.
+`context.State<T>()` gives this decoder's instance of `T`, made on first use and cleared by
+`Reset()`. The host can read the same instance with `decoder.State<T>()`.
+
+### Pens and elements
+
+Text is written under the markup in force, which is built from two things:
+
+- **Pens** are named slots a protocol sets and replaces: `context.SetPen(slot, markup)`, `Pen(slot)`,
+  and `SetPen(slot, null)` to clear. SGR is a pen (`VtPens.Style`); so is a link (`VtPens.Link`).
+- **Elements** are a stack a tag protocol opens and closes: `Open(markup)`, `Close(markup)` with
+  the same instance, which also closes anything opened after it, and `CloseTo(count)`. `Open` returns
+  false at `MaxOpenElements`.
+
+Pens sit inside every element, so an SGR colour inside an element wins, as it does in an MXP client.
+
+Besides `Print`, a handler can `Write` text as it is (skipping print filters), `Write(text, inner)`
+with one more layer inside, `Point(point)`, move the cursor (`CarriageReturn`, `Backspace`,
+`MoveToColumn`), erase (`EraseToEndOfLine`, `EraseToStartOfLine`, `EraseLine`), `EndLine()`, set
+`Destination` for the lines that follow, `Raise(event)` and `Reply(text)`.
+
+### Text protocols
+
+A text protocol reads every piece of printable text while it is on, and prints what is literal with
+`context.Print`. Only one is on at a time. This one makes `*text*` bold:
+
+```csharp
+sealed class StarsPlugin : IDecoderPlugin
+{
+    public string Name => "stars";
+
+    public void Register(DecoderBuilder builder) => builder.TextProtocol("stars", () => new StarsProtocol());
+}
+
+sealed class StarsProtocol : ITextProtocol
+{
+    private readonly IMarkup _bold = AnsiMarkup.Create(bold: true);
+    private bool _open;
+
+    public void Feed(ReadOnlySpan<char> text, DecodeContext context)
+    {
+        while (true)
+        {
+            var star = text.IndexOf('*');
+            if (star < 0)
+            {
+                context.Print(text);
+                return;
+            }
+
+            context.Print(text[..star]);
+            if (_open) Close(context);
+            else _open = context.Open(_bold);
+            text = text[(star + 1)..];
+        }
+    }
+
+    public void EndLine(DecodeContext context) => Close(context);
+
+    public void Reset(DecodeContext context) => Close(context);
+
+    private void Close(DecodeContext context)
+    {
+        if (_open) context.Close(_bold);
+        _open = false;
+    }
+}
+```
+
+The registry offers the protocol; the decoder makes an instance the first time it is turned on,
+typically after telnet negotiates it:
+
+```csharp
+var decoder = DecoderRegistry.Empty.WithVt().With(new StarsPlugin()).CreateDecoder();
+decoder.EnableProtocol("stars");   // raises ProtocolEvent { Name = stars, Active = True }
+decoder.Feed("a *bold \e[31mred\e[0m bold* plain *open\n")[0].Content.Render(MarkupFormat.Ansi);
+```
+
+```
+a \e[1mbold \e[31mred\e[0m\e[1m bold\e[0m plain \e[1mopen\e[0m
+```
+
+The SGR reset inside the element ends the red pen, not the bold element. `EndLine` closed the
+element left open, so the next line starts plain. `EnableProtocol` returns false when the registry
+offers no protocol of that name; `ActiveProtocol` names the one that is on.
+
+## Pictures, MXP and Pueblo
+
+These plugins are covered in their own sections.
