@@ -46,6 +46,9 @@ public sealed class DecodeContext
 	/// <summary>The pane the lines being read are for, or null for the main output.</summary>
 	public string? Destination { get; set; }
 
+	/// <summary>Whether nothing has been written to the current line.</summary>
+	public bool LineIsEmpty => Line.IsEmpty;
+
 	/// <summary>The column the next character is written at, in cells.</summary>
 	public int Column => Line.Cursor;
 

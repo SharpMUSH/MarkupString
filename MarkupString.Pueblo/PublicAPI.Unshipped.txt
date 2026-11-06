@@ -1,1 +1,9 @@
 #nullable enable
+MarkupString.Pueblo.Decoding.PuebloDecoding
+MarkupString.Pueblo.Decoding.PuebloPlugin
+MarkupString.Pueblo.Decoding.PuebloPlugin.Name.get -> string!
+MarkupString.Pueblo.Decoding.PuebloPlugin.Register(MarkupString.Decoding.DecoderBuilder! builder) -> void
+const MarkupString.Pueblo.Decoding.PuebloDecoding.Protocol = "pueblo" -> string!
+static MarkupString.Pueblo.Decoding.PuebloDecoding.IsGreeting(string! line) -> bool
+static MarkupString.Pueblo.Decoding.PuebloDecoding.WithPueblo(this MarkupString.Decoding.DecoderRegistry! registry) -> MarkupString.Decoding.DecoderRegistry!
+static MarkupString.Pueblo.Decoding.PuebloPlugin.Instance.get -> MarkupString.Pueblo.Decoding.PuebloPlugin!

@@ -726,3 +726,4 @@ static MarkupString.Decoding.TagSyntax.Entity(System.ReadOnlySpan<char> name, Sy
 static MarkupString.Decoding.TagSyntax.Parse(System.ReadOnlySpan<char> body, System.Func<string!, string?>? entity = null) -> MarkupString.Decoding.ParsedTag?
 ~override MarkupString.Decoding.TagArgument.Equals(object obj) -> bool
 ~override MarkupString.Decoding.TagArgument.ToString() -> string
+MarkupString.Decoding.DecodeContext.LineIsEmpty.get -> bool
