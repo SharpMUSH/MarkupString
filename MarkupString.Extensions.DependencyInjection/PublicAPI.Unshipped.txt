@@ -18,7 +18,6 @@ MarkupString.Extensions.DependencyInjection.DisplaySettings.Output.set -> void
 MarkupString.Extensions.DependencyInjection.MarkupDecoderFactory
 MarkupString.Extensions.DependencyInjection.MarkupDecoderFactory.CreateDecoder(MarkupString.Decoding.DecoderOptions? options = null) -> MarkupString.Decoding.Decoder!
 MarkupString.Extensions.DependencyInjection.MarkupDecoderFactory.Defaults.get -> MarkupString.Decoding.DecoderOptions!
-MarkupString.Extensions.DependencyInjection.MarkupDecoderFactory.MarkupDecoderFactory(MarkupString.Decoding.DecoderRegistry! registry, MarkupString.Extensions.DependencyInjection.MarkupStringOptions! options, MarkupString.IUrlPolicy! links, System.Diagnostics.Metrics.IMeterFactory? meters = null) -> void
 MarkupString.Extensions.DependencyInjection.MarkupStringBuilder
 MarkupString.Extensions.DependencyInjection.MarkupStringBuilder.AddDecoders(System.Func<MarkupString.Decoding.DecoderRegistry!, MarkupString.Decoding.DecoderRegistry!>! configure) -> MarkupString.Extensions.DependencyInjection.MarkupStringBuilder!
 MarkupString.Extensions.DependencyInjection.MarkupStringBuilder.AddDisplay(System.Func<MarkupString.Display.DisplayRegistry!, MarkupString.Display.DisplayRegistry!>! configure) -> MarkupString.Extensions.DependencyInjection.MarkupStringBuilder!
@@ -48,3 +47,4 @@ MarkupString.Extensions.DependencyInjection.PictureSettings.PictureSettings() ->
 MarkupString.Extensions.DependencyInjection.ServiceCollectionExtensions
 static MarkupString.Extensions.DependencyInjection.ServiceCollectionExtensions.AddMarkupString(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<MarkupString.Extensions.DependencyInjection.MarkupStringOptions!>? configure = null) -> MarkupString.Extensions.DependencyInjection.MarkupStringBuilder!
 MarkupString.Extensions.DependencyInjection.MarkupDecoderFactory.CreateDecoderFor(MarkupString.Decoding.ClientIdentity! identity) -> MarkupString.Decoding.Decoder!
+MarkupString.Extensions.DependencyInjection.MarkupDecoderFactory.MarkupDecoderFactory(MarkupString.Decoding.DecoderRegistry! registry, MarkupString.Extensions.DependencyInjection.MarkupStringOptions! options, MarkupString.IUrlPolicy! links, System.Diagnostics.Metrics.IMeterFactory? meters = null, Microsoft.Extensions.Logging.ILoggerFactory? loggers = null) -> void

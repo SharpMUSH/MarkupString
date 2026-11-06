@@ -41,6 +41,19 @@ public sealed class MarkupRegistry
 		_blockEmitters = blockEmitters;
 	}
 
+	/// <summary>
+	/// Which link addresses the emitters write as links; one that may not is written as its text. Every emitter in
+	/// this package asks it. <see cref="UrlPolicy.Safe"/> unless set with <see cref="WithLinks"/>.
+	/// </summary>
+	public IUrlPolicy Links { get; private init; } = UrlPolicy.Safe;
+
+	/// <summary>The registry with links decided by <paramref name="links"/>.</summary>
+	public MarkupRegistry WithLinks(IUrlPolicy links)
+	{
+		ArgumentNullException.ThrowIfNull(links);
+		return new MarkupRegistry(_emitters, _setEmitters, _framers, _lineFramers, _codecsByKind, _codecsByType, _blockEmitters, _blockCodecsByKind, _blockCodecsByType) { Links = links };
+	}
+
 	/// <summary>A registry that knows nothing: every markup passes its body through unchanged.</summary>
 	public static readonly MarkupRegistry Empty = new(
 		FrozenDictionary<(Type, MarkupFormat), IMarkupEmitter>.Empty,
@@ -102,7 +115,7 @@ public sealed class MarkupRegistry
 		var emitters = new Dictionary<(Type, MarkupFormat), IMarkupEmitter>(_emitters.Count + 1);
 		foreach (var pair in _emitters) emitters[pair.Key] = pair.Value;
 		emitters[(emitter.MarkupType, emitter.Format)] = emitter;
-		return new MarkupRegistry(emitters.ToFrozenDictionary(), _setEmitters, _framers, _lineFramers, _codecsByKind, _codecsByType, _blockEmitters, _blockCodecsByKind, _blockCodecsByType);
+		return new MarkupRegistry(emitters.ToFrozenDictionary(), _setEmitters, _framers, _lineFramers, _codecsByKind, _codecsByType, _blockEmitters, _blockCodecsByKind, _blockCodecsByType) { Links = Links };
 	}
 
 	/// <summary>Returns a registry with <paramref name="emitter"/> added, replacing any set emitter for the same format.</summary>
@@ -112,7 +125,7 @@ public sealed class MarkupRegistry
 		var setEmitters = new Dictionary<MarkupFormat, IMarkupSetEmitter>(_setEmitters.Count + 1);
 		foreach (var pair in _setEmitters) setEmitters[pair.Key] = pair.Value;
 		setEmitters[emitter.Format] = emitter;
-		return new MarkupRegistry(_emitters, setEmitters.ToFrozenDictionary(), _framers, _lineFramers, _codecsByKind, _codecsByType, _blockEmitters, _blockCodecsByKind, _blockCodecsByType);
+		return new MarkupRegistry(_emitters, setEmitters.ToFrozenDictionary(), _framers, _lineFramers, _codecsByKind, _codecsByType, _blockEmitters, _blockCodecsByKind, _blockCodecsByType) { Links = Links };
 	}
 
 	/// <summary>Returns a registry with <paramref name="framer"/> added, replacing any framer for the same format.</summary>
@@ -122,7 +135,7 @@ public sealed class MarkupRegistry
 		var framers = new Dictionary<MarkupFormat, IFormatFramer>(_framers.Count + 1);
 		foreach (var pair in _framers) framers[pair.Key] = pair.Value;
 		framers[framer.Format] = framer;
-		return new MarkupRegistry(_emitters, _setEmitters, framers.ToFrozenDictionary(), _lineFramers, _codecsByKind, _codecsByType, _blockEmitters, _blockCodecsByKind, _blockCodecsByType);
+		return new MarkupRegistry(_emitters, _setEmitters, framers.ToFrozenDictionary(), _lineFramers, _codecsByKind, _codecsByType, _blockEmitters, _blockCodecsByKind, _blockCodecsByType) { Links = Links };
 	}
 
 	/// <summary>Returns a registry with <paramref name="framer"/> added, replacing any line framer for the same format.</summary>
@@ -132,7 +145,7 @@ public sealed class MarkupRegistry
 		var lineFramers = new Dictionary<MarkupFormat, ILineFramer>(_lineFramers.Count + 1);
 		foreach (var pair in _lineFramers) lineFramers[pair.Key] = pair.Value;
 		lineFramers[framer.Format] = framer;
-		return new MarkupRegistry(_emitters, _setEmitters, _framers, lineFramers.ToFrozenDictionary(), _codecsByKind, _codecsByType, _blockEmitters, _blockCodecsByKind, _blockCodecsByType);
+		return new MarkupRegistry(_emitters, _setEmitters, _framers, lineFramers.ToFrozenDictionary(), _codecsByKind, _codecsByType, _blockEmitters, _blockCodecsByKind, _blockCodecsByType) { Links = Links };
 	}
 
 	/// <summary>
@@ -162,7 +175,7 @@ public sealed class MarkupRegistry
 		foreach (var pair in _codecsByType)
 			if (!string.Equals(pair.Value.Kind, codec.Kind, StringComparison.Ordinal)) byType[pair.Key] = pair.Value;
 		byType[codec.MarkupType] = codec;
-		return new MarkupRegistry(_emitters, _setEmitters, _framers, _lineFramers, byKind.ToFrozenDictionary(StringComparer.Ordinal), byType.ToFrozenDictionary(), _blockEmitters, _blockCodecsByKind, _blockCodecsByType);
+		return new MarkupRegistry(_emitters, _setEmitters, _framers, _lineFramers, byKind.ToFrozenDictionary(StringComparer.Ordinal), byType.ToFrozenDictionary(), _blockEmitters, _blockCodecsByKind, _blockCodecsByType) { Links = Links };
 	}
 
 	/// <summary>
@@ -177,7 +190,7 @@ public sealed class MarkupRegistry
 		var emitters = new Dictionary<(Type, MarkupFormat), IBlockEmitter>(_blockEmitters.Count + 1);
 		foreach (var pair in _blockEmitters) emitters[pair.Key] = pair.Value;
 		emitters[(emitter.MarkupType, emitter.Format)] = emitter;
-		return new MarkupRegistry(_emitters, _setEmitters, _framers, _lineFramers, _codecsByKind, _codecsByType, emitters.ToFrozenDictionary(), _blockCodecsByKind, _blockCodecsByType);
+		return new MarkupRegistry(_emitters, _setEmitters, _framers, _lineFramers, _codecsByKind, _codecsByType, emitters.ToFrozenDictionary(), _blockCodecsByKind, _blockCodecsByType) { Links = Links };
 	}
 
 	/// <summary>The block emitter for <paramref name="markupType"/> in <paramref name="format"/>, or null.</summary>
@@ -239,7 +252,8 @@ public sealed class MarkupRegistry
 			if (!string.Equals(pair.Value.Kind, codec.Kind, StringComparison.Ordinal)) byType[pair.Key] = pair.Value;
 		byType[codec.BlockType] = codec;
 		return new MarkupRegistry(_emitters, _setEmitters, _framers, _lineFramers, _codecsByKind, _codecsByType, _blockEmitters,
-			byKind.ToFrozenDictionary(StringComparer.Ordinal), byType.ToFrozenDictionary());
+			byKind.ToFrozenDictionary(StringComparer.Ordinal), byType.ToFrozenDictionary())
+		{ Links = Links };
 	}
 
 	/// <summary>The block codec registered for <paramref name="kind"/>, or <see langword="null"/>.</summary>

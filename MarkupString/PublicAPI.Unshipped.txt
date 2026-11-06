@@ -756,3 +756,12 @@ static MarkupString.Display.CellRenderer.Layout(MarkupString.MarkupText! text, i
 static MarkupString.Display.SpanRenderer.Render(MarkupString.MarkupText! text, MarkupString.Display.IStyleResolver! registry, MarkupString.Display.DisplayOptions! options) -> System.Collections.Generic.IReadOnlyList<MarkupString.Display.DisplaySpan>!
 static MarkupString.UrlPolicy.Safe.get -> MarkupString.UrlPolicy!
 static MarkupString.UrlPolicy.WithSchemes(params System.Collections.Generic.IEnumerable<string!>! schemes) -> MarkupString.UrlPolicy!
+MarkupString.MarkupRegistry.Links.get -> MarkupString.IUrlPolicy!
+MarkupString.MarkupRegistry.WithLinks(MarkupString.IUrlPolicy! links) -> MarkupString.MarkupRegistry!
+MarkupString.Decoding.DecodeDiagnostics.Dropped -> System.Action<MarkupString.Decoding.DecodeDrop, int>?
+MarkupString.Decoding.DecodeDrop
+MarkupString.Decoding.DecodeDrop.AbandonedSequence = 0 -> MarkupString.Decoding.DecodeDrop
+MarkupString.Decoding.DecodeDrop.Limit = 3 -> MarkupString.Decoding.DecodeDrop
+MarkupString.Decoding.DecodeDrop.Picture = 4 -> MarkupString.Decoding.DecodeDrop
+MarkupString.Decoding.DecodeDrop.UnhandledControl = 2 -> MarkupString.Decoding.DecodeDrop
+MarkupString.Decoding.DecodeDrop.UnhandledSequence = 1 -> MarkupString.Decoding.DecodeDrop

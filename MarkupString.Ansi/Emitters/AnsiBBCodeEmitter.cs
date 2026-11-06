@@ -31,7 +31,7 @@ public sealed class AnsiBBCodeEmitter : IMarkupSetEmitter
 
 		var link = style.LinkKind == LinkKind.Url
 			&& style.LinkUrl is { Length: > 0 } candidate
-			&& UrlSafety.IsSafeNavigableUrl(candidate)
+			&& context.Registry.Links.IsAllowed(candidate)
 			? candidate
 			: null;
 

@@ -31,7 +31,7 @@ your own first replaces it.
 
 | Service | What it is |
 |---|---|
-| `MarkupRegistry` | `MarkupRegistry.Empty.WithAnsi()` and each `AddMarkup` step |
+| `MarkupRegistry` | `MarkupRegistry.Empty.WithAnsi().WithLinks(policy)` and each `AddMarkup` step |
 | `DecoderRegistry` | `WithVt()`, `WithPictures(cache)` unless pictures are off, and each `AddDecoders` step |
 | `MarkupDecoderFactory`, `IDecoderFactory` | Makes a decoder per connection with the configured limits, link policy, metrics and picture size |
 | `IPictureCache` | One `MemoryPictureCache` that every connection shares |
@@ -70,15 +70,22 @@ These are in the core packages and need no container.
   and `CellRenderer` take one.
 - `IUrlPolicy`: which link addresses are allowed. `UrlPolicy.Safe` is the default;
   `UrlPolicy.WithSchemes("mudclient")` adds schemes, never `javascript`, `data`, `vbscript` or `file`.
-  Set it as `DecoderOptions.Links` (what a server's links become) and `DisplayOptions.Links` (what is
-  drawn as clickable). The writers still use `UrlSafety`.
+  Set it as `DecoderOptions.Links` (what a server's links become), `DisplayOptions.Links` (what is
+  drawn as clickable), `MarkupRegistry.WithLinks` (what every writer, ANSI, HTML, MXP, Pueblo, BBCode
+  and Markdown, writes as a link) and `HtmlTagPolicy.Links` (which addresses a checked tag may hold).
+  `AddMarkupString` sets the first three to the registered policy.
 - `IPictureCache`: where decoded pictures are kept; `WithPictures(cache)` shares one.
 - `IColorResolver`: how palette colours become RGB, as `DisplayOptions.Colors`.
 
-## Metrics
+## Metrics and logging
 
 Each decoder reports what it drops on the `MarkupString.Decoding` meter, as the counter
 `markupstring.decoding.dropped` with a `kind` tag: `abandoned-sequence`, `unhandled-sequence`,
 `unhandled-control`, `limit` or `picture`. With `DecoderOptions.Meters` (the factory sets it to the
 host's `IMeterFactory` when one is registered) the meter comes from that factory, so
 `dotnet-counters` and OpenTelemetry see it with the host's other meters.
+
+`decoder.Diagnostics.Dropped` is raised with a `DecodeDrop` and a count each time one goes up. When the
+host registers an `ILoggerFactory`, the factory logs each one at `Debug` under the category
+`MarkupString.Decoding` (event 1, `Decoder dropped {Count} × {Kind}`); it subscribes only when that
+level is on, so a quiet host pays nothing.

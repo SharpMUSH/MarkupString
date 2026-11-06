@@ -177,7 +177,7 @@ Decoder.DecodeAll("\e(0lqqk\e(B ok", registry)[0].Content;  // ┌──┐ ok
 | `10`, `11`, `12` | Set the foreground, background, cursor colour, or answer `?` (10 and 11 only). `10;a;b` sets 10 and 11 at once. |
 | `110`, `111`, `112` | Reset them |
 | `52;sel;base64` | `ClipboardEvent` with the decoded text, or a null text for `?`. Invalid base64 is dropped. |
-| `8;params;uri` | A link over the text that follows, until an empty uri. An address longer than 2083 characters, or one `UrlSafety.IsSafeNavigableUrl` refuses (`javascript:` and the like), ends the link instead. The address must pass `DecoderOptions.Links` (`UrlPolicy.Safe` unless set). An `id=` among the params becomes a `LinkGroupMarkup`, and so `Interaction.Group`: the text under it is one link even across lines. |
+| `8;params;uri` | A link over the text that follows, until an empty uri. An address longer than 2083 characters, or one `DecoderOptions.Links` refuses (`UrlPolicy.Safe` unless set, which refuses `javascript:` and the like), ends the link instead. An `id=` among the params becomes a `LinkGroupMarkup`, and so `Interaction.Group`: the text under it is one link even across lines. |
 | `68;1;SEND;command` | An MSLP command link over the underlined text that follows. Turning the underline off ends it, and so does the end of the line. |
 
 Colours are X11 specs: `rgb:r/g/b` with one to four hex digits a channel, or `#rgb`, `#rrggbb`,
@@ -582,7 +582,7 @@ What the tags become:
 | Tag | Markup |
 |---|---|
 | `B`, `I`, `U`, `S`, `H`, `COLOR`, `FONT` | An `AnsiMarkup`. SGR inside an MXP colour wins, as in an MXP client. |
-| `A href hint` | A URL link, when `UrlSafety` allows the address |
+| `A href hint` | A URL link, when `DecoderOptions.Links` allows the address |
 | `SEND href hint prompt` | A command link. With several commands (`a\|b`) or `PROMPT`, a `CommandMenuMarkup` as well. With no `href`, or `&text;` in it, the command is the tag's text. |
 | `IMAGE fname url w h align` | An `ImageMarkup`. Sized in cells (`W=4c H=2c`), it is drawn over the cells the server leaves for it. |
 | `SOUND`, `MUSIC` | `SoundMarkup` or `SoundStopMarkup` points |

@@ -6,6 +6,7 @@ using MarkupString.Decoding;
 using MarkupString.Display;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 namespace MarkupString.Extensions.DependencyInjection;
 
@@ -17,7 +18,8 @@ public static class ServiceCollectionExtensions
 	/// pictures) and an <see cref="IDecoderFactory"/> that makes each connection's decoder with the configured limits;
 	/// one <see cref="IPictureCache"/> every connection shares; the <see cref="DisplayRegistry"/> as the
 	/// <see cref="IStyleResolver"/>, with default <see cref="DisplayOptions"/>; and the <see cref="IUrlPolicy"/>.
-	/// Decode metrics go to the host's <see cref="IMeterFactory"/> when it has one. A service registered before this
+	/// Decode metrics go to the host's <see cref="IMeterFactory"/>, and what decoders drop is logged at debug level
+	/// to its <see cref="ILoggerFactory"/> (category <c>MarkupString.Decoding</c>), when it has them. A service registered before this
 	/// call is kept, so any of them can be replaced. Calling it again adds to the same setup.
 	/// </summary>
 	public static MarkupStringBuilder AddMarkupString(this IServiceCollection services, Action<MarkupStringOptions>? configure = null)
@@ -40,13 +42,15 @@ public static class ServiceCollectionExtensions
 			sp.GetRequiredService<DecoderRegistry>(),
 			Options(sp),
 			sp.GetRequiredService<IUrlPolicy>(),
-			sp.GetService<IMeterFactory>()));
+			sp.GetService<IMeterFactory>(),
+			sp.GetService<ILoggerFactory>()));
 		services.TryAddSingleton<IDecoderFactory>(static sp => sp.GetRequiredService<MarkupDecoderFactory>());
 		services.TryAddSingleton(sp => setup.Display.Aggregate(
 			DisplayRegistry.Core.WithAnsi(Options(sp).Display.BoldIsBright), static (current, step) => step(current)));
 		services.TryAddSingleton<IStyleResolver>(static sp => sp.GetRequiredService<DisplayRegistry>());
 		services.TryAddSingleton(static sp => DisplayDefaults(Options(sp).Display, sp.GetRequiredService<IUrlPolicy>()));
-		services.TryAddSingleton(sp => setup.Markup.Aggregate(MarkupRegistry.Empty.WithAnsi(), static (current, step) => step(current)));
+		services.TryAddSingleton(sp => setup.Markup.Aggregate(
+			MarkupRegistry.Empty.WithAnsi().WithLinks(sp.GetRequiredService<IUrlPolicy>()), static (current, step) => step(current)));
 		return new MarkupStringBuilder(services, setup);
 	}
 
@@ -154,21 +158,24 @@ public sealed class MarkupStringBuilder
 
 /// <summary>
 /// Makes each connection's <see cref="Decoder"/> from the registered <see cref="DecoderRegistry"/>, with the
-/// configured limits, link policy, metrics and picture size.
+/// configured limits, link policy, metrics, logging and picture size.
 /// </summary>
-public sealed class MarkupDecoderFactory : IDecoderFactory
+public sealed partial class MarkupDecoderFactory : IDecoderFactory
 {
 	private readonly DecoderRegistry _registry;
 	private readonly long _maxPixels;
+	private readonly ILogger? _logger;
 
 	/// <summary>A factory over <paramref name="registry"/>.</summary>
-	public MarkupDecoderFactory(DecoderRegistry registry, MarkupStringOptions options, IUrlPolicy links, IMeterFactory? meters = null)
+	public MarkupDecoderFactory(DecoderRegistry registry, MarkupStringOptions options, IUrlPolicy links, IMeterFactory? meters = null,
+		ILoggerFactory? loggers = null)
 	{
 		ArgumentNullException.ThrowIfNull(registry);
 		ArgumentNullException.ThrowIfNull(options);
 		ArgumentNullException.ThrowIfNull(links);
 		_registry = registry;
 		_maxPixels = options.Pictures.MaxPixels;
+		_logger = loggers?.CreateLogger("MarkupString.Decoding");
 		var answers = ClientAnswers.Default;
 		answers = options.Decoding.AnswerCursorPosition ? answers | ClientAnswers.CursorPosition : answers & ~ClientAnswers.CursorPosition;
 		Defaults = new DecoderOptions
@@ -189,8 +196,12 @@ public sealed class MarkupDecoderFactory : IDecoderFactory
 	{
 		var decoder = _registry.CreateDecoder(options ?? Defaults);
 		if (_registry.Has(PicturesPlugin.Instance.Name)) decoder.Pictures().MaxPixels = _maxPixels;
+		if (_logger is { } logger && logger.IsEnabled(LogLevel.Debug)) decoder.Diagnostics.Dropped += (kind, count) => LogDropped(logger, kind, count);
 		return decoder;
 	}
+
+	[LoggerMessage(EventId = 1, Level = LogLevel.Debug, Message = "Decoder dropped {Count} × {Kind}")]
+	private static partial void LogDropped(ILogger logger, DecodeDrop kind, int count);
 
 	/// <summary>A decoder with the defaults, for a client that is <paramref name="identity"/>.</summary>
 	public Decoder CreateDecoderFor(ClientIdentity identity)

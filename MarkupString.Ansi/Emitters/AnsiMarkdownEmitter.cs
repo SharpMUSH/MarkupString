@@ -35,7 +35,7 @@ public sealed class AnsiMarkdownEmitter : IMarkupSetEmitter
 			return true;
 		}
 
-		var own = Delimiters(AnsiEmitterSupport.Fold(set, context.Format));
+		var own = Delimiters(AnsiEmitterSupport.Fold(set, context.Format), context.Registry.Links);
 		WriteDelimited(own, Shared(own, context.Previous, context), Shared(own, context.Next, context), body, output);
 		return true;
 	}
@@ -51,12 +51,12 @@ public sealed class AnsiMarkdownEmitter : IMarkupSetEmitter
 	/// The delimiters <paramref name="style"/> is written with, outermost first, always in the same order —
 	/// a link, then strikethrough, bold and italic — so two runs that share some of them share the outermost.
 	/// </summary>
-	private static List<Delimiter> Delimiters(in AnsiStyle style)
+	private static List<Delimiter> Delimiters(in AnsiStyle style, IUrlPolicy links)
 	{
 		var delimiters = new List<Delimiter>(4);
 		if (style.LinkKind == LinkKind.Url
 			&& style.LinkUrl is { Length: > 0 } url
-			&& UrlSafety.IsSafeNavigableUrl(url))
+			&& links.IsAllowed(url))
 			delimiters.Add(new Delimiter("[", "](" + MarkdownSyntax.Destination(url) + ")"));
 		if (style.StrikeThrough) delimiters.Add(Strike);
 		if (style.Bold) delimiters.Add(Strong);
@@ -80,14 +80,14 @@ public sealed class AnsiMarkdownEmitter : IMarkupSetEmitter
 	private static int Shared(List<Delimiter> own, MarkupSet? neighbour, in EmitContext context)
 	{
 		if (own.Count == 0 || neighbour is null || StandsAlone(neighbour, context)) return 0;
-		var theirs = Delimiters(AnsiEmitterSupport.Fold(neighbour, context.Format));
+		var theirs = Delimiters(AnsiEmitterSupport.Fold(neighbour, context.Format), context.Registry.Links);
 		var shared = 0;
 		while (shared < own.Count && shared < theirs.Count && own[shared] == theirs[shared]) shared++;
 		return shared;
 	}
 
 	private static void WriteAlone(in AnsiStyle style, ReadOnlySpan<char> body, in EmitContext context, IBufferWriter<char> output) =>
-		WriteDelimited(Delimiters(style), 0, 0, body, output);
+		WriteDelimited(Delimiters(style, context.Registry.Links), 0, 0, body, output);
 
 	/// <summary>
 	/// Writes <paramref name="body"/> inside <paramref name="delimiters"/>, the first <paramref name="opened"/> of

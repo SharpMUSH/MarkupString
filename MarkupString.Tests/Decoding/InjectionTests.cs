@@ -1,12 +1,16 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
+using MarkupString.Ansi;
 using MarkupString.Ansi.Decoding;
 using MarkupString.Decoding;
 using MarkupString.Display;
 using MarkupString.Extensions.DependencyInjection;
+using MarkupString.Html;
+using MarkupString.Mxp;
 using MarkupString.Mxp.Decoding;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 /// <summary>The seams a host injects through, and the package that wires them into a service collection.</summary>
 public class InjectionTests
@@ -120,5 +124,72 @@ public class InjectionTests
 	{
 		using var services = new ServiceCollection().AddMarkupString().UsePictureCache<NoCache>().Services.BuildServiceProvider();
 		await Assert.That(services.GetRequiredService<IDecoderFactory>().CreateDecoder().Pictures().Cache).IsTypeOf<NoCache>();
+	}
+
+	public static IEnumerable<Func<MarkupFormat>> LinkFormats() =>
+		[() => MarkupFormat.Ansi, () => MarkupFormat.Html, () => MarkupFormat.Mxp, () => MarkupFormat.BBCode, () => MarkupFormat.Markdown];
+
+	[Test]
+	[MethodDataSource(nameof(LinkFormats))]
+	public async Task Writers_AskTheRegistrysLinkPolicy(MarkupFormat format)
+	{
+		var link = MarkupText.Wrap(new AnsiMarkup(new AnsiStyle { LinkUrl = "mudclient://look", LinkKind = LinkKind.Url }), "look");
+		var safe = MarkupRegistry.Empty.WithAnsi().WithMxp().WithAnsiOutput(AnsiColorDepth.TrueColor);
+		var open = safe.WithLinks(UrlPolicy.WithSchemes("mudclient"));
+		await Assert.That(link.Render(format, safe)).DoesNotContain("mudclient://look");
+		await Assert.That(link.Render(format, open)).Contains("mudclient://look");
+		await Assert.That(open.WithMxp().Links).IsSameReferenceAs(open.Links);
+	}
+
+	[Test]
+	public async Task HtmlTagPolicy_AsksItsLinkPolicy()
+	{
+		var policy = HtmlTagPolicy.WellFormed with { UrlAttributes = HtmlTagPolicy.AddressAttributes };
+		await Assert.That(policy.TryCreate("a", "href=\"mudclient://look\"", out var dropped)).IsTrue();
+		await Assert.That(dropped!.Attributes).IsNull();
+		await Assert.That((policy with { Links = UrlPolicy.WithSchemes("mudclient") }).TryCreate("a", "href=\"mudclient://look\"", out var kept)).IsTrue();
+		await Assert.That(kept!.Attributes).Contains("mudclient://look");
+	}
+
+	[Test]
+	public async Task Diagnostics_RaiseDropped()
+	{
+		var decoder = VtDecoding.Terminal.CreateDecoder();
+		var dropped = new List<(DecodeDrop, int)>();
+		decoder.Diagnostics.Dropped += (kind, count) => dropped.Add((kind, count));
+		decoder.Feed("\e[5;5H\u0001");
+		await Assert.That(dropped).IsEquivalentTo([(DecodeDrop.UnhandledSequence, 1), (DecodeDrop.UnhandledControl, 1)]);
+	}
+
+	private sealed class Captured : ILoggerProvider, ILogger
+	{
+		public List<string> Lines { get; } = [];
+
+		public ILogger CreateLogger(string categoryName) => this;
+
+		public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+		public bool IsEnabled(LogLevel logLevel) => true;
+
+		public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter) =>
+			Lines.Add(formatter(state, exception));
+
+		public void Dispose()
+		{
+		}
+	}
+
+	[Test]
+	public async Task AddMarkupString_LogsWhatDecodersDrop()
+	{
+		var captured = new Captured();
+		using var services = new ServiceCollection()
+			.AddLogging(logging => logging.SetMinimumLevel(LogLevel.Debug).AddProvider(captured))
+			.AddMarkupString(options => options.LinkSchemes.Add("mudclient"))
+			.Services.BuildServiceProvider();
+		services.GetRequiredService<IDecoderFactory>().CreateDecoder().Feed("\e[5;5H");
+		await Assert.That(captured.Lines).IsEquivalentTo(["Decoder dropped 1 × UnhandledSequence"]);
+		var link = MarkupText.Wrap(new AnsiMarkup(new AnsiStyle { LinkUrl = "mudclient://look", LinkKind = LinkKind.Url }), "look");
+		await Assert.That(link.Render(MarkupFormat.Html, services.GetRequiredService<MarkupRegistry>())).Contains("href=\"mudclient://look\"");
 	}
 }

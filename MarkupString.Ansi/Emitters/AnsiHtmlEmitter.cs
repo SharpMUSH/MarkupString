@@ -45,7 +45,7 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 
 		if (!hasStyle && !hasClasses)
 		{
-			WriteAnchored(style, body, output);
+			WriteAnchored(style, body, context.Registry.Links, output);
 			return;
 		}
 
@@ -76,7 +76,7 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 		}
 
 		output.Write(">");
-		WriteAnchored(style, body, output);
+		WriteAnchored(style, body, context.Registry.Links, output);
 		output.Write("</span>");
 	}
 
@@ -144,7 +144,7 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 	/// <c>xch_cmd</c> — so it carries <c>role</c> and <c>tabindex</c> to stay keyboard-reachable. A
 	/// URL link with a scheme <see cref="UrlSafety"/> rejects falls back to plain text.
 	/// </summary>
-	private static void WriteAnchored(in AnsiStyle style, ReadOnlySpan<char> body, IBufferWriter<char> output)
+	private static void WriteAnchored(in AnsiStyle style, ReadOnlySpan<char> body, IUrlPolicy links, IBufferWriter<char> output)
 	{
 		if (style.LinkUrl is not { Length: > 0 } url)
 		{
@@ -158,7 +158,7 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 			output.Write(WebUtility.HtmlEncode(url));
 			output.Write("\"");
 		}
-		else if (UrlSafety.IsSafeNavigableUrl(url))
+		else if (links.IsAllowed(url))
 		{
 			output.Write("<a href=\"");
 			output.Write(WebUtility.HtmlEncode(url));

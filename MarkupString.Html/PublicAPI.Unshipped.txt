@@ -1,1 +1,3 @@
 #nullable enable
+MarkupString.Html.HtmlTagPolicy.Links.get -> MarkupString.IUrlPolicy!
+MarkupString.Html.HtmlTagPolicy.Links.init -> void

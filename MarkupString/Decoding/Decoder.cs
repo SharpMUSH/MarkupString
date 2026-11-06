@@ -245,42 +245,66 @@ public sealed class DecodeDiagnostics
 	public int AbandonedSequences
 	{
 		get => _abandoned;
-		set => _abandoned = Report(_abandoned, value, "abandoned-sequence");
+		set => _abandoned = Report(_abandoned, value, DecodeDrop.AbandonedSequence);
 	}
 
 	/// <summary>Well-formed sequences no handler claimed.</summary>
 	public int UnhandledSequences
 	{
 		get => _unhandled;
-		set => _unhandled = Report(_unhandled, value, "unhandled-sequence");
+		set => _unhandled = Report(_unhandled, value, DecodeDrop.UnhandledSequence);
 	}
 
 	/// <summary>Control characters no handler claimed.</summary>
 	public int UnhandledControls
 	{
 		get => _controls;
-		set => _controls = Report(_controls, value, "unhandled-control");
+		set => _controls = Report(_controls, value, DecodeDrop.UnhandledControl);
 	}
 
 	/// <summary>Things dropped because a limit was reached: an element stack, a line length, a picture size.</summary>
 	public int LimitsReached
 	{
 		get => _limits;
-		set => _limits = Report(_limits, value, "limit");
+		set => _limits = Report(_limits, value, DecodeDrop.Limit);
 	}
 
 	/// <summary>Pictures that could not be decoded.</summary>
 	public int PicturesFailed
 	{
 		get => _pictures;
-		set => _pictures = Report(_pictures, value, "picture");
+		set => _pictures = Report(_pictures, value, DecodeDrop.Picture);
 	}
 
-	private int Report(int before, int after, string kind)
+	/// <summary>Raised each time a count goes up, with what was dropped and how many.</summary>
+	public event Action<DecodeDrop, int>? Dropped;
+
+	private int Report(int before, int after, DecodeDrop kind)
 	{
-		if (after > before) _metrics?.Dropped(after - before, kind);
+		if (after <= before) return after;
+		_metrics?.Dropped(after - before, kind);
+		Dropped?.Invoke(kind, after - before);
 		return after;
 	}
+}
+
+/// <summary>What a decoder dropped, as <see cref="DecodeDiagnostics.Dropped"/> reports it.</summary>
+public enum DecodeDrop
+{
+	/// <summary>A sequence that was malformed, too long, or cut off by a line ending.</summary>
+	AbandonedSequence,
+
+	/// <summary>A well-formed sequence no handler claimed.</summary>
+	UnhandledSequence,
+
+	/// <summary>A control character no handler claimed.</summary>
+	UnhandledControl,
+
+	/// <summary>Something dropped because a limit was reached.</summary>
+	Limit,
+
+	/// <summary>A picture that could not be decoded.</summary>
+	Picture,
 }
 
 /// <summary>The decoding meter, one for each meter factory.</summary>
@@ -299,5 +323,14 @@ internal sealed class DecodeMetrics
 	public static DecodeMetrics For(System.Diagnostics.Metrics.IMeterFactory? factory) =>
 		factory is null ? Shared : ByFactory.GetValue(factory, static f => new DecodeMetrics(f.Create(new System.Diagnostics.Metrics.MeterOptions(MeterName))));
 
-	public void Dropped(int count, string kind) => _dropped.Add(count, new KeyValuePair<string, object?>("kind", kind));
+	public void Dropped(int count, DecodeDrop kind) => _dropped.Add(count, new KeyValuePair<string, object?>("kind", Tag(kind)));
+
+	private static string Tag(DecodeDrop kind) => kind switch
+	{
+		DecodeDrop.AbandonedSequence => "abandoned-sequence",
+		DecodeDrop.UnhandledSequence => "unhandled-sequence",
+		DecodeDrop.UnhandledControl => "unhandled-control",
+		DecodeDrop.Limit => "limit",
+		_ => "picture",
+	};
 }

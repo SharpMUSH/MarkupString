@@ -39,9 +39,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   [Dependency injection](docs/dependency-injection.md).
 - Interfaces to inject: `IDecoderFactory` (a `DecoderRegistry` is one), `IStyleResolver` (a `DisplayRegistry` is one;
   `SpanRenderer` and `CellRenderer` take it), and `IUrlPolicy` with `UrlPolicy.Safe` and `UrlPolicy.WithSchemes`, set as
-  `DecoderOptions.Links` and `DisplayOptions.Links`.
+  `DecoderOptions.Links`, `DisplayOptions.Links`, `MarkupRegistry.WithLinks` (every writer asks it) and
+  `HtmlTagPolicy.Links`.
 - Decode diagnostics are reported on the `MarkupString.Decoding` meter (`markupstring.decoding.dropped`, by `kind`),
-  through `DecoderOptions.Meters` when a host gives its `IMeterFactory`.
+  through `DecoderOptions.Meters` when a host gives its `IMeterFactory`, and raised as `DecodeDiagnostics.Dropped`;
+  the DI package logs them at debug level to the host's `ILoggerFactory`.
 - `IPictureCache` and `MemoryPictureCache`: `WithPictures(cache)` shares decoded pictures between connections, and a
   host can keep them in a cache of its own.
 - Kitty animation frames (`a=f`, and frame times with `a=a`) decode into a moving `StoredPicture`, given as a GIF.

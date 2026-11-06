@@ -61,7 +61,7 @@ public sealed class AnsiSetEmitter(AnsiOutputOptions options) : IMarkupSetEmitte
 		}
 		else
 		{
-			AnsiEmitterSupport.WriteLinked(effective, body, _options.Features, core);
+			AnsiEmitterSupport.WriteLinked(effective, body, _options.Features, context.Registry.Links, core);
 		}
 
 		// Nothing follows that would diff this state away, so close it here rather than leaving the

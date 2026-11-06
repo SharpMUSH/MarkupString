@@ -204,7 +204,7 @@ line.Render(MarkupFormat.Markdown);  // **Note:** see [the rules](https://exampl
   opened again round a line ending, since emphasis cannot cross a blank line. Markdown itself does not
   read a delimiter between punctuation and a letter, as in `**Note:**text`; leave a space there.
 - **Links**: a URL link is `[text](address)`, its address percent-encoded where Markdown would end it
-  early (a space, parentheses, angle brackets, a backslash, a pipe); an address `UrlSafety` refuses, and a
+  early (a space, parentheses, angle brackets, a backslash, a pipe); an address the registry's `Links` refuses, and a
   command link, are their text. A picture is `![description](address)` when its address is http(s) or
   relative, and its text otherwise; a picture inside a link is a linked image. Points — sounds, a bell, a
   clear — write nothing, and the rest of the shared vocabulary writes its text.
@@ -303,7 +303,7 @@ text.Render(MarkupFormat.Mxp);                            // <SEND HREF="north">
 
 `HtmlMarkup.Create` writes its tag name and attribute string as given. `HtmlTagPolicy` is the machinery
 for holding one to a list of allowed tags and attributes, with any address-bearing attribute checked
-against `UrlSafety`; `WithHtml(policy)` applies it to every tag rendered in `Html` as it is written, so
+against the policy's `Links` (`UrlPolicy.Safe` unless set); `WithHtml(policy)` applies it to every tag rendered in `Html` as it is written, so
 a refused tag leaves its body unwrapped and a refused attribute is dropped.
 
 The library ships no posture of its own — `HtmlTagPolicy.WellFormed` allows any well-formed tag, and
