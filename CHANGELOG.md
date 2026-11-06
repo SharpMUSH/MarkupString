@@ -33,6 +33,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   models. See [Display](docs/display.md).
 - `CommandMenuMarkup` (a menu of commands, or a prompt), `HighlightMarkup` (a background) and `LinkGroupMarkup`
   (an OSC 8 `id`, which becomes `Interaction.Group`) in core, with codecs.
+- `IPictureCache` and `MemoryPictureCache`: `WithPictures(cache)` shares decoded pictures between connections, and a
+  host can keep them in a cache of its own.
 - Kitty animation frames (`a=f`, and frame times with `a=a`) decode into a moving `StoredPicture`, given as a GIF.
 - Spans and cells at `ColorLevel.Standard` or `Xterm256` get the nearest colour of that palette.
 - `AnsiStyle.Concealed` (SGR 8), written as SGR 8 and as `ms-conceal` in HTML.

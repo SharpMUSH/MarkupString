@@ -29,12 +29,14 @@ public sealed class PicturesPlugin : IDecoderPlugin
 
 	private static readonly Dictionary<int, int> DiacriticIndex = BuildDiacriticIndex();
 
-	/// <summary>The one instance.</summary>
-	public static PicturesPlugin Instance { get; } = new();
+	/// <summary>The instance that gives each connection a cache of its own.</summary>
+	public static PicturesPlugin Instance { get; } = new(null);
 
-	private PicturesPlugin()
-	{
-	}
+	/// <summary>The plugin with every connection's pictures kept in <paramref name="cache"/>, or each in its own when null.</summary>
+	public PicturesPlugin(IPictureCache? cache) => Cache = cache;
+
+	/// <summary>The cache every connection's pictures are kept in, or null for one each.</summary>
+	public IPictureCache? Cache { get; }
 
 	/// <inheritdoc/>
 	public string Name => "pictures";
@@ -43,7 +45,16 @@ public sealed class PicturesPlugin : IDecoderPlugin
 	public static PictureStore Pictures(Decoder decoder)
 	{
 		ArgumentNullException.ThrowIfNull(decoder);
-		return decoder.State<PictureState>().Store;
+		var state = decoder.State<PictureState>();
+		state.Bind(decoder.Registry.Plugins.OfType<PicturesPlugin>().FirstOrDefault()?.Cache);
+		return state.Store;
+	}
+
+	private PictureState Bind(DecodeContext context)
+	{
+		var state = context.State<PictureState>();
+		state.Bind(Cache);
+		return state;
 	}
 
 	/// <inheritdoc/>
@@ -51,11 +62,15 @@ public sealed class PicturesPlugin : IDecoderPlugin
 	{
 		ArgumentNullException.ThrowIfNull(builder);
 		builder
-			.OnApc(static (payload, context) => payload.Length > 0 && payload[0] == 'G' && Kitty(payload[1..], context))
-			.OnOsc(1337, static (payload, context) => InlineImage(payload, context))
-			.OnDcs('q', static (in CsiSequence header, ReadOnlySpan<char> data, DecodeContext context) => Sixel(header, data, context))
-			.OnPrint(static (text, context) => Placeholders(text, context))
-			.OnLineEnd(static context => DrawOverlays(context));
+			.OnApc((payload, context) => payload.Length > 0 && payload[0] == 'G' && Bind(context) is not null && Kitty(payload[1..], context))
+			.OnOsc(1337, (payload, context) => Bind(context) is not null && InlineImage(payload, context))
+			.OnDcs('q', (in CsiSequence header, ReadOnlySpan<char> data, DecodeContext context) => Bind(context) is not null && Sixel(header, data, context))
+			.OnPrint((text, context) => Bind(context) is not null && Placeholders(text, context))
+			.OnLineEnd(context =>
+			{
+				Bind(context);
+				DrawOverlays(context);
+			});
 	}
 
 	// ── Kitty ───────────────────────────────────────────────────────────────────
@@ -180,14 +195,12 @@ public sealed class PicturesPlugin : IDecoderPlugin
 
 	private static StoredPicture? DecodeKitty(KittyKeys keys, byte[] bytes, PictureStore store)
 	{
+		// A file already held is not decoded again.
+		if (keys.Format == 100 && store.TryGetFile(bytes, out var held) && held.Pixels is not null) return held;
 		if (DecodePixels(keys, bytes, store.MaxPixels) is not { } pixels) return null;
-		var picture = keys.Format == 100
+		return keys.Format == 100
 			? store.Add(pixels.Width, pixels.Height, pixels.Rgba, bytes, "image/png")
 			: store.Add(pixels.Width, pixels.Height, pixels.Rgba);
-
-		// The same picture sent again starts over as one frame; its frames follow again if it moves.
-		if (picture.IsMoving) store.ReplacePixels(picture, new TerminalPicture(picture.Key, pixels.Width, pixels.Height, pixels.Rgba));
-		return picture;
 	}
 
 	/// <summary>The pixels a Kitty transmission carries: a PNG, or raw RGB or RGBA <c>s</c> × <c>v</c>.</summary>
@@ -238,7 +251,7 @@ public sealed class PicturesPlugin : IDecoderPlugin
 			return false;
 		}
 
-		var animation = Animation(keys.Id, stored, pixels, state);
+		var animation = Animation(keys.Id, ref stored, pixels, state);
 		var size = stored.Width * stored.Height * 4;
 
 		// For a frame, c and r are frame numbers (from 1), not cells.
@@ -298,15 +311,19 @@ public sealed class PicturesPlugin : IDecoderPlugin
 
 		var frame = keys.Rows;
 		if (frame <= 0 || keys.Gap == 0) return;
-		var animation = Animation(keys.Id, stored, pixels, state);
+		var animation = Animation(keys.Id, ref stored, pixels, state);
 		if (frame > animation.Frames.Count) return;
 		animation.Gaps[frame - 1] = keys.Gap;
 		Publish(stored, animation, state.Store);
 	}
 
-	private static KittyAnimation Animation(uint id, StoredPicture stored, TerminalPicture pixels, PictureState state)
+	private static KittyAnimation Animation(uint id, ref StoredPicture stored, TerminalPicture pixels, PictureState state)
 	{
 		if (state.Animations.TryGetValue(id, out var animation)) return animation;
+
+		// Frames go on a copy of its own, so the still picture, shown elsewhere too, stays still.
+		stored = state.Store.Fork(stored);
+		state.KittyImages[id] = state.KittyImages[id] with { Key = stored.Key };
 		animation = new KittyAnimation();
 		if (pixels.Frames.Count > 0)
 		{
@@ -571,7 +588,12 @@ public sealed class PicturesPlugin : IDecoderPlugin
 
 		var store = context.State<PictureState>().Store;
 		StoredPicture? picture = null;
-		if (PngDecoder.TryDecode(bytes, store.MaxPixels, out var width, out var height, out var rgba))
+		if (store.TryGetFile(bytes, out var held))
+		{
+			// A file already held is not decoded again.
+			picture = held;
+		}
+		else if (PngDecoder.TryDecode(bytes, store.MaxPixels, out var width, out var height, out var rgba))
 		{
 			picture = store.Add(width, height, rgba, bytes, "image/png");
 		}
@@ -929,7 +951,17 @@ public sealed class PicturesPlugin : IDecoderPlugin
 /// <summary>The pictures plugin's state for one decoder.</summary>
 internal sealed class PictureState
 {
-	public PictureStore Store { get; } = new();
+	private IPictureCache? _cache;
+	private PictureStore? _store;
+
+	/// <summary>This connection's store, in the plugin's cache when it has one.</summary>
+	public PictureStore Store => _store ??= new PictureStore(_cache);
+
+	/// <summary>Takes the plugin's cache, before the store is first made.</summary>
+	public void Bind(IPictureCache? cache)
+	{
+		if (_store is null) _cache = cache;
+	}
 
 	public Dictionary<uint, PicturesPlugin.KittyImage> KittyImages { get; } = [];
 
@@ -956,6 +988,17 @@ public static class PictureDecoding
 	{
 		ArgumentNullException.ThrowIfNull(registry);
 		return registry.With(PicturesPlugin.Instance);
+	}
+
+	/// <summary>
+	/// The registry with <see cref="PicturesPlugin"/>, every decoder it makes keeping its pictures in
+	/// <paramref name="cache"/>: a picture several connections are sent is decoded and kept once.
+	/// </summary>
+	public static DecoderRegistry WithPictures(this DecoderRegistry registry, IPictureCache cache)
+	{
+		ArgumentNullException.ThrowIfNull(registry);
+		ArgumentNullException.ThrowIfNull(cache);
+		return registry.With(new PicturesPlugin(cache));
 	}
 
 	/// <summary>The pictures <paramref name="decoder"/> has read.</summary>

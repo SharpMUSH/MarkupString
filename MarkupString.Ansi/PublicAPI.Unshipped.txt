@@ -57,8 +57,6 @@ MarkupString.Ansi.Decoding.PictureStore
 MarkupString.Ansi.Decoding.PictureStore.Add(int width, int height, byte[]! rgba) -> MarkupString.Ansi.Decoding.StoredPicture!
 MarkupString.Ansi.Decoding.PictureStore.Add(int width, int height, byte[]? rgba, System.ReadOnlyMemory<byte> encoded, string? mediaType) -> MarkupString.Ansi.Decoding.StoredPicture!
 MarkupString.Ansi.Decoding.PictureStore.Added -> System.Action<MarkupString.Ansi.Decoding.StoredPicture!>?
-MarkupString.Ansi.Decoding.PictureStore.Budget.get -> long
-MarkupString.Ansi.Decoding.PictureStore.Budget.set -> void
 MarkupString.Ansi.Decoding.PictureStore.Count.get -> int
 MarkupString.Ansi.Decoding.PictureStore.MarkTransmitted(uint imageId) -> bool
 MarkupString.Ansi.Decoding.PictureStore.MaxPixels.get -> long
@@ -68,7 +66,6 @@ MarkupString.Ansi.Decoding.PictureStore.Remove(string! key) -> bool
 MarkupString.Ansi.Decoding.PictureStore.TryGet(MarkupString.ImageMarkup! image, out MarkupString.Ansi.Decoding.StoredPicture? picture) -> bool
 MarkupString.Ansi.Decoding.PictureStore.TryGet(string! key, out MarkupString.Ansi.Decoding.StoredPicture? picture) -> bool
 MarkupString.Ansi.Decoding.PictureStore.TryGetPicture(MarkupString.ImageMarkup! image, out MarkupString.Ansi.TerminalPicture? picture) -> bool
-MarkupString.Ansi.Decoding.PictureStore.Used.get -> long
 MarkupString.Ansi.Decoding.PicturesPlugin
 MarkupString.Ansi.Decoding.PicturesPlugin.Name.get -> string!
 MarkupString.Ansi.Decoding.PicturesPlugin.Register(MarkupString.Decoding.DecoderBuilder! builder) -> void
@@ -92,3 +89,21 @@ MarkupString.Ansi.Decoding.StoredPicture.IsMoving.get -> bool
 MarkupString.Ansi.Decoding.StoredPicture.MediaType.get -> string!
 const MarkupString.Ansi.Decoding.PicturesPlugin.MaxFrames = 1000 -> int
 const MarkupString.Ansi.Decoding.VtPens.LinkGroup = "link-group" -> string!
+MarkupString.Ansi.Decoding.IPictureCache
+MarkupString.Ansi.Decoding.IPictureCache.Remove(string! key) -> bool
+MarkupString.Ansi.Decoding.IPictureCache.Set(MarkupString.Ansi.Decoding.StoredPicture! picture) -> void
+MarkupString.Ansi.Decoding.IPictureCache.TryGet(string! key, out MarkupString.Ansi.Decoding.StoredPicture? picture) -> bool
+MarkupString.Ansi.Decoding.MemoryPictureCache
+MarkupString.Ansi.Decoding.MemoryPictureCache.Budget.get -> long
+MarkupString.Ansi.Decoding.MemoryPictureCache.Budget.set -> void
+MarkupString.Ansi.Decoding.MemoryPictureCache.Count.get -> int
+MarkupString.Ansi.Decoding.MemoryPictureCache.MemoryPictureCache() -> void
+MarkupString.Ansi.Decoding.MemoryPictureCache.Remove(string! key) -> bool
+MarkupString.Ansi.Decoding.MemoryPictureCache.Set(MarkupString.Ansi.Decoding.StoredPicture! picture) -> void
+MarkupString.Ansi.Decoding.MemoryPictureCache.TryGet(string! key, out MarkupString.Ansi.Decoding.StoredPicture? picture) -> bool
+MarkupString.Ansi.Decoding.MemoryPictureCache.Used.get -> long
+MarkupString.Ansi.Decoding.PictureStore.Cache.get -> MarkupString.Ansi.Decoding.IPictureCache!
+MarkupString.Ansi.Decoding.PictureStore.PictureStore(MarkupString.Ansi.Decoding.IPictureCache? cache) -> void
+MarkupString.Ansi.Decoding.PicturesPlugin.Cache.get -> MarkupString.Ansi.Decoding.IPictureCache?
+MarkupString.Ansi.Decoding.PicturesPlugin.PicturesPlugin(MarkupString.Ansi.Decoding.IPictureCache? cache) -> void
+static MarkupString.Ansi.Decoding.PictureDecoding.WithPictures(this MarkupString.Decoding.DecoderRegistry! registry, MarkupString.Ansi.Decoding.IPictureCache! cache) -> MarkupString.Decoding.DecoderRegistry!

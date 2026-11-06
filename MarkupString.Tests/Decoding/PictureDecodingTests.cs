@@ -261,12 +261,83 @@ public class PictureDecodingTests
 	[Test]
 	public async Task Store_EvictsTheLeastRecentlyUsed()
 	{
-		var store = new PictureStore { Budget = 100 };
+		var cache = new MemoryPictureCache { Budget = 100 };
+		var store = new PictureStore(cache);
 		var first = store.Add(4, 4, new byte[64]);
 		var second = store.Add(4, 4, Enumerable.Repeat((byte)1, 64).ToArray());
 		await Assert.That(store.TryGet(first.Key, out _)).IsFalse();
 		await Assert.That(store.TryGet(second.Key, out _)).IsTrue();
-		await Assert.That(store.Used).IsEqualTo(64);
+		await Assert.That(cache.Used).IsEqualTo(64);
+	}
+
+	[Test]
+	public async Task SharedCache_DecodesTheSamePictureOnce()
+	{
+		var cache = new MemoryPictureCache();
+		var registry = VtDecoding.Terminal.WithPictures(cache);
+		var wire = Wire(TerminalFeatures.KittyGraphics, RedBlue());
+		var first = registry.CreateDecoder();
+		var second = registry.CreateDecoder();
+		var added = 0;
+		first.Pictures().Added += _ => added++;
+		second.Pictures().Added += _ => added++;
+
+		first.Feed(wire);
+		second.Feed(wire);
+
+		await Assert.That(first.Pictures().Cache).IsSameReferenceAs(cache);
+		await Assert.That(cache.Count).IsEqualTo(1);
+		await Assert.That(added).IsEqualTo(1);
+		await Assert.That(second.Pictures().Count).IsEqualTo(1);
+	}
+
+	[Test]
+	public async Task SharedCache_AMovingPictureDoesNotChangeTheStillOne()
+	{
+		var cache = new MemoryPictureCache();
+		var registry = VtDecoding.Terminal.WithPictures(cache);
+		var still = registry.CreateDecoder();
+		var moving = registry.CreateDecoder();
+		var root = $"\e_Ga=t,i=3,f=32,s=1,v=1;{Convert.ToBase64String([0, 0, 0, 255])}\e\\";
+		still.Feed(root);
+		moving.Feed(root);
+		moving.Feed($"\e_Ga=f,i=3,f=32,s=1,v=1,X=1;{Convert.ToBase64String([255, 0, 0, 255])}\e\\");
+
+		var placed = (Decoder decoder) => decoder.Feed("\e_Ga=p,i=3,c=1,r=1\e\\\n")
+			.SelectMany(line => line.Content.Runs).SelectMany(run => run.Markups).OfType<ImageMarkup>().First();
+		await Assert.That(still.Pictures().TryGet(placed(still), out var a)).IsTrue();
+		await Assert.That(moving.Pictures().TryGet(placed(moving), out var b)).IsTrue();
+		await Assert.That(a!.IsMoving).IsFalse();
+		await Assert.That(b!.IsMoving).IsTrue();
+		await Assert.That(cache.Count).IsEqualTo(2);
+	}
+
+	private sealed class CountingCache : IPictureCache
+	{
+		public Dictionary<string, StoredPicture> Held { get; } = [];
+
+		public int Sets { get; private set; }
+
+		public bool TryGet(string key, [NotNullWhen(true)] out StoredPicture? picture) => Held.TryGetValue(key, out picture);
+
+		public void Set(StoredPicture picture)
+		{
+			Sets++;
+			Held[picture.Key] = picture;
+		}
+
+		public bool Remove(string key) => Held.Remove(key);
+	}
+
+	[Test]
+	public async Task CustomCache_HoldsThePictures()
+	{
+		var cache = new CountingCache();
+		var decoder = VtDecoding.Terminal.WithPictures(cache).CreateDecoder();
+		var lines = decoder.Feed(Wire(TerminalFeatures.InlineImages, RedBlue()));
+		var image = lines.SelectMany(line => line.Content.Runs).SelectMany(run => run.Markups).OfType<ImageMarkup>().First();
+		await Assert.That(cache.Held.ContainsKey(image.Source[PictureStore.Scheme.Length..])).IsTrue();
+		await Assert.That(cache.Sets).IsEqualTo(1);
 	}
 
 	[Test]

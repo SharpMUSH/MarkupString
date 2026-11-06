@@ -489,13 +489,25 @@ foreach (var image in lines.SelectMany(l => l.Content.Runs).SelectMany(r => r.Ma
 The pixels live in the decoder's `PictureStore`, and an image's `Source` is `picture:` and a key
 (a hash of the picture, so the same picture sent twice is stored once). The store:
 
-- keeps `Budget` bytes (64 MiB), dropping the least recently used first. A line whose picture is gone
-  shows its text instead.
+- keeps its pictures in an `IPictureCache`: by default a `MemoryPictureCache` of its own, which holds
+  `Budget` bytes (64 MiB) and drops the least recently used first. A line whose picture is gone shows
+  its text instead.
+- shares one cache between connections with `WithPictures(cache)`, so a picture every player is sent
+  is decoded and kept once. A file already in the cache is not decoded again. The cache can be your
+  own (on disk, in Redis); it must be safe to call from several threads. A connection that adds
+  frames to a picture does so on a copy under a key of its own, so the still picture other lines
+  show does not change.
 - refuses a picture of more than `MaxPixels` (4096 × 4096).
 - is the `ITerminalPictureSource` to give `AnsiOutputOptions.Pictures`, so decoded pictures can be
   written to a terminal again.
 - gives `StoredPicture.ToDataUrl()` for an `<img>`, and raises `Added` so a host can serve pictures
-  from its own address instead.
+  from its own address instead. A picture already in a shared cache is not raised again.
+
+```csharp
+var cache = new MemoryPictureCache { Budget = 256L * 1024 * 1024 };   // one for the whole server
+var registry = DecoderRegistry.Empty.WithVt().WithPictures(cache);
+var decoder = registry.CreateDecoder();                               // per connection, same cache
+```
 
 PNG and sixel are decoded here, and Kitty's raw RGB and RGBA, zlib-compressed or not. A GIF, JPEG or
 WebP sent as an iTerm2 image is kept as the file with no pixels: a browser shows it, a terminal gets

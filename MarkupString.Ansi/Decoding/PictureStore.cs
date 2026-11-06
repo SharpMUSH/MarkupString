@@ -82,36 +82,173 @@ public sealed class StoredPicture
 }
 
 /// <summary>
-/// The pictures one connection's decoder read, within a budget of bytes; the least recently used go first. It is
-/// also the <see cref="ITerminalPictureSource"/> that draws them again in a terminal. Get a decoder's with
+/// Where decoded pictures are kept, by <see cref="StoredPicture.Key"/>: a hash of the picture, so the same picture
+/// is kept once however often, and by however many connections, it is sent. Give one to
+/// <see cref="PictureDecoding.WithPictures(MarkupString.Decoding.DecoderRegistry, IPictureCache)"/> to share it
+/// between connections, or to keep pictures somewhere of your own. <see cref="MemoryPictureCache"/> is the default.
+/// </summary>
+/// <remarks>
+/// Decoders on different threads may share one cache, so an implementation must be safe to call from several
+/// threads at once. A picture is not changed once it is in a cache, except one that a connection made for its own
+/// moving picture, under a key of its own; <see cref="Set"/> is called again when that one gains a frame.
+/// </remarks>
+public interface IPictureCache
+{
+	/// <summary>The picture with <paramref name="key"/>, if it is held.</summary>
+	bool TryGet(string key, [NotNullWhen(true)] out StoredPicture? picture);
+
+	/// <summary>Holds <paramref name="picture"/>, or takes note that its <see cref="StoredPicture.Size"/> changed.</summary>
+	void Set(StoredPicture picture);
+
+	/// <summary>Forgets the picture with <paramref name="key"/>.</summary>
+	bool Remove(string key);
+}
+
+/// <summary>Pictures in memory, within a budget of bytes; the least recently used go first. Safe to share.</summary>
+public sealed class MemoryPictureCache : IPictureCache
+{
+	private sealed class Entry(StoredPicture picture)
+	{
+		public StoredPicture Picture { get; } = picture;
+
+		public long Size { get; set; }
+	}
+
+	private readonly Dictionary<string, LinkedListNode<Entry>> _pictures = new(StringComparer.Ordinal);
+	private readonly LinkedList<Entry> _order = [];
+	private readonly Lock _lock = new();
+	private long _budget = 64L * 1024 * 1024;
+
+	/// <summary>The most bytes held. 64 MiB unless set.</summary>
+	public long Budget
+	{
+		get => _budget;
+		set
+		{
+			lock (_lock)
+			{
+				_budget = value;
+				Evict(null);
+			}
+		}
+	}
+
+	/// <summary>The bytes held now.</summary>
+	public long Used { get; private set; }
+
+	/// <summary>The pictures held now.</summary>
+	public int Count
+	{
+		get
+		{
+			lock (_lock) return _pictures.Count;
+		}
+	}
+
+	/// <inheritdoc/>
+	public bool TryGet(string key, [NotNullWhen(true)] out StoredPicture? picture)
+	{
+		ArgumentNullException.ThrowIfNull(key);
+		lock (_lock)
+		{
+			if (_pictures.TryGetValue(key, out var node))
+			{
+				_order.Remove(node);
+				_order.AddFirst(node);
+				picture = node.Value.Picture;
+				return true;
+			}
+		}
+
+		picture = null;
+		return false;
+	}
+
+	/// <inheritdoc/>
+	public void Set(StoredPicture picture)
+	{
+		ArgumentNullException.ThrowIfNull(picture);
+		lock (_lock)
+		{
+			if (_pictures.TryGetValue(picture.Key, out var node))
+			{
+				_order.Remove(node);
+				Used -= node.Value.Size;
+			}
+			else
+			{
+				node = new LinkedListNode<Entry>(new Entry(picture));
+				_pictures[picture.Key] = node;
+			}
+
+			node.Value.Size = picture.Size;
+			Used += node.Value.Size;
+			_order.AddFirst(node);
+			Evict(picture);
+		}
+	}
+
+	/// <inheritdoc/>
+	public bool Remove(string key)
+	{
+		ArgumentNullException.ThrowIfNull(key);
+		lock (_lock) return RemoveHeld(key);
+	}
+
+	private bool RemoveHeld(string key)
+	{
+		if (!_pictures.Remove(key, out var node)) return false;
+		_order.Remove(node);
+		Used -= node.Value.Size;
+		return true;
+	}
+
+	/// <summary>Drops the least recently used until the budget is met, keeping the newest and <paramref name="keep"/>.</summary>
+	private void Evict(StoredPicture? keep)
+	{
+		while (Used > _budget && _order.Count > 1 && _order.Last!.Value.Picture != keep) RemoveHeld(_order.Last.Value.Picture.Key);
+	}
+}
+
+/// <summary>
+/// The pictures one connection's decoder read, kept in an <see cref="IPictureCache"/>. It is also the
+/// <see cref="ITerminalPictureSource"/> that draws them again in a terminal. Get a decoder's with
 /// <see cref="PicturesPlugin.Pictures(MarkupString.Decoding.Decoder)"/>.
 /// </summary>
 /// <remarks>
 /// A picture the server deletes (Kitty <c>a=d</c>) is only forgotten by its id: lines already read still show it,
-/// until the budget pushes it out. A line whose picture is gone shows its text instead.
+/// until the cache lets it go. A line whose picture is gone shows its text instead.
 /// </remarks>
 public sealed class PictureStore : ITerminalPictureSource
 {
 	/// <summary>The scheme of a <see cref="StoredPicture.Source"/>.</summary>
 	public const string Scheme = "picture:";
 
-	private readonly Dictionary<string, LinkedListNode<StoredPicture>> _pictures = new(StringComparer.Ordinal);
-	private readonly LinkedList<StoredPicture> _order = [];
+	private readonly HashSet<string> _read = new(StringComparer.Ordinal);
 	private readonly HashSet<uint> _transmitted = [];
 
-	/// <summary>The most bytes held. 64 MiB unless set.</summary>
-	public long Budget { get; set; } = 64L * 1024 * 1024;
+	/// <summary>A store of its own, in a new <see cref="MemoryPictureCache"/>.</summary>
+	public PictureStore()
+		: this(null)
+	{
+	}
+
+	/// <summary>A store that keeps its pictures in <paramref name="cache"/>, or in a new <see cref="MemoryPictureCache"/>.</summary>
+	public PictureStore(IPictureCache? cache) => Cache = cache ?? new MemoryPictureCache();
+
+	/// <summary>Where the pictures are kept.</summary>
+	public IPictureCache Cache { get; }
 
 	/// <summary>The largest picture decoded, in pixels.</summary>
 	public long MaxPixels { get; set; } = 4096L * 4096;
 
-	/// <summary>The bytes held now.</summary>
-	public long Used { get; private set; }
+	/// <summary>How many pictures this connection has read, held or not.</summary>
+	public int Count => _read.Count;
 
-	/// <summary>The pictures held now.</summary>
-	public int Count => _pictures.Count;
-
-	/// <summary>Raised when a picture is stored, so a host can serve it from an address of its own.</summary>
+	/// <summary>
+	/// Raised when a picture is first stored, so a host can serve it from an address of its own. One already in a
+	/// shared cache is not raised again.
+	/// </summary>
 	public event Action<StoredPicture>? Added;
 
 	/// <summary>Stores decoded pixels.</summary>
@@ -120,46 +257,58 @@ public sealed class PictureStore : ITerminalPictureSource
 	/// <summary>Stores a file, with its pixels when they were decoded.</summary>
 	public StoredPicture Add(int width, int height, byte[]? rgba, ReadOnlyMemory<byte> encoded, string? mediaType)
 	{
-		var key = Hash(encoded.IsEmpty ? rgba : encoded.Span);
-		if (_pictures.TryGetValue(key, out var existing))
-		{
-			_order.Remove(existing);
-			_order.AddFirst(existing);
-			return existing.Value;
-		}
+		var key = KeyOf(encoded.IsEmpty ? rgba : encoded.Span);
+		_read.Add(key);
+		if (Cache.TryGet(key, out var existing)) return existing;
 
 		var pixels = rgba is null ? null : new TerminalPicture(key, width, height, rgba);
 		var picture = new StoredPicture(key, width, height, pixels, encoded, mediaType);
-		_pictures[key] = _order.AddFirst(picture);
-		Used += picture.Size;
-		while (Used > Budget && _order.Count > 1) Remove(_order.Last!.Value.Key);
+		Cache.Set(picture);
 		Added?.Invoke(picture);
 		return picture;
 	}
 
-	/// <summary>Replaces a held picture's pixels, as when a moving picture gains a frame.</summary>
-	internal void ReplacePixels(StoredPicture picture, TerminalPicture pixels)
+	/// <summary>
+	/// The picture already held for the file <paramref name="encoded"/>, so it need not be decoded again; never one
+	/// larger than <see cref="MaxPixels"/>.
+	/// </summary>
+	internal bool TryGetFile(ReadOnlySpan<byte> encoded, [NotNullWhen(true)] out StoredPicture? picture)
 	{
-		var held = _pictures.ContainsKey(picture.Key);
-		if (held) Used -= picture.Size;
-		picture.ReplacePixels(pixels);
-		if (!held) return;
-		Used += picture.Size;
-		while (Used > Budget && _order.Count > 1 && _order.Last!.Value != picture) Remove(_order.Last.Value.Key);
-	}
-
-	/// <summary>The picture with <paramref name="key"/>, if it is still held.</summary>
-	public bool TryGet(string key, [NotNullWhen(true)] out StoredPicture? picture)
-	{
-		if (_pictures.TryGetValue(key, out var node))
+		var key = KeyOf(encoded);
+		if (Cache.TryGet(key, out picture) && (long)picture.Width * picture.Height <= MaxPixels)
 		{
-			picture = node.Value;
+			_read.Add(key);
 			return true;
 		}
 
 		picture = null;
 		return false;
 	}
+
+	/// <summary>
+	/// A copy of <paramref name="still"/> under a key of its own, for this connection to add frames to, so the
+	/// still picture, which other lines and connections may show, stays as it is.
+	/// </summary>
+	internal StoredPicture Fork(StoredPicture still)
+	{
+		var key = $"{still.Key}-{Guid.NewGuid():N}";
+		var pixels = still.Pixels is { } source ? new TerminalPicture(key, source.Width, source.Height, source.Rgba) : null;
+		var picture = new StoredPicture(key, still.Width, still.Height, pixels, default, null);
+		_read.Add(key);
+		Cache.Set(picture);
+		Added?.Invoke(picture);
+		return picture;
+	}
+
+	/// <summary>Replaces a picture's pixels, as when a moving picture gains a frame.</summary>
+	internal void ReplacePixels(StoredPicture picture, TerminalPicture pixels)
+	{
+		picture.ReplacePixels(pixels);
+		if (Cache.TryGet(picture.Key, out var held) && held == picture) Cache.Set(picture);
+	}
+
+	/// <summary>The picture with <paramref name="key"/>, if it is still held.</summary>
+	public bool TryGet(string key, [NotNullWhen(true)] out StoredPicture? picture) => Cache.TryGet(key, out picture);
 
 	/// <summary>The picture <paramref name="image"/> shows, if it is one of these and still held.</summary>
 	public bool TryGet(ImageMarkup image, [NotNullWhen(true)] out StoredPicture? picture)
@@ -169,13 +318,11 @@ public sealed class PictureStore : ITerminalPictureSource
 		return image.Source.StartsWith(Scheme, StringComparison.Ordinal) && TryGet(image.Source[Scheme.Length..], out picture);
 	}
 
-	/// <summary>Forgets the picture with <paramref name="key"/>.</summary>
+	/// <summary>Forgets the picture with <paramref name="key"/>, for every connection that shares the cache.</summary>
 	public bool Remove(string key)
 	{
-		if (!_pictures.Remove(key, out var node)) return false;
-		_order.Remove(node);
-		Used -= node.Value.Size;
-		return true;
+		_read.Remove(key);
+		return Cache.Remove(key);
 	}
 
 	/// <inheritdoc/>
@@ -188,7 +335,8 @@ public sealed class PictureStore : ITerminalPictureSource
 	/// <inheritdoc/>
 	public bool MarkTransmitted(uint imageId) => _transmitted.Add(imageId);
 
-	private static string Hash(ReadOnlySpan<byte> data)
+	/// <summary>The key of a picture whose file, or else pixels, are <paramref name="data"/>.</summary>
+	internal static string KeyOf(ReadOnlySpan<byte> data)
 	{
 		Span<byte> hash = stackalloc byte[32];
 		SHA256.HashData(data, hash);
