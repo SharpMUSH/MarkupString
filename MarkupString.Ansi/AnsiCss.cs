@@ -33,6 +33,7 @@ public static class AnsiCss
 		".ms-underline { text-decoration: underline; }\n" +
 		".ms-strike { text-decoration: line-through; }\n" +
 		".ms-overline { text-decoration: overline; }\n" +
+		".ms-conceal { color: transparent; }\n" +
 		".ms-blink { animation: ms-blink 1s step-start infinite; }\n" +
 		".ms-invert { color: var(--ms-bg, #000); background-color: var(--ms-fg, #fff); }\n" +
 		".ms-cmd-link { cursor: pointer; text-decoration: underline dotted; }\n" +

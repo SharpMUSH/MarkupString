@@ -278,7 +278,7 @@ internal static class AnsiEmitterSupport
 	internal static bool LeavesState(in AnsiStyle style) =>
 		style.Foreground is not null || style.Background is not null
 		|| style.Bold || style.Faint || style.Italic || style.Underlined
-		|| style.Overlined || style.Blink || style.Inverted || style.StrikeThrough;
+		|| style.Overlined || style.Blink || style.Inverted || style.StrikeThrough || style.Concealed;
 
 	private static void WriteTaggedLink(
 		in AnsiStyle style,

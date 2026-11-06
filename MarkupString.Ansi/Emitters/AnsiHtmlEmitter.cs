@@ -114,7 +114,7 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 	/// </summary>
 	private static bool HasClasses(in AnsiStyle style, bool hasColourStyle) =>
 		style.Bold || style.Faint || style.Italic || style.Underlined
-		|| style.StrikeThrough || style.Overlined || style.Blink
+		|| style.StrikeThrough || style.Overlined || style.Blink || style.Concealed
 		|| (style.Inverted && !hasColourStyle);
 
 	private static void WriteClasses(in AnsiStyle style, bool hasColourStyle, IBufferWriter<char> output)
@@ -127,6 +127,7 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 		AppendClass(style.StrikeThrough, "ms-strike", ref first, output);
 		AppendClass(style.Overlined, "ms-overline", ref first, output);
 		AppendClass(style.Blink, "ms-blink", ref first, output);
+		AppendClass(style.Concealed, "ms-conceal", ref first, output);
 		AppendClass(style.Inverted && !hasColourStyle, "ms-invert", ref first, output);
 	}
 

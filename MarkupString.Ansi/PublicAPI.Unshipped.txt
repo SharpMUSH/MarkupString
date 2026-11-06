@@ -3,3 +3,52 @@ MarkupString.Ansi.AnsiMarkdownEmitter
 MarkupString.Ansi.AnsiMarkdownEmitter.AnsiMarkdownEmitter() -> void
 MarkupString.Ansi.AnsiMarkdownEmitter.Format.get -> MarkupString.MarkupFormat!
 MarkupString.Ansi.AnsiMarkdownEmitter.TryEmit(MarkupString.MarkupSet! set, System.ReadOnlySpan<char> body, in MarkupString.EmitContext context, System.Buffers.IBufferWriter<char>! output) -> bool
+MarkupString.Ansi.AnsiStyle.Concealed.get -> bool
+MarkupString.Ansi.AnsiStyle.Concealed.init -> void
+MarkupString.Ansi.Decoding.AnsiColors
+MarkupString.Ansi.Decoding.AnsiColors.AnsiColors() -> void
+MarkupString.Ansi.Decoding.AnsiDisplay
+MarkupString.Ansi.Decoding.AnsiStyles
+MarkupString.Ansi.Decoding.AnsiStyles.Contribute(MarkupString.MarkupSet! markups, MarkupString.Display.StyleBuilder! style, MarkupString.Display.DisplayOptions! options) -> void
+MarkupString.Ansi.Decoding.AnswersPlugin
+MarkupString.Ansi.Decoding.AnswersPlugin.Name.get -> string!
+MarkupString.Ansi.Decoding.AnswersPlugin.Register(MarkupString.Decoding.DecoderBuilder! builder) -> void
+MarkupString.Ansi.Decoding.CharsetPlugin
+MarkupString.Ansi.Decoding.CharsetPlugin.Name.get -> string!
+MarkupString.Ansi.Decoding.CharsetPlugin.Register(MarkupString.Decoding.DecoderBuilder! builder) -> void
+MarkupString.Ansi.Decoding.ControlsPlugin
+MarkupString.Ansi.Decoding.ControlsPlugin.Name.get -> string!
+MarkupString.Ansi.Decoding.ControlsPlugin.Register(MarkupString.Decoding.DecoderBuilder! builder) -> void
+MarkupString.Ansi.Decoding.OscPlugin
+MarkupString.Ansi.Decoding.OscPlugin.Name.get -> string!
+MarkupString.Ansi.Decoding.OscPlugin.Register(MarkupString.Decoding.DecoderBuilder! builder) -> void
+MarkupString.Ansi.Decoding.SgrPlugin
+MarkupString.Ansi.Decoding.SgrPlugin.Name.get -> string!
+MarkupString.Ansi.Decoding.SgrPlugin.Register(MarkupString.Decoding.DecoderBuilder! builder) -> void
+MarkupString.Ansi.Decoding.VtDecoding
+MarkupString.Ansi.Decoding.VtPens
+const MarkupString.Ansi.Decoding.ControlsPlugin.TabStop = 8 -> int
+const MarkupString.Ansi.Decoding.OscPlugin.MaxUriLength = 2083 -> int
+const MarkupString.Ansi.Decoding.VtPens.Link = "link" -> string!
+const MarkupString.Ansi.Decoding.VtPens.Style = "sgr" -> string!
+static MarkupString.Ansi.Decoding.AnsiColors.Default.get -> MarkupString.Ansi.Decoding.AnsiColors!
+static MarkupString.Ansi.Decoding.AnsiDisplay.Default.get -> MarkupString.Display.DisplayRegistry!
+static MarkupString.Ansi.Decoding.AnsiDisplay.ToColorDepth(this MarkupString.Display.OutputCapabilities! capabilities) -> MarkupString.Ansi.AnsiColorDepth
+static MarkupString.Ansi.Decoding.AnsiDisplay.ToOutputCapabilities(this MarkupString.Ansi.TerminalProfile! profile, MarkupString.Ansi.AnsiColorDepth depth) -> MarkupString.Display.OutputCapabilities!
+static MarkupString.Ansi.Decoding.AnsiDisplay.ToTerminalFeatures(this MarkupString.Display.OutputCapabilities! capabilities) -> MarkupString.Ansi.TerminalFeatures
+static MarkupString.Ansi.Decoding.AnsiDisplay.WithAnsi(this MarkupString.Display.DisplayRegistry! registry, bool boldIsBright = false) -> MarkupString.Display.DisplayRegistry!
+static MarkupString.Ansi.Decoding.AnsiStyles.BoldIsBright.get -> MarkupString.Ansi.Decoding.AnsiStyles!
+static MarkupString.Ansi.Decoding.AnsiStyles.Instance.get -> MarkupString.Ansi.Decoding.AnsiStyles!
+static MarkupString.Ansi.Decoding.AnswersPlugin.Instance.get -> MarkupString.Ansi.Decoding.AnswersPlugin!
+static MarkupString.Ansi.Decoding.CharsetPlugin.Instance.get -> MarkupString.Ansi.Decoding.CharsetPlugin!
+static MarkupString.Ansi.Decoding.ControlsPlugin.Instance.get -> MarkupString.Ansi.Decoding.ControlsPlugin!
+static MarkupString.Ansi.Decoding.OscPlugin.FormatColor(MarkupString.RgbColor color) -> string!
+static MarkupString.Ansi.Decoding.OscPlugin.Instance.get -> MarkupString.Ansi.Decoding.OscPlugin!
+static MarkupString.Ansi.Decoding.OscPlugin.ParseColor(System.ReadOnlySpan<char> spec) -> MarkupString.RgbColor?
+static MarkupString.Ansi.Decoding.SgrPlugin.Apply(MarkupString.Ansi.AnsiStyle style, in MarkupString.Decoding.CsiSequence sequence) -> MarkupString.Ansi.AnsiStyle
+static MarkupString.Ansi.Decoding.SgrPlugin.Instance.get -> MarkupString.Ansi.Decoding.SgrPlugin!
+static MarkupString.Ansi.Decoding.VtDecoding.Terminal.get -> MarkupString.Decoding.DecoderRegistry!
+static MarkupString.Ansi.Decoding.VtDecoding.WithVt(this MarkupString.Decoding.DecoderRegistry! registry) -> MarkupString.Decoding.DecoderRegistry!
+virtual MarkupString.Ansi.Decoding.AnsiColors.Legible(MarkupString.RgbColor foreground, MarkupString.RgbColor background) -> MarkupString.RgbColor
+virtual MarkupString.Ansi.Decoding.AnsiColors.Standard(int index, bool bright) -> MarkupString.RgbColor
+virtual MarkupString.Ansi.Decoding.AnsiColors.Xterm(int index) -> MarkupString.RgbColor

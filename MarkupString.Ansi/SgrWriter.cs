@@ -120,6 +120,7 @@ public static class SgrWriter
 		|| (from.Blink && !to.Blink)
 		|| (from.Inverted && !to.Inverted)
 		|| (from.StrikeThrough && !to.StrikeThrough)
+		|| (from.Concealed && !to.Concealed)
 		|| (from.Foreground is not null && to.Foreground is null)
 		|| (from.Background is not null && to.Background is null);
 
@@ -150,6 +151,7 @@ public static class SgrWriter
 		if (to.Blink && !from.Blink) codes.Add(5);
 		if (to.Inverted && !from.Inverted) codes.Add(7);
 		if (to.StrikeThrough && !from.StrikeThrough) codes.Add(9);
+		if (to.Concealed && !from.Concealed) codes.Add(8);
 
 		// A bright foreground's bold parameter is always covered by the attribute pass above, since
 		// IsBold(to) is true whenever it is set.

@@ -52,6 +52,7 @@ public sealed class AnsiMarkupCodec : IMarkupCodec
 		if (style.Overlined) writer.WriteNumber("ov", 1);
 		if (style.Underlined) writer.WriteNumber("un", 1);
 		if (style.StrikeThrough) writer.WriteNumber("st", 1);
+		if (style.Concealed) writer.WriteNumber("cn", 1);
 		if (style.BlinkOff) writer.WriteNumber("nbl", 1);
 		if (style.BoldOff) writer.WriteNumber("nbo", 1);
 		if (style.InvertedOff) writer.WriteNumber("nin", 1);
@@ -80,6 +81,7 @@ public sealed class AnsiMarkupCodec : IMarkupCodec
 			Overlined = element.TryGetProperty("ov", out _),
 			Underlined = element.TryGetProperty("un", out _),
 			StrikeThrough = element.TryGetProperty("st", out _),
+			Concealed = element.TryGetProperty("cn", out _),
 			BlinkOff = element.TryGetProperty("nbl", out _),
 			BoldOff = element.TryGetProperty("nbo", out _),
 			InvertedOff = element.TryGetProperty("nin", out _),
