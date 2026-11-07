@@ -4,8 +4,7 @@ using System.Text;
 namespace MarkupString.Ansi;
 
 /// <summary>
-/// Writes RGBA pixels as sixel graphics: the 216-colour cube for a palette (each pixel's entry is arithmetic,
-/// with no search), a transparent background (<c>P2 = 1</c>) when any pixel is transparent, square pixels,
+/// Writes RGBA pixels as sixel graphics: an adaptive palette of up to 255 colours, a transparent background (<c>P2 = 1</c>) when any pixel is transparent, square pixels,
 /// and runs of a repeated column compressed with <c>!</c>.
 /// </summary>
 /// <remarks>
@@ -15,12 +14,16 @@ namespace MarkupString.Ansi;
 /// </remarks>
 internal static class SixelWriter
 {
-	private const int Colours = 216;
+	private const int Colours = 255;
 
 	/// <summary>Encodes <paramref name="pixels"/>; <paramref name="height"/> is a whole number of six-pixel bands.</summary>
 	internal static string Encode(byte[] pixels, int width, int height)
 	{
 		var pixelCount = width * height;
+		var histogram = new int[PicturePalette.Bins];
+		for (var i = 0; i < pixelCount * 4; i += 4)
+			if (pixels[i + 3] >= 128) histogram[PicturePalette.Bin(pixels, i)]++;
+		var (palette, lookup) = PicturePalette.MedianCut(histogram, Colours);
 		var index = ArrayPool<byte>.Shared.Rent(pixelCount);
 		// Each colour's sixel line for the band being written: one byte of six bits per column.
 		var lines = ArrayPool<byte>.Shared.Rent(Colours * width);
@@ -38,7 +41,7 @@ internal static class SixelWriter
 					continue;
 				}
 
-				var entry = Level(pixels[o]) * 36 + Level(pixels[o + 1]) * 6 + Level(pixels[o + 2]);
+				var entry = lookup[PicturePalette.Bin(pixels, o)];
 				index[i] = (byte)entry;
 				used[entry] = true;
 			}
@@ -52,7 +55,7 @@ internal static class SixelWriter
 			{
 				if (!used[entry]) continue;
 				text.Append('#').Append(entry).Append(";2;")
-					.Append(entry / 36 * 20).Append(';').Append(entry / 6 % 6 * 20).Append(';').Append(entry % 6 * 20);
+					.Append(Percent(palette[entry].R)).Append(';').Append(Percent(palette[entry].G)).Append(';').Append(Percent(palette[entry].B));
 			}
 
 			Span<byte> bandColours = stackalloc byte[Colours];
@@ -117,8 +120,8 @@ internal static class SixelWriter
 		}
 	}
 
-	/// <summary>A channel's nearest of the cube's six levels.</summary>
-	private static int Level(byte value) => (value * 5 + 127) / 255;
+	/// <summary>Sixel colour channels are integer percentages.</summary>
+	private static int Percent(byte value) => (value * 100 + 127) / 255;
 
 	/// <summary>
 	/// <paramref name="line"/> with each run of more than three equal sixels written <c>!n</c>, and the empty

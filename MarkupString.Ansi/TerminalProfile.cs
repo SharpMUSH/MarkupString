@@ -173,9 +173,16 @@ public sealed record TerminalProfile(string Id, string Name, TerminalFeatures Fe
 		Reports = ["tmux"],
 	};
 
+	/// <summary>MudForge 2.0.5657: iTerm2 inline images and Sixel, verified in its web client.</summary>
+	public static TerminalProfile MudForge { get; } = new("mudforge", "MudForge",
+		TerminalFeatures.InlineImages | TerminalFeatures.Sixel | TerminalFeatures.BlockArt)
+	{
+		Reports = ["mudforge"],
+	};
+
 	/// <summary>Every terminal this package knows.</summary>
 	public static IReadOnlyList<TerminalProfile> Known { get; } =
-		[Kitty, Ghostty, WezTerm, ITerm2, Konsole, Foot, XTerm, WindowsTerminal, Mintty, VsCode, Contour, Rio, Mlterm, Alacritty, Vte, Tmux];
+		[Kitty, Ghostty, WezTerm, ITerm2, Konsole, Foot, XTerm, WindowsTerminal, Mintty, VsCode, Contour, Rio, Mlterm, Alacritty, Vte, Tmux, MudForge];
 
 	/// <summary>The known terminal a player calls <paramref name="id"/>, compared without case, or null.</summary>
 	public static TerminalProfile? Find(string? id) =>

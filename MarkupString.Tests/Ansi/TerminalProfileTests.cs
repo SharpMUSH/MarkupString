@@ -4,6 +4,8 @@ using MarkupString.Ansi;
 public class TerminalProfileTests
 {
 	[Test]
+	[Arguments("MUDFORGE", "mudforge")]
+	[Arguments("MudForge 2.0.5657", "mudforge")]
 	[Arguments("kitty(0.35.2)", "kitty")]
 	[Arguments("xterm-kitty", "kitty")]
 	[Arguments("WezTerm 20240203-110809-5046fc22", "wezterm")]
