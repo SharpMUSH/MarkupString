@@ -88,8 +88,8 @@ jobs:
         run: dotnet pack --configuration Release --no-build -p:SkipFormatVerification=true -o packages
       - name: The core package carries net10.0 and net11.0
         run: |
-          unzip -l packages/MarkupString.*[0-9].nupkg | grep -q 'lib/net10.0/MarkupString.dll'
-          unzip -l packages/MarkupString.*[0-9].nupkg | grep -q 'lib/net11.0/MarkupString.dll'
+          unzip -l packages/MarkupString.[0-9]*.nupkg | grep -q 'lib/net10.0/MarkupString.dll'
+          unzip -l packages/MarkupString.[0-9]*.nupkg | grep -q 'lib/net11.0/MarkupString.dll'
 
   web:
     name: Web runtime in a browser
