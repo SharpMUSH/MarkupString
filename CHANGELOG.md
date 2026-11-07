@@ -6,6 +6,35 @@ All notable changes to `MarkupString`, `MarkupString.Ansi`, `MarkupString.Html`,
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.27.0 — Unreleased
+
+### Added
+
+- `Decoder.OpenElements` and `DecodeContext.PendingLine`: the elements a text protocol has open, and the line read
+  so far. `DecodeContext.Insert(column, text)` puts text into the line at a display column.
+- `ISequenceObserver`: a text protocol is told when an escape sequence arrives.
+- `GaugeEvent` for MXP `GAUGE` and `STAT`.
+- `MxpOptions` for `WithMxp(options)`: `ShowRefusedTags` shows a refused tag as the text it was, and `Supports`
+  sets the tags and attributes `<SUPPORT>` is answered with. `MxpOptions.Answer` gives that answer to a host.
+- MXP `FRAME` redirects (`ACTION=REDIRECT`, `CLOSE`) through `DisplayLine.Destination`; `SOUND` priority and
+  type (`SoundMarkup.Priority`, `SoundMarkup.Type`); the `IMAGE` `T` folder; `<VERSION n>` sets the reported style.
+- Pueblo `<send href>`, `<a xch_mode=prompt>`, and `strong`/`em`/`strike`/`del` closing their canonical tags.
+
+### Fixed
+
+- An MXP element that used itself (`<!ELEMENT loop "<loop>x">`) overflowed the stack. Expansion is now bounded
+  in depth and per line, and definitions, entities and their lengths are capped (`MxpPlugin.MaxElements` and the
+  rest). Built-in tags and entities cannot be redefined.
+- An element defined on an open line played back as secure, so a player could send a secure tag through it.
+- `ESC [ 4 z` (temp secure) stayed armed past text and escape sequences; `ESC [ z` with no number, and an
+  undefined line tag in 10–99, changed the line mode.
+- Leaving open mode mid-line left the open part's elements open.
+- `A` and `SEND` links, and Pueblo `a`, ran on past their line.
+- A tab inside an MXP tag moved the cursor instead of being part of the tag.
+- `<!ELEMENT name EMPTY>` took `EMPTY` as its definition and printed it.
+- `SEND` hints with several commands were matched to the wrong labels.
+- A cell-sized `IMAGE` could cover text the server wrote over its cells; it now goes inline at the tag.
+
 ## 2.26.0 — 2026-11-06
 
 ### Added

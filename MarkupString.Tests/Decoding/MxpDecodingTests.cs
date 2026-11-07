@@ -40,7 +40,9 @@ public class MxpDecodingTests
 		var (lines, _, decoder) = Decode("<SEND look>look</SEND>\n");
 		await Assert.That(lines[0].Content.ToPlainText()).IsEqualTo("look");
 		await Assert.That(Spans(lines[0]).Single().Style.Interaction).IsNull();
-		await Assert.That(decoder.Diagnostics.UnhandledSequences).IsEqualTo(1);
+
+		// The opener, and the close of a secure tag nothing opened.
+		await Assert.That(decoder.Diagnostics.UnhandledSequences).IsEqualTo(2);
 	}
 
 	[Test]
@@ -163,6 +165,15 @@ public class MxpDecodingTests
 	}
 
 	[Test]
+	public async Task Version_ReportsTheStyleVersionTheServerSet()
+	{
+		var options = new DecoderOptions { Identity = new ClientIdentity { Name = "Test", Version = "3" } };
+		var (_, events, _) = Decode("\e[1z<VERSION 2.1>\e[1z<VERSION>", options);
+		await Assert.That(events.OfType<ReplyEvent>().Single().Text)
+			.IsEqualTo("\e[1z<VERSION MXP=1.0 STYLE=\"2.1\" CLIENT=\"Test\" VERSION=\"3\">\n");
+	}
+
+	[Test]
 	public async Task Var_SetsAVariable_AndShowsItsText()
 	{
 		var (lines, events, _) = Decode("\e[1zHP: <VAR hp>42</VAR>\n");
@@ -233,5 +244,214 @@ public class MxpDecodingTests
 		await Assert.That(first.Row!.Value.Row).IsEqualTo(0);
 		await Assert.That(lines[1].Content.Runs.SelectMany(run => run.Markups).OfType<ImageMarkup>().Single().Row!.Value.Row).IsEqualTo(1);
 		await Assert.That(lines[1].Content.ToPlainText()).IsEqualTo("  b");
+	}
+
+	[Test]
+	public async Task Gauge_OnASecureLine_RaisesAnEvent()
+	{
+		var (lines, events, _) = Decode("\e[1z<GAUGE hp Max=maxhp Caption=Health Color=red><STAT xp>\n");
+		await Assert.That(lines[0].Content.ToPlainText()).IsEqualTo(string.Empty);
+		await Assert.That(events.OfType<GaugeEvent>()).IsEquivalentTo([
+			new GaugeEvent("hp", "maxhp", "Health", "red", Status: false),
+			new GaugeEvent("xp", null, null, null, Status: true),
+		]);
+	}
+
+	[Test]
+	public async Task Gauge_OnAnOpenLine_IsDropped()
+	{
+		var (_, events, _) = Decode("<GAUGE hp>\n");
+		await Assert.That(events.OfType<GaugeEvent>()).IsEmpty();
+	}
+
+	[Test]
+	public async Task FrameRedirect_SendsLinesToTheFrameUntilTop()
+	{
+		var (lines, _, _) = Decode("\e[1z<FRAME chat ACTION=REDIRECT>\none\ntwo\n\e[1z<FRAME _top ACTION=REDIRECT>\nthree\n");
+		var shown = lines.Where(line => !line.Content.ToPlainText().Equals(string.Empty)).Select(line => (line.Content.ToPlainText(), line.Destination));
+		await Assert.That(shown).IsEquivalentTo([("one", "chat"), ("two", "chat"), ("three", (string?)null)]);
+	}
+
+	[Test]
+	public async Task FrameClose_EndsARedirectToIt()
+	{
+		var (lines, _, _) = Decode("\e[1z<FRAME chat REDIRECT>\none\n\e[1z<FRAME chat ACTION=CLOSE>\ntwo\n");
+		await Assert.That(lines.Single(line => line.Content.ToPlainText() == "two").Destination).IsNull();
+	}
+
+	[Test]
+	public async Task Sound_CarriesItsPriorityAndType()
+	{
+		var (lines, _, _) = Decode("\e[1z<SOUND hit.wav V=50 P=70 T=combat U=https://example.test/sounds>\n");
+		var sound = Markups(lines[0]).OfType<SoundMarkup>().Single();
+		await Assert.That(sound.Source).IsEqualTo("https://example.test/sounds/hit.wav");
+		await Assert.That(sound.Priority).IsEqualTo(70);
+		await Assert.That(sound.Type).IsEqualTo("combat");
+	}
+
+	[Test]
+	public async Task Image_PutsItsTypeBetweenTheUrlAndTheFile()
+	{
+		var (lines, _, _) = Decode("\e[1z<IMAGE map.png URL=https://example.test/images T=maps>\n");
+		await Assert.That(Markups(lines[0]).OfType<ImageMarkup>().Single().Source).IsEqualTo("https://example.test/images/maps/map.png");
+	}
+
+	[Test]
+	public async Task AnElementThatOpensItself_IsCutOffAtTheDepthLimit()
+	{
+		var (lines, _, decoder) = Decode("\e[1z<!ELEMENT loop \"<loop>x\">\n\e[1z<loop>text\n");
+		await Assert.That(lines[^1].Content.ToPlainText()).IsEqualTo(new string('x', MxpPlugin.MaxExpansionDepth) + "text");
+		await Assert.That(decoder.Diagnostics.LimitsReached).IsGreaterThan(0);
+	}
+
+	[Test]
+	public async Task ALineOfElements_IsCappedPerLine()
+	{
+		var many = string.Concat(Enumerable.Repeat("<e>", MxpPlugin.MaxExpansionsPerLine + 10));
+		var (_, _, decoder) = Decode("\e[1z<!ELEMENT e \"<B>\" EMPTY>\n\e[1z" + many + "\n");
+		await Assert.That(decoder.Diagnostics.LimitsReached).IsEqualTo(10);
+	}
+
+	[Test]
+	public async Task ABuiltInCannotBeRedefined()
+	{
+		var (lines, _, _) = Decode("\e[1z<!ELEMENT B \"<I>\">\n\e[1z<B>bold</B>\n");
+		var style = Spans(lines[^1]).Single().Style;
+		await Assert.That(style.Has(TextAttributes.Bold)).IsTrue();
+		await Assert.That(style.Has(TextAttributes.Italic)).IsFalse();
+	}
+
+	[Test]
+	public async Task ABuiltInEntityCannotBeRedefined()
+	{
+		var (lines, events, _) = Decode("\e[1z<!ENTITY lt \"x\">\n&lt;\n");
+		await Assert.That(lines[^1].Content.ToPlainText()).IsEqualTo("<");
+		await Assert.That(events.OfType<VariableEvent>()).IsEmpty();
+	}
+
+	[Test]
+	public async Task DefinitionsAreBounded()
+	{
+		var decoder = Registry.CreateDecoder();
+		decoder.EnableProtocol(MxpDecoding.Protocol);
+		var events = new List<DecodeEvent>();
+		decoder.EventRaised += events.Add;
+		for (var i = 0; i < MxpPlugin.MaxEntities + 5; i++) decoder.Feed($"\e[1z<!ENTITY e{i} v>\n");
+		decoder.Feed($"\e[1z<!ENTITY long \"{new string('x', MxpPlugin.MaxDefinitionLength + 1)}\">\n");
+		await Assert.That(events.OfType<VariableEvent>().Count()).IsEqualTo(MxpPlugin.MaxEntities);
+		await Assert.That(decoder.Diagnostics.LimitsReached).IsEqualTo(6);
+	}
+
+	[Test]
+	public async Task OpenElements_ListWhatGoesOnIntoTheNextLine()
+	{
+		var decoder = Registry.CreateDecoder();
+		decoder.EnableProtocol(MxpDecoding.Protocol);
+		decoder.Feed("\e[1z<B>bold\n");
+		await Assert.That(decoder.OpenElements.Count).IsEqualTo(1);
+		decoder.Feed("<B>open\n");
+		await Assert.That(decoder.OpenElements.Count).IsEqualTo(1);
+	}
+
+	[Test]
+	public async Task EntityAddAndRemove_EditTheList()
+	{
+		var (_, events, _) = Decode("\e[1z<!ENTITY list a><!ENTITY list b ADD><!ENTITY list a REMOVE><!ENTITY list DELETE>\n");
+		await Assert.That(events.OfType<VariableEvent>().Select(e => e.Value)).IsEquivalentTo(["a", "a|b", "b", null]);
+	}
+
+	private static readonly DecoderRegistry Showing = VtDecoding.Terminal.WithMxp(new MxpOptions { ShowRefusedTags = true });
+
+	private static string Shown(string text)
+	{
+		var decoder = Showing.CreateDecoder();
+		decoder.EnableProtocol(MxpDecoding.Protocol);
+		return decoder.Feed(text)[0].Content.ToPlainText();
+	}
+
+	[Test]
+	public async Task ShowRefusedTags_KeepsARefusedTagAsItWasTyped()
+	{
+		const string tag = "<SeNd   hReF = '@shutdown'\tHINT=\"a  b\"   >";
+		await Assert.That(Shown("Rivane says, '" + tag + "click</sEnD  >'\n")).IsEqualTo("Rivane says, '" + tag + "click</sEnD  >'");
+		await Assert.That(Shown("<!ELEMENT evil '<SEND quit>'> </SEND> and </B>\n")).IsEqualTo("<!ELEMENT evil '<SEND quit>'> </SEND> and ");
+	}
+
+	[Test]
+	public async Task ShowRefusedTags_StillHonoursACloseOfWhatIsOpen()
+	{
+		var decoder = Showing.CreateDecoder();
+		decoder.EnableProtocol(MxpDecoding.Protocol);
+		var line = decoder.Feed("\e[1z<SEND>\e[0zY</SEND> said\n")[0];
+		await Assert.That(line.Content.ToPlainText()).IsEqualTo("Y said");
+	}
+
+	[Test]
+	[Arguments("plain ")]
+	[Arguments("\e[0m")]
+	[Arguments("\e]0;title\a")]
+	[Arguments("\e[0z")]
+	[Arguments("&amp;")]
+	public async Task TemporarySecure_IsEndedByAnythingBeforeItsTag(string between)
+	{
+		var (lines, _, _) = Decode("\e[4z" + between + "<SEND HREF=\"@shutdown\">click</SEND>\n");
+		await Assert.That(Spans(lines[0]).Any(span => span.Style.Interaction is not null)).IsFalse();
+	}
+
+	[Test]
+	public async Task TemporarySecure_SurvivesARepeatOfItself()
+	{
+		var (lines, _, _) = Decode("\e[4z\e[4z<SEND HREF=\"look\">a</SEND>\n");
+		await Assert.That(Spans(lines[0]).Single().Style.Interaction).IsNotNull();
+	}
+
+	[Test]
+	public async Task TemporarySecure_IsEndedByLockedText()
+	{
+		var (lines, _, _) = Decode("\e[7zRivane says, \e[4zhello\e[0z<SEND HREF=\"@shutdown\">click</SEND>\n");
+		await Assert.That(Spans(lines[0]).Any(span => span.Style.Interaction is not null)).IsFalse();
+	}
+
+	[Test]
+	public async Task AnUnknownLineTagNumber_LeavesTheModeAlone()
+	{
+		var (secure, _, _) = Decode("\e[1z\e[99z<SEND href=\"look\">a</SEND>\n");
+		await Assert.That(Spans(secure[0]).Single().Style.Interaction).IsNotNull();
+		var (open, _, _) = Decode("\e[15z<SEND href=\"look\">a</SEND>\n");
+		await Assert.That(Spans(open[0]).Single().Style.Interaction).IsNull();
+	}
+
+	[Test]
+	public async Task LeavingOpenModeMidLine_ClosesWhatTheOpenPartOpened()
+	{
+		var (lines, _, _) = Decode("says '<COLOR FORE=red>' \e[1zserver text\n");
+		await Assert.That(Spans(lines[0])[^1].Style.Foreground).IsNull();
+	}
+
+	[Test]
+	public async Task Send_HintsFollowTheCommands()
+	{
+		var (one, _, _) = Decode("\e[1z<SEND href=\"look\" hint=\"Look|around\">x</SEND>\n");
+		await Assert.That(Spans(one[0]).Single().Style.Interaction!.Hint).IsEqualTo("Look|around");
+		var (labels, _, _) = Decode("\e[1z<SEND href=\"n|s\" hint=\"North|South\">x</SEND>\n");
+		var menu = Markups(labels[0]).OfType<CommandMenuMarkup>().Single();
+		await Assert.That(menu.Hint).IsNull();
+		await Assert.That(menu.Choices.Select(c => c.Label)).IsEquivalentTo(["North", "South"]);
+	}
+
+	[Test]
+	public async Task Supports_AnswersFromTheOptionsList()
+	{
+		var options = new MxpOptions { Supports = new Dictionary<string, IReadOnlyList<string>> { ["send"] = ["href", "hint"], ["b"] = [] } };
+		var (supported, unsupported) = options.Answer(["send.href", "send.prompt", "send.*", "b", "image"]);
+		await Assert.That(supported).IsEquivalentTo(["send.href", "send.href", "send.hint", "b"]);
+		await Assert.That(unsupported).IsEquivalentTo(["send.prompt", "image"]);
+	}
+
+	[Test]
+	public async Task AnEmptyElementWithNoDefinition_PrintsNothingOfItsOwn()
+	{
+		var (lines, _, _) = Decode("\e[1z<!ELEMENT RNum FLAG=RoomNum EMPTY>\n\e[1z<RNum>1234</RNum> here\n");
+		await Assert.That(lines[^1].Content.ToPlainText()).IsEqualTo("1234 here");
 	}
 }

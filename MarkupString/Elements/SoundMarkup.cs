@@ -40,6 +40,15 @@ public sealed record SoundMarkup(
 	/// <summary>The <see cref="Repeats"/> value that loops a sound until it is stopped.</summary>
 	public const int Forever = -1;
 
+	/// <summary>
+	/// For an effect: from 0 to 100, how much it matters, so a client playing one sound at a time knows whether this
+	/// one cuts in. The client's default when null. MXP and MSP call it <c>P</c>.
+	/// </summary>
+	public int? Priority { get; init; }
+
+	/// <summary>The kind of sound the server filed it under, such as <c>combat</c>, if it said. MXP and MSP call it <c>T</c>.</summary>
+	public string? Type { get; init; }
+
 	/// <summary>Whether this sound loops until it is stopped.</summary>
 	public bool Loops => Repeats == Forever;
 }

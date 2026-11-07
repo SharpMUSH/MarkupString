@@ -24,3 +24,26 @@ static MarkupString.Mxp.Decoding.MxpFlagMarkup.operator !=(MarkupString.Mxp.Deco
 static MarkupString.Mxp.Decoding.MxpFlagMarkup.operator ==(MarkupString.Mxp.Decoding.MxpFlagMarkup? left, MarkupString.Mxp.Decoding.MxpFlagMarkup? right) -> bool
 static MarkupString.Mxp.Decoding.MxpPlugin.Instance.get -> MarkupString.Mxp.Decoding.MxpPlugin!
 static MarkupString.Mxp.Decoding.MxpPlugin.Supported.get -> System.Collections.Generic.IReadOnlyList<string!>!
+const MarkupString.Mxp.Decoding.MxpPlugin.MaxElements = 256 -> int
+const MarkupString.Mxp.Decoding.MxpPlugin.MaxEntities = 512 -> int
+const MarkupString.Mxp.Decoding.MxpPlugin.MaxDefinitionLength = 1024 -> int
+const MarkupString.Mxp.Decoding.MxpPlugin.MaxExpansionDepth = 4 -> int
+const MarkupString.Mxp.Decoding.MxpPlugin.MaxExpansionsPerLine = 64 -> int
+MarkupString.Mxp.Decoding.MxpOptions
+MarkupString.Mxp.Decoding.MxpOptions.<Clone>$() -> MarkupString.Mxp.Decoding.MxpOptions!
+MarkupString.Mxp.Decoding.MxpOptions.Answer(System.Collections.Generic.IReadOnlyList<string!>! asked) -> (System.Collections.Generic.IReadOnlyList<string!>! Supported, System.Collections.Generic.IReadOnlyList<string!>! Unsupported)
+MarkupString.Mxp.Decoding.MxpOptions.Equals(MarkupString.Mxp.Decoding.MxpOptions? other) -> bool
+MarkupString.Mxp.Decoding.MxpOptions.MxpOptions() -> void
+MarkupString.Mxp.Decoding.MxpOptions.ShowRefusedTags.get -> bool
+MarkupString.Mxp.Decoding.MxpOptions.ShowRefusedTags.init -> void
+MarkupString.Mxp.Decoding.MxpOptions.Supports.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>?
+MarkupString.Mxp.Decoding.MxpOptions.Supports.init -> void
+MarkupString.Mxp.Decoding.MxpPlugin.MxpPlugin(MarkupString.Mxp.Decoding.MxpOptions! options) -> void
+MarkupString.Mxp.Decoding.MxpPlugin.Options.get -> MarkupString.Mxp.Decoding.MxpOptions!
+override MarkupString.Mxp.Decoding.MxpOptions.Equals(object? obj) -> bool
+override MarkupString.Mxp.Decoding.MxpOptions.GetHashCode() -> int
+override MarkupString.Mxp.Decoding.MxpOptions.ToString() -> string!
+static MarkupString.Mxp.Decoding.MxpDecoding.WithMxp(this MarkupString.Decoding.DecoderRegistry! registry, MarkupString.Mxp.Decoding.MxpOptions! options) -> MarkupString.Decoding.DecoderRegistry!
+static MarkupString.Mxp.Decoding.MxpOptions.Default.get -> MarkupString.Mxp.Decoding.MxpOptions!
+static MarkupString.Mxp.Decoding.MxpOptions.operator !=(MarkupString.Mxp.Decoding.MxpOptions? left, MarkupString.Mxp.Decoding.MxpOptions? right) -> bool
+static MarkupString.Mxp.Decoding.MxpOptions.operator ==(MarkupString.Mxp.Decoding.MxpOptions? left, MarkupString.Mxp.Decoding.MxpOptions? right) -> bool

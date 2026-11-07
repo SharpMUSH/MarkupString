@@ -100,6 +100,11 @@ internal sealed class PuebloReader : ITextProtocol, ITagSink
 	{
 		_context = context;
 		_scanner.Flush(this);
+
+		// A link ends with its line, so one the server left open does not make what follows a link.
+		var open = State.Open;
+		var index = open.FindIndex(element => element.Name is "a" or "send");
+		if (index >= 0) CloseFrom(index);
 	}
 
 	public void Reset(DecodeContext context)
@@ -197,6 +202,13 @@ internal sealed class PuebloReader : ITextProtocol, ITagSink
 					if (tag.Get("xch_cmd") is { Length: > 0 } command)
 					{
 						link = new AnsiStyle { LinkUrl = command, LinkKind = LinkKind.Command, LinkText = hint };
+						if (string.Equals(tag.Get("xch_mode"), "prompt", StringComparison.OrdinalIgnoreCase))
+						{
+							// xch_mode=prompt puts the command on the player's input line instead of sending it.
+							OpenElement(name, new CommandMenuMarkup([new CommandChoice(command, command)], hint, Prompt: true));
+							OpenElement(name, new AnsiMarkup(link.Value));
+							return true;
+						}
 					}
 					else if (tag.Get("href") is { } href && Context.Options.Links.IsAllowed(href))
 					{
@@ -204,6 +216,14 @@ internal sealed class PuebloReader : ITextProtocol, ITagSink
 					}
 
 					OpenElement(name, link is { } style ? new AnsiMarkup(style) : null);
+					return true;
+				}
+			case "send":
+				{
+					// Not Pueblo's own, but servers that speak MXP too send it: a command link.
+					var command = tag.Get("href", 0);
+					OpenElement(name, string.IsNullOrEmpty(command) ? null
+						: new AnsiMarkup(new AnsiStyle { LinkUrl = command, LinkKind = LinkKind.Command, LinkText = tag.Get("hint") }));
 					return true;
 				}
 			case "br":
@@ -291,9 +311,25 @@ internal sealed class PuebloReader : ITextProtocol, ITagSink
 
 	private void Close(string name)
 	{
+		// HTML's other spellings of the same element close it: </b> closes <strong>.
+		var canonical = Canonical(name);
 		var open = State.Open;
-		var index = open.FindLastIndex(element => element.Name == name);
+		var index = open.FindLastIndex(element => Canonical(element.Name) == canonical);
 		if (index < 0) return;
+		CloseFrom(index);
+	}
+
+	private static string Canonical(string name) => name switch
+	{
+		"strong" => "b",
+		"em" => "i",
+		"strike" or "del" => "s",
+		_ => name,
+	};
+
+	private void CloseFrom(int index)
+	{
+		var open = State.Open;
 		for (var i = index; i < open.Count; i++)
 		{
 			if (open[i].First is { } first)
