@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using MarkupString.Ansi;
 using MarkupString.Layout;
+using MarkupString.Mxp;
 
 /// <summary>
 /// What a terminal is sent beyond colour, by what its connection says it can do: OSC 8 and MSLP links, and
@@ -53,6 +54,47 @@ public class TerminalFeatureTests
 	/// <summary>A figure laid out for a reader whose client draws pictures <paramref name="cells"/> big.</summary>
 	private static MarkupText Laid(Block block, int width, PictureCells? cells = null) =>
 		BlockLayout.Build(block, width, context: new LayoutContext { Pictures = (_, _) => cells ?? new PictureCells(4, 2) });
+
+	[Test]
+	[Arguments(TerminalFeatures.InlineImages, "\e]1337;")]
+	[Arguments(TerminalFeatures.Sixel, "\eP")]
+	public async Task MxpWithoutImageUsesTerminalPictures(TerminalFeatures feature, string sequence)
+	{
+		var registry = MarkupRegistry.Empty.WithAnsi().WithMxp(_ => false).WithMxpSecureLines()
+			.WithAnsiOutput(new AnsiOutputOptions(Features: feature) { Pictures = new Source(RedBlue()) });
+		var figure = Laid(new Figure(Cat, MarkupText.Plain("cat")), 20);
+		var link = MarkupText.Wrap(AnsiMarkup.Create(linkUrl: "look", linkKind: LinkKind.Command), "look");
+		var rendered = MarkupText.Concat(figure, link).Render(MarkupFormat.Mxp, registry);
+		await Assert.That(rendered).Contains(sequence).And.DoesNotContain("<IMAGE");
+		await Assert.That(rendered).Contains("<SEND HREF=\"look\">look</SEND>");
+	}
+
+	[Test]
+	[Arguments(true, true, true)]
+	[Arguments(false, false, true)]
+	[Arguments(false, true, false)]
+	public async Task MxpPrefersSupportedImagesAndKeepsArtWhenFallbackUnavailable(bool supportsImage, bool enabled, bool available)
+	{
+		var registry = MarkupRegistry.Empty.WithAnsi().WithMxp(_ => supportsImage)
+			.WithAnsiOutput(new AnsiOutputOptions(Features: enabled ? TerminalFeatures.InlineImages : TerminalFeatures.None)
+			{ Pictures = new Source(available ? RedBlue() : null) });
+		var output = Laid(new Figure(Cat, MarkupText.Plain("cat")), 20).Render(MarkupFormat.Mxp, registry);
+		await Assert.That(output.Contains("<IMAGE")).IsEqualTo(supportsImage);
+		await Assert.That(output).DoesNotContain("\e]1337;");
+		if (!supportsImage) await Assert.That(output).Contains("cat");
+	}
+
+	[Test]
+	public async Task MxpBlockArtPreservesTheSurroundingBackground()
+	{
+		var pixels = new TerminalPicture("transparent", 2, 2,
+			new byte[] { 255, 0, 0, 255, 0, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0 });
+		var registry = MarkupRegistry.Empty.WithAnsi().WithMxp(_ => false)
+			.WithAnsiOutput(new AnsiOutputOptions(Features: TerminalFeatures.BlockArt) { Pictures = new Source(pixels) });
+		var laid = Laid(new Figure(Cat, MarkupText.Plain("cat")), 2, new PictureCells(2, 1));
+		var styled = MarkupText.Wrap(AnsiMarkup.Create(background: new AnsiColor.Standard(2, false)), laid);
+		await Assert.That(styled.Render(MarkupFormat.Mxp, registry).Split("42m").Length).IsGreaterThanOrEqualTo(3);
+	}
 
 	// ── Links ───────────────────────────────────────────────────────────────────
 

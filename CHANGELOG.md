@@ -8,6 +8,12 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+
+- MXP images a client does not support can fall back to configured ANSI terminal graphics, preserving
+  the other MXP elements. The fallback requires both enabled graphics and available picture pixels.
+
+
 ### Added
 
 - **Output effects.** `OutputEffect` is a C# union of what output asks of a client besides text: the points
