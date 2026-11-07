@@ -100,6 +100,11 @@ internal sealed class PuebloReader : ITextProtocol, ITagSink
 	{
 		_context = context;
 		_scanner.Flush(this);
+
+		// A link ends with its line, so one the server left open does not make what follows a link.
+		var open = State.Open;
+		var index = open.FindIndex(element => element.Name is "a" or "send");
+		if (index >= 0) CloseFrom(index);
 	}
 
 	public void Reset(DecodeContext context)
@@ -162,7 +167,6 @@ internal sealed class PuebloReader : ITextProtocol, ITagSink
 
 		if (tag.Closing)
 		{
-			if (name == "pre" && state.Preformatted > 0) state.Preformatted--;
 			Close(name!);
 			return;
 		}
@@ -197,6 +201,13 @@ internal sealed class PuebloReader : ITextProtocol, ITagSink
 					if (tag.Get("xch_cmd") is { Length: > 0 } command)
 					{
 						link = new AnsiStyle { LinkUrl = command, LinkKind = LinkKind.Command, LinkText = hint };
+						if (string.Equals(tag.Get("xch_mode"), "prompt", StringComparison.OrdinalIgnoreCase))
+						{
+							// xch_mode=prompt puts the command on the player's input line instead of sending it.
+							// One entry for both, so </a> closes the menu and the link together.
+							OpenElement(name, new CommandMenuMarkup([new CommandChoice(command, command)], hint, Prompt: true), new AnsiMarkup(link.Value));
+							return true;
+						}
 					}
 					else if (tag.Get("href") is { } href && Context.Options.Links.IsAllowed(href))
 					{
@@ -204,6 +215,19 @@ internal sealed class PuebloReader : ITextProtocol, ITagSink
 					}
 
 					OpenElement(name, link is { } style ? new AnsiMarkup(style) : null);
+					return true;
+				}
+			case "send":
+				{
+					// Not Pueblo's own, but servers that speak MXP too send it: a command link.
+					var command = tag.Get("href", 0);
+					if (string.IsNullOrEmpty(command))
+					{
+						OpenElement(name, null);
+						return true;
+					}
+
+					OpenSend(name, command, tag.Get("hint"));
 					return true;
 				}
 			case "br":
@@ -289,11 +313,74 @@ internal sealed class PuebloReader : ITextProtocol, ITagSink
 		State.Open.Add((name, markup));
 	}
 
+	/// <summary>Opens several markups as one element: closing it closes them all.</summary>
+	private void OpenElement(string name, IMarkup first, IMarkup second)
+	{
+		IMarkup? opened = null;
+		if (Context.Open(first)) opened = first;
+		if (Context.Open(second)) opened ??= second;
+		State.Open.Add((name, opened));
+	}
+
+	/// <summary>
+	/// A SEND link. Several commands (<c>buy|look</c>) are a menu, labelled by the hints as MXP labels them: one hint
+	/// more than the commands is the link's own hint and then the labels, as many hints as commands are the labels.
+	/// </summary>
+	private void OpenSend(string name, string href, string? hintText)
+	{
+		var commands = href.Split('|');
+		var link = new AnsiMarkup(new AnsiStyle { LinkUrl = commands[0], LinkKind = LinkKind.Command, LinkText = commands.Length == 1 ? hintText : null });
+		if (commands.Length == 1)
+		{
+			OpenElement(name, link);
+			return;
+		}
+
+		var hints = hintText?.Split('|') ?? [];
+		string? hint = null;
+		var labels = commands;
+		if (hints.Length == commands.Length + 1)
+		{
+			hint = hints[0];
+			labels = hints[1..];
+		}
+		else if (hints.Length == commands.Length)
+		{
+			labels = hints;
+		}
+		else if (hints.Length > 0)
+		{
+			hint = hints[0];
+		}
+
+		link = new AnsiMarkup(new AnsiStyle { LinkUrl = commands[0], LinkKind = LinkKind.Command, LinkText = hint });
+		var choices = new CommandChoice[commands.Length];
+		for (var i = 0; i < commands.Length; i++) choices[i] = new CommandChoice(labels[i], commands[i]);
+		OpenElement(name, new CommandMenuMarkup(choices, hint), link);
+	}
+
 	private void Close(string name)
 	{
+		// HTML's other spellings of the same element close it: </b> closes <strong>.
+		var canonical = Canonical(name);
 		var open = State.Open;
-		var index = open.FindLastIndex(element => element.Name == name);
+		var index = open.FindLastIndex(element => Canonical(element.Name) == canonical);
 		if (index < 0) return;
+		CloseFrom(index);
+	}
+
+	private static string Canonical(string name) => name switch
+	{
+		"strong" => "b",
+		"em" => "i",
+		"strike" or "del" => "s",
+		_ => name,
+	};
+
+	private void CloseFrom(int index)
+	{
+		var state = State;
+		var open = state.Open;
 		for (var i = index; i < open.Count; i++)
 		{
 			if (open[i].First is { } first)
@@ -301,6 +388,12 @@ internal sealed class PuebloReader : ITextProtocol, ITagSink
 				Context.Close(first);
 				break;
 			}
+		}
+
+		// A <pre> closed along with the element around it is no longer in force.
+		for (var i = index; i < open.Count; i++)
+		{
+			if (open[i].Name == "pre" && state.Preformatted > 0) state.Preformatted--;
 		}
 
 		open.RemoveRange(index, open.Count - index);

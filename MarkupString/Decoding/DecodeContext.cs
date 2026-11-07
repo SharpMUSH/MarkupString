@@ -219,6 +219,32 @@ public sealed class DecodeContext
 		Line.Write(text.ToString(), set);
 	}
 
+	/// <summary>The line read so far, not yet ended.</summary>
+	public MarkupText PendingLine => Line.Peek();
+
+	/// <summary>
+	/// Puts <paramref name="text"/> into the line at display column <paramref name="column"/>, moving what is there to
+	/// the right, and the cursor with it when it is past that column. A column past the end puts it at the end.
+	/// </summary>
+	public void Insert(int column, MarkupText text)
+	{
+		ArgumentNullException.ThrowIfNull(text);
+		if (text.Length == 0) return;
+		var line = Line.Peek();
+		if (line.Length + text.Length > Line.MaxLength)
+		{
+			// Too long to fit: the line stays as it was, and so does the cursor.
+			Diagnostics.LimitsReached++;
+			return;
+		}
+
+		var index = DisplayWidth.IndexAtWidth(line.Text, Math.Clamp(column, 0, line.DisplayWidth));
+		var cursor = Line.Cursor;
+		Line.Take();
+		Line.Put(line.Insert(index, text));
+		Line.Cursor = cursor >= column ? cursor + text.DisplayWidth : cursor;
+	}
+
 	/// <summary>Writes already built text at the cursor.</summary>
 	public void Write(MarkupText text)
 	{
@@ -344,6 +370,11 @@ public sealed class DecodeContext
 	{
 		if (_active is not null) _active.Feed(text, this);
 		else Print(text);
+	}
+
+	internal void SequenceSeen()
+	{
+		if (_active is ISequenceObserver observer) observer.SequenceSeen(this);
 	}
 
 	internal void ResetAll()

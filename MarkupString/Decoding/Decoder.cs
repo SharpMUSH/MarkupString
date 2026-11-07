@@ -50,6 +50,12 @@ public sealed class Decoder
 	/// <summary>Whether anything has been read into the current line.</summary>
 	public bool HasPendingLine => !Context.Line.IsEmpty;
 
+	/// <summary>
+	/// The elements a text protocol has open, outermost first: what the text read next is written inside. An
+	/// element still here after a line ended goes on into the next line.
+	/// </summary>
+	public IReadOnlyList<IMarkup> OpenElements => Context.Elements;
+
 	/// <summary>The text protocol now reading the text, such as <c>mxp</c>, or null.</summary>
 	public string? ActiveProtocol => Context.ActiveProtocolName;
 
@@ -157,6 +163,7 @@ public sealed class Decoder
 
 		public void Csi(in CsiSequence sequence)
 		{
+			Context.SequenceSeen();
 			if (Registry.Csi.TryGetValue(new CsiKey(sequence.Prefix, sequence.Intermediates.ToString(), sequence.Final), out var handlers))
 			{
 				foreach (var handler in handlers)
@@ -170,6 +177,7 @@ public sealed class Decoder
 
 		public void Esc(in EscSequence sequence)
 		{
+			Context.SequenceSeen();
 			if (Registry.Esc.TryGetValue(new CsiKey('\0', sequence.Intermediates.ToString(), sequence.Final), out var handlers))
 			{
 				foreach (var handler in handlers)
@@ -183,6 +191,7 @@ public sealed class Decoder
 
 		public void Osc(ReadOnlySpan<char> payload)
 		{
+			Context.SequenceSeen();
 			var separator = payload.IndexOf(';');
 			var number = separator < 0 ? payload : payload[..separator];
 			var rest = separator < 0 ? [] : payload[(separator + 1)..];
@@ -200,6 +209,7 @@ public sealed class Decoder
 
 		public void Dcs(in CsiSequence header, ReadOnlySpan<char> data)
 		{
+			Context.SequenceSeen();
 			if (Registry.Dcs.TryGetValue(new CsiKey(header.Prefix, header.Intermediates.ToString(), header.Final), out var handlers))
 			{
 				foreach (var handler in handlers)
@@ -213,6 +223,7 @@ public sealed class Decoder
 
 		public void Apc(ReadOnlySpan<char> payload)
 		{
+			Context.SequenceSeen();
 			foreach (var handler in Registry.Apc)
 			{
 				if (handler(payload, Context)) return;

@@ -43,6 +43,16 @@ public interface ITextProtocol
 	void Reset(DecodeContext context);
 }
 
+/// <summary>
+/// A text protocol that wants to know when an escape sequence (CSI, ESC, OSC, DCS or APC) arrives between two pieces
+/// of text, such as MXP, whose one-tag secure mode a sequence in between ends.
+/// </summary>
+public interface ISequenceObserver
+{
+	/// <summary>A sequence has been read and is about to be handled.</summary>
+	void SequenceSeen(DecodeContext context);
+}
+
 /// <summary>A protocol that adds handlers to a <see cref="DecoderRegistry"/>.</summary>
 public interface IDecoderPlugin
 {
