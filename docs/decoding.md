@@ -134,7 +134,8 @@ The decoder acts on none of these. Refuse a clipboard write unless the player al
 | `53`, `55` | Overline on, off |
 | `58` | Underline colour: its parameters are read and dropped |
 
-Any other code is ignored. An extended colour out of range leaves the colour as it was. The style
+Any other code is ignored. An extended colour out of range leaves the colour as it was, and so does one
+with too few components, whose components are not read as codes of their own. The style
 is written under the `VtPens.Style` pen as an `AnsiMarkup`.
 
 ### `ControlsPlugin`
@@ -584,8 +585,8 @@ What the tags become:
 | `B`, `I`, `U`, `S`, `H`, `COLOR`, `FONT` | An `AnsiMarkup`. SGR inside an MXP colour wins, as in an MXP client. |
 | `A href hint` | A URL link, when `DecoderOptions.Links` allows the address |
 | `SEND href hint prompt` | A command link. With several commands (`a\|b`) or `PROMPT`, a `CommandMenuMarkup` as well. With no `href`, or `&text;` in it, the command is the tag's text. |
-| `IMAGE fname url w h align` | An `ImageMarkup`. Sized in cells (`W=4c H=2c`), it is drawn over the cells the server leaves for it. |
-| `SOUND`, `MUSIC` | `SoundMarkup` or `SoundStopMarkup` points |
+| `IMAGE fname url t w h align` | An `ImageMarkup` at `url`, then the `t` directory, then `fname`. Sized in cells (`W=4c H=2c`), it is drawn over the cells the server leaves for it. |
+| `SOUND`, `MUSIC` | `SoundMarkup` or `SoundStopMarkup` points, at `u`, then `t`, then the file |
 | `FRAME`, `DEST` | A `PaneMarkup` over the text in `DEST`, titled from its `FRAME` |
 | `VAR name` | A `VariableMarkup` over its text, and a `VariableEvent` |
 | `EXPIRE`, `RELOCATE`, `USER`, `PASSWORD` | Their points |
