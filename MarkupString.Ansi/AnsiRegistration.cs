@@ -63,6 +63,7 @@ public static class AnsiRegistration
 	/// Returns a registry that writes for one client as <paramref name="options"/> describe it: every colour at its
 	/// depth in <see cref="MarkupFormat.Ansi"/>, <see cref="MarkupFormat.Pueblo"/> and <see cref="MarkupFormat.Mxp"/>,
 	/// and, in <see cref="MarkupFormat.Ansi"/>, links and pictures in the forms its terminal reads.
+	/// Pictures are also available as a fallback when MXP refuses its IMAGE element.
 	/// </summary>
 	/// <param name="registry">The registry to add to, one <see cref="WithAnsi"/> has already filled.</param>
 	/// <param name="options">What the client is sent.</param>
@@ -73,6 +74,7 @@ public static class AnsiRegistration
 
 		return registry
 			.With(new AnsiSetEmitter(options))
+			.With(new ImageAnsiEmitter(options))
 			.With(new AnsiPuebloEmitter(options.ColorDepth))
 			.With(new AnsiMxpEmitter(options.ColorDepth));
 	}

@@ -54,6 +54,12 @@ An element the client refused is written as a format without MXP writes it: noth
 description for a picture, the text in the main window for a pane. With no predicate every element is
 written. Asking belongs to the telnet layer, and the answer to one connection.
 
+For a client that refuses `IMAGE` but renders terminal graphics, also configure
+`WithAnsiOutput(new AnsiOutputOptions(depth, features) { Pictures = source })`. Laid-out image rows
+then use the enabled Sixel, iTerm2, Kitty or block-art renderer while links and other supported elements
+remain MXP. Without pixels or an enabled graphics method, the picture keeps its text art. A client
+that supports `IMAGE` continues receiving MXP images.
+
 ## Elements
 
 | Factory | Written as |

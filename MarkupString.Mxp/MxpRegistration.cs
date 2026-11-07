@@ -23,7 +23,8 @@ public static class MxpRegistration
 	/// <para>MXP lets a client say what it can render, and <paramref name="supports"/> is where that
 	/// answer comes in: it is asked with an element's name from <see cref="Elements"/>, upper case, and an
 	/// element it refuses is written as a format without MXP writes it — nothing for a sound, the
-	/// description for a picture, the text in the main window for a pane. The answer belongs to one
+	/// description for a picture, the text in the main window for a pane. An unsupported picture first
+	/// delegates to a registered ANSI image emitter, allowing enabled terminal graphics as a fallback. The answer belongs to one
 	/// connection, so a server builds a registry per answer. With no predicate, every element is written,
 	/// which is right for a client that was never asked.</para>
 	/// </remarks>

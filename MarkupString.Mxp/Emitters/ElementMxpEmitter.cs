@@ -67,7 +67,9 @@ internal sealed class ElementMxpEmitter(Type markupType, Func<string, bool>? sup
 				{
 					if (!Supports("IMAGE"))
 					{
-						output.Write(body);
+						if (context.Registry.FindEmitter(typeof(ImageMarkup), MarkupFormat.Ansi) is { } fallback)
+							fallback.Emit(markup, body, context, output);
+						else output.Write(body);
 						return;
 					}
 
