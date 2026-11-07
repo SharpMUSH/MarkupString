@@ -433,3 +433,4 @@ tools/responsive-sweep/out/
 # Verify snapshot output: *.received.* is a failing test's actual result, never committed.
 # The reviewed *.verified.* files are.
 *.received.*
+MarkupString.Web/tests/node_modules/

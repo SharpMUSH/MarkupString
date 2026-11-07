@@ -162,7 +162,7 @@ public class SharedVocabularyTests
 	}
 
 	[Test]
-	public async Task WhatOnlyMxpHasIsWrittenForMxpAndNothingElse()
+	public async Task WhatOnlyMxpHasIsWrittenForMxpAndForThePageScript()
 	{
 		var points = MarkupText.Concat([
 			MarkupText.ExpireLinks("exits"),
@@ -174,7 +174,10 @@ public class SharedVocabularyTests
 			.IsEqualTo("<EXPIRE exits><RELOCATE other.example 4201 QUIET><USER><PASSWORD>");
 		await Assert.That(Render(points, MarkupFormat.Pueblo)).IsEqualTo(string.Empty);
 		await Assert.That(Render(points, MarkupFormat.Ansi)).IsEqualTo(string.Empty);
-		await Assert.That(Render(points, MarkupFormat.Html)).IsEqualTo("<span class=\"ms-expire\" data-group=\"exits\"></span>");
+		await Assert.That(Render(points, MarkupFormat.Html)).IsEqualTo(
+			"<span class=\"ms-expire\" data-group=\"exits\"></span>" +
+			"<span class=\"ms-relocate\" data-host=\"other.example\" data-port=\"4201\" data-quiet=\"true\"></span>" +
+			"<span class=\"ms-login\" data-field=\"user\"></span><span class=\"ms-login\" data-field=\"password\"></span>");
 	}
 
 	[Test]

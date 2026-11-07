@@ -1,12 +1,32 @@
 # Changelog
 
 All notable changes to `MarkupString`, `MarkupString.Ansi`, `MarkupString.Html`, `MarkupString.Mxp`,
-`MarkupString.Pueblo` and `MarkupString.Extensions.DependencyInjection`. The packages share one version and are released together.
+`MarkupString.Pueblo`, `MarkupString.Extensions.DependencyInjection` and `MarkupString.Web`. The packages share one version and are released together.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+### Added
+
+- **Output effects.** `OutputEffect` is a C# union of what output asks of a client besides text: the points
+  (`BellMarkup`, `ClearScreenMarkup`, `SoundMarkup`, `SoundStopMarkup`, `ExpireLinksMarkup`, `PrefetchMarkup`,
+  `LoginPromptMarkup`, `RelocateMarkup`, any other `IPointMarkup`) and the decoder's events (`TitleEvent`,
+  `VariableEvent` and the rest, any other `DecodeEvent`). `OutputEffects.Of(text)` reads them out of a line, a
+  decoder's events convert to one, and `EffectDispatcher` hands them to `IEffectHandler`s, newest first, which
+  `AddMarkupString().AddEffectHandler<T>()` registers. See [Display](docs/display.md#effects).
+- **`MarkupString.Web`**: `markupstring.css` (every class the HTML writer uses) and `markupstring.js`, an ES
+  module whose `attach(root, { send })` runs command links and `SEND` menus, plays and stops sounds by channel,
+  rings the bell, clears, expires link groups, keeps variables and the gauges that show them, and moves pane
+  text to its pane. Each effect is a cancelable `ms:<effect>` DOM event first, then a plugin's, then the host's
+  option. `attachDotNet` does the same for a Blazor host. See [Web pages](docs/web.md).
+- HTML for the vocabulary that wrote nothing there: `CommandMenuMarkup` (`ms-menu`, with its choices in
+  `data-commands`), `HighlightMarkup` (`ms-highlight`), `LinkGroupMarkup` (`ms-link-group`), `RelocateMarkup`
+  (`ms-relocate`) and `LoginPromptMarkup` (`ms-login`). An MXP `SEND` with several commands was its text alone.
+- With the .NET 11 SDK, `MarkupString` also builds for net11.0, where its unions implement the runtime's
+  `IUnion`. The net10.0 build declares them with internal copies of the compiler's union types; with the
+  .NET 10 SDK the repository builds through `Microsoft.Net.Compilers.Toolset`.
 
 ### Fixed
 

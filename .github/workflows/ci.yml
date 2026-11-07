@@ -16,14 +16,16 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+      # The .NET 11 SDK: the .NET 10 SDK's formatter cannot parse a `union` declaration (*.Union.cs).
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 11.0.x
+          dotnet-quality: preview
       # Folder mode, not solution mode: `dotnet format` cannot load a solution on the .NET 11
       # SDK (the MSBuild build host crashes). Whitespace rules are syntactic, so nothing is lost.
       - name: Verify formatting
         run: |
-          for dir in MarkupString MarkupString.Ansi MarkupString.Extensions.DependencyInjection MarkupString.Html MarkupString.Mxp MarkupString.Pueblo MarkupString.Tests MarkupString.AotSmoke; do
+          for dir in MarkupString MarkupString.Ansi MarkupString.Extensions.DependencyInjection MarkupString.Html MarkupString.Mxp MarkupString.Pueblo MarkupString.Web MarkupString.Tests MarkupString.AotSmoke; do
             dotnet format whitespace --folder "$dir" --exclude "**/bin/**" --exclude "**/obj/**" --verify-no-changes
           done
 
@@ -59,6 +61,52 @@ jobs:
 
       - name: Pack
         run: dotnet pack --configuration Release --no-build -p:SkipFormatVerification=true -o packages
+
+  net11:
+    name: Build and test on the .NET 11 SDK
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      # With the .NET 11 SDK the core package also builds for net11.0, where its unions implement the
+      # runtime's IUnion. The release builds this way, so this job proves what ships.
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            10.0.x
+            11.0.x
+          dotnet-quality: preview
+      - name: Restore
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --configuration Release --no-restore -p:SkipFormatVerification=true
+      - name: Test
+        run: dotnet run --project MarkupString.Tests --configuration Release --no-build
+      - name: Pack
+        run: dotnet pack --configuration Release --no-build -p:SkipFormatVerification=true -o packages
+      - name: The core package carries net10.0 and net11.0
+        run: |
+          unzip -l packages/MarkupString.*[0-9].nupkg | grep -q 'lib/net10.0/MarkupString.dll'
+          unzip -l packages/MarkupString.*[0-9].nupkg | grep -q 'lib/net11.0/MarkupString.dll'
+
+  web:
+    name: Web runtime in a browser
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: MarkupString.Web/tests
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # fragments.json is what the HTML writer writes; MarkupWebTests fails when it is out of date.
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
 
   aot:
     name: AOT publish

@@ -38,6 +38,7 @@ your own first replaces it.
 | `DisplayRegistry`, `IStyleResolver` | `DisplayRegistry.Core.WithAnsi()` and each `AddDisplay` step |
 | `DisplayOptions` | The configured output, colour level and link policy |
 | `IUrlPolicy` | `UrlPolicy.WithSchemes(LinkSchemes)` |
+| `EffectDispatcher` | Hands [output effects](display.md#effects) to every `IEffectHandler` added with `AddEffectHandler<T>()` or `AddEffectHandler(handler)`, newest first |
 
 `UsePictureCache<T>()` and `UseUrlPolicy<T>()` swap in your own as singletons. A cache of your own
 (on disk, in Redis) must be safe to call from several threads; see [Pictures](decoding.md#pictures).

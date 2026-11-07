@@ -21,9 +21,13 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+      # The .NET 11 SDK builds the core package for net11.0 as well as net10.0.
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: |
+            10.0.x
+            11.0.x
+          dotnet-quality: preview
 
       - name: Restore
         run: dotnet restore
@@ -50,9 +54,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      # The .NET 11 SDK builds the core package for net11.0 as well as net10.0.
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: |
+            10.0.x
+            11.0.x
+          dotnet-quality: preview
 
       - name: Restore
         run: dotnet restore

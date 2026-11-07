@@ -1,0 +1,16 @@
+{
+  "bell": "ding<span class=\"ms-bell\" role=\"alert\"></span>",
+  "clear": "fresh<span class=\"ms-clear\"></span>",
+  "cmd": "<a class=\"ms-cmd-link\" role=\"button\" tabindex=\"0\" xch_cmd=\"look\">look</a>",
+  "expire": "<span class=\"ms-expire\" data-group=\"exits\"></span>",
+  "gauge": "<span class=\"ms-gauge\" data-variable=\"hp\" data-maximum=\"maxhp\" data-caption=\"Hit Points\" data-color=\"red\">HP</span>",
+  "grouped": "<span class=\"ms-link-group\" data-group=\"exits\"><a class=\"ms-cmd-link\" role=\"button\" tabindex=\"0\" xch_cmd=\"north\">north</a></span>",
+  "music": "<audio class=\"ms-sound\" data-channel=\"music\" src=\"theme.ogg\" preload=\"none\"></audio>",
+  "mxpmenu": "<span class=\"ms-menu\" role=\"button\" tabindex=\"0\" aria-haspopup=\"menu\" title=\"Sword\" data-commands=\"[{&quot;label&quot;:&quot;Buy&quot;,&quot;command&quot;:&quot;buy sword&quot;},{&quot;label&quot;:&quot;Look&quot;,&quot;command&quot;:&quot;look sword&quot;}]\"><a class=\"ms-cmd-link\" role=\"button\" tabindex=\"0\" xch_cmd=\"buy sword\" title=\"Sword\">sword</a></span>",
+  "pane": "<span class=\"ms-pane\" data-pane=\"chat\" data-title=\"Chat\">chat line</span>",
+  "prompt": "<span class=\"ms-menu ms-prompt\" role=\"button\" tabindex=\"0\" data-commands=\"[{&quot;label&quot;:&quot;Say&quot;,&quot;command&quot;:&quot;say &quot;}]\">talk</span>",
+  "relocate": "<span class=\"ms-relocate\" data-host=\"h\" data-port=\"23\"></span>",
+  "sound": "door<audio class=\"ms-sound\" data-channel=\"effects\" src=\"door.wav\" preload=\"none\"></audio>",
+  "stop": "<span class=\"ms-sound-stop\"></span>",
+  "vars": "<span class=\"ms-variable\" data-name=\"maxhp\">50</span><span class=\"ms-variable\" data-name=\"hp\">25</span>"
+}

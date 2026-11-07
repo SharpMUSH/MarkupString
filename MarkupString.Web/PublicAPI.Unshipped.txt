@@ -1,0 +1,8 @@
+#nullable enable
+MarkupString.Web.MarkupWeb
+const MarkupString.Web.MarkupWeb.ContentRoot = "_content/MarkupString.Web/" -> string!
+const MarkupString.Web.MarkupWeb.ScriptPath = "_content/MarkupString.Web/markupstring.js" -> string!
+const MarkupString.Web.MarkupWeb.StylesheetPath = "_content/MarkupString.Web/markupstring.css" -> string!
+static MarkupString.Web.MarkupWeb.RuntimeStylesheet.get -> string!
+static MarkupString.Web.MarkupWeb.Script.get -> string!
+static MarkupString.Web.MarkupWeb.Stylesheet.get -> string!

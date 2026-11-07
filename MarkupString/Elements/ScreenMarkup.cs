@@ -50,7 +50,10 @@ public enum LoginField
 /// Marks a login prompt, so a client that stores a player's name and password knows which to send.
 /// <see cref="MarkupText.LoginPrompt"/> builds one.
 /// </summary>
-/// <remarks>MXP writes <c>&lt;USER&gt;</c> or <c>&lt;PASSWORD&gt;</c>; nothing else has the idea.</remarks>
+/// <remarks>
+/// MXP writes <c>&lt;USER&gt;</c> or <c>&lt;PASSWORD&gt;</c>, and HTML an empty <c>ms-login</c> element for the
+/// page's script; nothing else has the idea.
+/// </remarks>
 /// <param name="Field">Which prompt this is.</param>
 public sealed record LoginPromptMarkup(LoginField Field) : IPointMarkup;
 
@@ -58,7 +61,10 @@ public sealed record LoginPromptMarkup(LoginField Field) : IPointMarkup;
 /// Asks the client to disconnect and connect to another address. <see cref="MarkupText.Relocate"/>
 /// builds one.
 /// </summary>
-/// <remarks>MXP writes <c>&lt;RELOCATE&gt;</c>; nothing else has the idea.</remarks>
+/// <remarks>
+/// MXP writes <c>&lt;RELOCATE&gt;</c>, and HTML an empty <c>ms-relocate</c> element for the page's script;
+/// nothing else has the idea.
+/// </remarks>
 /// <param name="Host">The host to connect to.</param>
 /// <param name="Port">The port to connect to.</param>
 /// <param name="Quiet">Whether the client reconnects without telling the player.</param>

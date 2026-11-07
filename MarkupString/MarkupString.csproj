@@ -16,6 +16,14 @@
     <Description>Immutable styled text: a string plus layered markup runs, rendered to ANSI, HTML, Pueblo, MXP, BBCode, Markdown or plain text through a registry of emitters, and round-tripped through JSON.</Description>
   </PropertyGroup>
 
+  <Import Project="..\build\Unions.props" />
+
+  <!-- With the .NET 11 SDK the package carries a net11.0 build too, whose unions implement the runtime's own
+       IUnion; the net10.0 build declares them with the copies in Polyfills/Unions.cs. -->
+  <PropertyGroup Condition="$(MarkupStringSdkMajor) &gt;= 11">
+    <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="MinVer" Version="8.0.0" PrivateAssets="all" />
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="5.6.0" PrivateAssets="all" />

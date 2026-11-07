@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+  <PropertyGroup>
+    <AssemblyName>MarkupString.Web</AssemblyName>
+    <RootNamespace>MarkupString.Web</RootNamespace>
+    <PackageId>MarkupString.Web</PackageId>
+    <Title>MarkupString.Web</Title>
+    <IsAotCompatible>true</IsAotCompatible>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>CS1591</NoWarn>
+    <!-- A new package: there is no earlier version to validate against yet. -->
+    <EnablePackageValidation>false</EnablePackageValidation>
+    <Description>The browser side of MarkupString: one stylesheet for every class the HTML writer uses, and a script module that runs command links and menus, plays sounds, rings the bell, clears, expires links, keeps variables and gauges, and routes pane text, with DOM events and plugins for a host to take any of it over. Served at _content/MarkupString.Web/.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="8.0.0" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="5.6.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The browser test and its npm files are not part of the package. -->
+    <Content Remove="tests/**" />
+    <None Remove="tests/**" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+    <EmbeddedResource Include="runtime.css" LogicalName="MarkupString.Web.runtime.css" />
+    <EmbeddedResource Include="wwwroot/markupstring.js" LogicalName="MarkupString.Web.markupstring.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MarkupString.Html\MarkupString.Html.csproj" />
+  </ItemGroup>
+</Project>

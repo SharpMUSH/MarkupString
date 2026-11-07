@@ -6,5 +6,6 @@
   <Project Path="MarkupString.Mxp/MarkupString.Mxp.csproj" />
   <Project Path="MarkupString.Pueblo/MarkupString.Pueblo.csproj" />
   <Project Path="MarkupString.Tests/MarkupString.Tests.csproj" />
+  <Project Path="MarkupString.Web/MarkupString.Web.csproj" />
   <Project Path="MarkupString/MarkupString.csproj" />
 </Solution>
