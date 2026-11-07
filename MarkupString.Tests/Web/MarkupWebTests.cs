@@ -78,7 +78,7 @@ public class MarkupWebTests
 			["pane"] = Html(MarkupText.Pane(MarkupText.Plain("chat line"), "chat", "Chat")),
 			["relocate"] = Html(Point(new RelocateMarkup("h", 23))),
 		};
-		var json = System.Text.Json.JsonSerializer.Serialize(fragments, new System.Text.Json.JsonSerializerOptions { WriteIndented = true, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }) + "\n";
+		var json = System.Text.Json.JsonSerializer.Serialize(fragments, new System.Text.Json.JsonSerializerOptions { WriteIndented = true, NewLine = "\n", Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }) + "\n";
 
 		if (Updating) await File.WriteAllTextAsync(Fixture(), json);
 		await Assert.That(await File.ReadAllTextAsync(Fixture())).IsEqualTo(json);
