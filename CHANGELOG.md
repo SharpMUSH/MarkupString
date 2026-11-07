@@ -34,6 +34,10 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `<!ELEMENT name EMPTY>` took `EMPTY` as its definition and printed it.
 - `SEND` hints with several commands were matched to the wrong labels.
 - A cell-sized `IMAGE` could cover text the server wrote over its cells; it now goes inline at the tag.
+- MXP `IMAGE` and `SOUND` put the file in the `T=` type's directory under the base address, as the MXP
+  specification says: `<IMAGE map.png URL=https://h/img/ T=maps>` is `https://h/img/maps/map.png`.
+- An SGR extended colour with too few components (`38;2;40`) no longer reads what is left as codes of their own,
+  so it does not set a black background.
 
 ## 2.26.0 — 2026-11-06
 

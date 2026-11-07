@@ -1002,7 +1002,7 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 	{
 		var file = tag.Get("FNAME", 0);
 		if (string.IsNullOrEmpty(file)) return;
-		var source = Address(Directory(tag.Get("URL"), tag.Get("T")), file);
+		var source = Address(tag.Get("URL"), tag.Get("T"), file);
 		var (width, widthCells) = Size(tag.Get("W"));
 		var (height, heightCells) = Size(tag.Get("H"));
 		var align = Enum.TryParse<ImageAlign>(tag.Get("ALIGN"), ignoreCase: true, out var parsed) ? parsed : (ImageAlign?)null;
@@ -1102,24 +1102,25 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 		var continues = music && tag.Get("C") == "1";
 		int? priority = !music && int.TryParse(tag.Get("P"), NumberStyles.None, CultureInfo.InvariantCulture, out var p) ? Math.Clamp(p, 0, 100) : null;
 		var type = tag.Get("T") is { Length: > 0 } t ? t : null;
-		Context.Point(new SoundMarkup(Address(tag.Get("U"), file), channel, volume, repeats, continues)
+		Context.Point(new SoundMarkup(Address(tag.Get("U"), type, file), channel, volume, repeats, continues)
 		{
 			Priority = priority,
 			Type = type,
 		});
 	}
 
-	// MXP puts an image type's files in a folder of that name under the URL.
-	private static string? Directory(string? directory, string? type)
-	{
-		if (string.IsNullOrEmpty(directory) || string.IsNullOrWhiteSpace(type)) return directory;
-		return (directory.EndsWith('/') ? directory : directory + "/") + type.Trim().Trim('/');
-	}
-
-	private static string Address(string? directory, string file)
+	/// <summary>
+	/// Where a picture or sound is: the file under the base address, in the type's directory when there is one
+	/// ("the classname is appended to the URL, along with the name of the file itself"), or the file as it is
+	/// when there is no base or the file is already absolute.
+	/// </summary>
+	private static string Address(string? directory, string? type, string file)
 	{
 		if (string.IsNullOrEmpty(directory) || Uri.TryCreate(file, UriKind.Absolute, out _)) return file;
-		return directory.EndsWith('/') ? directory + file : directory + "/" + file;
+		var address = directory.EndsWith('/') ? directory : directory + "/";
+		var kind = type?.Trim().Trim('/');
+		if (!string.IsNullOrEmpty(kind)) address += kind + "/";
+		return address + file;
 	}
 
 	// ── Helpers ─────────────────────────────────────────────────────────────────

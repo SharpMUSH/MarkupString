@@ -236,6 +236,22 @@ public class MxpDecodingTests
 	}
 
 	[Test]
+	public async Task Image_TypeIsADirectoryUnderTheUrl()
+	{
+		var (lines, _, _) = Decode("\e[1z<IMAGE map.png URL=\"https://example.test/img/\" T=maps>\n\e[1z<IMAGE map.png URL=https://example.test/img T=/maps/>\n\e[1z<SOUND door.wav U=https://example.test/ T=doors>\n");
+		await Assert.That(Markups(lines[0]).OfType<ImageMarkup>().Single().Source).IsEqualTo("https://example.test/img/maps/map.png");
+		await Assert.That(Markups(lines[1]).OfType<ImageMarkup>().Single().Source).IsEqualTo("https://example.test/img/maps/map.png");
+		await Assert.That(Markups(lines[2]).OfType<SoundMarkup>().Single().Source).IsEqualTo("https://example.test/doors/door.wav");
+	}
+
+	[Test]
+	public async Task Image_TypeWithoutUrlLeavesTheName()
+	{
+		var (lines, _, _) = Decode("\e[1z<IMAGE https://example.test/x.png T=maps>\n");
+		await Assert.That(Markups(lines[0]).OfType<ImageMarkup>().Single().Source).IsEqualTo("https://example.test/x.png");
+	}
+
+	[Test]
 	public async Task Image_InCells_IsDrawnOverTheLines()
 	{
 		var (lines, _, _) = Decode("\e[1z<IMAGE cat.png URL=\"https://example.test/\" W=2c H=2c>  a\n  b\n");
@@ -284,7 +300,7 @@ public class MxpDecodingTests
 	{
 		var (lines, _, _) = Decode("\e[1z<SOUND hit.wav V=50 P=70 T=combat U=https://example.test/sounds>\n");
 		var sound = Markups(lines[0]).OfType<SoundMarkup>().Single();
-		await Assert.That(sound.Source).IsEqualTo("https://example.test/sounds/hit.wav");
+		await Assert.That(sound.Source).IsEqualTo("https://example.test/sounds/combat/hit.wav");
 		await Assert.That(sound.Priority).IsEqualTo(70);
 		await Assert.That(sound.Type).IsEqualTo("combat");
 	}

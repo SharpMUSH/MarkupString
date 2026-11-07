@@ -155,6 +155,9 @@ public sealed class SgrPlugin : IDecoderPlugin
 		}
 		else if (first + 2 >= sequence.Count)
 		{
+			// Too few components: they are still the colour's, not codes of their own (38;2;40 does not
+			// set a black background).
+			i = sequence.Count - 1;
 			return null;
 		}
 

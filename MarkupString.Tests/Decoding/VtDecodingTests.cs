@@ -91,6 +91,14 @@ public class VtDecodingTests
 	}
 
 	[Test]
+	public async Task Sgr_TruncatedTrueColour_SetsNothing()
+	{
+		var span = Only("\e[31;38;2;40mx\n");
+		await Assert.That(span.Style.Foreground).IsEqualTo(new RgbColor(170, 0, 0));
+		await Assert.That(span.Style.Background).IsNull();
+	}
+
+	[Test]
 	public async Task Sgr_TrueColour_SemicolonsAndColons()
 	{
 		await Assert.That(Only("\e[38;2;1;2;3mx\n").Style.Foreground).IsEqualTo(new RgbColor(1, 2, 3));

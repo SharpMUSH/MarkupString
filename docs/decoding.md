@@ -140,7 +140,8 @@ The decoder acts on none of these. Refuse a clipboard write unless the player al
 | `53`, `55` | Overline on, off |
 | `58` | Underline colour: its parameters are read and dropped |
 
-Any other code is ignored. An extended colour out of range leaves the colour as it was. The style
+Any other code is ignored. An extended colour out of range leaves the colour as it was, and so does one
+with too few components, whose components are not read as codes of their own. The style
 is written under the `VtPens.Style` pen as an `AnsiMarkup`.
 
 ### `ControlsPlugin`
@@ -603,8 +604,8 @@ What the tags become:
 | `B`, `I`, `U`, `S`, `H`, `COLOR`, `FONT` | An `AnsiMarkup`. SGR inside an MXP colour wins, as in an MXP client. |
 | `A href hint` | A URL link, when `DecoderOptions.Links` allows the address |
 | `SEND href hint prompt` | A command link. With several commands (`a\|b`) or `PROMPT`, a `CommandMenuMarkup` as well. With no `href`, or `&text;` in it, the command is the tag's text. One command takes the whole hint. With several, one more hint than commands makes the first the link's hint and the rest the menu labels; as many hints as commands are the labels alone. |
-| `IMAGE fname url t w h align` | An `ImageMarkup`, from `url` + `t` + `fname`. Sized in cells (`W=4c H=2c`), it is drawn over the cells the server leaves blank for it; when those cells hold text, it goes inline at the tag instead. Sized in cells one way only, the other size is converted to pixels with the identity's cell size. |
-| `SOUND`, `MUSIC` | `SoundMarkup` (with `Priority` from `P` and `Type` from `T`) or `SoundStopMarkup` points |
+| `IMAGE fname url t w h align` | An `ImageMarkup` at `url`, then the `t` directory, then `fname`. Sized in cells (`W=4c H=2c`), it is drawn over the cells the server leaves blank for it; when those cells hold text, it goes inline at the tag instead. Sized in cells one way only, the other size is converted to pixels with the identity's cell size. |
+| `SOUND`, `MUSIC` | `SoundMarkup` (with `Priority` from `P` and `Type` from `T`) or `SoundStopMarkup` points, at `u`, then `t`, then the file |
 | `FRAME`, `DEST` | A `PaneMarkup` over the text in `DEST`, titled from its `FRAME`. `FRAME ACTION=REDIRECT` (or the `REDIRECT` flag) sends the lines after it to that frame through `DisplayLine.Destination`, until a redirect to `_top` or `_previous` or `FRAME … CLOSE`. |
 | `GAUGE`, `STAT` | A `GaugeEvent` |
 | `VAR name` | A `VariableMarkup` over its text, and a `VariableEvent` |
