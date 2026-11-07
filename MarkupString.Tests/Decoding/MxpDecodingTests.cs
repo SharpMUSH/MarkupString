@@ -306,6 +306,64 @@ public class MxpDecodingTests
 	}
 
 	[Test]
+	public async Task Sound_PriorityAndType_ReadBackFromWhatThisPackageWrites()
+	{
+		var registry = MarkupRegistry.Empty.WithAnsi().WithMxp().WithMxpSecureLines();
+		var sound = new SoundMarkup("https://example.test/sounds/combat/hit.wav", Volume: 50) { Priority = 70, Type = "combat" };
+		var wire = MarkupText.Point(sound).Render(MarkupFormat.Mxp, registry);
+
+		var (lines, _, _) = Decode(wire + "\n");
+		await Assert.That(Markups(lines.Single()).OfType<SoundMarkup>().Single()).IsEqualTo(sound);
+	}
+
+	[Test]
+	public async Task FrameRedirect_EndsWhenMxpIsTurnedOff()
+	{
+		var decoder = Registry.CreateDecoder();
+		decoder.EnableProtocol(MxpDecoding.Protocol);
+		var lines = new List<DisplayLine>(decoder.Feed("\e[1z<FRAME chat REDIRECT>\none\n"));
+		decoder.DisableProtocol(MxpDecoding.Protocol);
+		lines.AddRange(decoder.Feed("two\n"));
+		await Assert.That(lines.Single(line => line.Content.ToPlainText() == "one").Destination).IsEqualTo("chat");
+		await Assert.That(lines.Single(line => line.Content.ToPlainText() == "two").Destination).IsNull();
+	}
+
+	[Test]
+	public async Task Var_KeepsTheEntityTableBounded()
+	{
+		var tooLong = new string('x', MxpPlugin.MaxDefinitionLength + 1);
+		var (_, events, decoder) = Decode($"\e[1z<V short>ok</V>\e[1z<V long>{tooLong}</V>\n");
+		await Assert.That(events.OfType<VariableEvent>().Select(e => e.Name)).IsEquivalentTo(["short"]);
+		await Assert.That(decoder.Diagnostics.LimitsReached).IsGreaterThan(0);
+	}
+
+	[Test]
+	public async Task Image_InCells_TooLargeGoesInlineInsteadOfThrowing()
+	{
+		var (lines, _, _) = Decode("x\e[1z<IMAGE cat.png URL=\"https://example.test/\" W=2147483647c H=1c>y\n");
+		var image = Markups(lines[0]).OfType<ImageMarkup>().Single();
+		await Assert.That(image.Row).IsNull();
+		await Assert.That(lines[0].Content.ToPlainText()).IsEqualTo("xcat.pngy");
+	}
+
+	[Test]
+	public async Task Image_InCells_AfterOneThatWentInline_StillUsesItsCells()
+	{
+		var (lines, _, _) = Decode("\e[1z<IMAGE a.png URL=\"https://example.test/\" W=2c H=1c>xx\e[1z<IMAGE b.png URL=\"https://example.test/\" W=2c H=1c>  \n");
+		var images = Markups(lines[0]).OfType<ImageMarkup>().ToList();
+		await Assert.That(images.Single(image => image.Source.EndsWith("a.png", StringComparison.Ordinal)).Row).IsNull();
+		await Assert.That(images.Single(image => image.Source.EndsWith("b.png", StringComparison.Ordinal)).Row).IsNotNull();
+	}
+
+	[Test]
+	public async Task Image_InCells_InlineThatWouldOverfillTheLine_LeavesTheLineAlone()
+	{
+		var (lines, _, decoder) = Decode("\e[1z<IMAGE cat.png URL=\"https://example.test/\" W=2c H=1c>xxxx\n", new DecoderOptions { MaxLineLength = 4 });
+		await Assert.That(lines[0].Content.ToPlainText()).IsEqualTo("xxxx");
+		await Assert.That(decoder.Diagnostics.LimitsReached).IsGreaterThan(0);
+	}
+
+	[Test]
 	public async Task Image_PutsItsTypeBetweenTheUrlAndTheFile()
 	{
 		var (lines, _, _) = Decode("\e[1z<IMAGE map.png URL=https://example.test/images T=maps>\n");

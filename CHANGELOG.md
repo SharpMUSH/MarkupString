@@ -38,6 +38,16 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   specification says: `<IMAGE map.png URL=https://h/img/ T=maps>` is `https://h/img/maps/map.png`.
 - An SGR extended colour with too few components (`38;2;40`) no longer reads what is left as codes of their own,
   so it does not set a black background.
+- A `<VAR>` could grow the entity table past `MaxEntities` or store a value past `MaxDefinitionLength`.
+- An `IMAGE` sized in cells with a huge `W` or `H` could throw at the end of the line. A size over 1024 cells is
+  ignored, and the picture goes inline.
+- A second cell-sized `IMAGE` on a line looked for its cells in the wrong place after the first went inline.
+- A picture put inline on a line that had no room for it emptied the line. The line is now left as it was.
+- A FRAME redirect outlived turning MXP off.
+- A handler that threw during an element's playback could leave the line secure.
+- Writing a sound as MXP dropped its `P` and `T`.
+- Pueblo: `</a>` left a `xch_mode=prompt` menu open; a `<pre>` closed with the link around it stayed in force;
+  `<send href="buy|look">` was one link to `buy|look` rather than a menu.
 
 ## 2.26.0 — 2026-11-06
 

@@ -231,10 +231,17 @@ public sealed class DecodeContext
 		ArgumentNullException.ThrowIfNull(text);
 		if (text.Length == 0) return;
 		var line = Line.Peek();
+		if (line.Length + text.Length > Line.MaxLength)
+		{
+			// Too long to fit: the line stays as it was, and so does the cursor.
+			Diagnostics.LimitsReached++;
+			return;
+		}
+
 		var index = DisplayWidth.IndexAtWidth(line.Text, Math.Clamp(column, 0, line.DisplayWidth));
 		var cursor = Line.Cursor;
 		Line.Take();
-		if (!Line.Put(line.Insert(index, text))) Diagnostics.LimitsReached++;
+		Line.Put(line.Insert(index, text));
 		Line.Cursor = cursor >= column ? cursor + text.DisplayWidth : cursor;
 	}
 

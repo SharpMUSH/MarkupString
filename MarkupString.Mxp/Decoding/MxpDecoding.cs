@@ -292,11 +292,17 @@ internal sealed class MxpState
 	public int ExpansionsThisLine { get; set; }
 
 	public string? StyleVersion { get; set; }
+
+	/// <summary>The frame a FRAME redirect sent lines to, so turning MXP off sends them back to the main window.</summary>
+	public string? Redirect { get; set; }
 }
 
 internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, ISequenceObserver
 {
 	private const int MaxCapture = 4096;
+
+	/// <summary>The most cells a picture sized in cells may cover either way; a larger size is ignored.</summary>
+	private const int MaxImageCells = 1024;
 
 	private static readonly HashSet<string> OpenTags = new(StringComparer.OrdinalIgnoreCase)
 	{
@@ -363,6 +369,12 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 		if (state.Open.Count > 0) CloseFrom(0);
 		state.Capture = null;
 		state.Overlays.Clear();
+		if (state.Redirect is { } redirect && string.Equals(context.Destination, redirect, StringComparison.OrdinalIgnoreCase))
+		{
+			context.Destination = null;
+		}
+
+		state.Redirect = null;
 		state.Line = state.Default = MxpMode.Open;
 		state.TemporarySecure = false;
 	}
@@ -639,6 +651,7 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 						case "REDIRECT":
 							// Every line from here goes to the frame, until a redirect back to the main window.
 							context.Destination = main ? null : name;
+							State.Redirect = context.Destination;
 							break;
 						case "CLOSE":
 							State.FrameTitles.Remove(name);
@@ -805,11 +818,11 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 		}
 		finally
 		{
+			// Restored even when a handler throws, or open-line text after it would be read as secure.
+			state.Line = saved;
 			state.ExpansionDepth--;
 			state.Replaying = replaying;
 		}
-
-		state.Line = saved;
 
 		// What the definition opened is one element now, closed together.
 		if (state.Open.Count > opened) state.Open.RemoveRange(opened, state.Open.Count - opened);
@@ -914,13 +927,7 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 						value = existing + "|" + value;
 					}
 
-					if (TagSyntax.Entity(name, static _ => null) is not null || value.Length > MxpPlugin.MaxDefinitionLength
-						|| (!state.Entities.ContainsKey(name) && state.Entities.Count >= MxpPlugin.MaxEntities))
-					{
-						// &lt; and the other built-in entities keep their meaning, and the table stays bounded.
-						Context.Diagnostics.LimitsReached++;
-						return;
-					}
+					if (!CanStoreEntity(name, value)) return;
 
 					state.Entities[name] = value;
 					if (!tag.Has("PRIVATE")) Context.Raise(new VariableEvent(name, value));
@@ -954,6 +961,23 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 		if (state.CaptureRaw.Length > MaxCapture) FinishCapture();
 	}
 
+	/// <summary>
+	/// Whether <paramref name="name"/> may be set to <paramref name="value"/>: &amp;lt; and the other built-in entities
+	/// keep their meaning, and the table stays bounded in size and in each value's length.
+	/// </summary>
+	private bool CanStoreEntity(string name, string value)
+	{
+		var state = State;
+		if (TagSyntax.Entity(name, static _ => null) is null && value.Length <= MxpPlugin.MaxDefinitionLength
+			&& (state.Entities.ContainsKey(name) || state.Entities.Count < MxpPlugin.MaxEntities))
+		{
+			return true;
+		}
+
+		Context.Diagnostics.LimitsReached++;
+		return false;
+	}
+
 	private void FinishCapture()
 	{
 		var state = State;
@@ -979,8 +1003,12 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 			var variable = tag.Get("NAME", 0);
 			if (!string.IsNullOrEmpty(variable))
 			{
-				state.Entities[variable] = text;
-				if (!tag.Has("PRIVATE")) Context.Raise(new VariableEvent(variable, text));
+				if (CanStoreEntity(variable, text))
+				{
+					state.Entities[variable] = text;
+					if (!tag.Has("PRIVATE")) Context.Raise(new VariableEvent(variable, text));
+				}
+
 				OpenElement(tag.Name, [new VariableMarkup(variable)], openMode: false);
 			}
 			else
@@ -991,8 +1019,15 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 
 		var saved = state.Line;
 		state.Line = MxpMode.Secure;
-		new TagScanner().Feed(raw, this);
-		state.Line = saved;
+		try
+		{
+			new TagScanner().Feed(raw, this);
+		}
+		finally
+		{
+			state.Line = saved;
+		}
+
 		Close(tag.Name);
 	}
 
@@ -1032,7 +1067,11 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 	private static (int? Pixels, int Cells) Size(string? value)
 	{
 		if (string.IsNullOrEmpty(value)) return (null, 0);
-		if (value.EndsWith('c') && int.TryParse(value.AsSpan(0, value.Length - 1), NumberStyles.None, CultureInfo.InvariantCulture, out var cells)) return (null, cells);
+		if (value.EndsWith('c') && int.TryParse(value.AsSpan(0, value.Length - 1), NumberStyles.None, CultureInfo.InvariantCulture, out var cells))
+		{
+			return (null, cells <= MaxImageCells ? cells : 0);
+		}
+
 		var digits = value.EndsWith("px", StringComparison.OrdinalIgnoreCase) ? value[..^2] : value;
 		return int.TryParse(digits, NumberStyles.None, CultureInfo.InvariantCulture, out var pixels) && pixels > 0 ? (pixels, 0) : (null, 0);
 	}
@@ -1043,22 +1082,35 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 		if (overlays.Count == 0) return;
 		var context = Context;
 		var cursor = context.Column;
+		List<(int Column, int Width)>? inserted = null;
 		for (var i = 0; i < overlays.Count; i++)
 		{
 			var (image, rows, columns, column, next, inline) = overlays[i];
-			if (next == 0 && !Blank(context.PendingLine, column, columns))
+
+			// A picture put inline earlier on this line moved the cells after it to the right.
+			var at = column;
+			if (inserted is not null)
+			{
+				foreach (var (insertedAt, width) in inserted)
+				{
+					if (insertedAt <= column) at += width;
+				}
+			}
+
+			if (next == 0 && !Blank(context.PendingLine, at, columns))
 			{
 				// The server left no room for it here: the picture goes where its tag was instead of over its text.
-				context.Insert(column, inline);
-				if (cursor >= column) cursor += inline.DisplayWidth;
+				context.Insert(at, inline);
+				if (cursor >= at) cursor += inline.DisplayWidth;
+				(inserted ??= []).Add((column, inline.DisplayWidth));
 				overlays[i] = (image, rows, columns, column, rows, inline);
 				continue;
 			}
 
 			// A later row drawn over text would hide it; that row of the picture is left out instead.
-			if (next == 0 || Blank(context.PendingLine, column, columns))
+			if (next == 0 || Blank(context.PendingLine, at, columns))
 			{
-				context.MoveToColumn(column);
+				context.MoveToColumn(at);
 				context.Write(new string(' ', columns), image with { Row = new PictureRow(next, rows, columns) });
 			}
 

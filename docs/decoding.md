@@ -625,11 +625,11 @@ bounded by `MxpPlugin` constants:
 |---|---|---|
 | `MaxElements` | 256 | Elements defined at once |
 | `MaxEntities` | 512 | Entities defined at once |
-| `MaxDefinitionLength` | 1024 | Characters in an element's definition or an entity's value |
+| `MaxDefinitionLength` | 1024 | Characters in an element's definition or an entity's value, `<VAR>` included |
 | `MaxExpansionDepth` | 4 | Elements expanding inside each other (an element that uses itself stops here) |
 | `MaxExpansionsPerLine` | 64 | Custom elements expanded on one line |
 
-A definition past a limit is refused and counted in `LimitsReached`. The built-in tags and the entities
+A cell size (`W=Nc`, `H=Nc`) over 1024 is ignored, so the picture goes inline. A definition past a limit is refused and counted in `LimitsReached`. The built-in tags and the entities
 the decoder already knows (`lt`, `nbsp` and the rest) cannot be redefined. `<!ENTITY name value REMOVE>` takes `value`
 out of a `|` list, and `DELETE` deletes the entity.
 

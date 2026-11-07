@@ -38,10 +38,21 @@ internal sealed class ElementMxpEmitter(Type markupType, Func<string, bool>? sup
 					if (!Supports(name)) return;
 
 					var (file, directory) = Split(sound.Source);
+					var type = sound.Type?.Trim().Trim('/');
+					if (string.IsNullOrEmpty(type)) type = null;
+
+					// A reader puts T's folder between U and the file, so a source already under it loses it from U.
+					if (type is not null && directory is not null && directory.EndsWith("/" + type + "/", StringComparison.OrdinalIgnoreCase))
+					{
+						directory = directory[..^(type.Length + 1)];
+					}
+
 					tag.Open(name).Positional(file)
 						.Named("V", sound.Volume)
 						.Named("L", sound.Repeats)
+						.Named("P", sound.Priority)
 						.Named("C", sound.Channel == SoundChannel.Music && sound.Continues ? "1" : null)
+						.Named("T", type)
 						.Named("U", directory)
 						.Close();
 					return;

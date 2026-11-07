@@ -87,4 +87,30 @@ public class PuebloDecodingTests
 		await Assert.That(PuebloDecoding.IsGreeting("This world is Pueblo 1.10 Enhanced.")).IsTrue();
 		await Assert.That(PuebloDecoding.IsGreeting("Welcome!")).IsFalse();
 	}
+
+	[Test]
+	public async Task PromptLink_EndsAtItsClosingTag()
+	{
+		var lines = Decode("</xch_mudtext><a xch_cmd=\"look\" xch_mode=\"prompt\">look</a> plain<br>");
+		var content = lines[0].Content;
+		var plain = content.Text.IndexOf("plain", StringComparison.Ordinal);
+		IEnumerable<IMarkup> At(int index) => content.Runs.Where(run => run.Start <= index && index < run.Start + run.Length).SelectMany(run => run.Markups);
+		await Assert.That(At(plain).OfType<CommandMenuMarkup>()).IsEmpty();
+		await Assert.That(At(0).OfType<CommandMenuMarkup>()).IsNotEmpty();
+	}
+
+	[Test]
+	public async Task Pre_ClosedWithTheLinkAroundIt_EndsWithIt()
+	{
+		var lines = Decode("</xch_mudtext><send href=look><pre>x</send>a\nb<br>");
+		await Assert.That(lines.Select(line => line.Content.ToPlainText())).IsEquivalentTo(["xab"]);
+	}
+
+	[Test]
+	public async Task Send_WithSeveralCommands_IsAMenu()
+	{
+		var lines = Decode("</xch_mudtext><send href=\"buy|look\" hint=\"Buy|Look\">sword</send><br>");
+		var menu = Markups(lines[0]).OfType<CommandMenuMarkup>().Single();
+		await Assert.That(menu.Choices).IsEquivalentTo([new CommandChoice("Buy", "buy"), new CommandChoice("Look", "look")]);
+	}
 }
