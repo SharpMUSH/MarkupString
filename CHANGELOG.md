@@ -6,14 +6,48 @@ All notable changes to `MarkupString`, `MarkupString.Ansi`, `MarkupString.Html`,
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 2.27.0 — Unreleased
+
+### Added
+
+- `Decoder.OpenElements` and `DecodeContext.PendingLine`: the elements a text protocol has open, and the line read
+  so far. `DecodeContext.Insert(column, text)` puts text into the line at a display column.
+- `ISequenceObserver`: a text protocol is told when an escape sequence arrives.
+- `GaugeEvent` for MXP `GAUGE` and `STAT`.
+- `MxpOptions` for `WithMxp(options)`: `ShowRefusedTags` shows a refused tag as the text it was, and `Supports`
+  sets the tags and attributes `<SUPPORT>` is answered with. `MxpOptions.Answer` gives that answer to a host.
+- MXP `FRAME` redirects (`ACTION=REDIRECT`, `CLOSE`) through `DisplayLine.Destination`; `SOUND` priority and
+  type (`SoundMarkup.Priority`, `SoundMarkup.Type`); the `IMAGE` `T` folder; `<VERSION n>` sets the reported style.
+- Pueblo `<send href>`, `<a xch_mode=prompt>`, and `strong`/`em`/`strike`/`del` closing their canonical tags.
 
 ### Fixed
 
+- An MXP element that used itself (`<!ELEMENT loop "<loop>x">`) overflowed the stack. Expansion is now bounded
+  in depth and per line, and definitions, entities and their lengths are capped (`MxpPlugin.MaxElements` and the
+  rest). Built-in tags and entities cannot be redefined.
+- An element defined on an open line played back as secure, so a player could send a secure tag through it.
+- `ESC [ 4 z` (temp secure) stayed armed past text and escape sequences; `ESC [ z` with no number, and an
+  undefined line tag in 10–99, changed the line mode.
+- Leaving open mode mid-line left the open part's elements open.
+- `A` and `SEND` links, and Pueblo `a`, ran on past their line.
+- A tab inside an MXP tag moved the cursor instead of being part of the tag.
+- `<!ELEMENT name EMPTY>` took `EMPTY` as its definition and printed it.
+- `SEND` hints with several commands were matched to the wrong labels.
+- A cell-sized `IMAGE` could cover text the server wrote over its cells; it now goes inline at the tag.
 - MXP `IMAGE` and `SOUND` put the file in the `T=` type's directory under the base address, as the MXP
   specification says: `<IMAGE map.png URL=https://h/img/ T=maps>` is `https://h/img/maps/map.png`.
 - An SGR extended colour with too few components (`38;2;40`) no longer reads what is left as codes of their own,
   so it does not set a black background.
+- A `<VAR>` could grow the entity table past `MaxEntities` or store a value past `MaxDefinitionLength`.
+- An `IMAGE` sized in cells with a huge `W` or `H` could throw at the end of the line. A size over 1024 cells is
+  ignored, and the picture goes inline.
+- A second cell-sized `IMAGE` on a line looked for its cells in the wrong place after the first went inline.
+- A picture put inline on a line that had no room for it emptied the line. The line is now left as it was.
+- A FRAME redirect outlived turning MXP off.
+- A handler that threw during an element's playback could leave the line secure.
+- Writing a sound as MXP dropped its `P` and `T`.
+- Pueblo: `</a>` left a `xch_mode=prompt` menu open; a `<pre>` closed with the link around it stayed in force;
+  `<send href="buy|look">` was one link to `buy|look` rather than a menu.
 
 ## 2.26.0 — 2026-11-06
 

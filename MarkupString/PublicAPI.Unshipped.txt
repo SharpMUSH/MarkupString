@@ -765,3 +765,33 @@ MarkupString.Decoding.DecodeDrop.Limit = 3 -> MarkupString.Decoding.DecodeDrop
 MarkupString.Decoding.DecodeDrop.Picture = 4 -> MarkupString.Decoding.DecodeDrop
 MarkupString.Decoding.DecodeDrop.UnhandledControl = 2 -> MarkupString.Decoding.DecodeDrop
 MarkupString.Decoding.DecodeDrop.UnhandledSequence = 1 -> MarkupString.Decoding.DecodeDrop
+MarkupString.Decoding.Decoder.OpenElements.get -> System.Collections.Generic.IReadOnlyList<MarkupString.IMarkup!>!
+MarkupString.Decoding.GaugeEvent
+MarkupString.Decoding.GaugeEvent.Caption.get -> string?
+MarkupString.Decoding.GaugeEvent.Caption.init -> void
+MarkupString.Decoding.GaugeEvent.Color.get -> string?
+MarkupString.Decoding.GaugeEvent.Color.init -> void
+MarkupString.Decoding.GaugeEvent.Deconstruct(out string! Variable, out string? Maximum, out string? Caption, out string? Color, out bool Status) -> void
+MarkupString.Decoding.GaugeEvent.Equals(MarkupString.Decoding.GaugeEvent? other) -> bool
+MarkupString.Decoding.GaugeEvent.GaugeEvent(string! Variable, string? Maximum, string? Caption, string? Color, bool Status) -> void
+MarkupString.Decoding.GaugeEvent.Maximum.get -> string?
+MarkupString.Decoding.GaugeEvent.Maximum.init -> void
+MarkupString.Decoding.GaugeEvent.Status.get -> bool
+MarkupString.Decoding.GaugeEvent.Status.init -> void
+MarkupString.Decoding.GaugeEvent.Variable.get -> string!
+MarkupString.Decoding.GaugeEvent.Variable.init -> void
+MarkupString.SoundMarkup.Priority.get -> int?
+MarkupString.SoundMarkup.Priority.init -> void
+MarkupString.SoundMarkup.Type.get -> string?
+MarkupString.SoundMarkup.Type.init -> void
+override MarkupString.Decoding.GaugeEvent.<Clone>$() -> MarkupString.Decoding.GaugeEvent!
+override MarkupString.Decoding.GaugeEvent.Equals(object? obj) -> bool
+override MarkupString.Decoding.GaugeEvent.GetHashCode() -> int
+override MarkupString.Decoding.GaugeEvent.ToString() -> string!
+override sealed MarkupString.Decoding.GaugeEvent.Equals(MarkupString.Decoding.DecodeEvent? other) -> bool
+static MarkupString.Decoding.GaugeEvent.operator !=(MarkupString.Decoding.GaugeEvent? left, MarkupString.Decoding.GaugeEvent? right) -> bool
+static MarkupString.Decoding.GaugeEvent.operator ==(MarkupString.Decoding.GaugeEvent? left, MarkupString.Decoding.GaugeEvent? right) -> bool
+MarkupString.Decoding.ISequenceObserver
+MarkupString.Decoding.ISequenceObserver.SequenceSeen(MarkupString.Decoding.DecodeContext! context) -> void
+MarkupString.Decoding.DecodeContext.PendingLine.get -> MarkupString.MarkupText!
+MarkupString.Decoding.DecodeContext.Insert(int column, MarkupString.MarkupText! text) -> void

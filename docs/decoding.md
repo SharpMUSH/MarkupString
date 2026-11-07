@@ -93,6 +93,11 @@ Output two
 A `DisplayLine` carries `Content`, `Kind`, `Sequence` (its number within the decoder, from 0, for
 keying a view) and `Destination` (the pane it was sent to, or null for the main output).
 
+`PendingLine` is the text read so far on a line that has not ended, as `MarkupText`, and
+`OpenElements` lists the elements a text protocol has open, innermost last. A host that keeps state
+for as long as an element stays open (an MXP room-name flag that spans several lines, say) checks
+`OpenElements` after each line.
+
 `Reset()` forgets the style, open elements, half-read sequences and the pending line. Set
 `decoder.Identity` again when the pane is resized; answers read it each time.
 
@@ -108,6 +113,7 @@ Anything that is not text to show is raised through `EventRaised`, as it is foun
 | `ClipboardEvent(Selection, Text)` | OSC 52. `Text` is null when the server asked to read the clipboard. |
 | `ProtocolEvent(Name, Active)` | A text protocol was turned on or off. |
 | `VariableEvent(Name, Value)` | A server variable (MXP). |
+| `GaugeEvent(Variable, Maximum, Caption, Color, Status)` | An MXP `GAUGE` (`Status` false) or `STAT` (`Status` true) over an entity. |
 | `DownloadEvent(Name, Size)` | A file offered to save (iTerm2 `inline=0`). The decoder never saves it. |
 
 The decoder acts on none of these. Refuse a clipboard write unless the player allowed it.
@@ -407,7 +413,9 @@ with one more layer inside, `Point(point)`, move the cursor (`CarriageReturn`, `
 ### Text protocols
 
 A text protocol reads every piece of printable text while it is on, and prints what is literal with
-`context.Print`. Only one is on at a time. This one makes `*text*` bold:
+`context.Print`. Only one is on at a time. A protocol that also implements `ISequenceObserver` is told
+each time an escape sequence arrives while it is on; MXP uses this to spend a pending `ESC [ 4 z`.
+`context.Insert(column, text)` puts text into the line being read at a display column. This one makes `*text*` bold:
 
 ```csharp
 sealed class StarsPlugin : IDecoderPlugin
@@ -556,7 +564,7 @@ host turns it on after telnet negotiates option 91:
 ```csharp
 using MarkupString.Mxp.Decoding;
 
-var registry = DecoderRegistry.Empty.WithVt().WithMxp();
+var registry = DecoderRegistry.Empty.WithVt().WithMxp(new MxpOptions { ShowRefusedTags = true });
 var decoder = registry.CreateDecoder();
 decoder.EnableProtocol(MxpDecoding.Protocol);
 
@@ -569,14 +577,25 @@ Line modes (`ESC [ n z`) decide what a line may use. Until MXP is on they are cl
 |---|---|
 | `0`, `1`, `2` | This line is open, secure or locked |
 | `3` | Close every MXP element and go back to open |
-| `4` | The next tag is secure |
+| `4` | The next tag is secure. Any text, entity or escape sequence before it spends this; a second `ESC [ 4 z` arms it again. |
 | `5`, `6`, `7` | Open, secure or locked from now on |
 | `10`, `11`, `12`, `19` | This line is a room name, description, exits or welcome text: an `MxpFlagMarkup` over it |
 | `20`–`99` | This line is the element the server tied to that number with `TAG=` |
 
+Any other number in `10`–`99`, and `ESC [ z` with no number, changes nothing. Leaving open mode in the
+middle of a line (modes `1`, `2`, `6`, `7` or a line tag) closes the elements the open part opened.
+
 On an open line only the open tags work: `B`, `I`, `U`, `S`, `H`, `C`/`COLOR`, `FONT`, `BR`, `SBR`,
 `P`, `NOBR`. A secure tag there is dropped and counted in `UnhandledSequences`. On a locked line `<`
-and `&` are text. Elements opened on an open line close at its end.
+and `&` are text. Elements opened on an open line close at its end, and `A` and `SEND` always end
+with their line.
+
+`MxpOptions` changes two things:
+
+| Property | Default | |
+|---|---|---|
+| `ShowRefusedTags` | false | Show a refused tag (a secure tag or a definition on an open line, the close of a secure tag nothing opened) as the text it was, instead of dropping it |
+| `Supports` | null | The tags and attributes `<SUPPORT>` is answered with, such as `{ ["send"] = ["href", "hint"] }`. Null answers with every tag the package reads. `Answer(asked)` gives the same answer to a host that answers MXP support itself. |
 
 What the tags become:
 
@@ -584,18 +603,35 @@ What the tags become:
 |---|---|
 | `B`, `I`, `U`, `S`, `H`, `COLOR`, `FONT` | An `AnsiMarkup`. SGR inside an MXP colour wins, as in an MXP client. |
 | `A href hint` | A URL link, when `DecoderOptions.Links` allows the address |
-| `SEND href hint prompt` | A command link. With several commands (`a\|b`) or `PROMPT`, a `CommandMenuMarkup` as well. With no `href`, or `&text;` in it, the command is the tag's text. |
-| `IMAGE fname url t w h align` | An `ImageMarkup` at `url`, then the `t` directory, then `fname`. Sized in cells (`W=4c H=2c`), it is drawn over the cells the server leaves for it. |
-| `SOUND`, `MUSIC` | `SoundMarkup` or `SoundStopMarkup` points, at `u`, then `t`, then the file |
-| `FRAME`, `DEST` | A `PaneMarkup` over the text in `DEST`, titled from its `FRAME` |
+| `SEND href hint prompt` | A command link. With several commands (`a\|b`) or `PROMPT`, a `CommandMenuMarkup` as well. With no `href`, or `&text;` in it, the command is the tag's text. One command takes the whole hint. With several, one more hint than commands makes the first the link's hint and the rest the menu labels; as many hints as commands are the labels alone. |
+| `IMAGE fname url t w h align` | An `ImageMarkup` at `url`, then the `t` directory, then `fname`. Sized in cells (`W=4c H=2c`), it is drawn over the cells the server leaves blank for it; when those cells hold text, it goes inline at the tag instead. Sized in cells one way only, the other size is converted to pixels with the identity's cell size. |
+| `SOUND`, `MUSIC` | `SoundMarkup` (with `Priority` from `P` and `Type` from `T`) or `SoundStopMarkup` points, at `u`, then `t`, then the file |
+| `FRAME`, `DEST` | A `PaneMarkup` over the text in `DEST`, titled from its `FRAME`. `FRAME ACTION=REDIRECT` (or the `REDIRECT` flag) sends the lines after it to that frame through `DisplayLine.Destination`, until a redirect to `_top` or `_previous` or `FRAME … CLOSE`. |
+| `GAUGE`, `STAT` | A `GaugeEvent` |
 | `VAR name` | A `VariableMarkup` over its text, and a `VariableEvent` |
 | `EXPIRE`, `RELOCATE`, `USER`, `PASSWORD` | Their points |
-| `VERSION`, `SUPPORT` | Answered (`\e[1z<VERSION …>`, `\e[1z<SUPPORTS +send …>`) when `ClientAnswers.Mxp` allows |
+| `VERSION`, `SUPPORT` | Answered (`\e[1z<VERSION …>`, `\e[1z<SUPPORTS +send …>`) when `ClientAnswers.Mxp` allows. `<VERSION n>` from the server sets the `STYLE` the answer reports. |
 
 `<!ELEMENT>` defines an element from other tags, with `ATT` attributes substituted for `&name;`,
 `FLAG` for an `MxpFlagMarkup`, `OPEN`, `EMPTY` and `TAG`. `<!ENTITY>` defines an entity, used as
 `&name;` and published as a `VariableEvent` unless `PRIVATE`. `<!ATTLIST>` and `<!TAG>` are read
 too. To serialise lines with `MxpFlagMarkup`, add `MxpDecoding.FlagCodec` to the `MarkupRegistry`.
+
+An element defined on an open line plays back as open text, so a server cannot launder a secure tag
+through one; it plays back secure only when used on a secure line or by a line tag. Definitions are
+bounded by `MxpPlugin` constants:
+
+| Constant | Value | |
+|---|---|---|
+| `MaxElements` | 256 | Elements defined at once |
+| `MaxEntities` | 512 | Entities defined at once |
+| `MaxDefinitionLength` | 1024 | Characters in an element's definition or an entity's value, `<VAR>` included |
+| `MaxExpansionDepth` | 4 | Elements expanding inside each other (an element that uses itself stops here) |
+| `MaxExpansionsPerLine` | 64 | Custom elements expanded on one line |
+
+A cell size (`W=Nc`, `H=Nc`) over 1024 is ignored, so the picture goes inline. A definition past a limit is refused and counted in `LimitsReached`. The built-in tags and the entities
+the decoder already knows (`lt`, `nbsp` and the rest) cannot be redefined. `<!ENTITY name value REMOVE>` takes `value`
+out of a `|` list, and `DELETE` deletes the entity.
 
 What `MarkupFormat.Mxp` writes reads back to the same markup.
 
@@ -611,11 +647,14 @@ switches back, and its region is a `PreformattedMarkup`. ANSI is read in both.
 | Tag | Markup |
 |---|---|
 | `b`, `i`, `u`, `s`, `font color` | An `AnsiMarkup` |
-| `a xch_cmd xch_hint`, `a href` | A command or URL link |
+| `a xch_cmd xch_hint`, `a href` | A command or URL link. `xch_mode=prompt` puts the command on the input line, as a `CommandMenuMarkup` with `Prompt`. |
+| `send href` | A command link |
 | `img src alt` | An `ImageMarkup` over the alt text |
 | `img xch_sound=play\|loop\|stop href xch_volume` | `SoundMarkup` or `SoundStopMarkup` |
 | `xch_pane action=redirect name panetitle` | A `PaneMarkup` until the next redirect |
 | `xch_page clear=text`, `xch_prefetch href` | `ClearScreenMarkup`, `PrefetchMarkup` |
 | `br`, `p`, `hr`, `pre` | Line breaks, and a `PreformattedMarkup` for `pre` |
+
+`strong` and `em` close `b` and `i`, and `strike` and `del` close `s`. Links end with their line.
 
 What `MarkupFormat.Pueblo` writes reads back to the same markup.

@@ -73,6 +73,17 @@ public sealed record VariableEvent(string Name, string? Value) : DecodeEvent;
 /// <param name="Size">Its size in bytes.</param>
 public sealed record DownloadEvent(string? Name, int Size) : DecodeEvent;
 
+/// <summary>
+/// The server asked for a variable to be shown as a gauge or a status value (MXP <c>&lt;GAUGE&gt;</c>,
+/// <c>&lt;STAT&gt;</c>). The values come from <see cref="VariableEvent"/>s; this says how to show them.
+/// </summary>
+/// <param name="Variable">The variable that holds the value.</param>
+/// <param name="Maximum">The variable that holds its maximum, if any.</param>
+/// <param name="Caption">What to call it, if the server said.</param>
+/// <param name="Color">The colour the server asked for, as it wrote it, if any.</param>
+/// <param name="Status">True for <c>&lt;STAT&gt;</c>, a value shown as text; false for <c>&lt;GAUGE&gt;</c>, a bar.</param>
+public sealed record GaugeEvent(string Variable, string? Maximum, string? Caption, string? Color, bool Status) : DecodeEvent;
+
 /// <summary>A text protocol such as MXP was turned on or off.</summary>
 /// <param name="Name">The protocol.</param>
 /// <param name="Active">Whether it is now on.</param>
