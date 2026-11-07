@@ -699,7 +699,7 @@ internal sealed class MxpReader : ITextProtocol, ITagSink
 	{
 		var file = tag.Get("FNAME", 0);
 		if (string.IsNullOrEmpty(file)) return;
-		var source = Address(tag.Get("URL"), file);
+		var source = Address(tag.Get("URL"), tag.Get("T"), file);
 		var (width, widthCells) = Size(tag.Get("W"));
 		var (height, heightCells) = Size(tag.Get("H"));
 		var align = Enum.TryParse<ImageAlign>(tag.Get("ALIGN"), ignoreCase: true, out var parsed) ? parsed : (ImageAlign?)null;
@@ -758,13 +758,21 @@ internal sealed class MxpReader : ITextProtocol, ITagSink
 			? l < 0 ? SoundMarkup.Forever : l
 			: null;
 		var continues = music && tag.Get("C") == "1";
-		Context.Point(new SoundMarkup(Address(tag.Get("U"), file), channel, volume, repeats, continues));
+		Context.Point(new SoundMarkup(Address(tag.Get("U"), tag.Get("T"), file), channel, volume, repeats, continues));
 	}
 
-	private static string Address(string? directory, string file)
+	/// <summary>
+	/// Where a picture or sound is: the file under the base address, in the type's directory when there is one
+	/// ("the classname is appended to the URL, along with the name of the file itself"), or the file as it is
+	/// when there is no base or the file is already absolute.
+	/// </summary>
+	private static string Address(string? directory, string? type, string file)
 	{
 		if (string.IsNullOrEmpty(directory) || Uri.TryCreate(file, UriKind.Absolute, out _)) return file;
-		return directory.EndsWith('/') ? directory + file : directory + "/" + file;
+		var address = directory.EndsWith('/') ? directory : directory + "/";
+		var kind = type?.Trim().Trim('/');
+		if (!string.IsNullOrEmpty(kind)) address += kind + "/";
+		return address + file;
 	}
 
 	// ── Helpers ─────────────────────────────────────────────────────────────────
