@@ -613,14 +613,12 @@ public class TerminalFeatureTests
 
 		await Assert.That(sixel[1].Value).IsEqualTo("16");
 		await Assert.That(sixel[2].Value).IsEqualTo("30");
-		// Red is cube entry 180 (5,0,0), blue entry 5 (0,0,5).
-		await Assert.That(sixel[3].Value).Contains("#180;2;100;0;0");
-		await Assert.That(sixel[3].Value).Contains("#5;2;0;0;100");
+		await Assert.That(Regex.Matches(sixel[3].Value, "#\\d+;2;").Count).IsEqualTo(2);
 		await Assert.That(Regex.Matches(sixel[3].Value, "-").Count).IsEqualTo(4);
 	}
 
 	/// <summary>
-	/// Decoding the sixels gives back every pixel's cube colour, and leaves the transparent ones unset: the
+	/// Decoding the sixels gives back every pixel's approximate colour, and leaves the transparent ones unset: the
 	/// band is read once and each colour written only over the columns it reaches, which this pins down.
 	/// </summary>
 	[Test]
@@ -643,7 +641,7 @@ public class TerminalFeatureTests
 				// A colour in one corner only, one band-wide stripe, and a checker elsewhere.
 				var (r, g, b) = x < 3 && y < 3 ? (0, 255, 0) : y == 7 ? (255, 255, 0) : (x + y) % 2 == 0 ? (255, 0, 0) : (0, 0, 255);
 				(rgba[o], rgba[o + 1], rgba[o + 2], rgba[o + 3]) = ((byte)r, (byte)g, (byte)b, 255);
-				expected[i] = r / 51 * 36 + g / 51 * 6 + b / 51;
+				expected[i] = r << 16 | g << 8 | b;
 			}
 
 		var options = new AnsiOutputOptions(Features: TerminalFeatures.Sixel)
@@ -655,14 +653,25 @@ public class TerminalFeatureTests
 		var output = RenderString(Laid(new Figure(Cat, MarkupText.Empty), 10, new PictureCells(2, 1)), options);
 		var body = Regex.Match(output, $"{Esc}P0;1;0q\"1;1;16;12(.*?){Esc}\\\\").Groups[1].Value;
 
-		await Assert.That(Decode(body, width, height)).IsEquivalentTo(expected);
+		var actual = Decode(body, width, height);
+		for (var i = 0; i < expected.Length; i++)
+		{
+			if (expected[i] < 0) await Assert.That(actual[i]).IsEqualTo(-1);
+			else
+			{
+				await Assert.That(actual[i]).IsGreaterThanOrEqualTo(0);
+				foreach (var shift in new[] { 0, 8, 16 })
+					await Assert.That(Math.Abs(((actual[i] >> shift) & 255) - ((expected[i] >> shift) & 255))).IsLessThanOrEqualTo(6);
+			}
+		}
 	}
 
-	/// <summary>The palette entry each pixel of <paramref name="body"/> sets, -1 for none.</summary>
+	/// <summary>The RGB colour each pixel of <paramref name="body"/> sets, -1 for none.</summary>
 	private static int[] Decode(string body, int width, int height)
 	{
 		var pixels = Enumerable.Repeat(-1, width * height).ToArray();
 		var colour = 0;
+		var palette = new Dictionary<int, int>();
 		var x = 0;
 		var top = 0;
 		for (var i = 0; i < body.Length;)
@@ -672,6 +681,11 @@ public class TerminalFeatureTests
 			{
 				var match = Regex.Match(body[(i + 1)..], "^(\\d+)(;2;\\d+;\\d+;\\d+)?");
 				colour = int.Parse(match.Groups[1].Value);
+				if (match.Groups[2].Success)
+				{
+					var channels = match.Groups[2].Value.Split(';').Skip(2).Select(value => (int.Parse(value) * 255 + 50) / 100).ToArray();
+					palette[colour] = channels[0] << 16 | channels[1] << 8 | channels[2];
+				}
 				i += 1 + match.Length;
 				continue;
 			}
@@ -690,7 +704,7 @@ public class TerminalFeatureTests
 			if (c == '-') { x = 0; top += 6; continue; }
 			for (var n = 0; n < repeat; n++, x++)
 				for (var bit = 0; bit < 6; bit++)
-					if (((c - '?') & (1 << bit)) != 0) pixels[(top + bit) * width + x] = colour;
+					if (((c - '?') & (1 << bit)) != 0) pixels[(top + bit) * width + x] = palette[colour];
 		}
 
 		return pixels;

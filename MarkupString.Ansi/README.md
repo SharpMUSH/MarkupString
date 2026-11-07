@@ -167,3 +167,12 @@ so nothing depends on a type surviving the trimmer by name.
 ## Licence
 
 Apache-2.0. Source, guides and issues: [SharpMUSH/MarkupString](https://github.com/SharpMUSH/MarkupString).
+
+MudForge 2.0.5657 is recognized by `MUDFORGE` and supports still iTerm2 inline images and Sixel.
+This profile records verified image support; it does not enable graphics without the host/player's
+opt-in or imply support for animation or Kitty. Its web client currently does not forward terminal
+query replies, so automatic cell-size discovery still requires a client fix.
+
+Sixel uses an adaptive palette of up to 255 colours, selected from the image's colour histogram,
+with a reserved transparent index. The bounded median-cut palette implementation is shared with
+GIF encoding; GIF's existing palette and animation behaviour are unchanged.

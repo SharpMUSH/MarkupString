@@ -107,3 +107,4 @@ MarkupString.Ansi.Decoding.PictureStore.PictureStore(MarkupString.Ansi.Decoding.
 MarkupString.Ansi.Decoding.PicturesPlugin.Cache.get -> MarkupString.Ansi.Decoding.IPictureCache?
 MarkupString.Ansi.Decoding.PicturesPlugin.PicturesPlugin(MarkupString.Ansi.Decoding.IPictureCache? cache) -> void
 static MarkupString.Ansi.Decoding.PictureDecoding.WithPictures(this MarkupString.Decoding.DecoderRegistry! registry, MarkupString.Ansi.Decoding.IPictureCache! cache) -> MarkupString.Decoding.DecoderRegistry!
+static MarkupString.Ansi.TerminalProfile.MudForge.get -> MarkupString.Ansi.TerminalProfile!

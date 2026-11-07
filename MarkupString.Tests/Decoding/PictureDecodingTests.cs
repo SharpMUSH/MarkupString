@@ -123,6 +123,27 @@ public class PictureDecodingTests
 	}
 
 	[Test]
+	public async Task Sixel_PreservesSubtleGreyShades()
+	{
+		const int width = 32, height = 30;
+		var pixels = new byte[width * height * 4];
+		for (var y = 0; y < height; y++)
+			for (var x = 0; x < width; x++)
+			{
+				var offset = (y * width + x) * 4;
+				pixels[offset] = pixels[offset + 1] = pixels[offset + 2] = (byte)(x * 8 + 4);
+				pixels[offset + 3] = 255;
+			}
+
+		var (lines, decoder) = Decode(Wire(TerminalFeatures.Sixel, new TerminalPicture("grey", width, height, pixels)));
+		var image = lines.SelectMany(line => line.Content.Runs).SelectMany(run => run.Markups).OfType<ImageMarkup>().First();
+		await Assert.That(decoder.Pictures().TryGet(image, out var stored)).IsTrue();
+		var actual = stored!.Pixels!.Rgba.ToArray();
+		var error = Enumerable.Range(0, width * height).Average(i => Math.Abs(actual[i * 4] - pixels[i * 4]));
+		await Assert.That(error).IsLessThan(3.0);
+	}
+
+	[Test]
 	public async Task Sixel_DecodesColoursAndSize()
 	{
 		// Two colours, red in the left column and blue in the right, six pixels tall, raster 2 × 6.
