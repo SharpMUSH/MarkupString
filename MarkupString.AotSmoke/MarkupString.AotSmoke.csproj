@@ -23,6 +23,17 @@
     <TrimmerRootAssembly Include="MarkupString.Pueblo" />
   </ItemGroup>
 
+  <!--
+    The .NET 11 RC2 SDK ships 10.0.13 as the net10.0 ILCompiler, which has a high-severity advisory
+    (GHSA-p3jp-9v83-76w9), so restore fails under warnings-as-errors. global.json rolls forward to
+    the newest SDK, so anyone with SDK 11 installed hits this. Raise exactly that version to the patched
+    10.0.14 the .NET 10 SDK already uses; on any other SDK the update matches nothing.
+  -->
+  <ItemGroup>
+    <KnownILCompilerPack Update="@(KnownILCompilerPack->WithMetadataValue('TargetFramework', 'net10.0')->WithMetadataValue('ILCompilerPackVersion', '10.0.13'))"
+                         ILCompilerPackVersion="10.0.14" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />

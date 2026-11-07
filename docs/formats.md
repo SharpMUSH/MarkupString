@@ -89,10 +89,15 @@ line.Render(MarkupFormat.Ansi);    // A map of the city The door creaks.
 | `Prefetch` | nothing | `<xch_prefetch href xch_prob>` | `<link rel="prefetch">` | nothing |
 | `ExpireLinks` | `<EXPIRE>` | nothing | `ms-expire` | nothing |
 | `Variable`, `Gauge`, `Status` | `<VAR>`, `<GAUGE>`, `<STAT>` | the text | `ms-variable`, `ms-gauge`, `ms-status` around the text | the text |
-| `Relocate`, `LoginPrompt` | `<RELOCATE>`, `<USER>` / `<PASSWORD>` | nothing | nothing | nothing |
+| `Relocate`, `LoginPrompt` | `<RELOCATE>`, `<USER>` / `<PASSWORD>` | nothing | `ms-relocate`, `ms-login` | nothing |
 | `Bell` | U+0007 | U+0007 | `ms-bell` | ANSI U+0007 |
 
-An `ms-` element is a hook: the page decides what a clear, a pane or a gauge looks like. Addresses are
+`CommandMenuMarkup` is a `ms-menu` element whose `data-commands` holds the choices as JSON,
+`HighlightMarkup` a `ms-highlight` with its background, and `LinkGroupMarkup` a `ms-link-group` with
+its `data-group`, so an expiry can find its links.
+
+An `ms-` element is a hook: the page decides what a clear, a pane or a gauge looks like.
+[`MarkupString.Web`](web.md) is a script that does it, with a stylesheet for every class. Addresses are
 written as given — whether a page fetches or plays one is its own policy, not this library's.
 
 A link is already part of this vocabulary: `AnsiMarkup` with a `LinkKind` is written as each dialect

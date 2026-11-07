@@ -2,8 +2,11 @@
 
 A decoded line is a `MarkupText` (see [Decoding](decoding.md)). To show it, fold each run's markup
 into a `DisplayStyle` (RGB colours, attributes, what a click does) degraded to what the output can
-show. `SpanRenderer` gives runs of text for a web page; `CellRenderer` gives a grid of cells for a
-window that draws its own.
+show. `SpanRenderer` gives runs of text for a client that builds its own elements from styles;
+`CellRenderer` gives a grid of cells for a window that draws its own. A web page that shows HTML takes
+`Render(MarkupFormat.Html)` and [`MarkupString.Web`](web.md) instead: the same classes, layouts and theme
+variables as everything else the page renders, and a script that acts on them. What a line asks for
+besides text, every renderer's client reads as [effects](#effects).
 
 ```csharp
 using System.Net;
@@ -311,6 +314,61 @@ CellRenderer.Layout(row, 0, display, grid).Rows[0].Cells.Select(c => c.Style.Pic
 ```
 
 Word wrap never breaks at a space inside a picture.
+
+## Effects
+
+A line can ask for more than text: a sound, a bell, a clear, links to expire. A decoder raises more:
+a title, a palette change, a variable. `OutputEffect` is a C# union of the types that already say each of
+these, so a client handles all of them in one switch, whatever the line came from:
+
+```csharp
+using MarkupString.Display;
+
+void Apply(OutputEffect effect)
+{
+    switch (effect)
+    {
+        case SoundMarkup sound: player.Play(sound.Source, sound.Channel, sound.Volume); break;
+        case SoundStopMarkup stop: player.Stop(stop.Channel); break;
+        case BellMarkup: window.Flash(); break;
+        case ClearScreenMarkup: output.Clear(); break;
+        case ExpireLinksMarkup expire: output.ExpireLinks(expire.Group); break;
+        case VariableEvent variable: status[variable.Name] = variable.Value; break;
+        case TitleEvent title: window.Title = title.Title; break;
+        case ReplyEvent reply: connection.Send(reply.Text); break;
+        case IPointMarkup or DecodeEvent: break;   // a plugin's own, or one this client leaves
+    }
+}
+
+decoder.EventRaised += decoded => Apply(OutputEffect.Of(decoded));
+foreach (var line in decoder.Feed(text))
+{
+    foreach (var effect in OutputEffects.Of(line.Content, capabilities)) Apply(effect);
+    Show(line);
+}
+```
+
+| Case | Comes from |
+|---|---|
+| `BellMarkup`, `ClearScreenMarkup`, `SoundMarkup`, `SoundStopMarkup`, `ExpireLinksMarkup`, `PrefetchMarkup`, `LoginPromptMarkup`, `RelocateMarkup` | The points in a line |
+| `VariableEvent` | The text a `VariableMarkup` covers, or a decoder (MXP `<VAR>`, an entity) |
+| `TitleEvent`, `PaletteEvent`, `ClipboardEvent`, `DownloadEvent`, `ReplyEvent`, `ProtocolEvent` | A decoder |
+| `IPointMarkup`, `DecodeEvent` | Anything else of either kind, such as a plugin's |
+
+`OutputEffects.Of(text, capabilities)` lists a line's effects in order, one per point, and leaves sounds
+out for an output without `Sound`. An MXP `<VAR>` gives a `VariableEvent` twice, once from the decoder and
+once from the line; setting a variable to the value it has changes nothing.
+
+`EffectDispatcher` hands effects to `IEffectHandler`s, newest first, until one returns true, and raises
+`Unhandled` for the rest. `AddMarkupString().AddEffectHandler<T>()` registers one, and the container gives
+the dispatcher with every handler added (see [Dependency injection](dependency-injection.md)).
+
+A web page does not need this: [`MarkupString.Web`](web.md) reads the same effects out of the HTML.
+
+The library targets .NET 10, which has no unions in its runtime. Its net10.0 build declares them with
+internal copies of the two types the compiler needs, and with the .NET 11 SDK the package also carries a
+net11.0 build whose unions implement the runtime's own `IUnion`. A client on an older compiler reads the
+case from `effect.Value`.
 
 ## Back to ANSI
 

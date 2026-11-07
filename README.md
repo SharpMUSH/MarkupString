@@ -166,12 +166,14 @@ rendering opinions.
 | [`MarkupString.Mxp`](https://www.nuget.org/packages/MarkupString.Mxp) | The shared vocabulary expressed as client-supported MXP elements. |
 | [`MarkupString.Pueblo`](https://www.nuget.org/packages/MarkupString.Pueblo) | The shared vocabulary expressed through Pueblo client extensions. |
 | [`MarkupString.Extensions.DependencyInjection`](https://www.nuget.org/packages/MarkupString.Extensions.DependencyInjection) | `AddMarkupString()` for ASP.NET Core and other `Microsoft.Extensions` hosts, with options bound from configuration. |
+| [`MarkupString.Web`](https://www.nuget.org/packages/MarkupString.Web) | The browser side of the HTML output: one stylesheet, and a script that runs links and menus, sounds, the bell, clears, expiry, variables and panes. See [Web pages](docs/web.md). |
 
 ```sh
 dotnet add package MarkupString.Html
 dotnet add package MarkupString.Mxp
 dotnet add package MarkupString.Pueblo
 dotnet add package MarkupString.Extensions.DependencyInjection
+dotnet add package MarkupString.Web
 ```
 
 All packages share one version and are released together.

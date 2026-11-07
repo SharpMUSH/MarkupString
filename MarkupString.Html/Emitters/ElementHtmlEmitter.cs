@@ -22,7 +22,8 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 	[
 		typeof(SoundMarkup), typeof(SoundStopMarkup), typeof(ClearScreenMarkup), typeof(ExpireLinksMarkup),
 		typeof(PrefetchMarkup), typeof(ImageMarkup), typeof(PaneMarkup), typeof(VariableMarkup),
-		typeof(GaugeMarkup), typeof(StatusMarkup), typeof(PreformattedMarkup),
+		typeof(GaugeMarkup), typeof(StatusMarkup), typeof(PreformattedMarkup), typeof(CommandMenuMarkup),
+		typeof(HighlightMarkup), typeof(LinkGroupMarkup), typeof(RelocateMarkup), typeof(LoginPromptMarkup),
 	];
 
 	/// <summary>How an element is closed.</summary>
@@ -135,10 +136,62 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 					("data-maximum", status.Maximum), ("data-caption", status.Caption));
 				return;
 
+			case CommandMenuMarkup menu:
+				Write(markup, output, "span", Shape.Wrapping, body, context,
+					("class", menu.Prompt ? "ms-menu ms-prompt" : "ms-menu"), ("role", "button"), ("tabindex", "0"),
+					("aria-haspopup", menu.Choices.Count > 1 ? "menu" : null), ("title", menu.Hint),
+					("data-commands", Choices(menu.Choices)));
+				return;
+
+			case HighlightMarkup highlight:
+				Write(markup, output, "span", Shape.Wrapping, body, context,
+					("class", "ms-highlight"),
+					("style", string.Create(CultureInfo.InvariantCulture,
+						$"background-color: #{highlight.Color.R:x2}{highlight.Color.G:x2}{highlight.Color.B:x2}")));
+				return;
+
+			case LinkGroupMarkup group:
+				Write(markup, output, "span", Shape.Wrapping, body, context, ("class", "ms-link-group"), ("data-group", group.Group));
+				return;
+
+			case RelocateMarkup relocate:
+				Write(markup, output, "span", Shape.Empty, body, context,
+					("class", "ms-relocate"), ("data-host", relocate.Host),
+					("data-port", Number(relocate.Port)), ("data-quiet", relocate.Quiet ? "true" : null));
+				return;
+
+			case LoginPromptMarkup login:
+				Write(markup, output, "span", Shape.Empty, body, context,
+					("class", "ms-login"), ("data-field", login.Field == LoginField.Password ? "password" : "user"));
+				return;
+
 			default:
 				output.Write(body);
 				return;
 		}
+	}
+
+	/// <summary>
+	/// A menu's choices as a JSON array of <c>{"label", "command"}</c> objects, the default first, for the page
+	/// to build its menu from.
+	/// </summary>
+	private static string Choices(IReadOnlyList<CommandChoice> choices)
+	{
+		var buffer = new ArrayBufferWriter<byte>();
+		using (var json = new System.Text.Json.Utf8JsonWriter(buffer))
+		{
+			json.WriteStartArray();
+			foreach (var choice in choices)
+			{
+				json.WriteStartObject();
+				json.WriteString("label", choice.Label);
+				json.WriteString("command", choice.Command);
+				json.WriteEndObject();
+			}
+			json.WriteEndArray();
+		}
+
+		return System.Text.Encoding.UTF8.GetString(buffer.WrittenSpan);
 	}
 
 	/// <summary>

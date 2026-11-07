@@ -1,0 +1,9 @@
+.ms-menu { cursor: pointer; text-decoration: underline dotted; }
+.ms-menu-popup { position: fixed; z-index: 1000; margin: 0; padding: 2px 0; min-width: 8ch; font: inherit; color: var(--ms-menu-fg, CanvasText); background: var(--ms-menu-bg, Canvas); border: 1px solid var(--ms-menu-border, currentColor); box-shadow: 0 2px 6px rgb(0 0 0 / 0.3); }
+.ms-menu-popup button { display: block; width: 100%; margin: 0; padding: 2px 1ch; border: 0; font: inherit; color: inherit; text-align: start; background: none; cursor: pointer; }
+.ms-menu-popup button:hover, .ms-menu-popup button:focus-visible { outline: none; color: var(--ms-menu-active-fg, HighlightText); background: var(--ms-menu-active-bg, Highlight); }
+.ms-expired, .ms-expired .ms-cmd-link { cursor: default; text-decoration: none; }
+.ms-sound, .ms-sound-stop, .ms-bell, .ms-clear, .ms-expire, .ms-relocate, .ms-login { display: none; }
+.ms-gauge { background: linear-gradient(var(--ms-gauge, currentColor), var(--ms-gauge, currentColor)) no-repeat left bottom / calc(var(--ms-gauge-fill, 0) * 100%) 2px; }
+.ms-bell-ring { animation: ms-bell-ring 0.3s ease-out; }
+@keyframes ms-bell-ring { from { background-color: var(--ms-bell, rgb(255 255 255 / 0.25)); } }

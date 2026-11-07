@@ -765,6 +765,37 @@ MarkupString.Decoding.DecodeDrop.Limit = 3 -> MarkupString.Decoding.DecodeDrop
 MarkupString.Decoding.DecodeDrop.Picture = 4 -> MarkupString.Decoding.DecodeDrop
 MarkupString.Decoding.DecodeDrop.UnhandledControl = 2 -> MarkupString.Decoding.DecodeDrop
 MarkupString.Decoding.DecodeDrop.UnhandledSequence = 1 -> MarkupString.Decoding.DecodeDrop
+MarkupString.Display.EffectDispatcher
+MarkupString.Display.EffectDispatcher.EffectDispatcher(System.Collections.Generic.IEnumerable<MarkupString.Display.IEffectHandler!>! handlers) -> void
+MarkupString.Display.IEffectHandler
+MarkupString.Display.EffectDispatcher.Dispatch(MarkupString.Display.OutputEffect effect) -> bool
+MarkupString.Display.EffectDispatcher.Dispatch(System.Collections.Generic.IEnumerable<MarkupString.Display.OutputEffect>! effects) -> void
+MarkupString.Display.EffectDispatcher.Unhandled -> System.Action<MarkupString.Display.OutputEffect>?
+MarkupString.Display.IEffectHandler.Handle(MarkupString.Display.OutputEffect effect) -> bool
+MarkupString.Display.OutputEffect
+MarkupString.Display.OutputEffect.OutputEffect() -> void
+MarkupString.Display.OutputEffect.OutputEffect(MarkupString.BellMarkup! value) -> void
+MarkupString.Display.OutputEffect.OutputEffect(MarkupString.ClearScreenMarkup! value) -> void
+MarkupString.Display.OutputEffect.OutputEffect(MarkupString.Decoding.ClipboardEvent! value) -> void
+MarkupString.Display.OutputEffect.OutputEffect(MarkupString.Decoding.DecodeEvent! value) -> void
+MarkupString.Display.OutputEffect.OutputEffect(MarkupString.Decoding.DownloadEvent! value) -> void
+MarkupString.Display.OutputEffect.OutputEffect(MarkupString.Decoding.PaletteEvent! value) -> void
+MarkupString.Display.OutputEffect.OutputEffect(MarkupString.Decoding.ProtocolEvent! value) -> void
+MarkupString.Display.OutputEffect.OutputEffect(MarkupString.Decoding.ReplyEvent! value) -> void
+MarkupString.Display.OutputEffect.OutputEffect(MarkupString.Decoding.TitleEvent! value) -> void
+MarkupString.Display.OutputEffect.OutputEffect(MarkupString.Decoding.VariableEvent! value) -> void
+MarkupString.Display.OutputEffect.OutputEffect(MarkupString.ExpireLinksMarkup! value) -> void
+MarkupString.Display.OutputEffect.OutputEffect(MarkupString.IPointMarkup! value) -> void
+MarkupString.Display.OutputEffect.OutputEffect(MarkupString.LoginPromptMarkup! value) -> void
+MarkupString.Display.OutputEffect.OutputEffect(MarkupString.PrefetchMarkup! value) -> void
+MarkupString.Display.OutputEffect.OutputEffect(MarkupString.RelocateMarkup! value) -> void
+MarkupString.Display.OutputEffect.OutputEffect(MarkupString.SoundMarkup! value) -> void
+MarkupString.Display.OutputEffect.OutputEffect(MarkupString.SoundStopMarkup! value) -> void
+MarkupString.Display.OutputEffect.Value.get -> object?
+MarkupString.Display.OutputEffects
+static MarkupString.Display.OutputEffect.Of(MarkupString.Decoding.DecodeEvent! decoded) -> MarkupString.Display.OutputEffect
+static MarkupString.Display.OutputEffect.Of(MarkupString.IPointMarkup! point) -> MarkupString.Display.OutputEffect
+static MarkupString.Display.OutputEffects.Of(MarkupString.MarkupText! text, MarkupString.Display.OutputCapabilities? capabilities = null) -> System.Collections.Generic.IReadOnlyList<MarkupString.Display.OutputEffect>!
 MarkupString.Decoding.Decoder.OpenElements.get -> System.Collections.Generic.IReadOnlyList<MarkupString.IMarkup!>!
 MarkupString.Decoding.GaugeEvent
 MarkupString.Decoding.GaugeEvent.Caption.get -> string?

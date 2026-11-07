@@ -7,6 +7,8 @@
     <IsPackable>false</IsPackable>
     <NoWarn>TUnit0038;TUnitAssertions0002</NoWarn>
   </PropertyGroup>
+  <Import Project="..\build\Unions.props" />
+
   <ItemGroup>
     <PackageReference Include="CsCheck" Version="5.0.0" />
     <PackageReference Include="TUnit" Version="1.78.0" />
@@ -29,5 +31,6 @@
     <ProjectReference Include="..\MarkupString.Html\MarkupString.Html.csproj" />
     <ProjectReference Include="..\MarkupString.Mxp\MarkupString.Mxp.csproj" />
     <ProjectReference Include="..\MarkupString.Pueblo\MarkupString.Pueblo.csproj" />
+    <ProjectReference Include="..\MarkupString.Web\MarkupString.Web.csproj" />
   </ItemGroup>
 </Project>

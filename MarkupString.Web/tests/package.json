@@ -1,0 +1,6 @@
+{
+  "name": "markupstring-web-tests",
+  "private": true,
+  "scripts": { "test": "node runtime.test.cjs" },
+  "devDependencies": { "playwright": "1.63.0" }
+}

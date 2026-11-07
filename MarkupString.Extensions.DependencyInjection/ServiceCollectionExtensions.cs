@@ -17,7 +17,8 @@ public static class ServiceCollectionExtensions
 	/// Registers, as singletons: the <see cref="MarkupRegistry"/>; the <see cref="DecoderRegistry"/> (VT and
 	/// pictures) and an <see cref="IDecoderFactory"/> that makes each connection's decoder with the configured limits;
 	/// one <see cref="IPictureCache"/> every connection shares; the <see cref="DisplayRegistry"/> as the
-	/// <see cref="IStyleResolver"/>, with default <see cref="DisplayOptions"/>; and the <see cref="IUrlPolicy"/>.
+	/// <see cref="IStyleResolver"/>, with default <see cref="DisplayOptions"/>; the <see cref="IUrlPolicy"/>; and an
+	/// <see cref="EffectDispatcher"/> over every registered <see cref="IEffectHandler"/>.
 	/// Decode metrics go to the host's <see cref="IMeterFactory"/>, and what decoders drop is logged at debug level
 	/// to its <see cref="ILoggerFactory"/> (category <c>MarkupString.Decoding</c>), when it has them. A service registered before this
 	/// call is kept, so any of them can be replaced. Calling it again adds to the same setup.
@@ -51,6 +52,7 @@ public static class ServiceCollectionExtensions
 		services.TryAddSingleton(static sp => DisplayDefaults(Options(sp).Display, sp.GetRequiredService<IUrlPolicy>()));
 		services.TryAddSingleton(sp => setup.Markup.Aggregate(
 			MarkupRegistry.Empty.WithAnsi().WithLinks(sp.GetRequiredService<IUrlPolicy>()), static (current, step) => step(current)));
+		services.TryAddSingleton(static sp => new EffectDispatcher(sp.GetServices<IEffectHandler>()));
 		return new MarkupStringBuilder(services, setup);
 	}
 
@@ -128,6 +130,25 @@ public sealed class MarkupStringBuilder
 	{
 		ArgumentNullException.ThrowIfNull(configure);
 		_setup.Markup.Add(configure);
+		return this;
+	}
+
+	/// <summary>
+	/// Adds <typeparamref name="THandler"/>, a singleton, to the handlers the <see cref="EffectDispatcher"/> hands output
+	/// effects to. A handler added later is asked first.
+	/// </summary>
+	public MarkupStringBuilder AddEffectHandler<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] THandler>()
+		where THandler : class, IEffectHandler
+	{
+		Services.AddSingleton<IEffectHandler, THandler>();
+		return this;
+	}
+
+	/// <summary>Adds <paramref name="handler"/> to the handlers the <see cref="EffectDispatcher"/> hands output effects to.</summary>
+	public MarkupStringBuilder AddEffectHandler(IEffectHandler handler)
+	{
+		ArgumentNullException.ThrowIfNull(handler);
+		Services.AddSingleton(handler);
 		return this;
 	}
 
