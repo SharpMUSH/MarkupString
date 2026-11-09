@@ -826,3 +826,6 @@ MarkupString.Decoding.ISequenceObserver
 MarkupString.Decoding.ISequenceObserver.SequenceSeen(MarkupString.Decoding.DecodeContext! context) -> void
 MarkupString.Decoding.DecodeContext.PendingLine.get -> MarkupString.MarkupText!
 MarkupString.Decoding.DecodeContext.Insert(int column, MarkupString.MarkupText! text) -> void
+
+MarkupString.EmitContext.BodyDisplayWidth.get -> int?
+MarkupString.EmitContext.BodyDisplayWidth.init -> void

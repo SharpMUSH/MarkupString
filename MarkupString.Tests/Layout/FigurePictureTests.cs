@@ -44,6 +44,68 @@ public class FigurePictureTests
 	}
 
 	[Test]
+	[Arguments("mxp", AnsiColorDepth.Standard, true)]
+	[Arguments("mxp", AnsiColorDepth.TrueColor, true)]
+	[Arguments("mxp", AnsiColorDepth.None, false)]
+	[Arguments("pueblo", AnsiColorDepth.Standard, true)]
+	[Arguments("pueblo", AnsiColorDepth.TrueColor, true)]
+	[Arguments("html", AnsiColorDepth.TrueColor, true)]
+	[Arguments("bbcode", AnsiColorDepth.TrueColor, true)]
+	[Arguments("markdown", AnsiColorDepth.TrueColor, true)]
+	public async Task StyledPictureRowsKeepTheirOriginalCells(string format, AnsiColorDepth depth, bool styled)
+	{
+		var art = MarkupText.Plain(new string('=', 33));
+		if (styled) art = MarkupText.Wrap(new AnsiMarkup(new AnsiStyle { Foreground = new AnsiColor.Rgb(0, 245, 183) }), art);
+		var text = MarkupText.Concat(MarkupText.Wrap(Cat with { Row = new PictureRow(0, 1, 33) }, art), MarkupText.Plain("  END"));
+		var output = text.Render(format switch { "mxp" => MarkupFormat.Mxp, "pueblo" => MarkupFormat.Pueblo, "html" => MarkupFormat.Html, "bbcode" => MarkupFormat.BBCode, _ => MarkupFormat.Markdown }, Registry.WithAnsiOutput(depth));
+		var lines = output.Split('\n');
+		foreach (var line in lines)
+		{
+			var plain = System.Text.RegularExpressions.Regex.Replace(line, "<[^>]*>|\\[img\\].*?\\[/img\\]|!\\[[^]]*\\]\\([^)]*\\)", string.Empty);
+			await Assert.That(plain).IsEqualTo(new string(' ', 35) + "END");
+		}
+	}
+
+	[Test]
+	[Arguments("mxp")]
+	[Arguments("pueblo")]
+	[Arguments("html")]
+	[Arguments("bbcode")]
+	[Arguments("markdown")]
+	public async Task SplitPictureRowsMeasureSourceCellsNotEncodedEntities(string format)
+	{
+		var colored = MarkupText.Wrap(new AnsiMarkup(new AnsiStyle { Foreground = new AnsiColor.Rgb(0, 245, 183) }), "&<界");
+		var red = MarkupText.Wrap(new AnsiMarkup(new AnsiStyle { Foreground = new AnsiColor.Rgb(255, 0, 0) }), "e\u0301");
+		var art = MarkupText.Concat(colored, red);
+		var text = MarkupText.Concat(MarkupText.Wrap(Cat with { Row = new PictureRow(0, 1, 5) }, art), MarkupText.Plain("  END"));
+		var output = text.Render(format switch { "mxp" => MarkupFormat.Mxp, "pueblo" => MarkupFormat.Pueblo, "html" => MarkupFormat.Html, "bbcode" => MarkupFormat.BBCode, _ => MarkupFormat.Markdown }, Registry.WithAnsiOutput(AnsiColorDepth.TrueColor));
+		var plain = System.Text.RegularExpressions.Regex.Replace(output, "<[^>]*>|\\[img\\].*?\\[/img\\]|!\\[[^]]*\\]\\([^)]*\\)", string.Empty);
+		await Assert.That(plain).IsEqualTo(new string(' ', 7) + "END");
+	}
+
+	[Test]
+	[Arguments(117, AnsiColorDepth.Standard)]
+	[Arguments(134, AnsiColorDepth.TrueColor)]
+	public async Task StyledLogoKeepsWelcomeRulesInsideNegotiatedWidth(int width, AnsiColorDepth depth)
+	{
+		var art = MarkupText.Wrap(new AnsiMarkup(new AnsiStyle { Foreground = new AnsiColor.Rgb(0, 245, 183) }),
+			MarkupText.Plain(string.Join('\n', Enumerable.Repeat(new string('=', 33), 18))));
+		var block = new Flex([
+			new Sized(new Figure(Cat, art)) { Basis = BlockSize.Cells(33), Grow = 0 },
+			new Stack([.. Enumerable.Repeat<Block>(new Rule(MarkupText.Plain("New here?")) { TitleAlignment = Alignment.Left }, 18)])
+		]);
+		var lines = BlockLayout.Build(block, width).Render(MarkupFormat.Mxp, Registry.WithAnsiOutput(depth)).Split('\n');
+		await Assert.That(lines.Length).IsEqualTo(18);
+		foreach (var line in lines)
+		{
+			var plain = System.Text.RegularExpressions.Regex.Replace(line, "<[^>]*>", string.Empty);
+			await Assert.That(DisplayWidth.Of(plain)).IsEqualTo(width);
+			await Assert.That(plain[..35]).IsEqualTo(new string(' ', 35));
+			await Assert.That(plain[35]).IsNotEqualTo(' ');
+		}
+	}
+
+	[Test]
 	public async Task AFigureWithNoArtIsItsPictureNotItsDescription()
 	{
 		var laid = BlockLayout.Build(new Figure(Cat, MarkupText.Empty), 20);
