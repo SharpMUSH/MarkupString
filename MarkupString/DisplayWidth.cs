@@ -16,11 +16,12 @@ public enum ControlCharacterWidth
 }
 
 /// <summary>
-/// Terminal column width of text: 0 cells for controls, combining marks and format characters,
+/// Terminal column width of literal, unencoded text: 0 cells for controls, combining marks and format characters,
 /// 2 for East Asian wide and fullwidth code points, 1 for everything else. Each measure has an
 /// overload taking a <see cref="ControlCharacterWidth"/> that counts controls as 1 instead.
+/// Use <see cref="OfAnsi"/> or <see cref="OfTagged"/> for text that already contains formatting syntax.
 /// </summary>
-public static class DisplayWidth
+public static partial class DisplayWidth
 {
 	private const int ZeroWidthJoiner = 0x200D;
 	private const int HangulJungseongStart = 0x1160;

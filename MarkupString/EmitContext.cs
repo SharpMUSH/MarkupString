@@ -19,7 +19,9 @@ public readonly ref struct EmitContext
 
 	/// <summary>
 	/// Display cells in the original run, before text encoding or nested emitters add control sequences
-	/// and tags. Point carriers occupy zero cells. Null when a caller constructed this context without it.
+	/// and tags. An inner emitter may replace its text entirely, so measuring the emitted fragment
+	/// cannot always recover this geometry. Point carriers occupy zero cells. Null when a caller
+	/// constructed this context without it.
 	/// </summary>
 	public int? BodyDisplayWidth { get; init; }
 

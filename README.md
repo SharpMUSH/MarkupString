@@ -188,6 +188,12 @@ MarkupString keeps three measurements separate because they answer different que
 | Grapheme clusters | User-perceived characters that must stay intact | `GraphemeCount`, `EnumerateGraphemes` |
 | Display cells | Columns occupied in a terminal | `DisplayWidth`, `TruncateToWidth` |
 
+`DisplayWidth.Of(text)` measures literal source text. For an already-rendered fragment, use
+`DisplayWidth.OfAnsi(text)` for ANSI sequences or `DisplayWidth.OfTagged(text)` for HTML, MXP,
+and Pueblo tags, entities, and ANSI. These measure the fragment's text cells, not browser layout,
+image dimensions, or terminal cursor motion. They do not parse Markdown or BBCode. For example,
+`Of("&amp;")` is 5, while `OfTagged("&amp;")` is 1.
+
 That distinction powers grapheme-safe wrapping, truncation, padding, alignment, and multi-column
 layouts:
 
