@@ -24,6 +24,7 @@ internal sealed class ElementMxpEmitter(Type markupType, Func<string, bool>? sup
 
 	public MarkupFormat Format => MarkupFormat.Mxp;
 
+	/// <summary>Writes supported MXP elements or their fallbacks, preserving the source cells reserved by image rows.</summary>
 	public void Emit(IMarkup markup, ReadOnlySpan<char> body, in EmitContext context, IBufferWriter<char> output)
 	{
 		ArgumentNullException.ThrowIfNull(markup);
@@ -90,7 +91,7 @@ internal sealed class ElementMxpEmitter(Type markupType, Func<string, bool>? sup
 					}
 
 					// A figure's rows keep their cells, so what is beside the picture stays where it was.
-					if (image.Row is not null) output.Write(new string(' ', DisplayWidth.Of(body)));
+					if (image.Row is not null) output.Write(new string(' ', DisplayWidth.Of(body, context)));
 					return;
 				}
 

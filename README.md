@@ -188,6 +188,21 @@ MarkupString keeps three measurements separate because they answer different que
 | Grapheme clusters | User-perceived characters that must stay intact | `GraphemeCount`, `EnumerateGraphemes` |
 | Display cells | Columns occupied in a terminal | `DisplayWidth`, `TruncateToWidth` |
 
+`DisplayWidth.Of(text)` measures literal source text. For an already-rendered fragment, use
+`DisplayWidth.OfAnsi(text)` for ANSI sequences or `DisplayWidth.OfTagged(text)` for HTML, MXP,
+and Pueblo tags, entities, and ANSI. These measure the fragment's text cells, not browser layout,
+image dimensions, or terminal cursor motion. They do not parse Markdown or BBCode. For example,
+`Of("&amp;")` is 5, while `OfTagged("&amp;")` is 1.
+
+Inside an emitter, `DisplayWidth.Of(body, context)` uses `context.SourceDisplayWidth` when available,
+so a picture keeps its reserved source cells even if an inner emitter replaced the text. Without
+source geometry it selects the ANSI helper for ANSI or the tagged helper when `format.IsTagged` is
+true. This capability specifically means angle-bracket tags/comments and HTML-style entities, not
+BBCode or an arbitrary tag grammar. HTML, MXP and Pueblo declare it; custom formats can opt in with
+`MarkupFormat.Custom("my-format", TextEncoding.Html, isTagged: true)`. The existing two-argument
+`Custom` overload stays untagged regardless of literal-text encoding. Other formats keep literal
+measurement. The renderer supplies source geometry for every run.
+
 That distinction powers grapheme-safe wrapping, truncation, padding, alignment, and multi-column
 layouts:
 

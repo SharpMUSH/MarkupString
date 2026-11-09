@@ -43,6 +43,7 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 
 	public MarkupFormat Format => MarkupFormat.Html;
 
+	/// <summary>Writes the shared element under the HTML tag policy, preserving fallback text and the source cells reserved by image rows.</summary>
 	public void Emit(IMarkup markup, ReadOnlySpan<char> body, in EmitContext context, IBufferWriter<char> output)
 	{
 		ArgumentNullException.ThrowIfNull(markup);
@@ -107,7 +108,7 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 					if (image.StartsPicture(context)) Write(markup, output, "img", Shape.Void, body, context, attributes);
 
 					// A figure's rows keep their cells, so what is beside the picture stays where it was.
-					if (image.Row is not null) output.Write(new string(' ', DisplayWidth.Of(body)));
+					if (image.Row is not null) output.Write(new string(' ', DisplayWidth.Of(body, context)));
 					return;
 				}
 

@@ -17,6 +17,14 @@ public readonly ref struct EmitContext
 	/// <summary>This run's own markups, innermost first.</summary>
 	public required MarkupSet Markups { get; init; }
 
+	/// <summary>
+	/// Display cells in the original run, before text encoding or nested emitters add control sequences
+	/// and tags. An inner emitter may replace its text entirely, so measuring the emitted fragment
+	/// cannot always recover this geometry. Point carriers occupy zero cells. Null when a caller
+	/// constructed this context without it.
+	/// </summary>
+	public int? SourceDisplayWidth { get; init; }
+
 	/// <summary>The previous run's markups, or <see langword="null"/> when a gap or the start of the text precedes this run.</summary>
 	public MarkupSet? Previous { get; init; }
 

@@ -8,7 +8,25 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+
+- `MarkupFormat.IsTagged` declares the angle-bracket/entity grammar used for fragment-width
+  measurement, independently of literal-text encoding. HTML, MXP and Pueblo declare it; custom
+  formats can opt in explicitly through a new overload without changing existing custom formats.
+
+- `DisplayWidth.Of(body, context)` centralizes picture-placeholder measurement. The new context
+  property is named `SourceDisplayWidth` to distinguish original run cells from emitted text.
+
+- `DisplayWidth.OfAnsi` and `DisplayWidth.OfTagged` measure text cells in formatted fragments
+  without counting ANSI sequences, tags or entity syntax. Literal-text width and truncation keep
+  their existing semantics. MXP, Pueblo and HTML image emitters use tagged measurement when a
+  caller has not supplied original source-cell geometry.
+
 ### Fixed
+
+- Picture placeholder rows preserve their original display-cell width across nested styling and text
+  encoding. ANSI escapes and HTML/BBCode syntax no longer become extra blank cells beside MXP,
+  Pueblo, HTML, BBCode or Markdown images. This fixes welcome-screen rules wrapping after a colored logo.
 
 - MXP images a client does not support can fall back to configured ANSI terminal graphics, preserving
   the other MXP elements. The fallback requires both enabled graphics and available picture pixels.
