@@ -38,21 +38,20 @@ public static partial class DisplayWidth
 
 	/// <summary>
 	/// Cells reserved by the run's original source when <see cref="EmitContext.SourceDisplayWidth"/>
-	/// is supplied; otherwise measures <paramref name="body"/> using the context's known format.
+	/// is supplied; otherwise measures <paramref name="body"/> using the context's format capabilities.
 	/// </summary>
 	/// <remarks>
 	/// Source geometry wins even when an inner emitter replaced the text, and zero is a supplied width.
-	/// Without it, ANSI uses <see cref="OfAnsi"/> and HTML, MXP and Pueblo use <see cref="OfTagged"/>.
-	/// Plain text, Markdown, BBCode and custom formats retain literal <see cref="Of(ReadOnlySpan{char})"/>
-	/// measurement; there is no Markdown, BBCode or custom-format parser here. A manually constructed
-	/// context should supply source geometry when its body cannot be measured by those fallbacks.
+	/// Without it, ANSI uses <see cref="OfAnsi"/> and formats declaring <see cref="MarkupFormat.IsTagged"/>
+	/// use <see cref="OfTagged"/>. Other formats retain literal <see cref="Of(ReadOnlySpan{char})"/>
+	/// measurement; there is no Markdown or BBCode parser here. A manually constructed context should
+	/// supply source geometry when its body cannot be measured by those fallbacks.
 	/// </remarks>
 	public static int Of(ReadOnlySpan<char> body, in EmitContext context)
 	{
 		if (context.SourceDisplayWidth is { } width) return width;
 		if (context.Format == MarkupFormat.Ansi) return OfAnsi(body);
-		if (context.Format == MarkupFormat.Html || context.Format == MarkupFormat.Mxp || context.Format == MarkupFormat.Pueblo)
-			return OfTagged(body);
+		if (context.Format.IsTagged) return OfTagged(body);
 		return Of(body);
 	}
 

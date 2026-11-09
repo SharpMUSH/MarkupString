@@ -832,3 +832,5 @@ MarkupString.EmitContext.SourceDisplayWidth.init -> void
 static MarkupString.DisplayWidth.OfAnsi(System.ReadOnlySpan<char> text) -> int
 static MarkupString.DisplayWidth.OfTagged(System.ReadOnlySpan<char> text) -> int
 static MarkupString.DisplayWidth.Of(System.ReadOnlySpan<char> body, in MarkupString.EmitContext context) -> int
+MarkupString.MarkupFormat.IsTagged.get -> bool
+static MarkupString.MarkupFormat.Custom(string! name, MarkupString.TextEncoding encoding, bool isTagged) -> MarkupString.MarkupFormat!

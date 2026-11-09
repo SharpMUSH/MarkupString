@@ -196,8 +196,12 @@ image dimensions, or terminal cursor motion. They do not parse Markdown or BBCod
 
 Inside an emitter, `DisplayWidth.Of(body, context)` uses `context.SourceDisplayWidth` when available,
 so a picture keeps its reserved source cells even if an inner emitter replaced the text. Without
-source geometry it selects the ANSI or tagged helper for known formats; Plain, Markdown, BBCode,
-and custom formats keep literal measurement. The renderer supplies source geometry for every run.
+source geometry it selects the ANSI helper for ANSI or the tagged helper when `format.IsTagged` is
+true. This capability specifically means angle-bracket tags/comments and HTML-style entities, not
+BBCode or an arbitrary tag grammar. HTML, MXP and Pueblo declare it; custom formats can opt in with
+`MarkupFormat.Custom("my-format", TextEncoding.Html, isTagged: true)`. The existing two-argument
+`Custom` overload stays untagged regardless of literal-text encoding. Other formats keep literal
+measurement. The renderer supplies source geometry for every run.
 
 That distinction powers grapheme-safe wrapping, truncation, padding, alignment, and multi-column
 layouts:

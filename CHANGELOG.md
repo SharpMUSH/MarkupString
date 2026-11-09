@@ -10,6 +10,10 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `MarkupFormat.IsTagged` declares the angle-bracket/entity grammar used for fragment-width
+  measurement, independently of literal-text encoding. HTML, MXP and Pueblo declare it; custom
+  formats can opt in explicitly through a new overload without changing existing custom formats.
+
 - `DisplayWidth.Of(body, context)` centralizes picture-placeholder measurement. The new context
   property is named `SourceDisplayWidth` to distinguish original run cells from emitted text.
 
