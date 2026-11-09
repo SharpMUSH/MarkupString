@@ -6,6 +6,7 @@ using MarkupString.Pueblo;
 
 public class ContextDisplayWidthTests
 {
+	/// <summary>Resolves a built-in format or creates an untagged custom format despite its HTML text encoding.</summary>
 	private static MarkupFormat Format(string name) => MarkupFormat.TryParse(name)
 		?? MarkupFormat.Custom(name, TextEncoding.Html);
 

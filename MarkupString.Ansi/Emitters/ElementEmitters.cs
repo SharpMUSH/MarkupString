@@ -28,6 +28,7 @@ internal sealed class ImageBBCodeEmitter : IMarkupEmitter
 
 	public MarkupFormat Format => MarkupFormat.BBCode;
 
+	/// <summary>Writes one BBCode image and reserves its source-width cells on each figure row; an unrepresentable address keeps the body.</summary>
 	public void Emit(IMarkup markup, ReadOnlySpan<char> body, in EmitContext context, IBufferWriter<char> output)
 	{
 		ArgumentNullException.ThrowIfNull(output);
@@ -62,6 +63,7 @@ internal sealed class ImageMarkdownEmitter : IMarkupEmitter
 
 	public MarkupFormat Format => MarkupFormat.Markdown;
 
+	/// <summary>Writes one safe Markdown image and reserves its source-width cells on each figure row; a rejected address keeps the body.</summary>
 	public void Emit(IMarkup markup, ReadOnlySpan<char> body, in EmitContext context, IBufferWriter<char> output)
 	{
 		ArgumentNullException.ThrowIfNull(output);

@@ -28,6 +28,7 @@ internal sealed class ElementPuebloEmitter(Type markupType) : IMarkupEmitter
 
 	public MarkupFormat Format => MarkupFormat.Pueblo;
 
+	/// <summary>Writes Pueblo elements and their fallbacks, preserving the source cells reserved by image rows.</summary>
 	public void Emit(IMarkup markup, ReadOnlySpan<char> body, in EmitContext context, IBufferWriter<char> output)
 	{
 		ArgumentNullException.ThrowIfNull(markup);

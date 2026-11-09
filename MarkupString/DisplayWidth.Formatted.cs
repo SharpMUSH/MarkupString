@@ -55,6 +55,7 @@ public static partial class DisplayWidth
 		return Of(body);
 	}
 
+	/// <summary>Collects visible text through the shared scanners, then measures it as one Unicode sequence.</summary>
 	private static int OfFormatted(ReadOnlySpan<char> text, bool tagged)
 	{
 		using var plain = new PooledCharWriter(Math.Min(text.Length, 256));
@@ -71,6 +72,7 @@ public static partial class DisplayWidth
 		private readonly TagScanner? _tags = tagged ? new TagScanner() : null;
 		public bool ReadsMarkup => true;
 
+		/// <summary>Collects literal text directly, or passes it through the tag scanner when tagged syntax is enabled.</summary>
 		public void Print(ReadOnlySpan<char> text)
 		{
 			if (_tags is null) plain.Write(text);
@@ -86,6 +88,7 @@ public static partial class DisplayWidth
 
 		public void Text(ReadOnlySpan<char> text) => plain.Write(text);
 		public void Tag(ReadOnlySpan<char> body) { }
+		/// <summary>Decodes a known entity once and preserves an unknown entity as literal text.</summary>
 		public void Entity(ReadOnlySpan<char> name)
 		{
 			if (TagSyntax.Entity(name) is { } decoded) plain.Write(decoded);
@@ -103,6 +106,7 @@ public static partial class DisplayWidth
 		public void Dcs(in CsiSequence header, ReadOnlySpan<char> data) { }
 		public void Apc(ReadOnlySpan<char> payload) { }
 		public void Abandoned(VtSequenceKind kind) { }
+		/// <summary>Flushes an incomplete tag or entity as literal text before the combined text is measured.</summary>
 		public void Finish() => _tags?.Flush(this);
 	}
 }

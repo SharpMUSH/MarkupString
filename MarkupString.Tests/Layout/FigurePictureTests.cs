@@ -43,6 +43,7 @@ public class FigurePictureTests
 		await Assert.That(lines.Length).IsEqualTo(3);
 	}
 
+	/// <summary>Verifies that styling syntax never enlarges the picture placeholder or moves its neighboring text.</summary>
 	[Test]
 	[Arguments("mxp", AnsiColorDepth.Standard, true)]
 	[Arguments("mxp", AnsiColorDepth.TrueColor, true)]
@@ -66,6 +67,7 @@ public class FigurePictureTests
 		}
 	}
 
+	/// <summary>Verifies source-cell padding across differently styled runs containing entities, CJK text and combining marks.</summary>
 	[Test]
 	[Arguments("mxp")]
 	[Arguments("pueblo")]
@@ -83,6 +85,7 @@ public class FigurePictureTests
 		await Assert.That(plain).IsEqualTo(new string(' ', 7) + "END");
 	}
 
+	/// <summary>Reproduces the two reported banner widths and verifies that every rule stays within its negotiated row.</summary>
 	[Test]
 	[Arguments(117, AnsiColorDepth.Standard)]
 	[Arguments(134, AnsiColorDepth.TrueColor)]

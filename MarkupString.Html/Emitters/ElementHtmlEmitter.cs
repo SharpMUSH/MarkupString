@@ -43,6 +43,7 @@ internal sealed class ElementHtmlEmitter(Type markupType, HtmlTagPolicy? policy 
 
 	public MarkupFormat Format => MarkupFormat.Html;
 
+	/// <summary>Writes the shared element under the HTML tag policy, preserving fallback text and the source cells reserved by image rows.</summary>
 	public void Emit(IMarkup markup, ReadOnlySpan<char> body, in EmitContext context, IBufferWriter<char> output)
 	{
 		ArgumentNullException.ThrowIfNull(markup);

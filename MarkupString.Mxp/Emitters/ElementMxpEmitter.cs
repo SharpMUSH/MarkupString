@@ -24,6 +24,7 @@ internal sealed class ElementMxpEmitter(Type markupType, Func<string, bool>? sup
 
 	public MarkupFormat Format => MarkupFormat.Mxp;
 
+	/// <summary>Writes supported MXP elements or their fallbacks, preserving the source cells reserved by image rows.</summary>
 	public void Emit(IMarkup markup, ReadOnlySpan<char> body, in EmitContext context, IBufferWriter<char> output)
 	{
 		ArgumentNullException.ThrowIfNull(markup);
