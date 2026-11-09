@@ -74,7 +74,7 @@ internal sealed class ElementPuebloEmitter(Type markupType) : IMarkupEmitter
 				}
 
 				// A figure's rows keep their cells, so what is beside the picture stays where it was.
-				if (image.Row is not null) output.Write(new string(' ', context.BodyDisplayWidth ?? DisplayWidth.OfTagged(body)));
+				if (image.Row is not null) output.Write(new string(' ', DisplayWidth.Of(body, context)));
 				return;
 
 			case PreformattedMarkup:

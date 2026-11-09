@@ -827,7 +827,8 @@ MarkupString.Decoding.ISequenceObserver.SequenceSeen(MarkupString.Decoding.Decod
 MarkupString.Decoding.DecodeContext.PendingLine.get -> MarkupString.MarkupText!
 MarkupString.Decoding.DecodeContext.Insert(int column, MarkupString.MarkupText! text) -> void
 
-MarkupString.EmitContext.BodyDisplayWidth.get -> int?
-MarkupString.EmitContext.BodyDisplayWidth.init -> void
+MarkupString.EmitContext.SourceDisplayWidth.get -> int?
+MarkupString.EmitContext.SourceDisplayWidth.init -> void
 static MarkupString.DisplayWidth.OfAnsi(System.ReadOnlySpan<char> text) -> int
 static MarkupString.DisplayWidth.OfTagged(System.ReadOnlySpan<char> text) -> int
+static MarkupString.DisplayWidth.Of(System.ReadOnlySpan<char> body, in MarkupString.EmitContext context) -> int

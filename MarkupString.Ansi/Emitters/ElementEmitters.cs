@@ -48,7 +48,7 @@ internal sealed class ImageBBCodeEmitter : IMarkupEmitter
 		}
 
 		// A figure's rows keep their cells, so what is beside the picture stays where it was.
-		if (image.Row is not null) output.Write(new string(' ', context.BodyDisplayWidth ?? DisplayWidth.Of(body)));
+		if (image.Row is not null) output.Write(new string(' ', DisplayWidth.Of(body, context)));
 	}
 }
 
@@ -76,6 +76,6 @@ internal sealed class ImageMarkdownEmitter : IMarkupEmitter
 		if (image.StartsPicture(context)) MarkdownSyntax.WriteImage(image.Description, source, output);
 
 		// A figure's rows keep their cells, so what is beside the picture stays where it was.
-		if (image.Row is not null) output.Write(new string(' ', context.BodyDisplayWidth ?? DisplayWidth.Of(body)));
+		if (image.Row is not null) output.Write(new string(' ', DisplayWidth.Of(body, context)));
 	}
 }

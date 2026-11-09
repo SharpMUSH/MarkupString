@@ -10,6 +10,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `DisplayWidth.Of(body, context)` centralizes picture-placeholder measurement. The new context
+  property is named `SourceDisplayWidth` to distinguish original run cells from emitted text.
+
 - `DisplayWidth.OfAnsi` and `DisplayWidth.OfTagged` measure text cells in formatted fragments
   without counting ANSI sequences, tags or entity syntax. Literal-text width and truncation keep
   their existing semantics. MXP, Pueblo and HTML image emitters use tagged measurement when a

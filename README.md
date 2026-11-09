@@ -194,6 +194,11 @@ and Pueblo tags, entities, and ANSI. These measure the fragment's text cells, no
 image dimensions, or terminal cursor motion. They do not parse Markdown or BBCode. For example,
 `Of("&amp;")` is 5, while `OfTagged("&amp;")` is 1.
 
+Inside an emitter, `DisplayWidth.Of(body, context)` uses `context.SourceDisplayWidth` when available,
+so a picture keeps its reserved source cells even if an inner emitter replaced the text. Without
+source geometry it selects the ANSI or tagged helper for known formats; Plain, Markdown, BBCode,
+and custom formats keep literal measurement. The renderer supplies source geometry for every run.
+
 That distinction powers grapheme-safe wrapping, truncation, padding, alignment, and multi-column
 layouts:
 
