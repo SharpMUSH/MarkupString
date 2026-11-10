@@ -224,7 +224,8 @@ internal static class LayoutHtml
 			// side by side wrap onto rows of their own. Spare width is left alone only when the layout
 			// asked for it to be placed somewhere.
 			var item = Layout.Flex.SizeOf(block);
-			var grow = flex.Justify == FlexJustify.Start || item.Basis.Kind == BlockSizeKind.Auto
+			// A Bounded item keeps its width, as in a terminal: the spare goes after it, not into it.
+			var grow = block is not Bounded && (flex.Justify == FlexJustify.Start || item.Basis.Kind == BlockSizeKind.Auto)
 				? Math.Max(1, item.Grow)
 				: item.Grow;
 			html.Write("<div class=\"ms-item\" style=\"flex:");

@@ -548,7 +548,7 @@ public class BlockLayoutTests
 			"| L |",
 			"+---+",
 		});
-		await Assert.That(BlockLayout.Build(row, 20).Render(MarkupFormat.Html, Registry)).Contains("<div class=\"ms-item\" style=\"flex:1 1 5ch");
+		await Assert.That(BlockLayout.Build(row, 20).Render(MarkupFormat.Html, Registry)).Contains("<div class=\"ms-item\" style=\"flex:0 1 5ch");
 	}
 
 	[Test]
@@ -556,6 +556,8 @@ public class BlockLayoutTests
 	{
 		var box = BlockLayout.Build(T("x").Bordered(border: BorderStyle.Ascii), 10);
 		var row = new Flex([.. BlockLayout.Blocks(box), .. BlockLayout.Blocks(box)]);
+
+		await Assert.That(System.Text.RegularExpressions.Regex.Count(BlockLayout.Build(row, 40).Render(MarkupFormat.Html, Registry), "flex:0 1 10ch")).IsEqualTo(2);
 
 		await Assert.That(BlockLayout.Lines(row, 16).Select(line => line.ToPlainText().TrimEnd()).ToArray()).IsEquivalentTo(new[]
 		{
