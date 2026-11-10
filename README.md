@@ -13,7 +13,7 @@
   <a href="https://github.com/SharpMUSH/MarkupString/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/SharpMUSH/MarkupString/ci.yml?branch=main&amp;style=flat-square&amp;logo=githubactions&amp;logoColor=white&amp;label=build" alt="Build status"></a>
   <a href="https://www.nuget.org/packages/MarkupString"><img src="https://img.shields.io/nuget/v/MarkupString?style=flat-square&amp;logo=nuget&amp;logoColor=white" alt="MarkupString NuGet version"></a>
   <a href="https://www.nuget.org/packages/MarkupString"><img src="https://img.shields.io/nuget/dt/MarkupString?style=flat-square&amp;logo=nuget&amp;logoColor=white&amp;label=downloads" alt="NuGet downloads"></a>
-  <img src="https://img.shields.io/badge/.NET-10-512BD4?style=flat-square&amp;logo=dotnet&amp;logoColor=white" alt="Requires .NET 10">
+  <img src="https://img.shields.io/badge/.NET-10_%7C_11-512BD4?style=flat-square&amp;logo=dotnet&amp;logoColor=white" alt="Builds for .NET 10 and .NET 11">
   <img src="https://img.shields.io/badge/Native_AOT-ready-0F766E?style=flat-square" alt="Native AOT ready">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/SharpMUSH/MarkupString?style=flat-square&amp;color=2563EB" alt="Apache-2.0 license"></a>
 </p>
@@ -254,14 +254,17 @@ reflection hidden behind convenience APIs.
 
 ## Requirements
 
-- .NET 10 or later
+- .NET 10 or later; every package carries a net10.0 and a net11.0 build
 - Any runtime supported by .NET, including Native AOT deployments
 
 ## Contributing
 
+Building needs the .NET 11 SDK, and running the net10.0 tests needs the .NET 10 runtime.
+
 ```sh
 dotnet build MarkupString.slnx
-dotnet run --project MarkupString.Tests
+dotnet run --project MarkupString.Tests --framework net11.0
+dotnet run --project MarkupString.Tests --framework net10.0
 ```
 
 The build enforces the repository's formatting rules and public API compatibility. Versions follow

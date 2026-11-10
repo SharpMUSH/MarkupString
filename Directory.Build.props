@@ -1,8 +1,11 @@
 <Project>
 
-  <!-- Language and compilation settings shared by every project in the repository. -->
+  <!--
+    Language and compilation settings shared by every project in the repository. The repository builds
+    with the .NET 11 SDK (global.json), and tests, tools and the AOT smoke app run on net11.0.
+  -->
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -20,6 +23,22 @@
   <PropertyGroup>
     <Verify_SponsorshipExemption>OpenSource</Verify_SponsorshipExemption>
     <Verify_SponsorshipExemptionUntil>2027-09</Verify_SponsorshipExemptionUntil>
+  </PropertyGroup>
+
+  <!--
+    The shipping packages carry net10.0 as well as net11.0, so clients still on .NET 10 keep restoring
+    them. TargetFramework is cleared because, while it is set, MSBuild builds only that one framework
+    and ignores TargetFrameworks.
+  -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' == 'MarkupString'
+                            OR '$(MSBuildProjectName)' == 'MarkupString.Ansi'
+                            OR '$(MSBuildProjectName)' == 'MarkupString.Extensions.DependencyInjection'
+                            OR '$(MSBuildProjectName)' == 'MarkupString.Html'
+                            OR '$(MSBuildProjectName)' == 'MarkupString.Mxp'
+                            OR '$(MSBuildProjectName)' == 'MarkupString.Pueblo'
+                            OR '$(MSBuildProjectName)' == 'MarkupString.Web'">
+    <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
+    <TargetFramework></TargetFramework>
   </PropertyGroup>
 
   <!--

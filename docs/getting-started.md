@@ -13,7 +13,7 @@ emitters live in the kind packages. Take `MarkupString.Ansi` for terminal stylin
 covers HTML, Pueblo, MXP, BBCode and Markdown output of that styling, and links), and `MarkupString.Html` if
 you also need raw tags such as `<pre>` or a `<span class>`.
 
-Requires .NET 10 or later.
+Requires .NET 10 or later. The packages carry a net10.0 and a net11.0 build.
 
 ## Wire up the registry, once
 

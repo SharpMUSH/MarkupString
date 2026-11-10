@@ -11,6 +11,12 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - Built with the .NET 11 GA SDK; the net11.0 build of the core package is compiled against the release runtime.
+- Every package now carries a net11.0 build alongside net10.0 (before, only `MarkupString` did). The net11.0
+  build of `MarkupString.Extensions.DependencyInjection` takes the 11.0 `Microsoft.Extensions` packages, and
+  leaves out the ones .NET 11 ships in its own runtime; the net10.0 build keeps 10.0.14.
+- The repository needs the .NET 11 SDK (global.json); the .NET 10 SDK fallback through
+  `Microsoft.Net.Compilers.Toolset` is gone. Tests run on both net10.0 and net11.0, and the AOT smoke app
+  publishes for net11.0.
 
 ### Added
 
