@@ -48,7 +48,7 @@
       `dotnet format` genuinely does fail on this repo in solution mode, so this is not
       hypothetical. Output importance is normal so a tool failure explains itself.
     -->
-    <Exec Command="dotnet format whitespace --folder &quot;$(MSBuildProjectDirectory)&quot; --exclude &quot;**/bin/**&quot; --exclude &quot;**/obj/**&quot; $(FormatVerificationExclude) --verify-no-changes"
+    <Exec Command="dotnet format whitespace --folder &quot;$(MSBuildProjectDirectory)&quot; --exclude &quot;**/bin/**&quot; --exclude &quot;**/obj/**&quot; --verify-no-changes"
           ContinueOnError="true"
           IgnoreStandardErrorWarningFormat="true">
       <Output TaskParameter="ExitCode" PropertyName="FormatVerificationExitCode" />

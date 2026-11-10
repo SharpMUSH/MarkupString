@@ -16,7 +16,6 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
-      # The .NET 11 SDK: the .NET 10 SDK's formatter cannot parse a `union` declaration (*.Union.cs).
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: 11.0.x
@@ -44,9 +43,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      # The .NET 11 SDK builds everything; the .NET 10 runtime runs the tests' net10.0 build, which
+      # covers the net10.0 build every package still ships.
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: |
+            10.0.x
+            11.0.x
 
       - name: Restore
         run: dotnet restore
@@ -55,39 +58,23 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore -p:SkipFormatVerification=true
 
-      - name: Test
-        run: dotnet run --project MarkupString.Tests --configuration Release --no-build
+      - name: Test on net11.0
+        run: dotnet run --project MarkupString.Tests --configuration Release --no-build --framework net11.0
+
+      - name: Test on net10.0
+        run: dotnet run --project MarkupString.Tests --configuration Release --no-build --framework net10.0
 
       - name: Pack
         run: dotnet pack --configuration Release --no-build -p:SkipFormatVerification=true -o packages
 
-  net11:
-    name: Build and test on the .NET 11 SDK
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      # With the .NET 11 SDK the core package also builds for net11.0, where its unions implement the
-      # runtime's IUnion. The release builds this way, so this job proves what ships.
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: |
-            10.0.x
-            11.0.x
-      - name: Restore
-        run: dotnet restore
-      - name: Build
-        run: dotnet build --configuration Release --no-restore -p:SkipFormatVerification=true
-      - name: Test
-        run: dotnet run --project MarkupString.Tests --configuration Release --no-build
-      - name: Pack
-        run: dotnet pack --configuration Release --no-build -p:SkipFormatVerification=true -o packages
-      - name: The core package carries net10.0 and net11.0
+      - name: Every package carries net10.0 and net11.0
+        if: runner.os == 'Linux'
         run: |
-          unzip -l packages/MarkupString.[0-9]*.nupkg | grep -q 'lib/net10.0/MarkupString.dll'
-          unzip -l packages/MarkupString.[0-9]*.nupkg | grep -q 'lib/net11.0/MarkupString.dll'
+          for pkg in packages/*.nupkg; do
+            for tfm in net10.0 net11.0; do
+              unzip -l "$pkg" | grep -q "lib/$tfm/" || { echo "::error::$pkg has no lib/$tfm"; exit 1; }
+            done
+          done
 
   web:
     name: Web runtime in a browser
@@ -114,7 +101,7 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 11.0.x
 
       # The packages promise IsAotCompatible. Publishing the smoke app with every package assembly
       # rooted analyses every public entry point, so a trim- or AOT-hostile addition fails here
@@ -131,4 +118,4 @@ jobs:
           fi
 
       - name: Run the native binary
-        run: ./MarkupString.AotSmoke/bin/Release/net10.0/linux-x64/publish/MarkupString.AotSmoke
+        run: ./MarkupString.AotSmoke/bin/Release/net11.0/linux-x64/publish/MarkupString.AotSmoke

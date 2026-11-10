@@ -21,7 +21,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
-      # The .NET 11 SDK builds the core package for net11.0 as well as net10.0.
+      # The .NET 11 SDK builds every package for net10.0 and net11.0; the .NET 10 runtime runs the
+      # tests' net10.0 build.
       - uses: actions/setup-dotnet@v6
         with:
           dotnet-version: |
@@ -34,8 +35,11 @@ jobs:
       - name: Build
         run: dotnet build --configuration Release --no-restore -p:SkipFormatVerification=true
 
-      - name: Test
-        run: dotnet run --project MarkupString.Tests --configuration Release --no-build
+      - name: Test on net11.0
+        run: dotnet run --project MarkupString.Tests --configuration Release --no-build --framework net11.0
+
+      - name: Test on net10.0
+        run: dotnet run --project MarkupString.Tests --configuration Release --no-build --framework net10.0
 
   build:
     name: Pack
@@ -53,12 +57,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      # The .NET 11 SDK builds the core package for net11.0 as well as net10.0.
+      # The .NET 11 SDK builds every package for net10.0 and net11.0.
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: |
-            10.0.x
-            11.0.x
+          dotnet-version: 11.0.x
 
       - name: Restore
         run: dotnet restore
@@ -121,7 +123,7 @@ jobs:
 
       - uses: actions/setup-dotnet@v6
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: 11.0.x
 
       - name: Push to GitHub Packages
         run: dotnet nuget push "packages/*.nupkg" --skip-duplicate --source https://nuget.pkg.github.com/SharpMUSH/index.json --api-key ${GITHUB_TOKEN}

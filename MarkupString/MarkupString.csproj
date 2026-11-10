@@ -16,16 +16,8 @@
     <Description>Immutable styled text: a string plus layered markup runs, rendered to ANSI, HTML, Pueblo, MXP, BBCode, Markdown or plain text through a registry of emitters, and round-tripped through JSON.</Description>
   </PropertyGroup>
 
-  <Import Project="..\build\Unions.props" />
-
-  <!-- With the .NET 11 SDK the package carries a net11.0 build too, whose unions implement the runtime's own
-       IUnion; the net10.0 build declares them with the copies in Polyfills/Unions.cs. TargetFramework
-       is cleared because Directory.Build.props sets it, and while it is set MSBuild builds only that
-       one framework and ignores TargetFrameworks. -->
-  <PropertyGroup Condition="$(MarkupStringSdkMajor) &gt;= 11">
-    <TargetFrameworks>net10.0;net11.0</TargetFrameworks>
-    <TargetFramework></TargetFramework>
-  </PropertyGroup>
+  <!-- The net11.0 build's unions implement the runtime's own IUnion; the net10.0 build declares them
+       with the copies in Polyfills/Unions.cs. -->
 
   <ItemGroup>
     <PackageReference Include="MinVer" Version="8.0.0" PrivateAssets="all" />

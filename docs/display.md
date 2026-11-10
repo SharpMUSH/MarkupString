@@ -365,9 +365,9 @@ the dispatcher with every handler added (see [Dependency injection](dependency-i
 
 A web page does not need this: [`MarkupString.Web`](web.md) reads the same effects out of the HTML.
 
-The library targets .NET 10, which has no unions in its runtime. Its net10.0 build declares them with
-internal copies of the two types the compiler needs, and with the .NET 11 SDK the package also carries a
-net11.0 build whose unions implement the runtime's own `IUnion`. A client on an older compiler reads the
+The package carries a net10.0 and a net11.0 build. .NET 10 has no unions in its runtime, so the net10.0
+build declares them with internal copies of the two types the compiler needs; the net11.0 build's unions
+implement the runtime's own `IUnion`. A client on an older compiler reads the
 case from `effect.Value`.
 
 ## Back to ANSI
