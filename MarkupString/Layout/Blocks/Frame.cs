@@ -96,15 +96,16 @@ public sealed record Frame(Block Body) : Block
 		var padding = BlockText.Blank(Padding);
 		var inner = Math.Max(1, width - style.Left.DisplayWidth - style.Right.DisplayWidth - padding.DisplayWidth * 2);
 
-		// Each edge drawn (the top, a divider, the bottom), where it is, its fill, and the columns where a line
-		// between panes meets it from above and from below; the junctions are set into it once the body is drawn.
-		var edges = new List<(int Line, MarkupText Fill, HashSet<int> Up, HashSet<int> Down)>();
+		// Each edge drawn (the top, a divider, the bottom): where it is, the style it is drawn in, which of its
+		// cells are fill rather than a title, and the columns where a line between panes meets it from above and
+		// from below. The junctions are set into it once the body is drawn.
+		var edges = new List<(int Line, BorderStyle Style, string Fill, HashSet<int> Up, HashSet<int> Down)>();
 		var above = new HashSet<int>();
 		var lastWasEdge = false;
-		void AddEdge(MarkupText line, MarkupText fill)
+		void AddEdge(MarkupText left, MarkupText right, IReadOnlyList<EdgeTitle> titles, BorderStyle edgeStyle, MarkupText fill)
 		{
-			edges.Add((lines.Count, fill, above, []));
-			lines.Add(line);
+			edges.Add((lines.Count, edgeStyle, BlockText.Edge(left, FillMark, right, titles, edgeStyle, width).Text, above, []));
+			lines.Add(BlockText.Edge(left, fill, right, BlockText.Painted(context, titles), edgeStyle, width));
 			above = [];
 			lastWasEdge = true;
 		}
@@ -112,7 +113,7 @@ public sealed record Frame(Block Body) : Block
 		var top = BlockText.Titles(Title, TitleAlignment, Titles);
 		var bottom = BlockText.Titles(null, Alignment.Center, BottomTitles);
 		if (!none || top.Count > 0)
-			AddEdge(BlockText.Edge(style.TopLeft, style.Top, style.TopRight, BlockText.Painted(context, top), style, width), style.Top);
+			AddEdge(style.TopLeft, style.TopRight, top, style, style.Top);
 
 		var body = new List<MarkupText>();
 		foreach (var child in Parts)
@@ -122,7 +123,7 @@ public sealed record Frame(Block Body) : Block
 				var titles = rule.EdgeTitles;
 				if (none && titles.Count == 0) continue;
 				var ruleStyle = context.Paint(context.Border(rule.Border ?? Border));
-				AddEdge(BlockText.Edge(style.TeeLeft, ruleStyle.Top, style.TeeRight, BlockText.Painted(context, titles), ruleStyle, width), ruleStyle.Top);
+				AddEdge(style.TeeLeft, style.TeeRight, titles, ruleStyle, ruleStyle.Top);
 				continue;
 			}
 
@@ -142,14 +143,14 @@ public sealed record Frame(Block Body) : Block
 		}
 
 		if (!none || bottom.Count > 0)
-			AddEdge(BlockText.Edge(style.BottomLeft, style.Bottom, style.BottomRight, BlockText.Painted(context, bottom), style, width), style.Bottom);
+			AddEdge(style.BottomLeft, style.BottomRight, bottom, style, style.Bottom);
 
-		foreach (var (line, fill, up, down) in edges)
+		foreach (var (line, edgeStyle, fill, up, down) in edges)
 		{
 			var text = lines[line];
 			foreach (var column in up.Union(down).Order())
 			{
-				var glyph = up.Contains(column) && down.Contains(column) ? style.Cross : down.Contains(column) ? style.TeeTop : style.TeeBottom;
+				var glyph = up.Contains(column) && down.Contains(column) ? edgeStyle.Cross : down.Contains(column) ? edgeStyle.TeeTop : edgeStyle.TeeBottom;
 				text = Junction(text, column, glyph, fill);
 			}
 			lines[line] = text;
@@ -163,9 +164,11 @@ public sealed record Frame(Block Body) : Block
 	/// </summary>
 	private List<int>? Panes(LayoutContext context, Flex row, BorderStyle style, int width, List<MarkupText> lines)
 	{
-		var seam = style.Left.DisplayWidth;
+		// The lines between panes are the frame's sides, a cell wide, as the junctions set into its edges are.
+		const int seam = 1;
 		var span = width - style.Left.DisplayWidth - style.Right.DisplayWidth;
-		if (row.Items.IsDefaultOrEmpty || seam < 1 || row.Share(span, seam) is not { } widths) return null;
+		if (row.Items.IsDefaultOrEmpty || style.Left.DisplayWidth != seam || style.Right.DisplayWidth != seam
+			|| row.Share(span, seam) is not { } widths) return null;
 		widths[^1] += span - widths.Sum() - seam * (widths.Length - 1);
 
 		var padding = BlockText.Blank(Padding);
@@ -201,19 +204,19 @@ public sealed record Frame(Block Body) : Block
 		for (var line = 0; line < height; line++)
 		{
 			parts.Clear();
-			parts.Add(Divides(0, line) ? style.TeeLeft : style.Left);
+			parts.Add(Divides(0, line) ? Piece(style.TeeLeft, style.Left) : style.Left);
 			for (var i = 0; i < widths.Length; i++)
 			{
 				if (i > 0)
 				{
 					var (left, right) = (Divides(i - 1, line), Divides(i, line));
-					parts.Add(left && right ? style.Cross : left ? style.TeeRight : right ? style.TeeLeft : style.Left);
+					parts.Add(Piece(left && right ? style.Cross : left ? style.TeeRight : right ? style.TeeLeft : style.Left, style.Left));
 				}
 				var at = line - offsets[i];
 				parts.Add(at >= 0 && at < panes[i].Count ? panes[i][at].Text : BlockText.Blank(widths[i]));
 			}
-			parts.Add(Divides(widths.Length - 1, line) ? style.TeeRight : style.Right);
-			lines.Add(MarkupText.Concat(parts.ToArray().AsSpan()));
+			parts.Add(Divides(widths.Length - 1, line) ? Piece(style.TeeRight, style.Right) : style.Right);
+			lines.Add(BlockText.Fit(MarkupText.Concat(parts.ToArray().AsSpan()), width));
 		}
 
 		var seams = new List<int>(widths.Length - 1);
@@ -228,15 +231,27 @@ public sealed record Frame(Block Body) : Block
 	}
 
 	/// <summary>
-	/// <paramref name="line"/> with <paramref name="glyph"/> in place of the cell at <paramref name="column"/>, when
-	/// that cell is part of the edge's <paramref name="fill"/> and not of a title set into it.
+	/// Marks the fill in a copy of an edge, so a junction finds which cells are the fill's and which a title's, whatever
+	/// characters the title holds. A private-use character, a cell wide, that no border or title is drawn with.
 	/// </summary>
-	private static MarkupText Junction(MarkupText line, int column, MarkupText glyph, MarkupText fill)
+	private static readonly MarkupText FillMark = MarkupText.Plain("\uE000");
+
+	/// <summary><paramref name="piece"/>, or <paramref name="side"/> when the style leaves the piece out or draws it wider or narrower.</summary>
+	private static MarkupText Piece(MarkupText piece, MarkupText side) =>
+		piece.Length > 0 && piece.DisplayWidth == side.DisplayWidth ? piece : side;
+
+	/// <summary>
+	/// <paramref name="line"/> with <paramref name="glyph"/> in place of the cell at <paramref name="column"/>, when
+	/// that cell is the edge's fill and not part of a title set into it: <paramref name="fill"/> is the edge drawn with
+	/// <see cref="FillMark"/> as its fill.
+	/// </summary>
+	private static MarkupText Junction(MarkupText line, int column, MarkupText glyph, string fill)
 	{
 		if (glyph.Length == 0 || glyph.DisplayWidth != 1) return line;
 		var index = DisplayWidth.IndexAtWidth(line.Text, column);
 		if (index >= line.Length || DisplayWidth.IndexAtWidth(line.Text, column + 1) != index + 1) return line;
-		return fill.Text.Contains(line.Text[index]) ? line.Replace(index, 1, glyph) : line;
+		var mark = DisplayWidth.IndexAtWidth(fill, column);
+		return mark < fill.Length && fill[mark] == FillMark.Text[0] ? line.Replace(index, 1, glyph) : line;
 	}
 
 	/// <inheritdoc/>

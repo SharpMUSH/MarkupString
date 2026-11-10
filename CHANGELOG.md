@@ -13,9 +13,12 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Flex.Join`: inside a `Frame`, the items are panes that share its edges. A line of the frame's side
   runs between each two and meets the edge above and below with `BorderStyle.TeeTop` and `TeeBottom`,
   a divider across them with `Cross`, and a `Rule` in a pane's own body divides that pane from side to
-  side with `TeeLeft`/`TeeRight`. A junction under a title is left out. Panes that do not fit side by
-  side stack as an ordinary row; outside a frame the row is drawn as it would be without. HTML marks
-  the row `ms-joined`. In HTML a line between panes meets a divider with no title; next to a titled
+  side with `TeeLeft`/`TeeRight`. A junction never replaces a title's characters, and a divider with a
+  border of its own takes that border's junctions. A style that leaves a join piece out, or draws it
+  wider than its side, gets its side in that place. Panes need sides a cell wide; with wider sides, in a
+  frame with no border, in a vertical row, or when the panes do not fit side by side, the row is drawn
+  as an ordinary row, and so it is outside a frame. HTML joins exactly the rows the text does, marks
+  them `ms-joined`, and draws a pane's dividers in the frame's border. In HTML a line between panes meets a divider with no title; next to a titled
   edge it stops half a line short, so it does not cross the title.
 - `BorderStyle.TeeTop`, `TeeBottom` and `Cross` for every preset (`+` for ASCII and MUSH, `┬┴┼`,
   `╦╩╬`, `┳┻╋`), translated for an ASCII reader and kept by the serializer (`et`, `eb`, `x`).

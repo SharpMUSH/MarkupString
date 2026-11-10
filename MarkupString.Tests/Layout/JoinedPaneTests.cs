@@ -129,4 +129,77 @@ public class JoinedPaneTests
 			"+---------+--------+",
 		});
 	}
+
+	[Test]
+	public async Task ATitleHoldingTheFill_KeepsItsCharacters()
+	{
+		var frame = new Flex([T("a"), T("b")]) { Join = true }.Bordered(MarkupText.Plain("a-b-c-d-e-f-g-h"), BorderStyle.Ascii);
+
+		await Assert.That(Lines(frame, 24)[0]).IsEqualTo("+--< a-b-c-d-e-f-g-h >-+");
+	}
+
+	[Test]
+	public async Task AStyleWithoutTheJoinPieces_DrawsItsSides()
+	{
+		var border = new BorderStyle
+		{
+			Name = "plain",
+			TopLeft = MarkupText.Plain("+"), Top = MarkupText.Plain("-"), TopRight = MarkupText.Plain("+"),
+			Left = MarkupText.Plain("|"), Right = MarkupText.Plain("|"),
+			BottomLeft = MarkupText.Plain("+"), Bottom = MarkupText.Plain("-"), BottomRight = MarkupText.Plain("+"),
+		};
+		var frame = new Flex([Panes(T("a"), T("b")), T("c")]) { Join = true }.Bordered(border: border);
+
+		await Assert.That(Lines(frame, 20)).IsEquivalentTo(new[]
+		{
+			"+------------------+",
+			"| a       | c      |",
+			"|---------|        |",
+			"| b       |        |",
+			"+------------------+",
+		});
+	}
+
+	[Test]
+	public async Task SidesWiderThanACell_DrawTheRowUnjoined()
+	{
+		var border = BorderStyle.Ascii with { Left = MarkupText.Plain("||"), Right = MarkupText.Plain("||") };
+		var frame = new Flex([Panes(T("a"), T("b")), T("c")]) { Join = true }.Bordered(border: border);
+
+		var lines = Lines(frame, 20);
+		await Assert.That(lines.All(line => DisplayWidth.Of(line) == 20)).IsTrue();
+		await Assert.That(lines[0]).IsEqualTo("+------------------+");
+	}
+
+	[Test]
+	public async Task ADividerWithItsOwnBorder_TakesItsOwnJunctions()
+	{
+		var frame = new Stack([new Flex([T("a"), T("b")]) { Join = true }, new Rule { Border = BorderStyle.Double }, T("c")])
+			.Bordered(border: BorderStyle.Single);
+
+		await Assert.That(Lines(frame, 13)[2]).IsEqualTo("├═════╩═════┤");
+	}
+
+	[Test]
+	public async Task InHtml_APanesDividerTakesTheFramesBorder()
+	{
+		var html = BlockLayout.Build(Sheet(BorderStyle.Double), 44).Render(MarkupFormat.Html, Registry);
+
+		await Assert.That(html).Contains("<div class=\"ms-text\">Stats</div><div class=\"ms-divider ms-border-double\" role=\"separator\"></div>");
+	}
+
+	[Test]
+	public async Task InHtml_RowsTheTextDoesNotJoin_DrawAsPlainRows()
+	{
+		var row = new Flex([Panes(T("a"), T("b")), T("c")]) { Join = true };
+		var borderless = BlockLayout.Build(row.Bordered(border: BorderStyle.None), 20).Render(MarkupFormat.Html, Registry);
+		var vertical = BlockLayout.Build((row with { Vertical = true }).Bordered(border: BorderStyle.Single), 20).Render(MarkupFormat.Html, Registry);
+		var bare = BlockLayout.Build(row, 20).Render(MarkupFormat.Html, Registry);
+
+		foreach (var html in new[] { borderless, vertical, bare })
+		{
+			await Assert.That(html).DoesNotContain("ms-joined");
+			await Assert.That(html).DoesNotContain("ms-divider");
+		}
+	}
 }
