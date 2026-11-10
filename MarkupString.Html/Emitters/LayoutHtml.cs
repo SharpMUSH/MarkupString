@@ -223,7 +223,7 @@ internal static class LayoutHtml
 			// Each item asks for its terminal width and grows to fill its row, so items that do not fit
 			// side by side wrap onto rows of their own. Spare width is left alone only when the layout
 			// asked for it to be placed somewhere.
-			var item = block as Sized ?? new Sized(block);
+			var item = Layout.Flex.SizeOf(block);
 			var grow = flex.Justify == FlexJustify.Start || item.Basis.Kind == BlockSizeKind.Auto
 				? Math.Max(1, item.Grow)
 				: item.Grow;

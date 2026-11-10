@@ -535,4 +535,19 @@ public class BlockLayoutTests
 		await Assert.That(read.Render(MarkupFormat.Html, Registry)).IsEqualTo(outer.Render(MarkupFormat.Html, Registry));
 		await Assert.That(BlockLayout.Relayout(outer, 60, LayoutContext.Default).ToPlainText().Split('\n')[2].TrimEnd()).IsEqualTo("| │ hi     │" + new string(' ', 47) + "|");
 	}
+
+	[Test]
+	public async Task Flex_ABoundedItem_TakesItsWidth_AsASizedOneDoes()
+	{
+		var box = BlockLayout.Build(T("L").Bordered(border: BorderStyle.Ascii), 5);
+		var row = new Flex([.. BlockLayout.Blocks(box), T("rest")]);
+
+		await Assert.That(BlockLayout.Lines(row, 20).Select(line => line.ToPlainText().TrimEnd()).ToArray()).IsEquivalentTo(new[]
+		{
+			"+---+  rest",
+			"| L |",
+			"+---+",
+		});
+		await Assert.That(BlockLayout.Build(row, 20).Render(MarkupFormat.Html, Registry)).Contains("<div class=\"ms-item\" style=\"flex:1 1 5ch");
+	}
 }

@@ -362,7 +362,7 @@ a flex row with the line drawn between them.
 |---|---|
 | `.Bordered(title, border)` | a `Frame` round the block |
 | `.Sized(basis, min, grow)` | how wide it asks to be in a `Flex` |
-| `.Bounded(width)` | drawn at most `width` cells wide, against the left of what holds it, and in fewer when that is all it is given |
+| `.Bounded(width)` | drawn at most `width` cells wide, against the left of what holds it, and in fewer when that is all it is given; in a `Flex`, an item of `width` cells that takes no spare |
 | `.Aligned(alignment)` | where text inside it sits, unless the text says otherwise; a table column does this for its cells |
 | `.Shaded(gradient, flow)` | its borders and text in the colours of a gradient |
 | `.Colored(markup)` | a colour (or any layer) under the colour it sets itself |

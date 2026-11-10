@@ -853,3 +853,4 @@ override sealed MarkupString.Layout.Bounded.Equals(MarkupString.Layout.Block? ot
 static MarkupString.Layout.Bounded.operator !=(MarkupString.Layout.Bounded? left, MarkupString.Layout.Bounded? right) -> bool
 static MarkupString.Layout.Bounded.operator ==(MarkupString.Layout.Bounded? left, MarkupString.Layout.Bounded? right) -> bool
 static MarkupString.Layout.BlockExtensions.Bounded(this MarkupString.Layout.Block! content, int width) -> MarkupString.Layout.Bounded!
+static MarkupString.Layout.Flex.SizeOf(MarkupString.Layout.Block! item) -> MarkupString.Layout.Sized!

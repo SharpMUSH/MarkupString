@@ -28,8 +28,16 @@ public sealed record Flex(ImmutableArray<Block> Items) : Block
 	/// <summary>The cells between two items.</summary>
 	internal int Spacing => Separator?.DisplayWidth ?? Math.Max(0, Gap);
 
-	/// <summary>How an item asks to be sized: as its <see cref="Sized"/> says, or sharing what is left.</summary>
-	internal static Sized SizeOf(Block item) => item as Sized ?? new Sized(item);
+	/// <summary>
+	/// How an item asks to be sized: as its <see cref="Sized"/> says; a <see cref="Bounded"/> one at its width,
+	/// taking no spare, as an item of that many cells does; any other sharing what is left.
+	/// </summary>
+	public static Sized SizeOf(Block item) => item switch
+	{
+		Sized sized => sized,
+		Bounded bounded => new Sized(bounded) { Basis = BlockSize.Cells(Math.Max(1, bounded.Width)), Grow = 0 },
+		_ => new Sized(item),
+	};
 
 	/// <inheritdoc/>
 	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines)
