@@ -8,6 +8,10 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+
+- Built with the .NET 11 GA SDK; the net11.0 build of the core package is compiled against the release runtime.
+
 ### Added
 
 - `MarkupFormat.IsTagged` declares the angle-bracket/entity grammar used for fragment-width
