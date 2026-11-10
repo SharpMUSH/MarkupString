@@ -25,6 +25,13 @@ public sealed record Flex(ImmutableArray<Block> Items) : Block
 	/// <summary>Always one under the other.</summary>
 	public bool Vertical { get; init; }
 
+	/// <summary>
+	/// Inside a <see cref="Frame"/>, the items are panes that share its edges: a line of the frame's side runs
+	/// between each two, meeting the edges above and below and the dividers across them, and a <see cref="Rule"/>
+	/// of an item's own divides that pane from side to side. Anywhere else the row is drawn as it would be without.
+	/// </summary>
+	public bool Join { get; init; }
+
 	/// <summary>The cells between two items.</summary>
 	internal int Spacing => Separator?.DisplayWidth ?? Math.Max(0, Gap);
 
@@ -43,7 +50,7 @@ public sealed record Flex(ImmutableArray<Block> Items) : Block
 	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines)
 	{
 		if (Items.IsDefaultOrEmpty) return;
-		var widths = Vertical ? null : Share(width);
+		var widths = Vertical ? null : Share(width, Spacing);
 		if (widths is null)
 		{
 			DrawLinear(context, width, lines);
@@ -128,10 +135,10 @@ public sealed record Flex(ImmutableArray<Block> Items) : Block
 	}
 
 	/// <summary>The width of each item, or null when they cannot sit side by side and must stack.</summary>
-	private int[]? Share(int width)
+	internal int[]? Share(int width, int spacing)
 	{
 		var sizes = Items.Select(SizeOf).ToArray();
-		var available = width - Spacing * (sizes.Length - 1);
+		var available = width - spacing * (sizes.Length - 1);
 		if (available < sizes.Length) return null;
 
 		var widths = new int[sizes.Length];

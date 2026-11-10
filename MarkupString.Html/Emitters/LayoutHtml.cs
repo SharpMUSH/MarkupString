@@ -108,6 +108,9 @@ internal static class LayoutHtml
 		foreach (var child in frame.Body is Stack { Children.IsDefault: false } body ? body.Children : [frame.Body])
 		{
 			if (child is Rule divider) Rule(divider, "ms-divider", divider.Border ?? frame.Border, html);
+			// A joined row draws as panes only where the text does: across a frame with a border, side by side.
+			else if (child is Flex { Join: true, Vertical: false } row && BorderOf(frame.Border, html).Name != BorderStyle.None.Name)
+				Flex(row, html, BorderOf(frame.Border, html));
 			else html.Block(child);
 		}
 		var bottom = Titles(null, Alignment.Center, frame.BottomTitles);
@@ -190,7 +193,13 @@ internal static class LayoutHtml
 		html.Write("</div>");
 	}
 
-	private static void Flex(Flex flex, HtmlLayoutWriter html)
+	private static void Flex(Flex flex, HtmlLayoutWriter html) => Flex(flex, html, null);
+
+	/// <summary>
+	/// <paramref name="flex"/>; given the border of the frame it is joined to, as panes sharing that frame's edges,
+	/// a pane's rules drawn as dividers in that border.
+	/// </summary>
+	private static void Flex(Flex flex, HtmlLayoutWriter html, BorderStyle? frame)
 	{
 		var items = flex.Items.IsDefault ? [] : flex.Items;
 		var spacing = flex.Separator is { } separator ? separator.DisplayWidth : Math.Max(0, flex.Gap);
@@ -198,6 +207,7 @@ internal static class LayoutHtml
 		html.Write("<div class=\"ms-flex");
 		if (flex.Separator is not null) html.Write(" ms-divided");
 		if (flex.Vertical) html.Write(" ms-vertical");
+		if (frame is not null) html.Write(" ms-joined");
 		html.Write("\" style=\"column-gap:");
 		html.Write(Number(spacing));
 		html.Write("ch");
@@ -240,8 +250,26 @@ internal static class LayoutHtml
 				_ => item.Min > 1 ? Number(item.Min) + "ch" : "0",
 			});
 			html.Write("\">");
-			html.Block(item.Content);
+			if (frame is not null) Pane(item.Content, frame, html);
+			else html.Block(item.Content);
 			html.Write("</div>");
+		}
+		html.Write("</div>");
+	}
+
+	/// <summary>A pane of a joined row: its own rules drawn as dividers that meet its sides, as a frame's do.</summary>
+	private static void Pane(Block content, BorderStyle frame, HtmlLayoutWriter html)
+	{
+		if (content is not Stack { Children.IsDefault: false } stack || !stack.Children.Any(child => child is Rule))
+		{
+			html.Block(content);
+			return;
+		}
+		html.Write("<div class=\"ms-stack\">");
+		foreach (var child in stack.Children)
+		{
+			if (child is Rule divider) Rule(divider, "ms-divider", divider.Border ?? frame, html);
+			else html.Block(child);
 		}
 		html.Write("</div>");
 	}

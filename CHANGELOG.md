@@ -8,6 +8,24 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Panes
+
+- `Flex.Join`: inside a `Frame`, the items are panes that share its edges. A line of the frame's side
+  runs between each two and meets the edge above and below with `BorderStyle.TeeTop` and `TeeBottom`,
+  a divider across them with `Cross`, and a `Rule` in a pane's own body divides that pane from side to
+  side with `TeeLeft`/`TeeRight`. A junction never replaces a title's characters, and a divider with a
+  border of its own takes that border's junctions. A style that leaves a join piece out, or draws it
+  wider than its side, gets its side in that place. Panes need sides a cell wide; with wider sides, in a
+  frame with no border, in a vertical row, or when the panes do not fit side by side, the row is drawn
+  as an ordinary row, and so it is outside a frame. HTML draws a joined row directly in a
+  bordered frame as panes, marked `ms-joined`, and a pane's dividers in the frame's border; there the
+  panes narrow with the window instead of wrapping, and a borderless frame, a vertical row or a row
+  outside a frame is an ordinary row. A line between panes meets a divider with no title; next to a
+  titled edge it stops half a line short, so it does not cross the title.
+- `BorderStyle.TeeTop`, `TeeBottom` and `Cross` for every preset (`+` for ASCII and MUSH, `┬┴┼`,
+  `╦╩╬`, `┳┻╋`), translated for an ASCII reader and kept by the serializer (`et`, `eb`, `x`).
+- HTML: a rule or divider with no title is a line tall, as it is in a terminal.
+
 ### Changed
 
 - Built with the .NET 11 GA SDK; the net11.0 build of the core package is compiled against the release runtime.
