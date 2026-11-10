@@ -834,3 +834,23 @@ static MarkupString.DisplayWidth.OfTagged(System.ReadOnlySpan<char> text) -> int
 static MarkupString.DisplayWidth.Of(System.ReadOnlySpan<char> body, in MarkupString.EmitContext context) -> int
 MarkupString.MarkupFormat.IsTagged.get -> bool
 static MarkupString.MarkupFormat.Custom(string! name, MarkupString.TextEncoding encoding, bool isTagged) -> MarkupString.MarkupFormat!
+MarkupString.Layout.Bounded
+MarkupString.Layout.Bounded.Bounded(MarkupString.Layout.Block! Content, int Width) -> void
+MarkupString.Layout.Bounded.Content.get -> MarkupString.Layout.Block!
+MarkupString.Layout.Bounded.Content.init -> void
+MarkupString.Layout.Bounded.Deconstruct(out MarkupString.Layout.Block! Content, out int Width) -> void
+MarkupString.Layout.Bounded.Equals(MarkupString.Layout.Bounded? other) -> bool
+MarkupString.Layout.Bounded.Width.get -> int
+MarkupString.Layout.Bounded.Width.init -> void
+override MarkupString.Layout.Bounded.<Clone>$() -> MarkupString.Layout.Bounded!
+override MarkupString.Layout.Bounded.Draw(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
+override MarkupString.Layout.Bounded.Equals(object? obj) -> bool
+override MarkupString.Layout.Bounded.GetHashCode() -> int
+override MarkupString.Layout.Bounded.MapText(System.Func<MarkupString.MarkupText!, MarkupString.MarkupText!>! map) -> MarkupString.Layout.Block!
+override MarkupString.Layout.Bounded.Measure(MarkupString.Layout.LayoutContext! context, int width) -> MarkupString.Layout.BlockMeasure
+override MarkupString.Layout.Bounded.ToString() -> string!
+override sealed MarkupString.Layout.Bounded.Equals(MarkupString.Layout.Block? other) -> bool
+static MarkupString.Layout.Bounded.operator !=(MarkupString.Layout.Bounded? left, MarkupString.Layout.Bounded? right) -> bool
+static MarkupString.Layout.Bounded.operator ==(MarkupString.Layout.Bounded? left, MarkupString.Layout.Bounded? right) -> bool
+static MarkupString.Layout.BlockExtensions.Bounded(this MarkupString.Layout.Block! content, int width) -> MarkupString.Layout.Bounded!
+static MarkupString.Layout.Flex.SizeOf(MarkupString.Layout.Block! item) -> MarkupString.Layout.Sized!

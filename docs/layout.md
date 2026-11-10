@@ -337,7 +337,7 @@ a flex row with the line drawn between them.
   line under table headings — comes from the `LayoutTheme` of the `LayoutContext` it is drawn in, and
   in the end from `LayoutTheme.Defaults`. A rule inside a frame with no border of its own takes the
   frame's.
-- **Modifiers wrap any block.** `Bordered`, `Sized`, `Aligned`, `Shaded`, `Colored` and `Themed` are
+- **Modifiers wrap any block.** `Bordered`, `Sized`, `Bounded`, `Aligned`, `Shaded`, `Colored` and `Themed` are
   extension methods that return a wrapping block, so they chain.
 - **Formats plug in per block.** The terminal text comes from the block. HTML comes from a renderer
   registered for its type; a block with none is shown as its lines in a `<pre>`. Markdown comes from
@@ -362,6 +362,7 @@ a flex row with the line drawn between them.
 |---|---|
 | `.Bordered(title, border)` | a `Frame` round the block |
 | `.Sized(basis, min, grow)` | how wide it asks to be in a `Flex` |
+| `.Bounded(width)` | drawn at most `width` cells wide, against the left of what holds it, and in fewer when that is all it is given; in a `Flex`, an item of `width` cells that takes no spare |
 | `.Aligned(alignment)` | where text inside it sits, unless the text says otherwise; a table column does this for its cells |
 | `.Shaded(gradient, flow)` | its borders and text in the colours of a gradient |
 | `.Colored(markup)` | a colour (or any layer) under the colour it sets itself |
@@ -536,7 +537,9 @@ A block of your own that holds text overrides `MapText` so the fold reaches it.
 **Nesting.** `BlockLayout.AsBlock(content)` returns the tree of a text that is one whole block, and
 a `TextBlock` otherwise, so a builder that takes text as an argument nests a block it is given.
 `BlockLayout.Blocks(content)` splits a text into the blocks standing on lines of their own and the
-text between them.
+text between them. A block laid out at a width of its own (not fluid) comes back `Bounded` by that
+width, so a 30-cell box inside an 80-cell one stays 30 cells; in a holder narrower than that it takes
+the cells it is given. A fluid block, and a `Rule` at any width, takes the width it is nested in.
 
 ### Themes and palettes
 

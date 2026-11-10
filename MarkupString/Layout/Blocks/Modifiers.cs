@@ -102,6 +102,31 @@ public sealed record Themed(Block Content, LayoutTheme Theme) : Block
 		(context with { Theme = Within(context.Theme) }).Draw(Content, width, lines);
 }
 
+/// <summary>
+/// <paramref name="Content"/> drawn at most <paramref name="Width"/> cells wide, against the left of whatever
+/// holds it: a block laid out at a width of its own that keeps it when it is nested in a wider one.
+/// Where it is given fewer cells, it is drawn in those.
+/// </summary>
+/// <param name="Content">What is drawn.</param>
+/// <param name="Width">The most cells it takes.</param>
+public sealed record Bounded(Block Content, int Width) : Block
+{
+	/// <inheritdoc/>
+	public override Block MapText(Func<MarkupText, MarkupText> map) =>
+		this with { Content = Content.MapText(map) };
+
+	/// <inheritdoc/>
+	public override void Draw(LayoutContext context, int width, IList<MarkupText> lines) =>
+		context.Draw(Content, Math.Min(width, Math.Max(1, Width)), lines);
+
+	/// <inheritdoc/>
+	public override BlockMeasure Measure(LayoutContext context, int width)
+	{
+		ArgumentNullException.ThrowIfNull(context);
+		return Content.Measure(context, Math.Min(width, Math.Max(1, Width)));
+	}
+}
+
 /// <summary>Builds blocks up: a frame round one, a size in a row, a colour, a look.</summary>
 public static class BlockExtensions
 {
@@ -119,6 +144,9 @@ public static class BlockExtensions
 	/// <param name="grow">Its share of the spare width.</param>
 	public static Sized Sized(this Block content, BlockSize basis = default, int min = 1, int grow = 1) =>
 		new(content) { Basis = basis, Min = min, Grow = grow };
+
+	/// <summary><paramref name="content"/> drawn at most <paramref name="width"/> cells wide, however wide what holds it is.</summary>
+	public static Bounded Bounded(this Block content, int width) => new(content, width);
 
 	/// <summary><paramref name="content"/> with its text, where it sets none of its own, sitting as <paramref name="alignment"/> says.</summary>
 	public static Aligned Aligned(this Block content, Alignment alignment) => new(content, alignment);

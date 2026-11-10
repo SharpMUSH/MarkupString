@@ -14,6 +14,12 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `Bounded` (and `BlockExtensions.Bounded`): a block drawn at most a given number of cells wide,
+  against the left of what holds it, and in fewer when that is all it is given. HTML draws it as a
+  `div.ms-bounded` with `max-width` in `ch`. In a `Flex` it asks for its width and takes no spare,
+  as an item `Sized` to that many cells does, narrowing (never below its `Min`) before the row would
+  stack; `Flex.SizeOf` says how any item asks to be sized.
+
 - `MarkupFormat.IsTagged` declares the angle-bracket/entity grammar used for fragment-width
   measurement, independently of literal-text encoding. HTML, MXP and Pueblo declare it; custom
   formats can opt in explicitly through a new overload without changing existing custom formats.
@@ -27,6 +33,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   caller has not supplied original source-cell geometry.
 
 ### Fixed
+
+- `BlockLayout.Blocks` keeps the width of a block laid out at a width of its own: a non-fluid layout
+  nested in another comes back `Bounded` by the width it was built at, so a 30-cell box inside a
+  wider box stays 30 cells instead of stretching to the outer one. A fluid layout still takes the
+  width it is nested in, and a `Rule` still spans what holds it (a frame's divider).
 
 - Picture placeholder rows preserve their original display-cell width across nested styling and text
   encoding. ANSI escapes and HTML/BBCode syntax no longer become extra blank cells beside MXP,

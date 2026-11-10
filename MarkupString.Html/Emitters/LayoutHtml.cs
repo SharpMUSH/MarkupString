@@ -45,6 +45,14 @@ internal static class LayoutHtml
 			html.Block(aligned.Content, html.Context with { TextAlignment = aligned.Alignment });
 			html.Write("</div>");
 		}),
+		Of<Bounded>((bounded, html) =>
+		{
+			html.Write("<div class=\"ms-bounded\" style=\"max-width:");
+			html.Write(Number(Math.Max(1, bounded.Width)));
+			html.Write("ch\">");
+			html.Block(bounded.Content);
+			html.Write("</div>");
+		}),
 		Of<Shaded>(Shaded),
 		Of<Colored>(Colored),
 		Of<Themed>(Themed),
@@ -215,8 +223,9 @@ internal static class LayoutHtml
 			// Each item asks for its terminal width and grows to fill its row, so items that do not fit
 			// side by side wrap onto rows of their own. Spare width is left alone only when the layout
 			// asked for it to be placed somewhere.
-			var item = block as Sized ?? new Sized(block);
-			var grow = flex.Justify == FlexJustify.Start || item.Basis.Kind == BlockSizeKind.Auto
+			var item = Layout.Flex.SizeOf(block);
+			// A Bounded item keeps its width, as in a terminal: the spare goes after it, not into it.
+			var grow = block is not Bounded && (flex.Justify == FlexJustify.Start || item.Basis.Kind == BlockSizeKind.Auto)
 				? Math.Max(1, item.Grow)
 				: item.Grow;
 			html.Write("<div class=\"ms-item\" style=\"flex:");

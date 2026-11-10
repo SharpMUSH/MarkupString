@@ -51,7 +51,7 @@ public static class BlockLayout
 
 	/// <summary>
 	/// <paramref name="content"/> as a sequence of blocks: each intact block standing on lines of its own
-	/// as the tree it was laid out from, and the text between blocks as <see cref="TextBlock"/>s, the line
+	/// as the tree it was laid out from (<see cref="Nested"/>), and the text between blocks as <see cref="TextBlock"/>s, the line
 	/// ending that separates text from a block dropped. How a builder that takes a body nests the
 	/// blocks inside it — a box whose body holds columns, then a rule, then text.
 	/// </summary>
@@ -66,12 +66,31 @@ public static class BlockLayout
 		{
 			if (region.Markup is not LayoutMarkup layout || !region.Intact || !region.Standalone) continue;
 			AddText(content, position, region.Start, alignment, blocks);
-			blocks.Add(layout.Root);
+			blocks.Add(Nested(layout));
 			position = region.End;
 		}
 		AddText(content, position, content.Length, alignment, blocks);
 		return blocks;
 	}
+
+	/// <summary>
+	/// The tree of <paramref name="layout"/> as a block nested in another: one laid out at a width of its own
+	/// (not <see cref="LayoutMarkup.Fluid"/>) <see cref="Bounded"/> by it, so a 30-cell box stays 30 cells in a
+	/// wider one. A <see cref="Rule"/> spans what holds it whatever width it was laid out at, so a frame still
+	/// draws it as a divider.
+	/// </summary>
+	private static Block Nested(LayoutMarkup layout) =>
+		layout.Fluid || Spans(layout.Root) ? layout.Root : new Bounded(layout.Root, layout.Width);
+
+	private static bool Spans(Block block) => block switch
+	{
+		Rule => true,
+		Themed themed => Spans(themed.Content),
+		Colored colored => Spans(colored.Content),
+		Shaded shaded => Spans(shaded.Content),
+		Aligned aligned => Spans(aligned.Content),
+		_ => false,
+	};
 
 	private static void AddText(MarkupText content, int start, int end, Alignment? alignment, List<Block> blocks)
 	{
