@@ -569,8 +569,49 @@ var sheet = new Stack(
 └──────────────────────────────────────────┘
 ```
 
+How the pieces meet:
+
+- A line between two panes is the frame's side piece (`Left`). Where it meets the top edge it is
+  `TeeTop` (`┬`), the bottom edge `TeeBottom` (`┴`), and a divider across the frame `Cross` (`┼`), or
+  `TeeTop`/`TeeBottom` when the line runs on one side of the divider only.
+- A `Rule` in a pane's body divides that pane from side to side. It meets the frame's side with
+  `TeeLeft`/`TeeRight` and a line between panes with `TeeLeft`, `TeeRight` or `Cross`, depending on
+  whether the pane beside it is divided on the same line.
+- A `Rule` in the frame's body, outside the row, is a divider across the whole frame, as in any
+  frame. A divider with a border of its own takes that border's junctions.
+- A junction never replaces a title's characters: where a title covers the cell, the edge keeps the
+  title and has no junction there. In HTML the line stops half a line short of a titled edge.
+- A `Rule` as the frame body's first part draws a divider right under the top edge, and as its last
+  part right over the bottom edge. The frame draws what it is given, so this shows two lines:
+
+```csharp
+new Stack([new Rule(), new Flex([stats, bio]) { Join = true }]).Bordered(border: BorderStyle.Single);
+```
+
+```
+┌──────────────────┐
+├─────────┬────────┤
+│ Stats   │ Bio    │
+└─────────┴────────┘
+```
+
+Widths are shared as in any `Flex`. A `Sized` pane keeps its width, and the last pane takes the cells
+left over, so the row always reaches the frame's right side (`Justify` has no effect on a joined row).
+`Align` places a shorter pane at the top, middle or bottom of the row's height.
+
+The row is drawn as an ordinary `Flex` when it is not a direct part of a `Frame`, when the frame has
+no border (`BorderStyle.None`), when the row is `Vertical`, when the frame's sides are wider than a
+cell, or when the panes do not fit side by side. A border style that leaves out a join piece, or draws
+it at another width, gets its side piece in that place.
+
+A reader that is drawn in reading order (a screen reader) hears the panes one after another with no
+lines. HTML draws the row as panes in exactly the cases the text does. Their lines are the box's
+border, and a pane's rules are dividers in the frame's border.
+
 A picture in a pane is laid out as anywhere else: its art in a terminal, the picture drawn over its
-cells where the reader can show one, and an `<img>` no wider than the pane in HTML.
+cells where the reader can show one, and an `<img>` no wider than the pane in HTML. Pueblo writes the
+`<img>` inline at its pixel size, as it does in any box, so whether the lines after it stay aligned is
+up to the client.
 
 ### Themes and palettes
 

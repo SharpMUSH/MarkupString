@@ -202,4 +202,18 @@ public class JoinedPaneTests
 			await Assert.That(html).DoesNotContain("ms-divider");
 		}
 	}
+
+	[Test]
+	public async Task ARuleFirst_DrawsADividerUnderTheTopEdge()
+	{
+		var frame = new Stack([new Rule(), new Flex([T("Stats"), T("Bio")]) { Join = true }]).Bordered(border: BorderStyle.Single);
+
+		await Assert.That(Lines(frame, 20)).IsEquivalentTo(new[]
+		{
+			"┌──────────────────┐",
+			"├─────────┬────────┤",
+			"│ Stats   │ Bio    │",
+			"└─────────┴────────┘",
+		});
+	}
 }
