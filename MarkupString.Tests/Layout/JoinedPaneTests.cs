@@ -111,6 +111,7 @@ public class JoinedPaneTests
 		await Assert.That(html).Contains("<div class=\"ms-flex ms-joined\"");
 		await Assert.That(html).Contains("<div class=\"ms-text\">Stats</div><div class=\"ms-divider ms-border-single\" role=\"separator\"></div><div class=\"ms-text\">Skills</div>");
 		await Assert.That(LayoutCss.Fixed).Contains(".ms-box > .ms-flex.ms-joined > .ms-item + .ms-item { border-left: 1px solid");
+		await Assert.That(LayoutCss.Fixed).Contains(".ms-box > .ms-flex.ms-joined { flex-wrap: nowrap;");
 	}
 
 	[Test]

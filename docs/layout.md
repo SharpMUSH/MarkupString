@@ -605,8 +605,10 @@ cell, or when the panes do not fit side by side. A border style that leaves out 
 it at another width, gets its side piece in that place.
 
 A reader that is drawn in reading order (a screen reader) hears the panes one after another with no
-lines. HTML draws the row as panes in exactly the cases the text does. Their lines are the box's
-border, and a pane's rules are dividers in the frame's border.
+lines. In HTML a joined row directly in a frame with a border is drawn as panes; a borderless frame, a
+vertical row, or a row outside a frame is an ordinary row, as in text. The browser draws the lines
+itself, so the width of the border's characters does not matter there, and the panes narrow with the
+window rather than wrapping onto rows of their own. A pane's rules are dividers in the frame's border.
 
 A picture in a pane is laid out as anywhere else: its art in a terminal, the picture drawn over its
 cells where the reader can show one, and an `<img>` no wider than the pane in HTML. Pueblo writes the
