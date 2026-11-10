@@ -96,6 +96,7 @@ internal static class LayoutJson
 				w.Enum("j", b.Justify);
 				w.Enum("a", b.Align);
 				w.Bool("v", b.Vertical);
+				w.Bool("jn", b.Join);
 			},
 			r => new Flex(r.Blocks("it"))
 			{
@@ -104,6 +105,7 @@ internal static class LayoutJson
 				Justify = r.Enum<FlexJustify>("j"),
 				Align = r.Enum<FlexAlign>("a"),
 				Vertical = r.Bool("v"),
+				Join = r.Bool("jn"),
 			}),
 		BlockCodec.Create<Sized>("sized",
 			(b, w) =>

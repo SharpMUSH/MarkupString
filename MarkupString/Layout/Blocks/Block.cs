@@ -229,6 +229,9 @@ public sealed record LayoutContext
 			BottomRight = Piece(style.BottomRight),
 			TeeLeft = Piece(style.TeeLeft),
 			TeeRight = Piece(style.TeeRight),
+			TeeTop = Piece(style.TeeTop),
+			TeeBottom = Piece(style.TeeBottom),
+			Cross = Piece(style.Cross),
 			TitleOpen = Piece(style.TitleOpen),
 			TitleClose = Piece(style.TitleClose),
 		};

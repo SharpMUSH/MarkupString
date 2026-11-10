@@ -854,3 +854,11 @@ static MarkupString.Layout.Bounded.operator !=(MarkupString.Layout.Bounded? left
 static MarkupString.Layout.Bounded.operator ==(MarkupString.Layout.Bounded? left, MarkupString.Layout.Bounded? right) -> bool
 static MarkupString.Layout.BlockExtensions.Bounded(this MarkupString.Layout.Block! content, int width) -> MarkupString.Layout.Bounded!
 static MarkupString.Layout.Flex.SizeOf(MarkupString.Layout.Block! item) -> MarkupString.Layout.Sized!
+MarkupString.Layout.BorderStyle.TeeTop.get -> MarkupString.MarkupText!
+MarkupString.Layout.BorderStyle.TeeTop.init -> void
+MarkupString.Layout.BorderStyle.TeeBottom.get -> MarkupString.MarkupText!
+MarkupString.Layout.BorderStyle.TeeBottom.init -> void
+MarkupString.Layout.BorderStyle.Cross.get -> MarkupString.MarkupText!
+MarkupString.Layout.BorderStyle.Cross.init -> void
+MarkupString.Layout.Flex.Join.get -> bool
+MarkupString.Layout.Flex.Join.init -> void

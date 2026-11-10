@@ -198,6 +198,7 @@ internal static class LayoutHtml
 		html.Write("<div class=\"ms-flex");
 		if (flex.Separator is not null) html.Write(" ms-divided");
 		if (flex.Vertical) html.Write(" ms-vertical");
+		if (flex.Join) html.Write(" ms-joined");
 		html.Write("\" style=\"column-gap:");
 		html.Write(Number(spacing));
 		html.Write("ch");
@@ -240,8 +241,26 @@ internal static class LayoutHtml
 				_ => item.Min > 1 ? Number(item.Min) + "ch" : "0",
 			});
 			html.Write("\">");
-			html.Block(item.Content);
+			if (flex.Join) Pane(item.Content, html);
+			else html.Block(item.Content);
 			html.Write("</div>");
+		}
+		html.Write("</div>");
+	}
+
+	/// <summary>A pane of a joined row: its own rules drawn as dividers that meet its sides, as a frame's do.</summary>
+	private static void Pane(Block content, HtmlLayoutWriter html)
+	{
+		if (content is not Stack { Children.IsDefault: false } stack || !stack.Children.Any(child => child is Rule))
+		{
+			html.Block(content);
+			return;
+		}
+		html.Write("<div class=\"ms-stack\">");
+		foreach (var child in stack.Children)
+		{
+			if (child is Rule divider) Rule(divider, "ms-divider", divider.Border, html);
+			else html.Block(child);
 		}
 		html.Write("</div>");
 	}

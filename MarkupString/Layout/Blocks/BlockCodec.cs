@@ -191,7 +191,8 @@ public sealed class BlockWriter
 	[
 		("tl", b => b.TopLeft), ("t", b => b.Top), ("tr", b => b.TopRight), ("l", b => b.Left), ("r", b => b.Right),
 		("bl", b => b.BottomLeft), ("b", b => b.Bottom), ("br", b => b.BottomRight), ("el", b => b.TeeLeft),
-		("er", b => b.TeeRight), ("o", b => b.TitleOpen), ("c", b => b.TitleClose),
+		("er", b => b.TeeRight), ("et", b => b.TeeTop), ("eb", b => b.TeeBottom), ("x", b => b.Cross),
+		("o", b => b.TitleOpen), ("c", b => b.TitleClose),
 	];
 
 	private static readonly (string Key, Func<TreeGuide, MarkupText> Get)[] GuidePieces =
@@ -413,6 +414,9 @@ public sealed class BlockReader
 			BottomRight = Piece("br", style.BottomRight),
 			TeeLeft = Piece("el", style.TeeLeft),
 			TeeRight = Piece("er", style.TeeRight),
+			TeeTop = Piece("et", style.TeeTop),
+			TeeBottom = Piece("eb", style.TeeBottom),
+			Cross = Piece("x", style.Cross),
 			TitleOpen = Piece("o", style.TitleOpen),
 			TitleClose = Piece("c", style.TitleClose),
 		};

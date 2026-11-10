@@ -541,6 +541,37 @@ text between them. A block laid out at a width of its own (not fluid) comes back
 width, so a 30-cell box inside an 80-cell one stays 30 cells; in a holder narrower than that it takes
 the cells it is given. A fluid block, and a `Rule` at any width, takes the width it is nested in.
 
+**Panes.** A `Flex` with `Join` set, drawn inside a `Frame`, is a row of panes sharing the frame's
+edges: a line of the frame's side runs between each two, a `Rule` in a pane's body divides that pane
+from side to side, and each line meets what it touches with the border's tees and crosses. Three panes
+on the left, three in the middle and one on the right:
+
+```csharp
+Stack Column(params Block[] parts) => new([.. parts.SelectMany((part, i) => i == 0 ? new[] { part } : [new Rule(), part])]);
+
+var sheet = new Stack(
+[
+  new Flex([Column(stats, skills, gear).Sized(BlockSize.Cells(14)), Column(bio, notes, log), portrait]) { Join = true },
+  new Rule(MarkupText.Plain("Footer")),
+  end,
+]).Bordered(MarkupText.Plain("Sheet"), BorderStyle.Single);
+```
+
+```
+┌──────────────┬──┤ Sheet ├──┬─────────────┐
+│ Stats        │ Bio         │ Portrait    │
+├──────────────┼─────────────┤             │
+│ Skills       │ Notes       │             │
+├──────────────┼─────────────┤             │
+│ Gear         │ Log         │             │
+├──────────────┴─┤ Footer ├──┴─────────────┤
+│ end                                      │
+└──────────────────────────────────────────┘
+```
+
+A picture in a pane is laid out as anywhere else: its art in a terminal, the picture drawn over its
+cells where the reader can show one, and an `<img>` no wider than the pane in HTML.
+
 ### Themes and palettes
 
 A `LayoutTheme` sets the colour of each part as well as its characters: `BorderColor`, `TitleColor`,

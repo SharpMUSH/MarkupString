@@ -45,6 +45,15 @@ public sealed record BorderStyle
 	/// <summary>Where a divider meets the right side.</summary>
 	public MarkupText TeeRight { get; init; } = MarkupText.Empty;
 
+	/// <summary>Where a line between panes meets the top edge, or a divider, from below.</summary>
+	public MarkupText TeeTop { get; init; } = MarkupText.Empty;
+
+	/// <summary>Where a line between panes meets the bottom edge, or a divider, from above.</summary>
+	public MarkupText TeeBottom { get; init; } = MarkupText.Empty;
+
+	/// <summary>Where a line between panes crosses a divider.</summary>
+	public MarkupText Cross { get; init; } = MarkupText.Empty;
+
 	/// <summary>Written before a title set into an edge.</summary>
 	public MarkupText TitleOpen { get; init; } = MarkupText.Space;
 
@@ -55,22 +64,22 @@ public sealed record BorderStyle
 	public static BorderStyle None { get; } = new() { Name = "none" };
 
 	/// <summary><c>+-|</c>.</summary>
-	public static BorderStyle Ascii { get; } = Of("ascii", "+-+", "||", "+-+", "++", "< ", " >");
+	public static BorderStyle Ascii { get; } = Of("ascii", "+-+", "||", "+-+", "++", "+++", "< ", " >");
 
 	/// <summary><c>+=|</c>, the classic MUSH box.</summary>
-	public static BorderStyle Mush { get; } = Of("mush", "+=+", "||", "+=+", "++", "< ", " >");
+	public static BorderStyle Mush { get; } = Of("mush", "+=+", "||", "+=+", "++", "+++", "< ", " >");
 
 	/// <summary>Light box-drawing lines.</summary>
-	public static BorderStyle Single { get; } = Of("single", "┌─┐", "││", "└─┘", "├┤", "┤ ", " ├");
+	public static BorderStyle Single { get; } = Of("single", "┌─┐", "││", "└─┘", "├┤", "┬┴┼", "┤ ", " ├");
 
 	/// <summary>Double box-drawing lines.</summary>
-	public static BorderStyle Double { get; } = Of("double", "╔═╗", "║║", "╚═╝", "╠╣", "╡ ", " ╞");
+	public static BorderStyle Double { get; } = Of("double", "╔═╗", "║║", "╚═╝", "╠╣", "╦╩╬", "╡ ", " ╞");
 
 	/// <summary>Heavy box-drawing lines.</summary>
-	public static BorderStyle Heavy { get; } = Of("heavy", "┏━┓", "┃┃", "┗━┛", "┣┫", "┫ ", " ┣");
+	public static BorderStyle Heavy { get; } = Of("heavy", "┏━┓", "┃┃", "┗━┛", "┣┫", "┳┻╋", "┫ ", " ┣");
 
 	/// <summary>Light box-drawing lines with rounded corners.</summary>
-	public static BorderStyle Rounded { get; } = Of("rounded", "╭─╮", "││", "╰─╯", "├┤", "┤ ", " ├");
+	public static BorderStyle Rounded { get; } = Of("rounded", "╭─╮", "││", "╰─╯", "├┤", "┬┴┼", "┤ ", " ├");
 
 	/// <summary>Every preset, by name.</summary>
 	public static IReadOnlyList<BorderStyle> Presets { get; } = [None, Ascii, Mush, Single, Double, Heavy, Rounded];
@@ -109,6 +118,9 @@ public sealed record BorderStyle
 			BottomRight = Edge(BottomRight, Ascii.BottomRight),
 			TeeLeft = Edge(TeeLeft, Ascii.TeeLeft),
 			TeeRight = Edge(TeeRight, Ascii.TeeRight),
+			TeeTop = Edge(TeeTop, Ascii.TeeTop),
+			TeeBottom = Edge(TeeBottom, Ascii.TeeBottom),
+			Cross = Edge(Cross, Ascii.Cross),
 			TitleOpen = Bracket(TitleOpen, Ascii.TitleOpen),
 			TitleClose = Bracket(TitleClose, Ascii.TitleClose),
 		};
@@ -148,7 +160,7 @@ public sealed record BorderStyle
 
 	private bool All(Func<MarkupText, bool> test) =>
 		test(TopLeft) && test(Top) && test(TopRight) && test(Left) && test(Right) && test(BottomLeft)
-		&& test(Bottom) && test(BottomRight) && test(TeeLeft) && test(TeeRight) && test(TitleOpen) && test(TitleClose);
+		&& test(Bottom) && test(BottomRight) && test(TeeLeft) && test(TeeRight) && test(TeeTop) && test(TeeBottom) && test(Cross) && test(TitleOpen) && test(TitleClose);
 
 	private static bool IsAsciiText(string text)
 	{
@@ -157,7 +169,7 @@ public sealed record BorderStyle
 		return true;
 	}
 
-	private static BorderStyle Of(string name, string top, string sides, string bottom, string tees, string open, string close) => new()
+	private static BorderStyle Of(string name, string top, string sides, string bottom, string tees, string joins, string open, string close) => new()
 	{
 		Name = name,
 		TopLeft = Piece(top, 0),
@@ -170,6 +182,9 @@ public sealed record BorderStyle
 		BottomRight = Piece(bottom, 2),
 		TeeLeft = Piece(tees, 0),
 		TeeRight = Piece(tees, 1),
+		TeeTop = Piece(joins, 0),
+		TeeBottom = Piece(joins, 1),
+		Cross = Piece(joins, 2),
 		TitleOpen = MarkupText.Plain(open),
 		TitleClose = MarkupText.Plain(close),
 	};

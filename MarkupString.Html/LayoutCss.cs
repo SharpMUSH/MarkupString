@@ -51,6 +51,16 @@ public static class LayoutCss
 		".ms-flex.ms-vertical { flex-direction: column; }\n" +
 		".ms-item { min-width: 0; box-sizing: border-box; }\n" +
 		".ms-flex.ms-divided > .ms-item + .ms-item { border-left: 1px solid var(--ms-separator, var(--ms-separator-default, currentColor)); padding-left: 1ch; }\n" +
+		".ms-box > .ms-flex.ms-joined { column-gap: 0 !important; margin: 0 calc(-1 * var(--ms-pad)); }\n" +
+		".ms-box > .ms-flex.ms-joined > .ms-item { padding: 0 var(--ms-pad); }\n" +
+		".ms-box > .ms-flex.ms-joined > .ms-item + .ms-item { border-left: 1px solid var(--ms-border, var(--ms-border-default, currentColor)); }\n" +
+		".ms-box.ms-border-double > .ms-flex.ms-joined > .ms-item + .ms-item { border-left: 3px double var(--ms-border, var(--ms-border-default, currentColor)); }\n" +
+		".ms-box.ms-border-heavy > .ms-flex.ms-joined > .ms-item + .ms-item { border-left-width: 2px; }\n" +
+		".ms-box > .ms-divider:empty + .ms-flex.ms-joined { margin-top: -0.5lh; }\n" +
+		".ms-box > .ms-flex.ms-joined:has(+ .ms-divider:empty) { margin-bottom: -0.5lh; }\n" +
+		".ms-box > .ms-divider:empty + .ms-flex.ms-joined > .ms-item { padding-top: 0.5lh; }\n" +
+		".ms-box > .ms-flex.ms-joined:has(+ .ms-divider:empty) > .ms-item { padding-bottom: 0.5lh; }\n" +
+		".ms-rule:empty, .ms-divider:empty { gap: 0; min-height: 1lh; }\n" +
 		".ms-figure { display: flow-root; }\n" +
 		".ms-figure-image { max-width: 100%; height: auto; vertical-align: top; }\n" +
 		".ms-box.ms-box-picture { padding: 0; width: fit-content; max-width: 100%; box-sizing: border-box; }\n" +

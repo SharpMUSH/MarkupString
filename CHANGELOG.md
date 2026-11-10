@@ -8,6 +8,19 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Panes
+
+- `Flex.Join`: inside a `Frame`, the items are panes that share its edges. A line of the frame's side
+  runs between each two and meets the edge above and below with `BorderStyle.TeeTop` and `TeeBottom`,
+  a divider across them with `Cross`, and a `Rule` in a pane's own body divides that pane from side to
+  side with `TeeLeft`/`TeeRight`. A junction under a title is left out. Panes that do not fit side by
+  side stack as an ordinary row; outside a frame the row is drawn as it would be without. HTML marks
+  the row `ms-joined`. In HTML a line between panes meets a divider with no title; next to a titled
+  edge it stops half a line short, so it does not cross the title.
+- `BorderStyle.TeeTop`, `TeeBottom` and `Cross` for every preset (`+` for ASCII and MUSH, `┬┴┼`,
+  `╦╩╬`, `┳┻╋`), translated for an ASCII reader and kept by the serializer (`et`, `eb`, `x`).
+- HTML: a rule or divider with no title is a line tall, as it is in a terminal.
+
 ### Changed
 
 - Built with the .NET 11 GA SDK; the net11.0 build of the core package is compiled against the release runtime.
