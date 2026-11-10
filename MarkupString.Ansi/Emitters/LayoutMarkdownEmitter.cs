@@ -122,6 +122,9 @@ internal sealed class MarkdownLayoutWriter(MarkupRegistry registry, int width, b
 			case Sized sized:
 				Block(sized.Content, chunks);
 				break;
+			case Bounded bounded:
+				Block(bounded.Content, chunks);
+				break;
 
 			// Markdown has no alignment, gradient or colour; what they hold is written as it is.
 			case Aligned aligned:

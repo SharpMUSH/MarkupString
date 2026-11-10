@@ -45,6 +45,14 @@ internal static class LayoutHtml
 			html.Block(aligned.Content, html.Context with { TextAlignment = aligned.Alignment });
 			html.Write("</div>");
 		}),
+		Of<Bounded>((bounded, html) =>
+		{
+			html.Write("<div class=\"ms-bounded\" style=\"max-width:");
+			html.Write(Number(Math.Max(1, bounded.Width)));
+			html.Write("ch\">");
+			html.Block(bounded.Content);
+			html.Write("</div>");
+		}),
 		Of<Shaded>(Shaded),
 		Of<Colored>(Colored),
 		Of<Themed>(Themed),

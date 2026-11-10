@@ -470,4 +470,69 @@ public class BlockLayoutTests
 		await Assert.That(((TextBlock)nodes[2]).Content.ToPlainText()).IsEqualTo("Hooooo?");
 		await Assert.That(BlockLayout.Blocks(MarkupText.Concat(P("x "), rule)).Single()).IsTypeOf<TextBlock>();
 	}
+
+	private static Frame BoxOf(MarkupText body) =>
+		new(BlockLayout.Blocks(body) is [var single] ? single : new Stack([.. BlockLayout.Blocks(body)])) { Border = BorderStyle.Ascii };
+
+	[Test]
+	public async Task Blocks_ABlockLaidOutAtItsOwnWidth_KeepsItInAWiderOne()
+	{
+		var inner = BlockLayout.Build(T("hi").Bordered(border: BorderStyle.Ascii), 10);
+
+		var lines = BlockLayout.Lines(BoxOf(inner), 20).Select(line => line.ToPlainText()).ToArray();
+
+		await Assert.That(BlockLayout.Blocks(inner).Single()).IsTypeOf<Bounded>();
+		await Assert.That(lines).IsEquivalentTo(new[]
+		{
+			"+------------------+",
+			"| +--------+       |",
+			"| | hi     |       |",
+			"| +--------+       |",
+			"+------------------+",
+		});
+	}
+
+	[Test]
+	public async Task Blocks_AFluidBlock_TakesTheWidthItIsNestedIn()
+	{
+		var inner = BlockLayout.Build(T("hi").Bordered(border: BorderStyle.Ascii), 10, fluid: true);
+
+		var lines = BlockLayout.Lines(BoxOf(inner), 20).Select(line => line.ToPlainText()).ToArray();
+
+		await Assert.That(BlockLayout.Blocks(inner).Single()).IsTypeOf<Frame>();
+		await Assert.That(lines[1]).IsEqualTo("| +--------------+ |");
+	}
+
+	[Test]
+	public async Task Blocks_ABlockWiderThanItsHolder_IsDrawnInTheCellsItHas()
+	{
+		var inner = BlockLayout.Build(T("hi").Bordered(border: BorderStyle.Ascii), 30);
+
+		var lines = BlockLayout.Lines(BoxOf(inner), 12).Select(line => line.ToPlainText()).ToArray();
+
+		await Assert.That(lines[1]).IsEqualTo("| +------+ |");
+	}
+
+	[Test]
+	public async Task Blocks_ARuleOfItsOwnWidth_StillDividesTheBox()
+	{
+		var rule = BlockLayout.Build(new Rule(), 5);
+		var body = MarkupText.Join(MarkupText.NewLine, [P("a"), rule, P("b")]);
+
+		var lines = BlockLayout.Lines(BoxOf(body), 12).Select(line => line.ToPlainText()).ToArray();
+
+		await Assert.That(lines[2]).IsEqualTo("+----------+");
+	}
+
+	[Test]
+	public async Task Bounded_InHtml_CapsItsWidth_AndSurvivesTheSerializer()
+	{
+		var inner = BlockLayout.Build(T("hi").Bordered(), 10);
+		var outer = BlockLayout.Build(BoxOf(inner), 40, fluid: true);
+		var read = MarkupTextSerializer.Deserialize(MarkupTextSerializer.Serialize(outer, Registry), Registry);
+
+		await Assert.That(outer.Render(MarkupFormat.Html, Registry)).Contains("<div class=\"ms-bounded\" style=\"max-width:10ch\"><fieldset class=\"ms-box");
+		await Assert.That(read.Render(MarkupFormat.Html, Registry)).IsEqualTo(outer.Render(MarkupFormat.Html, Registry));
+		await Assert.That(BlockLayout.Relayout(outer, 60, LayoutContext.Default).ToPlainText().Split('\n')[2].TrimEnd()).IsEqualTo("| │ hi     │" + new string(' ', 47) + "|");
+	}
 }

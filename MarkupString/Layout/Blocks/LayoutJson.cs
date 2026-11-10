@@ -255,6 +255,13 @@ internal static class LayoutJson
 				w.String("a", Name(b.Alignment));
 			},
 			r => new Aligned(r.Block("c") ?? new Stack([]), r.Enum("a", Alignment.Left))),
+		BlockCodec.Create<Bounded>("bounded",
+			(b, w) =>
+			{
+				w.Block("c", b.Content);
+				w.Int("w", b.Width, 0);
+			},
+			r => new Bounded(r.Block("c") ?? new Stack([]), r.Int("w", 1, 1, 4096))),
 		BlockCodec.Create<Shaded>("shaded",
 			(b, w) =>
 			{
