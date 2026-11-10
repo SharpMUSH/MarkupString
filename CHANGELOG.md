@@ -17,7 +17,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Bounded` (and `BlockExtensions.Bounded`): a block drawn at most a given number of cells wide,
   against the left of what holds it, and in fewer when that is all it is given. HTML draws it as a
   `div.ms-bounded` with `max-width` in `ch`. In a `Flex` it asks for its width and takes no spare,
-  as an item `Sized` to that many cells does; `Flex.SizeOf` says how any item asks to be sized.
+  as an item `Sized` to that many cells does, narrowing (never below its `Min`) before the row would
+  stack; `Flex.SizeOf` says how any item asks to be sized.
 
 - `MarkupFormat.IsTagged` declares the angle-bracket/entity grammar used for fragment-width
   measurement, independently of literal-text encoding. HTML, MXP and Pueblo declare it; custom

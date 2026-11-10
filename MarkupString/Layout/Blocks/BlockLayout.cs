@@ -86,6 +86,9 @@ public static class BlockLayout
 	{
 		Rule => true,
 		Themed themed => Spans(themed.Content),
+		Colored colored => Spans(colored.Content),
+		Shaded shaded => Spans(shaded.Content),
+		Aligned aligned => Spans(aligned.Content),
 		_ => false,
 	};
 

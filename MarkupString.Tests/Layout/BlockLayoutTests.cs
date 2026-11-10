@@ -550,4 +550,18 @@ public class BlockLayoutTests
 		});
 		await Assert.That(BlockLayout.Build(row, 20).Render(MarkupFormat.Html, Registry)).Contains("<div class=\"ms-item\" style=\"flex:1 1 5ch");
 	}
+
+	[Test]
+	public async Task Flex_BoundedItemsTooWideTogether_ShrinkSideBySide()
+	{
+		var box = BlockLayout.Build(T("x").Bordered(border: BorderStyle.Ascii), 10);
+		var row = new Flex([.. BlockLayout.Blocks(box), .. BlockLayout.Blocks(box)]);
+
+		await Assert.That(BlockLayout.Lines(row, 16).Select(line => line.ToPlainText().TrimEnd()).ToArray()).IsEquivalentTo(new[]
+		{
+			"+-----+  +-----+",
+			"| x   |  | x   |",
+			"+-----+  +-----+",
+		});
+	}
 }

@@ -100,6 +100,33 @@ public sealed record Flex(ImmutableArray<Block> Items) : Block
 		foreach (var item in Items) context.Draw(item, width, lines);
 	}
 
+	/// <summary>
+	/// Takes up to <paramref name="over"/> cells from the <see cref="Bounded"/> items, whose width is the most they
+	/// take rather than what they need, in proportion to their widths and none below its <see cref="Sized.Min"/>:
+	/// so two 40-cell boxes sit side by side in 78. The cells still over, negated (zero when all were found).
+	/// </summary>
+	private int Narrow(int[] widths, Sized[] sizes, int over)
+	{
+		var bounded = Enumerable.Range(0, sizes.Length).Where(i => Items[i] is Bounded).ToArray();
+		var spare = bounded.Sum(i => widths[i] - Math.Max(1, sizes[i].Min));
+		if (spare <= 0) return -over;
+		var take = Math.Min(over, spare);
+		var taken = 0;
+		foreach (var i in bounded)
+		{
+			var share = take * (widths[i] - Math.Max(1, sizes[i].Min)) / spare;
+			widths[i] -= share;
+			taken += share;
+		}
+		for (var k = 0; taken < take; k = (k + 1) % bounded.Length)
+		{
+			if (widths[bounded[k]] <= Math.Max(1, sizes[bounded[k]].Min)) continue;
+			widths[bounded[k]]--;
+			taken++;
+		}
+		return take - over;
+	}
+
 	/// <summary>The width of each item, or null when they cannot sit side by side and must stack.</summary>
 	private int[]? Share(int width)
 	{
@@ -125,6 +152,7 @@ public sealed record Flex(ImmutableArray<Block> Items) : Block
 		}
 
 		var remaining = available - fixedSum;
+		if (remaining < 0) remaining = Narrow(widths, sizes, -remaining);
 		if (remaining < 0) return null;
 
 		var autos = Enumerable.Range(0, sizes.Length).Where(i => sizes[i].Basis.Kind == BlockSizeKind.Auto).ToArray();
