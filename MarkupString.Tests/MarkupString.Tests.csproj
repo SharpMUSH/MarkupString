@@ -12,10 +12,10 @@
   <ItemGroup>
     <PackageReference Include="CsCheck" Version="5.0.1" />
     <PackageReference Include="TUnit" Version="1.78.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Diagnostics" Version="10.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.14" />
     <!-- A GitHub-flavoured Markdown reader, so the Markdown tests check what a reader makes of the output
          rather than only the characters written. -->
     <PackageReference Include="Markdig" Version="1.6.0" />
