@@ -50,3 +50,5 @@ MarkupString.Extensions.DependencyInjection.MarkupDecoderFactory.CreateDecoderFo
 MarkupString.Extensions.DependencyInjection.MarkupDecoderFactory.MarkupDecoderFactory(MarkupString.Decoding.DecoderRegistry! registry, MarkupString.Extensions.DependencyInjection.MarkupStringOptions! options, MarkupString.IUrlPolicy! links, System.Diagnostics.Metrics.IMeterFactory? meters = null, Microsoft.Extensions.Logging.ILoggerFactory? loggers = null) -> void
 MarkupString.Extensions.DependencyInjection.MarkupStringBuilder.AddEffectHandler(MarkupString.Display.IEffectHandler! handler) -> MarkupString.Extensions.DependencyInjection.MarkupStringBuilder!
 MarkupString.Extensions.DependencyInjection.MarkupStringBuilder.AddEffectHandler<THandler>() -> MarkupString.Extensions.DependencyInjection.MarkupStringBuilder!
+MarkupString.Extensions.DependencyInjection.MarkupStringOptions.RefuseControlCharactersInLinks.get -> bool
+MarkupString.Extensions.DependencyInjection.MarkupStringOptions.RefuseControlCharactersInLinks.set -> void

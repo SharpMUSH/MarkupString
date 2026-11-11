@@ -30,7 +30,12 @@ public static class ServiceCollectionExtensions
 		services.AddOptions<MarkupStringOptions>();
 		if (configure is not null) services.Configure(configure);
 
-		services.TryAddSingleton<IUrlPolicy>(static sp => UrlPolicy.WithSchemes(Options(sp).LinkSchemes));
+		services.TryAddSingleton<IUrlPolicy>(static sp =>
+		{
+			var options = Options(sp);
+			var policy = UrlPolicy.WithSchemes(options.LinkSchemes);
+			return options.RefuseControlCharactersInLinks ? policy.RefusingControlCharacters() : policy;
+		});
 		services.TryAddSingleton<IPictureCache>(static sp => new MemoryPictureCache { Budget = Options(sp).Pictures.Budget });
 		services.TryAddSingleton(sp =>
 		{

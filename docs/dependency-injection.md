@@ -52,6 +52,7 @@ binds it from configuration. The binder is source-generated, so it works in a na
 {
   "MarkupString": {
     "LinkSchemes": [ "mudclient" ],
+    "RefuseControlCharactersInLinks": true,
     "Decoding": { "MaxLineLength": 65536, "MaxOpenElements": 64, "AnswerCursorPosition": false },
     "Pictures": { "Enabled": true, "Budget": 268435456, "MaxPixels": 16777216 },
     "Display": { "Output": "Browser", "Colors": "Xterm256", "BoldIsBright": false }
@@ -71,6 +72,10 @@ These are in the core packages and need no container.
   and `CellRenderer` take one.
 - `IUrlPolicy`: which link addresses are allowed. `UrlPolicy.Safe` is the default;
   `UrlPolicy.WithSchemes("mudclient")` adds schemes, never `javascript`, `data`, `vbscript` or `file`.
+  `.RefusingControlCharacters()` also refuses an address holding a control character or with a space
+  at either end. A browser strips those before it reads the scheme, so `java&#9;script:` in an MXP or
+  Pueblo link would otherwise pass as a relative address and run as `javascript:`. It is off unless
+  asked for (`RefuseControlCharactersInLinks` in configuration).
   Set it as `DecoderOptions.Links` (what a server's links become), `DisplayOptions.Links` (what is
   drawn as clickable), `MarkupRegistry.WithLinks` (what every writer, ANSI, HTML, MXP, Pueblo, BBCode
   and Markdown, writes as a link) and `HtmlTagPolicy.Links` (which addresses a checked tag may hold).

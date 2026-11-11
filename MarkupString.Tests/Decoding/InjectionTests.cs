@@ -31,6 +31,44 @@ public class InjectionTests
 	}
 
 	[Test]
+	[Arguments("java\tscript:alert(1)")]
+	[Arguments("java\nscript:alert(1)")]
+	[Arguments("\u0001javascript:alert(1)")]
+	[Arguments("\u0085javascript:alert(1)")]
+	[Arguments(" javascript:alert(1)")]
+	[Arguments("/look ")]
+	public async Task UrlPolicy_RefusingControlCharacters_RefusesWhatABrowserWouldStrip(string url)
+	{
+		await Assert.That(UrlPolicy.Safe.RefusingControlCharacters().IsAllowed(url)).IsFalse();
+		await Assert.That(UrlPolicy.WithSchemes("mudclient").RefusingControlCharacters().IsAllowed(url)).IsFalse();
+	}
+
+	[Test]
+	public async Task UrlPolicy_RefusingControlCharacters_IsOptIn()
+	{
+		// A tab inside reads as a relative address unless the host asks for it to be refused.
+		await Assert.That(UrlPolicy.Safe.RefusesControlCharacters).IsFalse();
+		await Assert.That(UrlPolicy.Safe.IsAllowed("java\tscript:alert(1)")).IsTrue();
+
+		var strict = UrlPolicy.WithSchemes("mudclient").RefusingControlCharacters();
+		await Assert.That(strict.RefusesControlCharacters).IsTrue();
+		await Assert.That(strict.RefusingControlCharacters()).IsSameReferenceAs(strict);
+		await Assert.That(strict.IsAllowed("mudclient://look")).IsTrue();
+		await Assert.That(strict.IsAllowed("https://example.com/a b")).IsTrue();
+		await Assert.That(strict.IsAllowed("javascript:alert(1)")).IsFalse();
+	}
+
+	[Test]
+	public async Task UrlPolicy_RefusingControlCharacters_KeepsAnMxpLinkAsText()
+	{
+		var registry = MarkupRegistry.Empty.WithAnsi().WithHtml();
+		var link = MarkupText.Wrap(new AnsiMarkup(new AnsiStyle { LinkUrl = "java\tscript:alert(1)", LinkKind = LinkKind.Url }), "x");
+
+		await Assert.That(link.Render(MarkupFormat.Html, registry)).Contains("href=");
+		await Assert.That(link.Render(MarkupFormat.Html, registry.WithLinks(UrlPolicy.Safe.RefusingControlCharacters()))).IsEqualTo("x");
+	}
+
+	[Test]
 	public async Task UrlPolicy_DecidesDecodedAndDisplayedLinks()
 	{
 		var policy = UrlPolicy.WithSchemes("mudclient");
@@ -191,5 +229,18 @@ public class InjectionTests
 		await Assert.That(captured.Lines).IsEquivalentTo(["Decoder dropped 1 × UnhandledSequence"]);
 		var link = MarkupText.Wrap(new AnsiMarkup(new AnsiStyle { LinkUrl = "mudclient://look", LinkKind = LinkKind.Url }), "look");
 		await Assert.That(link.Render(MarkupFormat.Html, services.GetRequiredService<MarkupRegistry>())).Contains("href=\"mudclient://look\"");
+	}
+
+	[Test]
+	public async Task AddMarkupString_RefusesControlCharactersInLinksWhenAsked()
+	{
+		using var lax = new ServiceCollection().AddMarkupString().Services.BuildServiceProvider();
+		using var strict = new ServiceCollection()
+			.AddMarkupString(options => options.RefuseControlCharactersInLinks = true)
+			.Services.BuildServiceProvider();
+
+		await Assert.That(lax.GetRequiredService<IUrlPolicy>().IsAllowed("java\tscript:alert(1)")).IsTrue();
+		await Assert.That(strict.GetRequiredService<IUrlPolicy>().IsAllowed("java\tscript:alert(1)")).IsFalse();
+		await Assert.That(strict.GetRequiredService<IUrlPolicy>().IsAllowed("https://example.com")).IsTrue();
 	}
 }

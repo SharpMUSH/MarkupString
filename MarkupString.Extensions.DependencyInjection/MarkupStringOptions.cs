@@ -21,6 +21,12 @@ public sealed class MarkupStringOptions
 	/// such as <c>mudclient</c>. <c>javascript</c>, <c>data</c>, <c>vbscript</c> and <c>file</c> are never allowed.
 	/// </summary>
 	public List<string> LinkSchemes { get; set; } = [];
+
+	/// <summary>
+	/// Whether a link address holding a control character, or with a space at either end, is refused
+	/// (<see cref="UrlPolicy.RefusingControlCharacters"/>). Off by default.
+	/// </summary>
+	public bool RefuseControlCharactersInLinks { get; set; }
 }
 
 /// <summary>How each connection's output is read.</summary>
