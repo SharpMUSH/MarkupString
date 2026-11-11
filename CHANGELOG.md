@@ -15,6 +15,19 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   before reading the scheme, so an MXP or Pueblo `href="java&#9;script:alert(1)"` passes `UrlPolicy.Safe` as a
   relative address and runs as `javascript:` when clicked. Opt-in; `UrlPolicy.Safe` is unchanged.
   `MarkupStringOptions.RefuseControlCharactersInLinks` turns it on for `AddMarkupString`.
+- `ElementMarkup`, data markup that numbers the element text is in, and `DecodeContext.NextElement()`. Stored by
+  the serializer like the other shared markup.
+
+### Fixed
+
+- Two equal elements side by side stay two. Before, an element closed and an equal one opened straight after it
+  became one run, so a client saw one thing where the server sent two. This happened with two exits of one
+  flagged element (`<Exit>north</Exit><Exit>south</Exit>` read as one exit, `northsouth`), two `<SEND>`s, `<A>`s
+  or OSC 8 or MSLP links to one place, two `<VAR>`s of one variable, and two pictures of one file (MXP
+  `<IMAGE>`, Pueblo `<img>`), which `SpanRenderer` also drew as one picture. The decoder now puts an
+  `ElementMarkup` on each link, menu, picture, variable and flagged element, and `SpanRenderer` joins spans
+  only within one element. An OSC 8 link opened again with the same address before it ends is still one
+  link, and an OSC 8 `id` still joins links. Elements that only style text (bold, a colour) are unchanged.
 
 ## 2.28.1 — 2026-11-10
 

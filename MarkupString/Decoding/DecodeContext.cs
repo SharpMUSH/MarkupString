@@ -21,6 +21,7 @@ public sealed class DecodeContext
 	private readonly Dictionary<string, ITextProtocol> _protocols = new(StringComparer.OrdinalIgnoreCase);
 	private MarkupSet? _set;
 	private bool _setValid;
+	private int _elementNumbers;
 	private ITextProtocol? _active;
 	private long _sequence;
 
@@ -103,6 +104,12 @@ public sealed class DecodeContext
 
 		return null;
 	}
+
+	/// <summary>
+	/// A new <see cref="ElementMarkup"/>, numbered after the last this decoder made. Opened before an element's own
+	/// markup, it keeps the element apart from an equal one beside it; closing it closes the element.
+	/// </summary>
+	public ElementMarkup NextElement() => new(++_elementNumbers);
 
 	/// <summary>Opens <paramref name="markup"/> over the text that follows, until <see cref="Close"/>.</summary>
 	/// <returns>False when <see cref="DecoderOptions.MaxOpenElements"/> are already open; nothing is opened.</returns>

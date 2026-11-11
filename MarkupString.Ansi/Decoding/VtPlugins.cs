@@ -35,7 +35,10 @@ public static class VtPens
 	/// <summary>The OSC 8 or MSLP link, an <see cref="AnsiMarkup"/> with only a link.</summary>
 	public const string Link = "link";
 
-	/// <summary>The OSC 8 link's <c>id</c>, a <see cref="LinkGroupMarkup"/>, set and cleared with <see cref="Link"/>.</summary>
+	/// <summary>
+	/// The OSC 8 link's <c>id</c>, a <see cref="LinkGroupMarkup"/>, set and cleared with <see cref="Link"/>. A link with
+	/// no id, and an MSLP link, has an <see cref="ElementMarkup"/> here instead, which keeps it apart from the next.
+	/// </summary>
 	public const string LinkGroup = "link-group";
 }
 
@@ -65,6 +68,7 @@ public sealed class SgrPlugin : IDecoderPlugin
 			{
 				// The underline is an MSLP link's extent.
 				context.SetPen(VtPens.Link, null);
+				context.SetPen(VtPens.LinkGroup, null);
 				state.MslpUnderlined = false;
 			}
 			else if (!before.Underlined && state.Style.Underlined && context.Pen(VtPens.Link) is AnsiMarkup { Style.LinkKind: LinkKind.Command })
@@ -398,9 +402,17 @@ public sealed class OscPlugin : IDecoderPlugin
 
 				var target = uri.ToString();
 				var safe = context.Options.Links.IsAllowed(target);
-				context.SetPen(VtPens.Link, safe ? new AnsiMarkup(new AnsiStyle { LinkUrl = target, LinkKind = LinkKind.Url }) : null);
 				var id = safe ? LinkId(payload[..separator]) : null;
-				context.SetPen(VtPens.LinkGroup, id is null ? null : new LinkGroupMarkup(id));
+
+				// With no id, each link is its own (an ElementMarkup), so two to one place side by side stay two. The
+				// same link opened again before it was ended, as a program does around a colour change, is still one.
+				IMarkup? group = id is not null ? new LinkGroupMarkup(id)
+					: !safe ? null
+					: context.Pen(VtPens.Link) is AnsiMarkup { Style: { LinkKind: LinkKind.Url } open } && open.LinkUrl == target
+						&& context.Pen(VtPens.LinkGroup) is ElementMarkup current ? current
+					: context.NextElement();
+				context.SetPen(VtPens.Link, safe ? new AnsiMarkup(new AnsiStyle { LinkUrl = target, LinkKind = LinkKind.Url }) : null);
+				context.SetPen(VtPens.LinkGroup, group);
 				return true;
 			})
 			.OnOsc(68, static (payload, context) =>
@@ -410,7 +422,7 @@ public sealed class OscPlugin : IDecoderPlugin
 				if (parts is not ["1", var type, var command] || command.Length == 0) return false;
 				if (!type.Equals("SEND", StringComparison.OrdinalIgnoreCase)) return false;
 				context.SetPen(VtPens.Link, new AnsiMarkup(new AnsiStyle { LinkUrl = command, LinkKind = LinkKind.Command }));
-				context.SetPen(VtPens.LinkGroup, null);
+				context.SetPen(VtPens.LinkGroup, context.NextElement());
 				context.State<VtState>().MslpUnderlined = false;
 				return true;
 			})
@@ -420,6 +432,7 @@ public sealed class OscPlugin : IDecoderPlugin
 				if (context.Pen(VtPens.Link) is AnsiMarkup { Style.LinkKind: LinkKind.Command })
 				{
 					context.SetPen(VtPens.Link, null);
+					context.SetPen(VtPens.LinkGroup, null);
 					context.State<VtState>().MslpUnderlined = false;
 				}
 			})

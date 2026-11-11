@@ -181,10 +181,38 @@ public class VtDecodingTests
 	}
 
 	[Test]
+	public async Task Osc8_TwoLinksToOnePlaceSideBySide_AreTwo()
+	{
+		var lines = Decode("\e]8;;https://example.com\e\\one\e]8;;\e\\\e]8;;https://example.com\e\\two\e]8;;\e\\\n");
+		await Assert.That(Spans(lines[0].Content).Select(span => span.Text)).IsEquivalentTo(["one", "two"]);
+	}
+
+	[Test]
+	public async Task Osc8_TheSameLinkOpenedAgainBeforeItEnds_IsOne()
+	{
+		var lines = Decode("\e]8;;https://example.com\e\\one\e]8;;https://example.com\e\\two\e]8;;\e\\\n");
+		await Assert.That(Spans(lines[0].Content).Select(span => span.Text)).IsEquivalentTo(["onetwo"]);
+	}
+
+	[Test]
 	public async Task Osc8_UnsafeScheme_IsText()
 	{
 		var lines = Decode("\e]8;;javascript:alert(1)\e\\x\e]8;;\e\\\n");
 		await Assert.That(Spans(lines[0].Content).Single().Style.Interaction).IsNull();
+	}
+
+	[Test]
+	public async Task Mslp_TwoLinksSideBySide_AreTwo()
+	{
+		var lines = Decode("\e]68;1;SEND;look\a\e[4mone\e[24m\e]68;1;SEND;look\a\e[4mtwo\e[24m\n");
+		await Assert.That(Spans(lines[0].Content).Select(span => span.Text)).IsEquivalentTo(["one", "two"]);
+	}
+
+	[Test]
+	public async Task Mslp_EndingTheLinkLeavesNoElementBehind()
+	{
+		var lines = Decode("\e]68;1;SEND;look\a\e[4mone\e[24m after\n");
+		await Assert.That(lines[0].Content.Runs.Where(run => run.Markups.OfType<ElementMarkup>().Any()).Count()).IsEqualTo(1);
 	}
 
 	[Test]

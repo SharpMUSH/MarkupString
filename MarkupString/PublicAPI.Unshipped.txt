@@ -864,3 +864,16 @@ MarkupString.Layout.Flex.Join.get -> bool
 MarkupString.Layout.Flex.Join.init -> void
 MarkupString.UrlPolicy.RefusesControlCharacters.get -> bool
 MarkupString.UrlPolicy.RefusingControlCharacters() -> MarkupString.UrlPolicy!
+MarkupString.ElementMarkup
+MarkupString.ElementMarkup.<Clone>$() -> MarkupString.ElementMarkup!
+MarkupString.ElementMarkup.Deconstruct(out int Number) -> void
+MarkupString.ElementMarkup.ElementMarkup(int Number) -> void
+MarkupString.ElementMarkup.Equals(MarkupString.ElementMarkup? other) -> bool
+MarkupString.ElementMarkup.Number.get -> int
+MarkupString.ElementMarkup.Number.init -> void
+MarkupString.Decoding.DecodeContext.NextElement() -> MarkupString.ElementMarkup!
+override MarkupString.ElementMarkup.Equals(object? obj) -> bool
+override MarkupString.ElementMarkup.GetHashCode() -> int
+override MarkupString.ElementMarkup.ToString() -> string!
+static MarkupString.ElementMarkup.operator !=(MarkupString.ElementMarkup? left, MarkupString.ElementMarkup? right) -> bool
+static MarkupString.ElementMarkup.operator ==(MarkupString.ElementMarkup? left, MarkupString.ElementMarkup? right) -> bool

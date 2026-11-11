@@ -24,6 +24,23 @@ public class PuebloDecodingTests
 	private static IEnumerable<IMarkup> Markups(DisplayLine line) => line.Content.Runs.SelectMany(run => run.Markups);
 
 	[Test]
+	[Arguments("</xch_mudtext><a xch_cmd=\"go\">north</a><a xch_cmd=\"go\">south</a>\n")]
+	[Arguments("</xch_mudtext><a href=\"https://x.org\">north</a><a href=\"https://x.org\">south</a>\n")]
+	[Arguments("</xch_mudtext><send href=\"n|s\">north</send><send href=\"n|s\">south</send>\n")]
+	public async Task TwoEqualElementsSideBySide_StayTwo(string input)
+	{
+		var lines = Decode(input);
+		await Assert.That(Spans(lines[^1]).Select(span => span.Text)).IsEquivalentTo(new[] { "north", "south" });
+	}
+
+	[Test]
+	public async Task TwoPicturesOfOneFileSideBySide_AreTwoPictures()
+	{
+		var lines = Decode("</xch_mudtext><img src=\"m.png\" alt=\"map\"><img src=\"m.png\" alt=\"map\">\n");
+		await Assert.That(Spans(lines[^1]).Select(span => span.Text)).IsEquivalentTo(new[] { "map", "map" });
+	}
+
+	[Test]
 	public async Task MudText_TagsAreText()
 	{
 		var lines = Decode("<b>x</b>\n");
