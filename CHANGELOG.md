@@ -58,6 +58,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- HTML: reverse video with only one colour now swaps it with the page's default on the other side, as a
+  terminal does. `\e[32;7m` was a green background under the page's text colour; the text is now
+  `var(--ms-bg)`, and `\e[41;7m` gets `var(--ms-fg)` as its background. These are the properties `ms-invert`
+  already swaps.
+
 - `BlockLayout.Blocks` keeps the width of a block laid out at a width of its own: a non-fluid layout
   nested in another comes back `Bounded` by the width it was built at, so a 30-cell box inside a
   wider box stays 30 cells instead of stretching to the outer one. A fluid layout still takes the
