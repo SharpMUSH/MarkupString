@@ -58,6 +58,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- MXP: a sequence cancelled by CAN or SUB ends a temporary secure arming (`ESC[4z`), as a finished
+  sequence does. Before, `ESC[4z ESC[1 CAN` left it armed for the next tag, so a `<SEND>` after it was honoured.
+
 - `BlockLayout.Blocks` keeps the width of a block laid out at a width of its own: a non-fluid layout
   nested in another comes back `Bounded` by the width it was built at, so a 30-cell box inside a
   wider box stays 30 cells instead of stretching to the outer one. A fluid layout still takes the
