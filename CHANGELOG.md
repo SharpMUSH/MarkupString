@@ -8,6 +8,15 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+
+- HTML: reverse video with only one colour now swaps it with the page's default on the other side, as a
+  terminal does. `\e[32;7m` was a green background under the page's text colour; the text is now
+  `var(--ms-bg)`, and `\e[41;7m` gets `var(--ms-fg)` as its background. These are the properties `ms-invert`
+  already swaps.
+
+## 2.28.0 — 2026-11-10
+
 ### Panes
 
 - `Flex.Join`: inside a `Frame`, the items are panes that share its edges. A line of the frame's side
@@ -44,6 +53,17 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   as an item `Sized` to that many cells does, narrowing (never below its `Min`) before the row would
   stack; `Flex.SizeOf` says how any item asks to be sized.
 
+### Fixed
+
+- `BlockLayout.Blocks` keeps the width of a block laid out at a width of its own: a non-fluid layout
+  nested in another comes back `Bounded` by the width it was built at, so a 30-cell box inside a
+  wider box stays 30 cells instead of stretching to the outer one. A fluid layout still takes the
+  width it is nested in, and a `Rule` still spans what holds it (a frame's divider).
+
+## 2.27.3 — 2026-11-09
+
+### Added
+
 - `MarkupFormat.IsTagged` declares the angle-bracket/entity grammar used for fragment-width
   measurement, independently of literal-text encoding. HTML, MXP and Pueblo declare it; custom
   formats can opt in explicitly through a new overload without changing existing custom formats.
@@ -58,23 +78,30 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
-- HTML: reverse video with only one colour now swaps it with the page's default on the other side, as a
-  terminal does. `\e[32;7m` was a green background under the page's text colour; the text is now
-  `var(--ms-bg)`, and `\e[41;7m` gets `var(--ms-fg)` as its background. These are the properties `ms-invert`
-  already swaps.
-
-- `BlockLayout.Blocks` keeps the width of a block laid out at a width of its own: a non-fluid layout
-  nested in another comes back `Bounded` by the width it was built at, so a 30-cell box inside a
-  wider box stays 30 cells instead of stretching to the outer one. A fluid layout still takes the
-  width it is nested in, and a `Rule` still spans what holds it (a frame's divider).
-
 - Picture placeholder rows preserve their original display-cell width across nested styling and text
   encoding. ANSI escapes and HTML/BBCode syntax no longer become extra blank cells beside MXP,
   Pueblo, HTML, BBCode or Markdown images. This fixes welcome-screen rules wrapping after a colored logo.
 
+## 2.27.2 — 2026-11-07
+
+### Added
+
+- `TerminalProfile.MudForge`: MudForge 2.0.5657, recognized by `MUDFORGE`, with still iTerm2 inline images and
+  Sixel.
+
+### Changed
+
+- Sixel uses an adaptive palette of up to 255 colours chosen from the image's colour histogram (median cut, shared
+  with GIF encoding), instead of the 216-colour cube. GIF output is unchanged.
+
+## 2.27.1 — 2026-11-07
+
+### Fixed
+
 - MXP images a client does not support can fall back to configured ANSI terminal graphics, preserving
   the other MXP elements. The fallback requires both enabled graphics and available picture pixels.
 
+## 2.27.0 — 2026-11-06
 
 ### Added
 
@@ -95,18 +122,6 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - With the .NET 11 SDK, `MarkupString` also builds for net11.0, where its unions implement the runtime's
   `IUnion`. The net10.0 build declares them with internal copies of the compiler's union types; with the
   .NET 10 SDK the repository builds through `Microsoft.Net.Compilers.Toolset`.
-
-### Fixed
-
-- MXP `IMAGE` and `SOUND` put the file in the `T=` type's directory under the base address, as the MXP
-  specification says: `<IMAGE map.png URL=https://h/img/ T=maps>` is `https://h/img/maps/map.png`.
-- An SGR extended colour with too few components (`38;2;40`) no longer reads what is left as codes of their own,
-  so it does not set a black background.
-
-## 2.27.0 — Unreleased
-
-### Added
-
 - `Decoder.OpenElements` and `DecodeContext.PendingLine`: the elements a text protocol has open, and the line read
   so far. `DecodeContext.Insert(column, text)` puts text into the line at a display column.
 - `ISequenceObserver`: a text protocol is told when an escape sequence arrives.
