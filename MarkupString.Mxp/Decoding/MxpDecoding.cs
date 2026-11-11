@@ -12,13 +12,6 @@ namespace MarkupString.Mxp.Decoding;
 /// <param name="Flag">The flag, as the server named it, such as <c>RoomName</c>.</param>
 public sealed record MxpFlagMarkup(string Flag) : IDataMarkup
 {
-	/// <summary>
-	/// Which element this is, numbered by the decoder from 1 as elements open. Two elements with the same flag
-	/// differ by it, so one closed and another opened on the same line are two runs rather than one. 0 when it was
-	/// not made by a decoder.
-	/// </summary>
-	public int Element { get; init; }
-
 	/// <summary>A room's name (line tag 10).</summary>
 	public const string RoomName = "RoomName";
 
@@ -152,18 +145,10 @@ public static class MxpDecoding
 
 		public Type MarkupType => typeof(MxpFlagMarkup);
 
-		public void Write(Utf8JsonWriter writer, IMarkup markup)
-		{
-			var flag = (MxpFlagMarkup)markup;
-			writer.WriteString("f", flag.Flag);
-			if (flag.Element != 0) writer.WriteNumber("e", flag.Element);
-		}
+		public void Write(Utf8JsonWriter writer, IMarkup markup) => writer.WriteString("f", ((MxpFlagMarkup)markup).Flag);
 
 		public IMarkup Read(JsonElement element) =>
-			new MxpFlagMarkup(element.TryGetProperty("f", out var flag) && flag.ValueKind == JsonValueKind.String ? flag.GetString()! : string.Empty)
-			{
-				Element = element.TryGetProperty("e", out var number) && number.TryGetInt32(out var value) ? value : 0,
-			};
+			new MxpFlagMarkup(element.TryGetProperty("f", out var flag) && flag.ValueKind == JsonValueKind.String ? flag.GetString()! : string.Empty);
 	}
 }
 
@@ -296,7 +281,7 @@ internal sealed class MxpState
 
 	public int CaptureDepth { get; set; }
 
-	public List<(ImageMarkup Image, int Rows, int Columns, int Column, int Next, MarkupText Inline)> Overlays { get; } = [];
+	public List<(ImageMarkup Image, ElementMarkup Element, int Rows, int Columns, int Column, int Next, MarkupText Inline)> Overlays { get; } = [];
 
 	public int ExpansionDepth { get; set; }
 
@@ -305,9 +290,6 @@ internal sealed class MxpState
 	public bool Replaying { get; set; }
 
 	public int ExpansionsThisLine { get; set; }
-
-	/// <summary>The flagged elements opened so far, which numbers the next (<see cref="MxpFlagMarkup.Element"/>).</summary>
-	public int FlagElements { get; set; }
 
 	public string? StyleVersion { get; set; }
 
@@ -428,8 +410,12 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 				{
 					LeaveOpen(context);
 					state.Line = MxpMode.Secure;
-					var markup = new MxpFlagMarkup(flag) { Element = ++state.FlagElements };
-					if (context.Open(markup)) state.Open.Add(new MxpOpenElement(flag, markup, openMode: false, lineTag: true));
+					var flagged = context.NextElement();
+					if (context.Open(flagged))
+					{
+						context.Open(new MxpFlagMarkup(flag));
+						state.Open.Add(new MxpOpenElement(flag, flagged, openMode: false, lineTag: true));
+					}
 				}
 
 				// A number with no meaning moves nothing, in either direction.
@@ -612,7 +598,7 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 					IMarkup? link = href is not null && Context.Options.Links.IsAllowed(href)
 						? new AnsiMarkup(new AnsiStyle { LinkUrl = href, LinkKind = LinkKind.Url, LinkText = tag.Get("HINT", 1) })
 						: null;
-					OpenElement(tag.Name, link is null ? [] : [link], openMode, lineTag: true);
+					OpenElement(tag.Name, link is null ? [] : [Context.NextElement(), link], openMode, lineTag: true);
 					return true;
 				}
 			case "SEND":
@@ -791,13 +777,13 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 		var link = new AnsiMarkup(new AnsiStyle { LinkUrl = commands[0], LinkKind = LinkKind.Command, LinkText = hint });
 		if (commands.Length == 1 && !prompt)
 		{
-			OpenElement(tag.Name, [link], openMode, lineTag: true);
+			OpenElement(tag.Name, [Context.NextElement(), link], openMode, lineTag: true);
 			return;
 		}
 
 		var choices = new CommandChoice[commands.Length];
 		for (var i = 0; i < commands.Length; i++) choices[i] = new CommandChoice(labels[i], commands[i]);
-		OpenElement(tag.Name, [new CommandMenuMarkup(choices, hint, prompt), link], openMode, lineTag: true);
+		OpenElement(tag.Name, [Context.NextElement(), new CommandMenuMarkup(choices, hint, prompt), link], openMode, lineTag: true);
 	}
 
 	/// <summary>
@@ -819,7 +805,7 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 		var before = Context.Elements.Count;
 		var opened = state.Open.Count;
 
-		if (definition.Flag is { } flag) Context.Open(new MxpFlagMarkup(flag) { Element = ++state.FlagElements });
+		if (definition.Flag is { } flag && Context.Open(Context.NextElement())) Context.Open(new MxpFlagMarkup(flag));
 
 		// The definition's tags, with the element's attributes put in for &name;, run as secure tags.
 		var expanded = Expand(definition, tag);
@@ -1027,7 +1013,7 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 					if (!tag.Has("PRIVATE")) Context.Raise(new VariableEvent(variable, text));
 				}
 
-				OpenElement(tag.Name, [new VariableMarkup(variable)], openMode: false);
+				OpenElement(tag.Name, [Context.NextElement(), new VariableMarkup(variable)], openMode: false);
 			}
 			else
 			{
@@ -1061,16 +1047,18 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 		var align = Enum.TryParse<ImageAlign>(tag.Get("ALIGN"), ignoreCase: true, out var parsed) ? parsed : (ImageAlign?)null;
 		var image = new ImageMarkup(source, null, width, height, align);
 
+		// Each picture is its own, so two of one file side by side stay two.
+		var element = Context.NextElement();
 		if (widthCells > 0 && heightCells > 0)
 		{
 			// Sized in cells: drawn over the cells the server leaves for it on this line and the ones after. If it left
 			// none, the picture goes in the line where its tag was, as one sized in pixels does.
 			var set = Context.CurrentMarkup;
-			var layers = new IMarkup[(set?.Count ?? 0) + 1];
-			layers[0] = image;
-			for (var i = 1; i < layers.Length; i++) layers[i] = set![i - 1];
+			var layers = new IMarkup[(set?.Count ?? 0) + 2];
 			layers[0] = image with { Width = widthCells * Context.Identity.CellWidth, Height = heightCells * Context.Identity.CellHeight };
-			State.Overlays.Add((image, heightCells, widthCells, Context.Column, 0, MarkupText.Wrap(MarkupSet.Of(layers.AsSpan()), file)));
+			layers[1] = element;
+			for (var i = 2; i < layers.Length; i++) layers[i] = set![i - 2];
+			State.Overlays.Add((image, element, heightCells, widthCells, Context.Column, 0, MarkupText.Wrap(MarkupSet.Of(layers.AsSpan()), file)));
 			return;
 		}
 
@@ -1079,7 +1067,22 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 		height ??= heightCells > 0 ? heightCells * Context.Identity.CellHeight : null;
 		image = image with { Width = width, Height = height };
 
-		Context.Write(file, image);
+		WriteIn(element, file, image);
+	}
+
+	/// <summary>Writes <paramref name="text"/> under <paramref name="inner"/> inside <paramref name="element"/>.</summary>
+	private void WriteIn(ElementMarkup element, string text, IMarkup inner) => WriteIn(Context, element, text, inner);
+
+	private static void WriteIn(DecodeContext context, ElementMarkup element, string text, IMarkup inner)
+	{
+		if (!context.Open(element))
+		{
+			context.Write(text, inner);
+			return;
+		}
+
+		context.Write(text, inner);
+		context.Close(element);
 	}
 
 	private static (int? Pixels, int Cells) Size(string? value)
@@ -1103,7 +1106,7 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 		List<(int Column, int Width)>? inserted = null;
 		for (var i = 0; i < overlays.Count; i++)
 		{
-			var (image, rows, columns, column, next, inline) = overlays[i];
+			var (image, element, rows, columns, column, next, inline) = overlays[i];
 
 			// A picture put inline earlier on this line moved the cells after it to the right.
 			var at = column;
@@ -1121,7 +1124,7 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 				context.Insert(at, inline);
 				if (cursor >= at) cursor += inline.DisplayWidth;
 				(inserted ??= []).Add((column, inline.DisplayWidth));
-				overlays[i] = (image, rows, columns, column, rows, inline);
+				overlays[i] = (image, element, rows, columns, column, rows, inline);
 				continue;
 			}
 
@@ -1129,10 +1132,10 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 			if (next == 0 || Blank(context.PendingLine, at, columns))
 			{
 				context.MoveToColumn(at);
-				context.Write(new string(' ', columns), image with { Row = new PictureRow(next, rows, columns) });
+				WriteIn(context, element, new string(' ', columns), image with { Row = new PictureRow(next, rows, columns) });
 			}
 
-			overlays[i] = (image, rows, columns, column, next + 1, inline);
+			overlays[i] = (image, element, rows, columns, column, next + 1, inline);
 		}
 
 		overlays.RemoveAll(overlay => overlay.Next >= overlay.Rows);

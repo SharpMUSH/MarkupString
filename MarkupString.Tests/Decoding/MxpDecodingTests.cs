@@ -145,28 +145,60 @@ public class MxpDecodingTests
 		await Assert.That(spans[1].Style).IsEqualTo(DisplayStyle.Plain);
 	}
 
-	[Test]
-	public async Task AFlaggedElementClosedAndOpenedAgainOnOneLine_IsTwoElements()
+	/// <summary>The pieces of <paramref name="line"/> under each element, by its number, in order.</summary>
+	private static List<string> ByElement(DisplayLine line)
 	{
-		var (lines, _, decoder) = Decode("\e[1z<!ELEMENT Exit FLAG=RoomExit>\n\e[1z<Exit>north</Exit><Exit>south</Exit>\n");
-		var flags = lines[1].Content.Runs.Select(run => run.Markups.OfType<MxpFlagMarkup>().Single()).ToList();
-		await Assert.That(flags.Count).IsEqualTo(2);
-		await Assert.That(lines[1].Content.ToPlainText().Substring(lines[1].Content.Runs[0].Start, lines[1].Content.Runs[0].Length)).IsEqualTo("north");
-		await Assert.That(flags[0].Flag).IsEqualTo("RoomExit");
-		await Assert.That(flags[1].Flag).IsEqualTo("RoomExit");
-		await Assert.That(flags[0]).IsNotEqualTo(flags[1]);
-		await Assert.That(decoder.OpenElements.Count).IsEqualTo(0);
+		var pieces = new List<string>();
+		ElementMarkup? last = null;
+		foreach (var run in line.Content.Runs)
+		{
+			var element = run.Markups.OfType<ElementMarkup>().FirstOrDefault();
+			var text = line.Content.Text.Substring(run.Start, run.Length);
+			if (element is not null && Equals(element, last)) pieces[^1] += text;
+			else pieces.Add(text);
+			last = element;
+		}
+
+		return pieces;
 	}
 
 	[Test]
-	public async Task AFlagIsStoredAndReadBackWithItsElement()
+	[Arguments("\e[1z<!ELEMENT Exit FLAG=RoomExit>\n\e[1z<Exit>north</Exit><Exit>south</Exit>\n")]
+	[Arguments("\e[1z<SEND href=go>north</SEND><SEND href=go>south</SEND>\n")]
+	[Arguments("\e[1z<SEND \"n|s\">north</SEND><SEND \"n|s\">south</SEND>\n")]
+	[Arguments("\e[1z<A href=\"https://x.org\">north</A><A href=\"https://x.org\">south</A>\n")]
+	[Arguments("\e[1z<VAR hp>north</VAR><VAR hp>south</VAR>\n")]
+	[Arguments("\e[1z<IMAGE north><IMAGE south>\n")]
+	public async Task TwoEqualElementsSideBySide_StayTwo(string input)
 	{
-		var registry = MarkupRegistry.Empty.With(MxpDecoding.FlagCodec);
+		var (lines, _, _) = Decode(input);
+		var line = lines[^1];
+		await Assert.That(ByElement(line)).IsEquivalentTo(new[] { "north", "south" });
+		await Assert.That(SpanRenderer.Render(line.Content, AnsiDisplay.Default, new DisplayOptions()).Count).IsEqualTo(2);
+	}
+
+	[Test]
+	public async Task TwoPicturesOfOneFileSideBySide_AreTwoPictures()
+	{
+		var (lines, _, _) = Decode("\e[1z<IMAGE m.png><IMAGE m.png>\n");
+		var spans = SpanRenderer.Render(lines[0].Content, AnsiDisplay.Default, new DisplayOptions());
+		await Assert.That(spans.Select(span => span.Text)).IsEquivalentTo(new[] { "m.png", "m.png" });
+	}
+
+	[Test]
+	public async Task AnElementStaysOneAcrossItsStyles()
+	{
+		var (lines, _, _) = Decode("\e[1z<SEND href=go>a<B>b</B>c</SEND>\n");
+		await Assert.That(ByElement(lines[0])).IsEquivalentTo(new[] { "abc" });
+	}
+
+	[Test]
+	public async Task AnElementIsStoredAndReadBack()
+	{
+		var registry = MarkupRegistry.Empty.WithAnsi().With(MxpDecoding.FlagCodec);
 		var (lines, _, _) = Decode("\e[10zThe Square\n");
 		var back = MarkupTextSerializer.Deserialize(MarkupTextSerializer.Serialize(lines[0].Content, registry), registry);
-		var flag = Markups(lines[0]).OfType<MxpFlagMarkup>().Single();
-		await Assert.That(flag.Element).IsGreaterThan(0);
-		await Assert.That(back.Runs.Single().Markups.OfType<MxpFlagMarkup>().Single()).IsEqualTo(flag);
+		await Assert.That(back.Runs.Single().Markups).IsEquivalentTo(lines[0].Content.Runs.Single().Markups);
 	}
 
 	[Test]

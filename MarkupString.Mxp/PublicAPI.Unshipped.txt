@@ -3,8 +3,6 @@ MarkupString.Mxp.Decoding.MxpDecoding
 MarkupString.Mxp.Decoding.MxpFlagMarkup
 MarkupString.Mxp.Decoding.MxpFlagMarkup.<Clone>$() -> MarkupString.Mxp.Decoding.MxpFlagMarkup!
 MarkupString.Mxp.Decoding.MxpFlagMarkup.Deconstruct(out string! Flag) -> void
-MarkupString.Mxp.Decoding.MxpFlagMarkup.Element.get -> int
-MarkupString.Mxp.Decoding.MxpFlagMarkup.Element.init -> void
 MarkupString.Mxp.Decoding.MxpFlagMarkup.Equals(MarkupString.Mxp.Decoding.MxpFlagMarkup? other) -> bool
 MarkupString.Mxp.Decoding.MxpFlagMarkup.Flag.get -> string!
 MarkupString.Mxp.Decoding.MxpFlagMarkup.Flag.init -> void

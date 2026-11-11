@@ -205,7 +205,7 @@ internal sealed class PuebloReader : ITextProtocol, ITagSink
 						{
 							// xch_mode=prompt puts the command on the player's input line instead of sending it.
 							// One entry for both, so </a> closes the menu and the link together.
-							OpenElement(name, new CommandMenuMarkup([new CommandChoice(command, command)], hint, Prompt: true), new AnsiMarkup(link.Value));
+							OpenLink(name, new CommandMenuMarkup([new CommandChoice(command, command)], hint, Prompt: true), new AnsiMarkup(link.Value));
 							return true;
 						}
 					}
@@ -214,7 +214,8 @@ internal sealed class PuebloReader : ITextProtocol, ITagSink
 						link = new AnsiStyle { LinkUrl = href, LinkKind = LinkKind.Url, LinkText = hint };
 					}
 
-					OpenElement(name, link is { } style ? new AnsiMarkup(style) : null);
+					if (link is { } style) OpenLink(name, new AnsiMarkup(style));
+					else OpenElement(name, null);
 					return true;
 				}
 			case "send":
@@ -286,7 +287,19 @@ internal sealed class PuebloReader : ITextProtocol, ITagSink
 		int? height = int.TryParse(tag.Get("height"), NumberStyles.None, CultureInfo.InvariantCulture, out var h) && h > 0 ? h : null;
 		var align = Enum.TryParse<ImageAlign>(tag.Get("align"), ignoreCase: true, out var parsed) ? parsed : (ImageAlign?)null;
 		var image = new ImageMarkup(src, string.IsNullOrEmpty(alt) ? null : alt, width, height, align);
-		context.Write(string.IsNullOrEmpty(alt) ? " " : alt, image);
+
+		// Each picture is its own, so two of one file side by side stay two.
+		var element = context.NextElement();
+		var text = string.IsNullOrEmpty(alt) ? " " : alt;
+		if (context.Open(element))
+		{
+			context.Write(text, image);
+			context.Close(element);
+		}
+		else
+		{
+			context.Write(text, image);
+		}
 	}
 
 	private void Pane(ParsedTag tag)
@@ -313,13 +326,25 @@ internal sealed class PuebloReader : ITextProtocol, ITagSink
 		State.Open.Add((name, markup));
 	}
 
-	/// <summary>Opens several markups as one element: closing it closes them all.</summary>
-	private void OpenElement(string name, IMarkup first, IMarkup second)
+	/// <summary>
+	/// Opens a link, or a menu and its link, as one element of its own, so two links to one place side by side stay
+	/// two: closing it closes them all.
+	/// </summary>
+	private void OpenLink(string name, params IMarkup[] markups)
 	{
-		IMarkup? opened = null;
-		if (Context.Open(first)) opened = first;
-		if (Context.Open(second)) opened ??= second;
-		State.Open.Add((name, opened));
+		var element = Context.NextElement();
+		if (!Context.Open(element))
+		{
+			State.Open.Add((name, null));
+			return;
+		}
+
+		foreach (var markup in markups)
+		{
+			if (!Context.Open(markup)) break;
+		}
+
+		State.Open.Add((name, element));
 	}
 
 	/// <summary>
@@ -332,7 +357,7 @@ internal sealed class PuebloReader : ITextProtocol, ITagSink
 		var link = new AnsiMarkup(new AnsiStyle { LinkUrl = commands[0], LinkKind = LinkKind.Command, LinkText = commands.Length == 1 ? hintText : null });
 		if (commands.Length == 1)
 		{
-			OpenElement(name, link);
+			OpenLink(name, link);
 			return;
 		}
 
@@ -356,7 +381,7 @@ internal sealed class PuebloReader : ITextProtocol, ITagSink
 		link = new AnsiMarkup(new AnsiStyle { LinkUrl = commands[0], LinkKind = LinkKind.Command, LinkText = hint });
 		var choices = new CommandChoice[commands.Length];
 		for (var i = 0; i < commands.Length; i++) choices[i] = new CommandChoice(labels[i], commands[i]);
-		OpenElement(name, new CommandMenuMarkup(choices, hint), link);
+		OpenLink(name, new CommandMenuMarkup(choices, hint), link);
 	}
 
 	private void Close(string name)
