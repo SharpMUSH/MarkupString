@@ -8,6 +8,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## 2.28.1 — 2026-11-10
+
 ### Fixed
 
 - MXP: a sequence cancelled by CAN or SUB ends a temporary secure arming (`ESC[4z`), as a finished
