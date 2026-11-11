@@ -8,6 +8,13 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+
+- HTML: reverse video with only one colour now swaps it with the page's default on the other side, as a
+  terminal does. `\e[32;7m` was a green background under the page's text colour; the text is now
+  `var(--ms-bg)`, and `\e[41;7m` gets `var(--ms-fg)` as its background. These are the properties `ms-invert`
+  already swaps.
+
 ## 2.28.0 — 2026-11-10
 
 ### Panes
