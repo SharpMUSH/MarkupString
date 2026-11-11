@@ -33,9 +33,13 @@ public static class SpanRenderer
 		var source = text.Text;
 		var at = 0;
 
+		// The element the last span is in: spans that look alike are one span only within one element, so two pictures
+		// or two links side by side stay two.
+		ElementMarkup? element = null;
+
 		foreach (var run in text.Runs)
 		{
-			if (run.Start > at) Add(spans, source[at..run.Start], DisplayStyle.Plain, fold);
+			if (run.Start > at) Add(spans, source[at..run.Start], DisplayStyle.Plain, fold, null, ref element);
 
 			var point = FindPoint(run.Markups);
 			if (point is not null)
@@ -49,13 +53,13 @@ public static class SpanRenderer
 					styles[run.Markups] = style = registry.Resolve(run.Markups, options);
 				}
 
-				Add(spans, source.Substring(run.Start, run.Length), style, fold);
+				Add(spans, source.Substring(run.Start, run.Length), style, fold, ElementOf(run.Markups), ref element);
 			}
 
 			at = run.End;
 		}
 
-		if (at < source.Length) Add(spans, source[at..], DisplayStyle.Plain, fold);
+		if (at < source.Length) Add(spans, source[at..], DisplayStyle.Plain, fold, null, ref element);
 		return spans;
 	}
 
@@ -127,17 +131,30 @@ public static class SpanRenderer
 		_ => true,
 	};
 
-	private static void Add(List<DisplaySpan> spans, string text, DisplayStyle style, bool fold)
+	private static void Add(List<DisplaySpan> spans, string text, DisplayStyle style, bool fold, ElementMarkup? element, ref ElementMarkup? last)
 	{
 		if (text.Length == 0) return;
 		if (fold) text = AsciiFold.Default.Fold(text);
-		if (spans.Count > 0 && spans[^1] is { Point: null } last && last.Style == style)
+		var same = Equals(element, last);
+		last = element;
+		if (same && spans.Count > 0 && spans[^1] is { Point: null } previous && previous.Style == style)
 		{
-			spans[^1] = last with { Text = last.Text + text };
+			spans[^1] = previous with { Text = previous.Text + text };
 			return;
 		}
 
 		spans.Add(new DisplaySpan(text, style));
+	}
+
+	/// <summary>The innermost element <paramref name="markups"/> are in, or null.</summary>
+	private static ElementMarkup? ElementOf(MarkupSet markups)
+	{
+		foreach (var markup in markups)
+		{
+			if (markup is ElementMarkup element) return element;
+		}
+
+		return null;
 	}
 
 	private static void Append(StringBuilder css, string property, string value)
