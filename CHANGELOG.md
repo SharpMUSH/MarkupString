@@ -8,6 +8,13 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+
+- MXP: a flagged element closed and opened again on the same line (`<Exit>north</Exit><Exit>south</Exit>`)
+  is two runs. Before, the two were merged into one run, so a client reading flags saw one exit named
+  `northsouth`. `MxpFlagMarkup` gains `Element`, the decoder's number for the element, which the flag codec
+  stores.
+
 ## 2.28.1 — 2026-11-10
 
 ### Fixed

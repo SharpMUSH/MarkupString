@@ -12,6 +12,13 @@ namespace MarkupString.Mxp.Decoding;
 /// <param name="Flag">The flag, as the server named it, such as <c>RoomName</c>.</param>
 public sealed record MxpFlagMarkup(string Flag) : IDataMarkup
 {
+	/// <summary>
+	/// Which element this is, numbered by the decoder from 1 as elements open. Two elements with the same flag
+	/// differ by it, so one closed and another opened on the same line are two runs rather than one. 0 when it was
+	/// not made by a decoder.
+	/// </summary>
+	public int Element { get; init; }
+
 	/// <summary>A room's name (line tag 10).</summary>
 	public const string RoomName = "RoomName";
 
@@ -145,10 +152,18 @@ public static class MxpDecoding
 
 		public Type MarkupType => typeof(MxpFlagMarkup);
 
-		public void Write(Utf8JsonWriter writer, IMarkup markup) => writer.WriteString("f", ((MxpFlagMarkup)markup).Flag);
+		public void Write(Utf8JsonWriter writer, IMarkup markup)
+		{
+			var flag = (MxpFlagMarkup)markup;
+			writer.WriteString("f", flag.Flag);
+			if (flag.Element != 0) writer.WriteNumber("e", flag.Element);
+		}
 
 		public IMarkup Read(JsonElement element) =>
-			new MxpFlagMarkup(element.TryGetProperty("f", out var flag) && flag.ValueKind == JsonValueKind.String ? flag.GetString()! : string.Empty);
+			new MxpFlagMarkup(element.TryGetProperty("f", out var flag) && flag.ValueKind == JsonValueKind.String ? flag.GetString()! : string.Empty)
+			{
+				Element = element.TryGetProperty("e", out var number) && number.TryGetInt32(out var value) ? value : 0,
+			};
 	}
 }
 
@@ -291,6 +306,9 @@ internal sealed class MxpState
 
 	public int ExpansionsThisLine { get; set; }
 
+	/// <summary>The flagged elements opened so far, which numbers the next (<see cref="MxpFlagMarkup.Element"/>).</summary>
+	public int FlagElements { get; set; }
+
 	public string? StyleVersion { get; set; }
 
 	/// <summary>The frame a FRAME redirect sent lines to, so turning MXP off sends them back to the main window.</summary>
@@ -410,7 +428,7 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 				{
 					LeaveOpen(context);
 					state.Line = MxpMode.Secure;
-					var markup = new MxpFlagMarkup(flag);
+					var markup = new MxpFlagMarkup(flag) { Element = ++state.FlagElements };
 					if (context.Open(markup)) state.Open.Add(new MxpOpenElement(flag, markup, openMode: false, lineTag: true));
 				}
 
@@ -801,7 +819,7 @@ internal sealed class MxpReader(MxpOptions options) : ITextProtocol, ITagSink, I
 		var before = Context.Elements.Count;
 		var opened = state.Open.Count;
 
-		if (definition.Flag is { } flag) Context.Open(new MxpFlagMarkup(flag));
+		if (definition.Flag is { } flag) Context.Open(new MxpFlagMarkup(flag) { Element = ++state.FlagElements });
 
 		// The definition's tags, with the element's attributes put in for &name;, run as secure tags.
 		var expanded = Expand(definition, tag);

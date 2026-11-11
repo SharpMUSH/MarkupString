@@ -146,6 +146,30 @@ public class MxpDecodingTests
 	}
 
 	[Test]
+	public async Task AFlaggedElementClosedAndOpenedAgainOnOneLine_IsTwoElements()
+	{
+		var (lines, _, decoder) = Decode("\e[1z<!ELEMENT Exit FLAG=RoomExit>\n\e[1z<Exit>north</Exit><Exit>south</Exit>\n");
+		var flags = lines[1].Content.Runs.Select(run => run.Markups.OfType<MxpFlagMarkup>().Single()).ToList();
+		await Assert.That(flags.Count).IsEqualTo(2);
+		await Assert.That(lines[1].Content.ToPlainText().Substring(lines[1].Content.Runs[0].Start, lines[1].Content.Runs[0].Length)).IsEqualTo("north");
+		await Assert.That(flags[0].Flag).IsEqualTo("RoomExit");
+		await Assert.That(flags[1].Flag).IsEqualTo("RoomExit");
+		await Assert.That(flags[0]).IsNotEqualTo(flags[1]);
+		await Assert.That(decoder.OpenElements.Count).IsEqualTo(0);
+	}
+
+	[Test]
+	public async Task AFlagIsStoredAndReadBackWithItsElement()
+	{
+		var registry = MarkupRegistry.Empty.With(MxpDecoding.FlagCodec);
+		var (lines, _, _) = Decode("\e[10zThe Square\n");
+		var back = MarkupTextSerializer.Deserialize(MarkupTextSerializer.Serialize(lines[0].Content, registry), registry);
+		var flag = Markups(lines[0]).OfType<MxpFlagMarkup>().Single();
+		await Assert.That(flag.Element).IsGreaterThan(0);
+		await Assert.That(back.Runs.Single().Markups.OfType<MxpFlagMarkup>().Single()).IsEqualTo(flag);
+	}
+
+	[Test]
 	public async Task LineTags_MarkTheLine()
 	{
 		var (lines, _, _) = Decode("\e[10zThe Square\nnext\n");
