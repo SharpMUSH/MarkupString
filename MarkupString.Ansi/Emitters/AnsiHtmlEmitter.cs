@@ -41,6 +41,15 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 		var foregroundSlot = SlotOf(foreground);
 		var backgroundSlot = SlotOf(background);
 		var hasStyle = foregroundHex.Length > 0 || backgroundHex.Length > 0;
+
+		// Reverse video with one colour swaps it with the page's default on the other side, as a terminal
+		// does: the default background becomes the text colour, or the default text colour the background.
+		// These are the properties ms-invert swaps with, so both cases agree.
+		if (hasStyle && style.Inverted)
+		{
+			if (foregroundHex.Length == 0) foregroundHex = InvertedForeground;
+			if (backgroundHex.Length == 0) backgroundHex = InvertedBackground;
+		}
 		var hasClasses = HasClasses(style, hasStyle);
 
 		if (!hasStyle && !hasClasses)
@@ -79,6 +88,12 @@ public sealed class AnsiHtmlEmitter : IMarkupSetEmitter
 		WriteAnchored(style, body, context.Registry.Links, output);
 		output.Write("</span>");
 	}
+
+	/// <summary>The text colour of reverse video whose background is the default: the page's background.</summary>
+	private const string InvertedForeground = "var(--ms-bg, #000)";
+
+	/// <summary>The background of reverse video whose text colour is the default: the page's text colour.</summary>
+	private const string InvertedBackground = "var(--ms-fg, #fff)";
 
 	/// <summary>The standard colour, 0-15, <paramref name="color"/> is, or -1 for any other.</summary>
 	private static int SlotOf(AnsiColor? color) => color switch
