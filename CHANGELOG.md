@@ -20,6 +20,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- A screen reader hears one row of a fixed-width table as one line. `BlockLayout.Relayout` with
+  `LayoutContext.Linear` now wraps a block that is not fluid at the reader's width, as it does a fluid one;
+  before, it wrapped at the width the block's columns took, so a 35-cell WHO listing broke each player's row in two. The same holds for one nested in another block (`Bounded`).
 - Two equal elements side by side stay two. Before, an element closed and an equal one opened straight after it
   became one run, so a client saw one thing where the server sent two. This happened with two exits of one
   flagged element (`<Exit>north</Exit><Exit>south</Exit>` read as one exit, `northsouth`), two `<SEND>`s, `<A>`s

@@ -105,7 +105,8 @@ public static class BlockLayout
 
 	/// <summary>
 	/// <paramref name="text"/> with every intact block laid out again under <paramref name="context"/>:
-	/// a <see cref="LayoutMarkup.Fluid"/> block at <paramref name="width"/>, any other at its own width.
+	/// a <see cref="LayoutMarkup.Fluid"/> block at <paramref name="width"/>, and any block read in order
+	/// (<see cref="LayoutContext.Linear"/>) too; any other at its own width.
 	/// A block that was cut, edited or shares a line with other text is left as it is.
 	/// </summary>
 	/// <param name="text">The text.</param>
@@ -120,7 +121,9 @@ public static class BlockLayout
 		foreach (var region in BlockRegions.Find(text))
 		{
 			if (region.Markup is not LayoutMarkup layout || !region.Intact || !region.Standalone) continue;
-			var target = layout.Fluid && width > 0 ? width : layout.Width;
+			// A screen reader hears a fixed-width block in reading order, so its lines wrap at the reader's
+			// width, not at the width its columns took: one row of a table stays one line.
+			var target = (layout.Fluid || context.Linear) && width > 0 ? width : layout.Width;
 			if (target == layout.Width && context == LayoutContext.Default) continue;
 			edits.Add((region.Start, region.End - region.Start, Build(layout.Root, target, layout.Fluid, context)));
 		}
