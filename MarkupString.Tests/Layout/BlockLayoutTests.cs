@@ -211,6 +211,20 @@ public class BlockLayoutTests
 	}
 
 	[Test]
+	public async Task Linear_ReadsAFixedWidthTableRowAsOneLineAtTheReadersWidth()
+	{
+		// A WHO listing is laid out at its own width (not fluid); read aloud, its one row is one line.
+		var table = new Table([new TableColumn(P("Player Name")) { Min = 16 }, new TableColumn(P("On For")) { Min = 10, Alignment = Alignment.Right }, new TableColumn(P("Idle ")) { Min = 7, Alignment = Alignment.Right }],
+			[[P("Marguerite"), P("7s"), P("0s")]])
+		{ Gap = 1 };
+		var text = BlockLayout.Build(table, 35);
+
+		var read = BlockLayout.Relayout(text, 78, new LayoutContext { Linear = true });
+
+		await Assert.That(read.ToPlainText()).IsEqualTo("Player Name: Marguerite, On For: 7s, Idle: 0s");
+	}
+
+	[Test]
 	public async Task Flex_StacksWhenItemsDoNotFit()
 	{
 		var flex = new Flex(
