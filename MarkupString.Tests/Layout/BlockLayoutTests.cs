@@ -225,6 +225,19 @@ public class BlockLayoutTests
 	}
 
 	[Test]
+	public async Task Linear_ReadsANestedFixedWidthTableRowAsOneLine()
+	{
+		// The same listing nested in a fluid block keeps its own width (Bounded); read aloud, it still reads as one line.
+		var table = new Table([new TableColumn(P("Player Name")) { Min = 16 }, new TableColumn(P("On For")) { Min = 10, Alignment = Alignment.Right }],
+			[[P("Marguerite"), P("7s")]]);
+		var text = BlockLayout.Build(new Bounded(table, 20), 78, fluid: true);
+
+		var read = BlockLayout.Relayout(text, 78, new LayoutContext { Linear = true });
+
+		await Assert.That(read.ToPlainText()).IsEqualTo("Player Name: Marguerite, On For: 7s");
+	}
+
+	[Test]
 	public async Task Flex_StacksWhenItemsDoNotFit()
 	{
 		var flex = new Flex(

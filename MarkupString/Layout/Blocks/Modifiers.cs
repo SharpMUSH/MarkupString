@@ -120,6 +120,11 @@ public sealed record Bounded(Block Content, int Width) : Block
 		context.Draw(Content, Math.Min(width, Math.Max(1, Width)), lines);
 
 	/// <inheritdoc/>
+	/// <remarks>Read in order, its content wraps at the reader's width: the bound keeps columns, which a reader does not hear.</remarks>
+	public override void DrawLinear(LayoutContext context, int width, IList<MarkupText> lines) =>
+		context.Draw(Content, width, lines);
+
+	/// <inheritdoc/>
 	public override BlockMeasure Measure(LayoutContext context, int width)
 	{
 		ArgumentNullException.ThrowIfNull(context);
