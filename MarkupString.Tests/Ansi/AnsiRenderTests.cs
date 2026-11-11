@@ -175,7 +175,16 @@ public class AnsiRenderTests
 		var markup = AnsiMarkup.Create(foreground: new AnsiColor.Rgb(255, 0, 0), inverted: true);
 		var text = MarkupText.Wrap(markup, "x");
 		await Assert.That(Render(text, MarkupFormat.Html))
-			.IsEqualTo("<span style=\"background-color: #ff0000\">x</span>");
+			.IsEqualTo("<span style=\"color: var(--ms-bg, #000); background-color: #ff0000\">x</span>");
+	}
+
+	[Test]
+	public async Task Html_InvertedWithOnlyBackground_MovesItToTheText()
+	{
+		var markup = AnsiMarkup.Create(background: new AnsiColor.Rgb(0, 0, 255), inverted: true);
+		var text = MarkupText.Wrap(markup, "x");
+		await Assert.That(Render(text, MarkupFormat.Html))
+			.IsEqualTo("<span style=\"color: #0000ff; background-color: var(--ms-fg, #fff)\">x</span>");
 	}
 
 	[Test]
