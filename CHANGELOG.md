@@ -8,6 +8,14 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+
+- `UrlPolicy.RefusingControlCharacters()`: the same policy, also refusing a link address that holds a
+  control character (U+0000–U+001F, U+007F–U+009F) or starts or ends with a space. A browser removes those
+  before reading the scheme, so an MXP or Pueblo `href="java&#9;script:alert(1)"` passes `UrlPolicy.Safe` as a
+  relative address and runs as `javascript:` when clicked. Opt-in; `UrlPolicy.Safe` is unchanged.
+  `MarkupStringOptions.RefuseControlCharactersInLinks` turns it on for `AddMarkupString`.
+
 ## 2.28.1 — 2026-11-10
 
 ### Fixed

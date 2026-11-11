@@ -862,3 +862,5 @@ MarkupString.Layout.BorderStyle.Cross.get -> MarkupString.MarkupText!
 MarkupString.Layout.BorderStyle.Cross.init -> void
 MarkupString.Layout.Flex.Join.get -> bool
 MarkupString.Layout.Flex.Join.init -> void
+MarkupString.UrlPolicy.RefusesControlCharacters.get -> bool
+MarkupString.UrlPolicy.RefusingControlCharacters() -> MarkupString.UrlPolicy!
