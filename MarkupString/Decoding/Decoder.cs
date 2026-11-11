@@ -232,7 +232,12 @@ public sealed class Decoder
 			decoder.Diagnostics.UnhandledSequences++;
 		}
 
-		public void Abandoned(VtSequenceKind kind) => decoder.Diagnostics.AbandonedSequences++;
+		public void Abandoned(VtSequenceKind kind)
+		{
+			// A cancelled sequence was still a sequence: it ends a temporary secure arming as a finished one does.
+			Context.SequenceSeen();
+			decoder.Diagnostics.AbandonedSequences++;
+		}
 	}
 }
 

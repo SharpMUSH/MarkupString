@@ -466,6 +466,8 @@ public class MxpDecodingTests
 	[Arguments("\e]0;title\a")]
 	[Arguments("\e[0z")]
 	[Arguments("&amp;")]
+	[Arguments("\e[1\u0018")] // a CSI cancelled by CAN
+	[Arguments("\e[1\u001a")] // a CSI cancelled by SUB
 	public async Task TemporarySecure_IsEndedByAnythingBeforeItsTag(string between)
 	{
 		var (lines, _, _) = Decode("\e[4z" + between + "<SEND HREF=\"@shutdown\">click</SEND>\n");

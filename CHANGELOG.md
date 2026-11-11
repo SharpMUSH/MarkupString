@@ -10,6 +10,8 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- MXP: a sequence cancelled by CAN or SUB ends a temporary secure arming (`ESC[4z`), as a finished
+  sequence does. Before, `ESC[4z ESC[1 CAN` left it armed for the next tag, so a `<SEND>` after it was honoured.
 - HTML: reverse video with only one colour now swaps it with the page's default on the other side, as a
   terminal does. `\e[32;7m` was a green background under the page's text colour; the text is now
   `var(--ms-bg)`, and `\e[41;7m` gets `var(--ms-fg)` as its background. These are the properties `ms-invert`
