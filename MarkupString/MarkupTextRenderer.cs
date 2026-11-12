@@ -471,7 +471,7 @@ public static class MarkupTextRenderer
 	private static int CountPoints(MarkupSet markups)
 	{
 		var points = 0;
-		foreach (var markup in markups)
+		foreach (var markup in markups.Items)
 			if (markup is IPointMarkup) points++;
 		return points;
 	}
@@ -491,7 +491,7 @@ public static class MarkupTextRenderer
 		IBufferWriter<char> output)
 	{
 		var written = false;
-		foreach (var markup in markups)
+		foreach (var markup in markups.Items)
 		{
 			if (markup is not IPointMarkup point) continue;
 
@@ -510,13 +510,13 @@ public static class MarkupTextRenderer
 	private static MarkupSet? WithoutData(MarkupSet markups)
 	{
 		var data = 0;
-		foreach (var markup in markups)
+		foreach (var markup in markups.Items)
 			if (markup is IDataMarkup) data++;
 		if (data == 0) return markups;
 		if (data == markups.Count) return null;
 
 		var rest = new List<IMarkup>(markups.Count - data);
-		foreach (var markup in markups)
+		foreach (var markup in markups.Items)
 			if (markup is not IDataMarkup) rest.Add(markup);
 		return MarkupSet.Of(rest);
 	}
@@ -527,7 +527,7 @@ public static class MarkupTextRenderer
 		if (markups.Count == points) return null;
 
 		var rest = new List<IMarkup>(markups.Count - points);
-		foreach (var markup in markups)
+		foreach (var markup in markups.Items)
 			if (markup is not IPointMarkup) rest.Add(markup);
 		return MarkupSet.Of(rest);
 	}

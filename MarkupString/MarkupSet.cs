@@ -139,6 +139,9 @@ public sealed class MarkupSet : IEquatable<MarkupSet>, IReadOnlyList<IMarkup>
 		return canonical;
 	}
 
+	/// <summary>The layers, innermost first, without boxing an enumerator as <see cref="GetEnumerator"/> does.</summary>
+	internal ReadOnlySpan<IMarkup> Items => _items;
+
 	public int Count => _items.Length;
 	public IMarkup this[int index] => _items[index];
 	public IMarkup Innermost => _items[0];

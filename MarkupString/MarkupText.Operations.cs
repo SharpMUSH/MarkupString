@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Collections.Immutable;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -77,9 +78,22 @@ public sealed partial class MarkupText
 		// Text with no runs has none to clip: no builder to fill, and an empty array to share.
 		if (Runs.IsDefaultOrEmpty) return new MarkupText(Text[from..to], ImmutableArray<Run>.Empty);
 
-		var runs = ImmutableArray.CreateBuilder<Run>();
-		ClipInto(from, to, -from, runs);
-		return new MarkupText(Text[from..to], runs.ToImmutable());
+		// Runs are sorted and disjoint, so the ones overlapping [from, to) are a contiguous slice:
+		// size the result exactly instead of growing a default builder and copying it out.
+		var first = FirstRunIndexAt(from);
+		if (Runs[first].End <= from) first++;
+		var last = first;
+		while (last < Runs.Length && Runs[last].Start < to) last++;
+		if (last == first) return new MarkupText(Text[from..to], ImmutableArray<Run>.Empty);
+
+		var clipped = new Run[last - first];
+		for (var i = first; i < last; i++)
+		{
+			var run = Runs[i];
+			var start = Math.Max(run.Start, from);
+			clipped[i - first] = new Run(start - from, Math.Min(run.End, to) - start, run.Markups);
+		}
+		return new MarkupText(Text[from..to], ImmutableCollectionsMarshal.AsImmutableArray(clipped));
 	}
 
 	/// <summary>
@@ -176,29 +190,61 @@ public sealed partial class MarkupText
 	public MarkupText[] Split(MarkupText delimiter) => Split(delimiter.Text);
 
 	/// <summary>
+	/// Splits on the plain text of <paramref name="delimiter"/>, its markup ignored, as
+	/// <see cref="Split(string, StringSplitOptions)"/> does.
+	/// </summary>
+	public MarkupText[] Split(MarkupText delimiter, StringSplitOptions options) => Split(delimiter.Text, options);
+
+	/// <summary>
 	/// Splits on every non-overlapping ordinal occurrence of <paramref name="delimiter"/>. An
 	/// empty text yields no segments; an empty delimiter yields this text unsplit.
 	/// </summary>
-	public MarkupText[] Split(string delimiter)
+	public MarkupText[] Split(string delimiter) => Split(delimiter, StringSplitOptions.None);
+
+	/// <summary>
+	/// Splits on every non-overlapping ordinal occurrence of <paramref name="delimiter"/>, as
+	/// <see cref="Split(string)"/> does, then applies <paramref name="options"/> to each segment in
+	/// the same pass: <see cref="StringSplitOptions.TrimEntries"/> drops white space
+	/// (<see cref="char.IsWhiteSpace(char)"/>) from both ends of a segment, and
+	/// <see cref="StringSplitOptions.RemoveEmptyEntries"/> leaves out segments that are empty, after
+	/// trimming when both are given. Splitting a list on spaces with
+	/// <see cref="StringSplitOptions.RemoveEmptyEntries"/> gives its words without filtering a second
+	/// array.
+	/// </summary>
+	/// <exception cref="ArgumentException"><paramref name="options"/> holds an undefined flag.</exception>
+	public MarkupText[] Split(string delimiter, StringSplitOptions options)
 	{
 		ArgumentNullException.ThrowIfNull(delimiter);
-		if (Length == 0) return [];
-		if (delimiter.Length == 0) return [this];
+		const StringSplitOptions all = StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries;
+		if ((options & ~all) != 0) throw new ArgumentException($"Undefined flags: {options & ~all}.", nameof(options));
+		var removeEmpty = (options & StringSplitOptions.RemoveEmptyEntries) != 0;
+		var trim = (options & StringSplitOptions.TrimEntries) != 0;
 
+		if (Length == 0) return [];
+		var text = Text;
 		// Counting first sizes the result exactly, so there is no list of positions to grow and copy.
-		var count = Text.AsSpan().Count(delimiter.AsSpan());
-		if (count == 0) return [this];
+		var count = delimiter.Length == 0 ? 0 : text.AsSpan().Count(delimiter.AsSpan());
+		if (count == 0 && !trim) return [this];
 
 		var segments = new MarkupText[count + 1];
+		var kept = 0;
 		var cursor = 0;
-		for (var i = 0; i < count; i++)
+		for (var i = 0; i <= count; i++)
 		{
-			var found = Text.IndexOf(delimiter, cursor, StringComparison.Ordinal);
-			segments[i] = Substring(cursor, found - cursor);
+			var found = i < count ? text.IndexOf(delimiter, cursor, StringComparison.Ordinal) : text.Length;
+			var start = cursor;
+			var end = found;
+			if (trim)
+			{
+				while (start < end && char.IsWhiteSpace(text[start])) start++;
+				while (end > start && char.IsWhiteSpace(text[end - 1])) end--;
+			}
+			// The last segment runs to the end of the text, so take it as Substring(start) does.
+			var segment = start == end ? Empty : end == text.Length ? Substring(start) : Substring(start, end - start);
+			if (!removeEmpty || segment.Length > 0) segments[kept++] = segment;
 			cursor = found + delimiter.Length;
 		}
-		segments[^1] = Substring(cursor);
-		return segments;
+		return kept == segments.Length ? segments : segments[..kept];
 	}
 
 	/// <summary>Removes leading and/or trailing spaces from the requested end(s).</summary>
@@ -217,10 +263,11 @@ public sealed partial class MarkupText
 
 		var start = 0;
 		var end = Length;
+		// CharAt rather than Text: trimming an accumulator that has nothing to trim must not join it.
 		if (type is TrimType.TrimStart or TrimType.TrimBoth)
-			while (start < end && chars.Contains(Text[start])) start++;
+			while (start < end && chars.Contains(CharAt(start))) start++;
 		if (type is TrimType.TrimEnd or TrimType.TrimBoth)
-			while (end > start && chars.Contains(Text[end - 1])) end--;
+			while (end > start && chars.Contains(CharAt(end - 1))) end--;
 
 		return start == 0 && end == Length ? this : Substring(start, end - start);
 	}
@@ -305,7 +352,7 @@ public sealed partial class MarkupText
 		if (Runs.IsDefaultOrEmpty) return new MarkupText(text, ImmutableArray<Run>.Empty);
 		// One style over the whole text: the copies would coalesce into one run anyway. A point
 		// marks a single carrier, so its copies stay apart.
-		if (Runs is [{ Start: 0 } whole] && whole.Length == Length && !whole.Markups.Any(m => m is IPointMarkup))
+		if (Runs is [{ Start: 0 } whole] && whole.Length == Length && !HasPoint(whole.Markups))
 			return new MarkupText(text, [new Run(0, text.Length, whole.Markups)]);
 
 		var runs = ImmutableArray.CreateBuilder<Run>(Runs.Length * count);
@@ -372,37 +419,90 @@ public sealed partial class MarkupText
 	{
 		if (edits.Length == 0) return this;
 
-		var text = new StringBuilder(Length);
-		var runs = ImmutableArray.CreateBuilder<Run>();
-		var position = 0;
-		var previousEnd = 0;
-		foreach (var edit in edits)
+		var source = Text;
+		int[]? rented = null;
+		var ranges = edits.Length <= 64
+			? stackalloc int[edits.Length * 2]
+			: (rented = ArrayPool<int>.Shared.Rent(edits.Length * 2)).AsSpan(0, edits.Length * 2);
+		try
 		{
-			if (edit.Start < 0 || edit.Start > Length)
-				throw new ArgumentOutOfRangeException(nameof(edits), edit.Start, "Edit starts outside the text.");
-			if (edit.Length < 0 || edit.Length > Length - edit.Start)
-				throw new ArgumentOutOfRangeException(nameof(edits), edit.Length, "Edit ends outside the text.");
-			if (edit.Start < previousEnd)
-				throw new ArgumentException("Edits must be sorted by start and must not overlap.", nameof(edits));
-			previousEnd = edit.Start + edit.Length;
+			// Pass 1: check, snap each range outward to cluster boundaries, and size the result, so the
+			// text is written once at its final length instead of through a growing builder.
+			var position = 0;
+			var previousEnd = 0;
+			var length = 0;
+			var runCount = Runs.Length + edits.Length;
+			for (var i = 0; i < edits.Length; i++)
+			{
+				var edit = edits[i];
+				if (edit.Start < 0 || edit.Start > Length)
+					throw new ArgumentOutOfRangeException(nameof(edits), edit.Start, "Edit starts outside the text.");
+				if (edit.Length < 0 || edit.Length > Length - edit.Start)
+					throw new ArgumentOutOfRangeException(nameof(edits), edit.Length, "Edit ends outside the text.");
+				if (edit.Start < previousEnd)
+					throw new ArgumentException("Edits must be sorted by start and must not overlap.", nameof(edits));
+				previousEnd = edit.Start + edit.Length;
 
-			var start = Math.Max(position, Graphemes.SnapStart(Text, edit.Start));
-			var end = edit.Length == 0 ? start : Math.Max(start, Graphemes.SnapEnd(Text, edit.Start + edit.Length));
+				var start = Math.Max(position, Graphemes.SnapStart(source, edit.Start));
+				var end = edit.Length == 0 ? start : Math.Max(start, Graphemes.SnapEnd(source, edit.Start + edit.Length));
+				ranges[i * 2] = start;
+				ranges[i * 2 + 1] = end;
 
-			ClipInto(position, start, text.Length - position, runs);
-			text.Append(Text, position, start - position);
+				var replacement = edit.Replacement ?? Empty;
+				length = checked(length + (start - position) + replacement.Length);
+				runCount += replacement.Runs.Length;
+				position = end;
+			}
+			length = checked(length + (Length - position));
 
-			var replacement = edit.Replacement ?? Empty;
-			var offset = text.Length;
-			text.Append(replacement.Text);
-			foreach (var run in replacement.Runs) runs.Add(run with { Start = run.Start + offset });
+			// Pass 2: the text.
+			var text = string.Create(length, new SpliceState(source, edits, ranges), static (span, state) =>
+			{
+				var from = 0;
+				var written = 0;
+				for (var i = 0; i < state.Edits.Length; i++)
+				{
+					var start = state.Ranges[i * 2];
+					state.Source.AsSpan(from, start - from).CopyTo(span[written..]);
+					written += start - from;
+					var replacement = (state.Edits[i].Replacement ?? Empty).Text;
+					replacement.AsSpan().CopyTo(span[written..]);
+					written += replacement.Length;
+					from = state.Ranges[i * 2 + 1];
+				}
+				state.Source.AsSpan(from).CopyTo(span[written..]);
+			});
 
-			position = end;
+			// Pass 3: the runs, unless neither side has any.
+			if (Runs.IsDefaultOrEmpty && runCount == edits.Length) return new MarkupText(text, ImmutableArray<Run>.Empty);
+
+			var runs = ImmutableArray.CreateBuilder<Run>(runCount);
+			position = 0;
+			var output = 0;
+			for (var i = 0; i < edits.Length; i++)
+			{
+				var start = ranges[i * 2];
+				ClipInto(position, start, output - position, runs);
+				output += start - position;
+				var replacement = edits[i].Replacement ?? Empty;
+				foreach (var run in replacement.Runs) runs.Add(run with { Start = run.Start + output });
+				output += replacement.Length;
+				position = ranges[i * 2 + 1];
+			}
+			ClipInto(position, Length, output - position, runs);
+			return new MarkupText(text, runs.Count == runs.Capacity ? runs.MoveToImmutable() : runs.ToImmutable());
 		}
+		finally
+		{
+			if (rented is not null) ArrayPool<int>.Shared.Return(rented);
+		}
+	}
 
-		ClipInto(position, Length, text.Length - position, runs);
-		text.Append(Text, position, Length - position);
-		return new MarkupText(text.ToString(), runs.ToImmutable());
+	private readonly ref struct SpliceState(string source, ReadOnlySpan<Edit> edits, ReadOnlySpan<int> ranges)
+	{
+		public string Source { get; } = source;
+		public ReadOnlySpan<Edit> Edits { get; } = edits;
+		public ReadOnlySpan<int> Ranges { get; } = ranges;
 	}
 
 	/// <summary>
@@ -541,6 +641,13 @@ public sealed partial class MarkupText
 		return result;
 	}
 
+	private static bool HasPoint(MarkupSet markups)
+	{
+		foreach (var markup in markups.Items)
+			if (markup is IPointMarkup) return true;
+		return false;
+	}
+
 	/// <summary>Layers <paramref name="outer"/> over every run and gap of <paramref name="inner"/>.</summary>
 	private static MarkupText WrapWith(MarkupText inner, MarkupSet outer)
 	{
@@ -559,7 +666,7 @@ public sealed partial class MarkupText
 	private static MarkupSet Layer(MarkupSet inner, MarkupSet outer)
 	{
 		var result = inner;
-		foreach (var markup in outer) result = result.Append(markup);
+		foreach (var markup in outer.Items) result = result.Append(markup);
 		return result;
 	}
 }

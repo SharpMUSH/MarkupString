@@ -253,7 +253,7 @@ public sealed class AsciiFold
 	{
 		List<(int Start, int End)>? ranges = null;
 		foreach (var run in runs)
-			foreach (var markup in run.Markups)
+			foreach (var markup in run.Markups.Items)
 				if (markup is IPointMarkup)
 				{
 					(ranges ??= []).Add((run.Start, run.End));
@@ -275,7 +275,7 @@ public sealed class AsciiFold
 			StandInMarkup? found = null;
 			// One whose text is not printable ASCII (built directly, or read from the wire) is ignored, so the
 			// covered text folds as any other would.
-			foreach (var markup in run.Markups)
+			foreach (var markup in run.Markups.Items)
 				if (markup is StandInMarkup standIn && IsPrintableAscii(standIn.Text))
 				{
 					found = standIn;
