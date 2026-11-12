@@ -878,3 +878,5 @@ override MarkupString.ElementMarkup.ToString() -> string!
 static MarkupString.ElementMarkup.operator !=(MarkupString.ElementMarkup? left, MarkupString.ElementMarkup? right) -> bool
 static MarkupString.ElementMarkup.operator ==(MarkupString.ElementMarkup? left, MarkupString.ElementMarkup? right) -> bool
 override MarkupString.Layout.Bounded.DrawLinear(MarkupString.Layout.LayoutContext! context, int width, System.Collections.Generic.IList<MarkupString.MarkupText!>! lines) -> void
+MarkupString.MarkupText.Split(MarkupString.MarkupText! delimiter, System.StringSplitOptions options) -> MarkupString.MarkupText![]!
+MarkupString.MarkupText.Split(string! delimiter, System.StringSplitOptions options) -> MarkupString.MarkupText![]!

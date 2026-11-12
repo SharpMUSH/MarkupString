@@ -148,7 +148,7 @@ public static class MarkupTextSerializer
 			foreach (var markups in palette)
 			{
 				writer.WriteStartArray();
-				foreach (var markup in markups) WriteMarkup(writer, markup, registry);
+				foreach (var markup in markups.Items) WriteMarkup(writer, markup, registry);
 				writer.WriteEndArray();
 			}
 			writer.WriteEndArray();

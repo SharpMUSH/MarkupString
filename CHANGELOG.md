@@ -17,6 +17,22 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `MarkupStringOptions.RefuseControlCharactersInLinks` turns it on for `AddMarkupString`.
 - `ElementMarkup`, data markup that numbers the element text is in, and `DecodeContext.NextElement()`. Stored by
   the serializer like the other shared markup.
+- `MarkupText.Split(string, StringSplitOptions)` and `Split(MarkupText, StringSplitOptions)`.
+  `RemoveEmptyEntries` drops empty segments and `TrimEntries` trims white space off each, in the same pass
+  as the split, so splitting a list into its words no longer needs a second array to filter.
+
+### Changed
+
+- Appending to long text no longer copies it. `MarkupText.Concat` of 1,024 characters or more keeps its
+  parts and joins them the first time `Text` or `Runs` is read; `Length` and `Trim` with nothing to trim
+  don't join. A softcode accumulator (`setq(0,%q0…)` or `fold()` over 1,000 items) went from about 50 MB
+  to about 3 MB allocated per call in SharpMUSH. `Text`, `Runs` and the serializer see the same values as
+  before, and a text read from several threads at once is joined safely.
+- `Splice`, and `Insert`, `Remove`, `Replace` and `ReplaceAll` on top of it, write the result once at its
+  final length instead of through a growing builder: about a third less allocated per `edit()`.
+- `Substring` and `Split` on styled text copy the runs they keep into an array of exactly that size.
+  Splitting a list of 1,000 coloured words allocates 132 KB instead of 312 KB.
+- Enumerating a `MarkupSet` inside the library no longer boxes an enumerator.
 
 ### Fixed
 

@@ -14,9 +14,131 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 	public static readonly MarkupText Space = new(" ", ImmutableArray<Run>.Empty);
 	public static readonly MarkupText NewLine = new("\n", ImmutableArray<Run>.Empty);
 
-	public string Text { get; }
-	public ImmutableArray<Run> Runs { get; }
-	public int Length => Text.Length;
+	/// <summary>The characters. On text built by a deferred concatenation, the first read joins the parts.</summary>
+	public string Text => Volatile.Read(ref _payload) as string ?? Flatten();
+
+	/// <summary>The styled spans over <see cref="Text"/>, sorted and coalesced.</summary>
+	public ImmutableArray<Run> Runs
+	{
+		get
+		{
+			if (Volatile.Read(ref _payload) is not string) Flatten();
+			return _runs;
+		}
+	}
+
+	public int Length => Volatile.Read(ref _payload) switch
+	{
+		// One read: another thread may join the parts between two reads of the field.
+		string text => text.Length,
+		var deferred => ((Deferred)deferred).Length,
+	};
+
+	/// <summary>
+	/// The text as a <see cref="string"/>, or, until the first read joins them, a <see cref="Deferred"/>
+	/// concatenation. One field for both keeps every MarkupText the size it was.
+	/// </summary>
+	private object _payload;
+
+	/// <summary>The parts of a concatenation not yet joined, and their total length.</summary>
+	private sealed class Deferred(MarkupText[] parts, int length)
+	{
+		public readonly MarkupText[] Parts = parts;
+		public readonly int Length = length;
+	}
+	private ImmutableArray<Run> _runs;
+
+	/// <summary>Whether this text is a concatenation that has not been joined yet.</summary>
+	internal bool IsDeferred => Volatile.Read(ref _payload) is Deferred;
+
+	/// <summary>
+	/// The length from which <see cref="Concat(MarkupText, MarkupText)"/> records its parts instead of
+	/// copying them. Below it a copy is cheap and the string is likely to be read soon anyway.
+	/// </summary>
+	internal const int DeferThreshold = 1024;
+
+	private MarkupText(MarkupText[] parts, int length)
+	{
+		_payload = new Deferred(parts, length);
+	}
+
+	/// <summary>
+	/// The character at <paramref name="index"/>, found without joining a deferred concatenation. The
+	/// last character of an accumulator is one step away; the first is as deep as the chain.
+	/// </summary>
+	private char CharAt(int index)
+	{
+		var node = this;
+		while (true)
+		{
+			var payload = Volatile.Read(ref node._payload);
+			if (payload is string text) return text[index];
+			foreach (var part in ((Deferred)payload).Parts)
+			{
+				if (index < part.Length)
+				{
+					node = part;
+					break;
+				}
+				index -= part.Length;
+			}
+		}
+	}
+
+	/// <summary>
+	/// Joins a deferred concatenation. The walk is iterative, because a softcode loop can chain
+	/// thousands of appends. Runs are written before the text is published; two threads racing here
+	/// both build the same text, and the one that loses throws its copy away.
+	/// </summary>
+	private string Flatten()
+	{
+		if (Volatile.Read(ref _payload) is not Deferred deferred) return (string)_payload;
+		var parts = deferred.Parts;
+
+		var leaves = new List<MarkupText>();
+		var stack = new Stack<MarkupText>();
+		for (var i = parts.Length - 1; i >= 0; i--) stack.Push(parts[i]);
+		var totalRuns = 0;
+		while (stack.Count > 0)
+		{
+			var node = stack.Pop();
+			if (Volatile.Read(ref node._payload) is Deferred { Parts: var inner })
+			{
+				for (var i = inner.Length - 1; i >= 0; i--) stack.Push(inner[i]);
+				continue;
+			}
+			// Either flat from the start, or joined by another reader since: its text and runs are set.
+			leaves.Add(node);
+			totalRuns += node._runs.IsDefault ? 0 : node._runs.Length;
+		}
+
+		var text = string.Create(deferred.Length, leaves, static (span, leaves) =>
+		{
+			var offset = 0;
+			foreach (var leaf in leaves)
+			{
+				var t = (string)leaf._payload;
+				t.AsSpan().CopyTo(span[offset..]);
+				offset += t.Length;
+			}
+		});
+
+		var runs = ImmutableArray<Run>.Empty;
+		if (totalRuns > 0)
+		{
+			var builder = ImmutableArray.CreateBuilder<Run>(totalRuns);
+			var start = 0;
+			foreach (var leaf in leaves)
+			{
+				foreach (var run in leaf._runs) builder.Add(run with { Start = run.Start + start });
+				start += leaf.Length;
+			}
+			runs = Normalise(builder.MoveToImmutable(), text, text.Length);
+		}
+
+		_runs = runs;
+		return Interlocked.CompareExchange(ref _payload, text, deferred) as string ?? text;
+	}
 
 	/// <summary>
 	/// Constructs a <see cref="MarkupText"/> from raw text and candidate runs. Normalises the
@@ -25,8 +147,8 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 	/// </summary>
 	internal MarkupText(string text, ImmutableArray<Run> runs)
 	{
-		Text = text;
-		Runs = Normalise(runs, text, text.Length);
+		_payload = text;
+		_runs = Normalise(runs, text, text.Length);
 	}
 
 	public static MarkupText Plain(string text) => text.Length switch
@@ -93,10 +215,11 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 	{
 		if (a.Length == 0) return b;
 		if (b.Length == 0) return a;
+		if (a.Length + b.Length >= DeferThreshold) return new MarkupText([a, b], checked(a.Length + b.Length));
 		var runs = ImmutableArray.CreateBuilder<Run>(a.Runs.Length + b.Runs.Length);
 		runs.AddRange(a.Runs);
 		foreach (var run in b.Runs) runs.Add(run with { Start = run.Start + a.Length });
-		return new MarkupText(a.Text + b.Text, runs.ToImmutable());
+		return new MarkupText(a.Text + b.Text, runs.MoveToImmutable());
 	}
 
 	public static MarkupText Concat(ReadOnlySpan<MarkupText> parts)
@@ -108,13 +231,20 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 		foreach (var p in parts)
 		{
 			if (p.Length == 0) continue;
-			totalLength += p.Length;
-			totalRuns += p.Runs.Length;
+			totalLength = checked(totalLength + p.Length);
 			nonEmpty++;
 			last = p;
 		}
 		if (nonEmpty == 0) return Empty;
 		if (nonEmpty == 1) return last!;
+		if (totalLength >= DeferThreshold)
+		{
+			var kept = new MarkupText[nonEmpty];
+			var k = 0;
+			foreach (var p in parts) if (p.Length > 0) kept[k++] = p;
+			return new MarkupText(kept, totalLength);
+		}
+		foreach (var p in parts) totalRuns += p.Runs.Length;
 		var text = string.Create(totalLength, parts, static (span, parts) =>
 		{
 			var offset = 0;
@@ -246,7 +376,7 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 		var hasData = false;
 		foreach (var run in Runs)
 		{
-			foreach (var markup in run.Markups)
+			foreach (var markup in run.Markups.Items)
 			{
 				if (markup is not IDataMarkup) continue;
 				hasData = true;
@@ -265,7 +395,7 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 			if (IsPoint(run)) continue;
 
 			var data = new List<IMarkup>();
-			foreach (var markup in run.Markups)
+			foreach (var markup in run.Markups.Items)
 				if (markup is IDataMarkup) data.Add(markup);
 			var body = Text.Substring(run.Start, run.Length);
 			parts.Add(data.Count == 0 ? Plain(body) : Wrap(MarkupSet.Of(data), body));
@@ -288,7 +418,7 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 		var dropping = false;
 		foreach (var run in Runs)
 		{
-			foreach (var markup in run.Markups)
+			foreach (var markup in run.Markups.Items)
 			{
 				if (!drop(markup)) continue;
 				dropping = true;
@@ -302,7 +432,7 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 		foreach (var run in Runs)
 		{
 			var kept = new List<IMarkup>(run.Markups.Count);
-			foreach (var markup in run.Markups)
+			foreach (var markup in run.Markups.Items)
 				if (!drop(markup)) kept.Add(markup);
 			if (kept.Count == run.Markups.Count) builder.Add(run);
 			else if (kept.Count > 0) builder.Add(run with { Markups = MarkupSet.Of(kept) });
@@ -345,7 +475,7 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 
 	private static bool IsPoint(Run run)
 	{
-		foreach (var markup in run.Markups)
+		foreach (var markup in run.Markups.Items)
 			if (markup is IPointMarkup) return true;
 		return false;
 	}
@@ -361,7 +491,7 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 	/// <summary>Every point in the set marks only its own carrier.</summary>
 	private static void CheckPoints(MarkupSet markups, string text)
 	{
-		foreach (var markup in markups)
+		foreach (var markup in markups.Items)
 			if (markup is IPointMarkup point)
 				CheckPoint(point, text);
 	}
@@ -396,7 +526,7 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 	private static MarkupSet WithoutMisplacedPoints(MarkupSet markups, ReadOnlySpan<char> text)
 	{
 		var keep = true;
-		foreach (var markup in markups)
+		foreach (var markup in markups.Items)
 		{
 			if (markup is IPointMarkup point && !IsCarriedBy(point, text))
 			{
@@ -408,7 +538,7 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 		if (keep) return markups;
 
 		var kept = new List<IMarkup>(markups.Count);
-		foreach (var markup in markups)
+		foreach (var markup in markups.Items)
 			if (markup is not IPointMarkup point || IsCarriedBy(point, text))
 				kept.Add(markup);
 
