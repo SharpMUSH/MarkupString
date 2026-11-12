@@ -89,6 +89,24 @@ public abstract record AnsiColor
 	/// </summary>
 	public string ToHex()
 	{
+		// The palette colours have fixed values, so each one's string is made once and shared: an HTML
+		// render asks for one per styled run.
+		switch (this)
+		{
+			case Standard standard:
+				return StandardHex[(standard.Bright ? 8 : 0) + standard.Index] ??= FormatHex();
+			case Xterm xterm:
+				return XtermHex[xterm.Index] ??= FormatHex();
+			default:
+				return FormatHex();
+		}
+	}
+
+	private static readonly string?[] StandardHex = new string?[16];
+	private static readonly string?[] XtermHex = new string?[256];
+
+	private string FormatHex()
+	{
 		if (ToRgb() is not { } rgb)
 		{
 			return string.Empty;

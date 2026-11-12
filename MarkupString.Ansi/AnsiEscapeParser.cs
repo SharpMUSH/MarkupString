@@ -19,31 +19,37 @@ public static class AnsiEscapeParser
 	{
 		if (string.IsNullOrEmpty(text)) return MarkupText.Empty;
 
+		var first = text.IndexOf(Escape);
+		if (first < 0) return MarkupText.Plain(text);
+
 		var segments = new List<MarkupText>();
 		var style = AnsiStyle.None;
-		var position = 0;
+		// The layer the last styled segment was wrapped in: a style that comes back unchanged (a sequence
+		// that changed nothing, or one undone and redone) reuses it rather than building another.
+		AnsiMarkup? markup = null;
+		var position = first;
 		var segmentStart = 0;
 
-		while (position < text.Length)
+		while (position >= 0)
 		{
-			if (text[position] != Escape)
-			{
-				position++;
-				continue;
-			}
-
-			if (position > segmentStart) segments.Add(Segment(text[segmentStart..position], style));
+			if (position > segmentStart) segments.Add(Segment(text[segmentStart..position], style, ref markup));
 			position += ReadEscapeSequence(text, position, ref style);
 			segmentStart = position;
+			var next = position < text.Length ? text.AsSpan(position).IndexOf(Escape) : -1;
+			position = next < 0 ? -1 : position + next;
 		}
 
-		if (segmentStart < text.Length) segments.Add(Segment(text[segmentStart..], style));
+		if (segmentStart < text.Length) segments.Add(Segment(text[segmentStart..], style, ref markup));
 
 		return MarkupText.Concat(segments);
 	}
 
-	private static MarkupText Segment(string text, in AnsiStyle style) =>
-		style.IsNone ? MarkupText.Plain(text) : MarkupText.Wrap(new AnsiMarkup(style), text);
+	private static MarkupText Segment(string text, in AnsiStyle style, ref AnsiMarkup? markup)
+	{
+		if (style.IsNone) return MarkupText.Plain(text);
+		if (markup is null || !markup.Style.Equals(style)) markup = new AnsiMarkup(style);
+		return MarkupText.Wrap(markup, text);
+	}
 
 	/// <summary>Applies the sequence starting at <paramref name="position"/> and returns its length.</summary>
 	private static int ReadEscapeSequence(string text, int position, ref AnsiStyle style)
@@ -158,12 +164,12 @@ public static class AnsiEscapeParser
 				case 29: style = style with { StrikeThrough = false }; break;
 				case 55: style = style with { Overlined = false }; break;
 
-				case >= 30 and <= 37: style = style with { Foreground = new AnsiColor.Standard((byte)(code - 30), false) }; break;
+				case >= 30 and <= 37: style = style with { Foreground = AnsiColor.StandardOf((byte)(code - 30), false) }; break;
 				case 39: style = style with { Foreground = AnsiColor.Default.Instance }; break;
-				case >= 40 and <= 47: style = style with { Background = new AnsiColor.Standard((byte)(code - 40), false) }; break;
+				case >= 40 and <= 47: style = style with { Background = AnsiColor.StandardOf((byte)(code - 40), false) }; break;
 				case 49: style = style with { Background = AnsiColor.Default.Instance }; break;
-				case >= 90 and <= 97: style = style with { Foreground = new AnsiColor.Standard((byte)(code - 90), true) }; break;
-				case >= 100 and <= 107: style = style with { Background = new AnsiColor.Standard((byte)(code - 100), true) }; break;
+				case >= 90 and <= 97: style = style with { Foreground = AnsiColor.StandardOf((byte)(code - 90), true) }; break;
+				case >= 100 and <= 107: style = style with { Background = AnsiColor.StandardOf((byte)(code - 100), true) }; break;
 
 				case 38 or 48:
 					var colour = ReadExtendedColor(codes[..count], ref i);
@@ -188,7 +194,7 @@ public static class AnsiEscapeParser
 		{
 			var value = codes[index + 2];
 			index += 2;
-			return value is >= 0 and <= 255 ? new AnsiColor.Xterm((byte)value) : null;
+			return value is >= 0 and <= 255 ? AnsiColor.XtermOf((byte)value) : null;
 		}
 
 		if (codes[index + 1] == 2 && index + 4 < codes.Length)

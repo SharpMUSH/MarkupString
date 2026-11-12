@@ -50,14 +50,21 @@ public sealed class AnsiSetEmitter(AnsiOutputOptions options) : IMarkupSetEmitte
 		var effective = AnsiEmitterSupport.Fold(set, context.Format).AtDepth(depth);
 		var previous = AnsiEmitterSupport.Fold(context.Previous, context.Format).AtDepth(depth);
 
-		using var core = new PooledCharWriter(body.Length + 32);
+		// The run is written around by the layers this package does not own, and a picture sends some of
+		// its output ahead of the row; with neither, the run goes straight to the output instead of
+		// through a scratch buffer.
+		var picture = Picture(set);
+		using var scratch = picture is not null || AnsiEmitterSupport.HasDelegatedLayer(set, context)
+			? new PooledCharWriter(body.Length + 32)
+			: null;
+		IBufferWriter<char> core = scratch is null ? output : scratch;
 		SgrWriter.Transition(previous, effective, core);
-		if (Picture(set) is { } picture)
+		if (picture is { } drawn)
 		{
 			// The run that starts the row draws all of it; the others in the same row draw nothing, so the row is
 			// as many cells as the text it stands over.
-			if (context.StartsRegion(picture.Image))
-				TerminalPictureWriter.Write(_pictureMethod, picture.Cells, picture.Pixels, effective, _options, core, output);
+			if (context.StartsRegion(drawn.Image))
+				TerminalPictureWriter.Write(_pictureMethod, drawn.Cells, drawn.Pixels, effective, _options, core, output);
 		}
 		else
 		{
@@ -68,7 +75,7 @@ public sealed class AnsiSetEmitter(AnsiOutputOptions options) : IMarkupSetEmitte
 		// terminal coloured for whatever the connection writes next.
 		if (context.Next is null && AnsiEmitterSupport.LeavesState(effective)) SgrWriter.Reset(core);
 
-		AnsiEmitterSupport.WriteWrapped(set, core.WrittenSpan, context, output);
+		if (scratch is not null) AnsiEmitterSupport.WriteWrapped(set, scratch.WrittenSpan, context, output);
 		return true;
 	}
 

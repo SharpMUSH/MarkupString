@@ -43,7 +43,7 @@ internal static class LineWrapper
 
 			int end, next;
 			bool endsParagraph;
-			if (format.Wrap == WrapMode.HardBreaks || Cells.Of(text[position..contentEnd]) <= available)
+			if (format.Wrap == WrapMode.HardBreaks || Cells.Of(text[position..contentEnd], ControlCharacterWidth.Zero, available) <= available)
 			{
 				end = contentEnd;
 				next = hardBreak < 0 ? -1 : hardBreak + 1;
@@ -101,8 +101,9 @@ internal static class LineWrapper
 	/// </summary>
 	private static int LastSpace(ReadOnlySpan<char> text, int from, int limit)
 	{
-		for (var k = Math.Min(limit, text.Length - 1); k > from; k--)
-			if (text[k] == ' ') return k;
-		return -1;
+		var last = Math.Min(limit, text.Length - 1);
+		if (last <= from) return -1;
+		var found = text[(from + 1)..(last + 1)].LastIndexOf(' ');
+		return found < 0 ? -1 : from + 1 + found;
 	}
 }

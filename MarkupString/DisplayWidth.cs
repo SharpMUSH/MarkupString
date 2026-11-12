@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Globalization;
 using System.Text;
 namespace MarkupString;
@@ -27,6 +28,16 @@ public static partial class DisplayWidth
 	private const int HangulJungseongStart = 0x1160;
 	private const int HangulJongseongEnd = 0x11FF;
 
+	/// <summary>
+	/// Space to tilde: one cell and one cluster a character. A <see cref="SearchValues{T}"/> rather than
+	/// <c>IndexOfAnyExceptInRange</c>, whose generic code allocates on every call until the JIT has optimised it.
+	/// </summary>
+	private static readonly SearchValues<char> PrintableAscii =
+		SearchValues.Create(string.Create(0x7F - ' ', 0, static (span, _) =>
+		{
+			for (var i = 0; i < span.Length; i++) span[i] = (char)(' ' + i);
+		}));
+
 	/// <summary>Cells occupied by <paramref name="rune"/> on its own: 0, 1 or 2.</summary>
 	public static int OfRune(Rune rune) => OfRune(rune, ControlCharacterWidth.Zero);
 
@@ -55,18 +66,38 @@ public static partial class DisplayWidth
 	/// <paramref name="controls"/> says — so under <see cref="ControlCharacterWidth.One"/> a CRLF
 	/// is 2.
 	/// </summary>
-	public static int Of(ReadOnlySpan<char> text, ControlCharacterWidth controls)
+	public static int Of(ReadOnlySpan<char> text, ControlCharacterWidth controls) => Of(text, controls, int.MaxValue);
+
+	/// <summary>
+	/// <see cref="Of(ReadOnlySpan{char}, ControlCharacterWidth)"/>, stopping as soon as the count passes
+	/// <paramref name="limit"/>: a result above it says only that the text is wider. A line breaker asking
+	/// whether the rest of a paragraph fits needs no more than that.
+	/// </summary>
+	internal static int Of(ReadOnlySpan<char> text, ControlCharacterWidth controls, int limit)
 	{
 		var width = 0;
-		var afterJoiner = false;
-		foreach (var rune in text.EnumerateRunes())
+		while (true)
 		{
-			var cells = OfRune(rune, controls);
-			if (afterJoiner && cells == 2) cells = 0;
-			afterJoiner = rune.Value == ZeroWidthJoiner;
-			width += cells;
+			// Printable ASCII is one cell a character and ends any joiner sequence, so a stretch of it
+			// is counted by a vectorised scan for where it stops.
+			var ascii = text.IndexOfAnyExcept(PrintableAscii);
+			if (ascii < 0) return width + text.Length;
+			width += ascii;
+			if (width > limit) return width;
+			text = text[ascii..];
+
+			var afterJoiner = false;
+			while (!text.IsEmpty && text[0] is not (>= ' ' and <= '~'))
+			{
+				Rune.DecodeFromUtf16(text, out var rune, out var consumed);
+				var cells = OfRune(rune, controls);
+				if (afterJoiner && cells == 2) cells = 0;
+				afterJoiner = rune.Value == ZeroWidthJoiner;
+				width += cells;
+				text = text[consumed..];
+			}
+			if (text.IsEmpty || width > limit) return width;
 		}
-		return width;
 	}
 
 	/// <summary>
@@ -87,6 +118,19 @@ public static partial class DisplayWidth
 		var position = 0;
 		while (position < text.Length)
 		{
+			// A stretch of printable ASCII is one cell and one cluster a character, except its last
+			// character when something follows that could extend it: take as much of it as fits at once.
+			var ascii = text[position..].IndexOfAnyExcept(PrintableAscii);
+			var simple = ascii < 0 ? text.Length - position : ascii - 1;
+			if (simple > 0)
+			{
+				var take = Math.Min(simple, cells - used);
+				used += take;
+				position += take;
+				if (take < simple) return position;
+				if (position >= text.Length) break;
+			}
+
 			int length, width;
 			if (IsSimple(text, position))
 			{

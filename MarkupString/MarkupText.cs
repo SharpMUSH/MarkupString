@@ -216,10 +216,16 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 		if (a.Length == 0) return b;
 		if (b.Length == 0) return a;
 		if (a.Length + b.Length >= DeferThreshold) return new MarkupText([a, b], checked(a.Length + b.Length));
-		var runs = ImmutableArray.CreateBuilder<Run>(a.Runs.Length + b.Runs.Length);
-		runs.AddRange(a.Runs);
-		foreach (var run in b.Runs) runs.Add(run with { Start = run.Start + a.Length });
-		return new MarkupText(a.Text + b.Text, runs.MoveToImmutable());
+		var text = string.Concat(a.Text, b.Text);
+		var aRuns = a.Runs;
+		var bRuns = b.Runs;
+		if (aRuns.Length + bRuns.Length == 0) return new MarkupText(text, ImmutableArray<Run>.Empty);
+		// Sized exactly and handed over as it is: a builder would be one more object for nothing.
+		var runs = new Run[aRuns.Length + bRuns.Length];
+		aRuns.CopyTo(runs);
+		var offset = a.Length;
+		for (var i = 0; i < bRuns.Length; i++) runs[aRuns.Length + i] = bRuns[i] with { Start = bRuns[i].Start + offset };
+		return new MarkupText(text, ImmutableCollectionsMarshal.AsImmutableArray(runs));
 	}
 
 	public static MarkupText Concat(ReadOnlySpan<MarkupText> parts)
@@ -256,14 +262,15 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 		});
 		if (totalRuns == 0) return new MarkupText(text, ImmutableArray<Run>.Empty);
 
-		var runs = ImmutableArray.CreateBuilder<Run>(totalRuns);
+		var runs = new Run[totalRuns];
 		var start = 0;
+		var r = 0;
 		foreach (var p in parts)
 		{
-			foreach (var run in p.Runs) runs.Add(run with { Start = run.Start + start });
+			foreach (var run in p.Runs) runs[r++] = run with { Start = run.Start + start };
 			start += p.Length;
 		}
-		return new MarkupText(text, runs.MoveToImmutable());
+		return new MarkupText(text, ImmutableCollectionsMarshal.AsImmutableArray(runs));
 	}
 
 	public static MarkupText Concat(IEnumerable<MarkupText> parts) => Concat(AsSpan(parts));
@@ -330,19 +337,20 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 		});
 		if (totalRuns == 0) return new MarkupText(text, ImmutableArray<Run>.Empty);
 
-		var runs = ImmutableArray.CreateBuilder<Run>(totalRuns);
+		var runs = new Run[totalRuns];
 		var start = 0;
+		var r = 0;
 		for (var i = 0; i < parts.Length; i++)
 		{
 			if (i > 0)
 			{
-				foreach (var run in separator.Runs) runs.Add(run with { Start = run.Start + start });
+				foreach (var run in separator.Runs) runs[r++] = run with { Start = run.Start + start };
 				start += separator.Length;
 			}
-			foreach (var run in parts[i].Runs) runs.Add(run with { Start = run.Start + start });
+			foreach (var run in parts[i].Runs) runs[r++] = run with { Start = run.Start + start };
 			start += parts[i].Length;
 		}
-		return new MarkupText(text, runs.MoveToImmutable());
+		return new MarkupText(text, ImmutableCollectionsMarshal.AsImmutableArray(runs));
 	}
 
 	private readonly ref struct JoinState(ReadOnlySpan<MarkupText> parts, string separator)

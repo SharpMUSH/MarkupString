@@ -33,6 +33,20 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `Substring` and `Split` on styled text copy the runs they keep into an array of exactly that size.
   Splitting a list of 1,000 coloured words allocates 132 KB instead of 312 KB.
 - Enumerating a `MarkupSet` inside the library no longer boxes an enumerator.
+- `DisplayWidth.Of` and `IndexAtWidth` count a stretch of printable ASCII with one vectorised scan:
+  2,000 characters measure in about 32 ns instead of 6 µs.
+- `WrapLines`, `Shape` and `FormatColumn` measure each line only as far as the line. They measured the
+  whole rest of the paragraph for every line, so wrapping a 2,000-character paragraph at 78 columns took
+  89 µs; it takes 4.6 µs.
+- Rendering shares one pair of pooled scratch buffers across all of a text's runs, hands a run's own
+  characters to its emitter when the format does not encode them, and `Render` returns its string from a
+  pooled buffer. The ANSI set emitter writes straight to the output when no other layer wraps the run.
+  Rendering 40 coloured runs to ANSI allocates 4.6 KB instead of 19.2 KB and takes a third of the time;
+  an 8-run line to HTML allocates 960 B instead of 4.5 KB.
+- `AnsiColor.ToHex` returns a shared string for the palette colours.
+- `Concat` and `Join` build their runs in an array of exactly the right size, and plain text builds none:
+  concatenating two short plain texts allocates 96 B instead of 152 B.
+- `AnsiEscapeParser.Parse` finds escapes with a vectorised search and reuses the shared palette colours.
 
 ### Fixed
 
