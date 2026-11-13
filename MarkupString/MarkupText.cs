@@ -167,6 +167,34 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 
 	public static MarkupText Wrap(IMarkup markup, string text) => Wrap(MarkupSet.Of(markup), text);
 
+	/// <summary>
+	/// Text with the styled spans given, built in one step: what concatenating a <see cref="Plain(string)"/> or
+	/// <see cref="Wrap(MarkupSet, string)"/> for each stretch makes, without the pieces. For a reader or parser
+	/// that already knows where each style starts and ends.
+	/// </summary>
+	/// <remarks>
+	/// The runs are copied, then sorted by <see cref="Run.Start"/>, clipped to the text, emptied ones dropped,
+	/// and neighbours carrying an equal set merged, as every text's runs are. Gaps between runs are plain text.
+	/// </remarks>
+	/// <exception cref="ArgumentException">
+	/// A run has no markup set, two runs overlap, or a point stands over something other than its own carrier.
+	/// </exception>
+	public static MarkupText Create(string text, ReadOnlySpan<Run> runs)
+	{
+		ArgumentNullException.ThrowIfNull(text);
+		if (text.Length == 0) return Empty;
+		if (runs.IsEmpty) return Plain(text);
+
+		foreach (var run in runs)
+		{
+			if (run.Markups is null) throw new ArgumentException("Every run needs a markup set.", nameof(runs));
+			var start = Math.Max(0, run.Start);
+			var end = Math.Min(text.Length, run.End);
+			if (end > start && HasPoint(run.Markups)) CheckPoints(run.Markups, text.Substring(start, end - start));
+		}
+		return new MarkupText(text, ImmutableCollectionsMarshal.AsImmutableArray(runs.ToArray()));
+	}
+
 	/// <exception cref="ArgumentException">
 	/// A point in <paramref name="markups"/> stands over something other than its own carrier.
 	/// </exception>

@@ -1,3 +1,4 @@
+using System.Buffers;
 namespace MarkupString.Ansi;
 
 /// <summary>
@@ -22,33 +23,81 @@ public static class AnsiEscapeParser
 		var first = text.IndexOf(Escape);
 		if (first < 0) return MarkupText.Plain(text);
 
-		var segments = new List<MarkupText>();
-		var style = AnsiStyle.None;
-		// The layer the last styled segment was wrapped in: a style that comes back unchanged (a sequence
-		// that changed nothing, or one undone and redone) reuses it rather than building another.
-		AnsiMarkup? markup = null;
-		var position = first;
-		var segmentStart = 0;
-
-		while (position >= 0)
+		// The text without its sequences, and a run for each styled stretch of it, built as they are read:
+		// one string and one run array, rather than a piece of text for every stretch joined at the end.
+		var chars = ArrayPool<char>.Shared.Rent(text.Length);
+		var runs = ArrayPool<Run>.Shared.Rent(8);
+		var written = 0;
+		var runCount = 0;
+		try
 		{
-			if (position > segmentStart) segments.Add(Segment(text[segmentStart..position], style, ref markup));
-			position += ReadEscapeSequence(text, position, ref style);
-			segmentStart = position;
-			var next = position < text.Length ? text.AsSpan(position).IndexOf(Escape) : -1;
-			position = next < 0 ? -1 : position + next;
+			var style = AnsiStyle.None;
+			// The sets the last few styles were given: text that switches between a handful of colours reuses
+			// them rather than building a layer for every stretch.
+			var recent = new RecentSets();
+			var position = first;
+			var segmentStart = 0;
+
+			while (true)
+			{
+				var end = position < 0 ? text.Length : position;
+				if (end > segmentStart)
+				{
+					text.AsSpan(segmentStart, end - segmentStart).CopyTo(chars.AsSpan(written));
+					if (!style.IsNone)
+					{
+						var set = recent.For(style);
+						if (runCount == runs.Length)
+						{
+							var grown = ArrayPool<Run>.Shared.Rent(runs.Length * 2);
+							runs.AsSpan(0, runCount).CopyTo(grown);
+							ArrayPool<Run>.Shared.Return(runs, clearArray: true);
+							runs = grown;
+						}
+						runs[runCount++] = new Run(written, end - segmentStart, set);
+					}
+					written += end - segmentStart;
+				}
+				if (position < 0) break;
+
+				position += ReadEscapeSequence(text, position, ref style);
+				segmentStart = position;
+				var next = position < text.Length ? text.AsSpan(position).IndexOf(Escape) : -1;
+				position = next < 0 ? -1 : position + next;
+			}
+
+			return MarkupText.Create(new string(chars, 0, written), runs.AsSpan(0, runCount));
 		}
-
-		if (segmentStart < text.Length) segments.Add(Segment(text[segmentStart..], style, ref markup));
-
-		return MarkupText.Concat(segments);
+		finally
+		{
+			ArrayPool<char>.Shared.Return(chars);
+			ArrayPool<Run>.Shared.Return(runs, clearArray: true);
+		}
 	}
 
-	private static MarkupText Segment(string text, in AnsiStyle style, ref AnsiMarkup? markup)
+	/// <summary>The markup sets of the last four styles read, the oldest replaced first.</summary>
+	private struct RecentSets
 	{
-		if (style.IsNone) return MarkupText.Plain(text);
-		if (markup is null || !markup.Style.Equals(style)) markup = new AnsiMarkup(style);
-		return MarkupText.Wrap(markup, text);
+		private Entries _entries;
+		private int _next;
+
+		[System.Runtime.CompilerServices.InlineArray(4)]
+		private struct Entries
+		{
+			private (AnsiStyle Style, MarkupSet? Set) _entry;
+		}
+
+		public MarkupSet For(in AnsiStyle style)
+		{
+			foreach (ref var entry in _entries)
+				if (entry.Set is not null && entry.Style.Equals(style))
+					return entry.Set;
+
+			var set = MarkupSet.Of(new AnsiMarkup(style));
+			_entries[_next] = (style, set);
+			_next = (_next + 1) % 4;
+			return set;
+		}
 	}
 
 	/// <summary>Applies the sequence starting at <paramref name="position"/> and returns its length.</summary>

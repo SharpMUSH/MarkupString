@@ -240,4 +240,41 @@ public class AnsiEscapeParserTests
 	{
 		await Assert.That(AnsiEscapeParser.Parse($"abc{E}[31").Text).IsEqualTo("abc");
 	}
+
+	/// <summary>
+	/// The text and its runs are built in one pass. A style that changes nothing between two stretches, or
+	/// comes back after plain text, still reads as the stretches it styles, sharing one set.
+	/// </summary>
+	[Test]
+	public async Task RepeatedStyle_SharesOneSetAndMergesWhereTheStretchesTouch()
+	{
+		var result = AnsiEscapeParser.Parse($"{E}[31mred{E}[31m more{E}[0m plain {E}[31mred again{E}[0m");
+
+		await Assert.That(result.Text).IsEqualTo("red more plain red again");
+		await Assert.That(result.Runs.Length).IsEqualTo(2);
+		await Assert.That(result.Runs[0]).IsEqualTo(new Run(0, 8, result.Runs[0].Markups));
+		await Assert.That(result.Runs[1].Start).IsEqualTo(15);
+		await Assert.That(result.Runs[1].Length).IsEqualTo(9);
+		await Assert.That(result.Runs[1].Markups).IsSameReferenceAs(result.Runs[0].Markups);
+	}
+
+	/// <summary>Text of nothing but sequences is empty.</summary>
+	[Test]
+	public async Task OnlySequences_IsEmpty()
+	{
+		await Assert.That(AnsiEscapeParser.Parse($"{E}[31m{E}[0m{E}[2J")).IsSameReferenceAs(MarkupText.Empty);
+	}
+
+	/// <summary>More styled stretches than the run buffer starts with.</summary>
+	[Test]
+	public async Task ManyStretches_KeepEveryRun()
+	{
+		var source = string.Concat(Enumerable.Range(0, 100).Select(i => $"{E}[3{i % 2 + 1}mx"));
+		var result = AnsiEscapeParser.Parse(source);
+
+		await Assert.That(result.Text).IsEqualTo(new string('x', 100));
+		await Assert.That(result.Runs.Length).IsEqualTo(100);
+		for (var i = 0; i < 100; i++)
+			await Assert.That(StyleOf(result, i).Foreground).IsEqualTo(new AnsiColor.Standard((byte)(i % 2 + 1), false));
+	}
 }
