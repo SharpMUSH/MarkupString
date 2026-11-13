@@ -6,7 +6,8 @@ public sealed partial class MarkupText
 	/// <summary>Renders this text in <paramref name="format"/>, against <see cref="MarkupRegistry.Default"/> when no registry is given.</summary>
 	public string Render(MarkupFormat format, MarkupRegistry? registry = null)
 	{
-		var writer = new ArrayBufferWriter<char>(Length + 16);
+		// The scratch comes from the pool: the string is the one copy the caller keeps.
+		using var writer = new PooledCharWriter(Length + 16);
 		MarkupTextRenderer.Render(this, format, registry ?? MarkupRegistry.Default, writer);
 		return new string(writer.WrittenSpan);
 	}

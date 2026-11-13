@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Globalization;
 using System.Text;
 namespace MarkupString;
@@ -27,6 +28,16 @@ public static partial class DisplayWidth
 	private const int HangulJungseongStart = 0x1160;
 	private const int HangulJongseongEnd = 0x11FF;
 
+	/// <summary>
+	/// Space to tilde: one cell and one cluster a character. A <see cref="SearchValues{T}"/> rather than
+	/// <c>IndexOfAnyExceptInRange</c>, whose generic code allocates on every call until the JIT has optimised it.
+	/// </summary>
+	private static readonly SearchValues<char> PrintableAscii =
+		SearchValues.Create(string.Create(0x7F - ' ', 0, static (span, _) =>
+		{
+			for (var i = 0; i < span.Length; i++) span[i] = (char)(' ' + i);
+		}));
+
 	/// <summary>Cells occupied by <paramref name="rune"/> on its own: 0, 1 or 2.</summary>
 	public static int OfRune(Rune rune) => OfRune(rune, ControlCharacterWidth.Zero);
 
@@ -39,6 +50,10 @@ public static partial class DisplayWidth
 		var value = rune.Value;
 		if (value < 0x20 || value is >= 0x7F and <= 0x9F) return controls == ControlCharacterWidth.One ? 1 : 0;
 		if (value < 0x300) return 1;
+		// The bulk of Chinese, Japanese and Korean text: kana, CJK ideographs (extension A and the unified
+		// block) and precomposed Hangul syllables, all letters and all wide, answered without the lookups below.
+		if (value is >= 0x3041 and <= 0x3096 or >= 0x30A1 and <= 0x30FA
+			or >= 0x3400 and <= 0x4DBF or >= 0x4E00 and <= 0x9FFF or >= 0xAC00 and <= 0xD7A3) return 2;
 		if (value is >= HangulJungseongStart and <= HangulJongseongEnd) return 0;
 		if (IsZeroWidthCategory(Rune.GetUnicodeCategory(rune))) return 0;
 		return IsWide(value) ? 2 : 1;
@@ -55,18 +70,38 @@ public static partial class DisplayWidth
 	/// <paramref name="controls"/> says — so under <see cref="ControlCharacterWidth.One"/> a CRLF
 	/// is 2.
 	/// </summary>
-	public static int Of(ReadOnlySpan<char> text, ControlCharacterWidth controls)
+	public static int Of(ReadOnlySpan<char> text, ControlCharacterWidth controls) => Of(text, controls, int.MaxValue);
+
+	/// <summary>
+	/// <see cref="Of(ReadOnlySpan{char}, ControlCharacterWidth)"/>, stopping as soon as the count passes
+	/// <paramref name="limit"/>: a result above it says only that the text is wider. A line breaker asking
+	/// whether the rest of a paragraph fits needs no more than that.
+	/// </summary>
+	internal static int Of(ReadOnlySpan<char> text, ControlCharacterWidth controls, int limit)
 	{
 		var width = 0;
-		var afterJoiner = false;
-		foreach (var rune in text.EnumerateRunes())
+		while (true)
 		{
-			var cells = OfRune(rune, controls);
-			if (afterJoiner && cells == 2) cells = 0;
-			afterJoiner = rune.Value == ZeroWidthJoiner;
-			width += cells;
+			// Printable ASCII is one cell a character and ends any joiner sequence, so a stretch of it
+			// is counted by a vectorised scan for where it stops.
+			var ascii = text.IndexOfAnyExcept(PrintableAscii);
+			if (ascii < 0) return width + text.Length;
+			width += ascii;
+			if (width > limit) return width;
+			text = text[ascii..];
+
+			var afterJoiner = false;
+			while (!text.IsEmpty && text[0] is not (>= ' ' and <= '~'))
+			{
+				Rune.DecodeFromUtf16(text, out var rune, out var consumed);
+				var cells = OfRune(rune, controls);
+				if (afterJoiner && cells == 2) cells = 0;
+				afterJoiner = rune.Value == ZeroWidthJoiner;
+				width += cells;
+				text = text[consumed..];
+			}
+			if (text.IsEmpty || width > limit) return width;
 		}
-		return width;
 	}
 
 	/// <summary>
@@ -87,6 +122,19 @@ public static partial class DisplayWidth
 		var position = 0;
 		while (position < text.Length)
 		{
+			// A stretch of printable ASCII is one cell and one cluster a character, except its last
+			// character when something follows that could extend it: take as much of it as fits at once.
+			var ascii = text[position..].IndexOfAnyExcept(PrintableAscii);
+			var simple = ascii < 0 ? text.Length - position : ascii - 1;
+			if (simple > 0)
+			{
+				var take = Math.Min(simple, cells - used);
+				used += take;
+				position += take;
+				if (take < simple) return position;
+				if (position >= text.Length) break;
+			}
+
 			int length, width;
 			if (IsSimple(text, position))
 			{

@@ -306,30 +306,39 @@ public static class MarkupTextRenderer
 		var runs = text.Runs;
 		var position = 0;
 		var anyRunEmitted = false;
-		for (var i = 0; i < runs.Length; i++)
+		// One pair of scratch buffers for every run, rather than a pair rented and returned per run.
+		Scratch? scratch = null;
+		try
 		{
-			var run = runs[i];
-			if (run.Start > position) EncodeStretch(content, position, run.Start, format.Encoding, output);
-			if (registry.HasBlockEmitters && TryRenderBlock(text, i, format, registry, output) is { } last)
+			for (var i = 0; i < runs.Length; i++)
 			{
-				anyRunEmitted = true;
-				position = runs[last].End;
-				i = last;
-				continue;
+				var run = runs[i];
+				if (run.Start > position) EncodeStretch(content, position, run.Start, format.Encoding, output);
+				if (registry.HasBlockEmitters && TryRenderBlock(text, i, format, registry, output) is { } last)
+				{
+					anyRunEmitted = true;
+					position = runs[last].End;
+					i = last;
+					continue;
+				}
+				var context = new EmitContext
+				{
+					Format = format,
+					Registry = registry,
+					Markups = run.Markups,
+					SourceDisplayWidth = CountPoints(run.Markups) > 0 ? 0 : DisplayWidth.Of(content.Slice(run.Start, run.Length)),
+					Previous = i > 0 && runs[i - 1].End == run.Start ? runs[i - 1].Markups : null,
+					Next = i + 1 < runs.Length && runs[i + 1].Start == run.End ? runs[i + 1].Markups : null,
+					IsFirstRun = i == 0,
+					IsLastRun = i == runs.Length - 1,
+				};
+				anyRunEmitted |= RenderRun(run, content, format, registry, context, output, scratch ??= new Scratch());
+				position = run.End;
 			}
-			var context = new EmitContext
-			{
-				Format = format,
-				Registry = registry,
-				Markups = run.Markups,
-				SourceDisplayWidth = CountPoints(run.Markups) > 0 ? 0 : DisplayWidth.Of(content.Slice(run.Start, run.Length)),
-				Previous = i > 0 && runs[i - 1].End == run.Start ? runs[i - 1].Markups : null,
-				Next = i + 1 < runs.Length && runs[i + 1].Start == run.End ? runs[i + 1].Markups : null,
-				IsFirstRun = i == 0,
-				IsLastRun = i == runs.Length - 1,
-			};
-			anyRunEmitted |= RenderRun(run, content, format, registry, context, output);
-			position = run.End;
+		}
+		finally
+		{
+			scratch?.Dispose();
 		}
 		if (position < content.Length) EncodeStretch(content, position, content.Length, format.Encoding, output);
 
@@ -377,7 +386,8 @@ public static class MarkupTextRenderer
 		MarkupFormat format,
 		MarkupRegistry registry,
 		in EmitContext context,
-		IBufferWriter<char> output)
+		IBufferWriter<char> output,
+		Scratch scratch)
 	{
 		var body = content.Slice(run.Start, run.Length);
 		// Data is not drawn: no emitter sees it, and text that carries nothing else is written as plain text.
@@ -389,59 +399,89 @@ public static class MarkupTextRenderer
 		}
 		var points = CountPoints(markups);
 
-		var front = new PooledCharWriter(body.Length + 16);
-		PooledCharWriter? back = null;
-		try
+		var front = scratch.Front(body.Length + 16);
+		var back = scratch.Back;
+		// The text the layers wrap: the run's own characters when nothing changes them, so they are not copied first.
+		ReadOnlySpan<char> encoded;
+		if (points > 0)
 		{
-			if (points > 0)
+			// A point's carrier is not text. With no emitter for this format the point writes nothing
+			// — not the carrier, and not the layers around it, which would wrap an empty body.
+			if (!WritePoints(markups, body, format, registry, context, front)) return false;
+			markups = Without(markups, points);
+			if (markups is null)
 			{
-				// A point's carrier is not text. With no emitter for this format the point writes nothing
-				// — not the carrier, and not the layers around it, which would wrap an empty body.
-				if (!WritePoints(markups, body, format, registry, context, front)) return false;
-				markups = Without(markups, points);
-				if (markups is null)
-				{
-					output.Write(front.WrittenSpan);
-					return true;
-				}
+				output.Write(front.WrittenSpan);
+				return true;
 			}
-			else
-			{
-				EncodeStretch(content, run.Start, run.End, EncodingFor(markups, format, registry), front);
-			}
-
-			var setEmitter = registry.FindSetEmitter(format);
-			if (setEmitter is not null)
-			{
-				back = new PooledCharWriter(front.WrittenCount + 16);
-				if (setEmitter.TryEmit(markups!, front.WrittenSpan, context, back))
-				{
-					output.Write(back.WrittenSpan);
-					return true;
-				}
-				back.Clear();
-			}
-
-			var emitted = points > 0;
-			for (var i = 0; i < markups!.Count; i++)
-			{
-				var markup = markups[i];
-				var emitter = registry.FindEmitter(markup.GetType(), format);
-				if (emitter is null) continue;
-				emitted = true;
-				back ??= new PooledCharWriter(front.WrittenCount + 16);
-				back.Clear();
-				emitter.Emit(markup, front.WrittenSpan, context, back);
-				(front, back) = (back, front);
-			}
-
-			output.Write(front.WrittenSpan);
-			return emitted;
+			encoded = front.WrittenSpan;
 		}
-		finally
+		else if (EncodingFor(markups, format, registry) is var encoding && encoding == TextEncoding.None)
 		{
-			front.Dispose();
-			back?.Dispose();
+			encoded = body;
+		}
+		else
+		{
+			EncodeStretch(content, run.Start, run.End, encoding, front);
+			encoded = front.WrittenSpan;
+		}
+
+		var setEmitter = registry.FindSetEmitter(format);
+		if (setEmitter is not null)
+		{
+			back = scratch.Back = back ?? new PooledCharWriter(encoded.Length + 16);
+			back.Clear();
+			if (setEmitter.TryEmit(markups!, encoded, context, back))
+			{
+				output.Write(back.WrittenSpan);
+				return true;
+			}
+			back.Clear();
+		}
+
+		var emitted = points > 0;
+		for (var i = 0; i < markups!.Count; i++)
+		{
+			var markup = markups[i];
+			var emitter = registry.FindEmitter(markup.GetType(), format);
+			if (emitter is null) continue;
+			emitted = true;
+			back = scratch.Back = back ?? new PooledCharWriter(encoded.Length + 16);
+			back.Clear();
+			emitter.Emit(markup, encoded, context, back);
+			// What was written becomes the body of the next layer; the old body's buffer takes the next write.
+			(front, back) = (back, front);
+			scratch.Swap();
+			encoded = front.WrittenSpan;
+		}
+
+		output.Write(encoded);
+		return emitted;
+	}
+
+	/// <summary>
+	/// The two buffers a run's layers are written through, one holding the body and the other taking the
+	/// next layer's output. Shared by every run of one render and returned to the pool at its end.
+	/// </summary>
+	private sealed class Scratch : IDisposable
+	{
+		private PooledCharWriter? _front;
+		public PooledCharWriter? Back;
+
+		/// <summary>The body buffer, emptied.</summary>
+		public PooledCharWriter Front(int capacity)
+		{
+			if (_front is null) return _front = new PooledCharWriter(capacity);
+			_front.Clear();
+			return _front;
+		}
+
+		public void Swap() => (_front, Back) = (Back, _front);
+
+		public void Dispose()
+		{
+			_front?.Dispose();
+			Back?.Dispose();
 		}
 	}
 
