@@ -10,6 +10,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `MarkupText.Create(string, ReadOnlySpan<Run>)`: text and its runs in one step, normalised as every
+  text's runs are, for a reader that already knows where each style starts and ends. Refuses overlapping
+  runs, a run without a set, and a point off its carrier, as `Wrap` does.
 - `UrlPolicy.RefusingControlCharacters()`: the same policy, also refusing a link address that holds a
   control character (U+0000–U+001F, U+007F–U+009F) or starts or ends with a space. A browser removes those
   before reading the scheme, so an MXP or Pueblo `href="java&#9;script:alert(1)"` passes `UrlPolicy.Safe` as a
@@ -50,7 +53,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   runs in an array of exactly the right size: a third less allocated and a third faster for an 8-run line.
 - `Concat` and `Join` build their runs in an array of exactly the right size, and plain text builds none:
   concatenating two short plain texts allocates 96 B instead of 152 B.
-- `AnsiEscapeParser.Parse` finds escapes with a vectorised search and reuses the shared palette colours.
+- `AnsiEscapeParser.Parse` builds the text and its runs in one pass through `MarkupText.Create`, finds
+  escapes with a vectorised search, and reuses the markup of the last four styles it read: 2,000 characters
+  of coloured text parse in 12 µs and 6.4 KB instead of 32 µs and 44 KB.
 
 ### Fixed
 

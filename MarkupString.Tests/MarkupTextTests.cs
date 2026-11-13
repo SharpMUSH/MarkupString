@@ -110,3 +110,55 @@ public class MarkupTextTests
 	public async Task ToString_IsPlainText()
 		=> await Assert.That(MarkupText.Wrap(new Tag("b"), "x").ToString()).IsEqualTo("x");
 }
+
+public class MarkupTextCreateTests
+{
+	private static readonly MarkupSet Bold = MarkupSet.Of(MarkupString.Ansi.AnsiCodeParser.Parse("h"));
+	private static readonly MarkupSet Red = MarkupSet.Of(MarkupString.Ansi.AnsiCodeParser.Parse("r"));
+
+	[Test]
+	public async Task Create_IsWhatConcatenatingThePiecesMakes()
+	{
+		var created = MarkupText.Create("ab cd ef", [new Run(0, 2, Bold), new Run(6, 2, Red)]);
+		var concatenated = MarkupText.Concat(
+			[MarkupText.Wrap(Bold, "ab"), MarkupText.Plain(" cd "), MarkupText.Wrap(Red, "ef")]);
+
+		await Assert.That(created.Text).IsEqualTo(concatenated.Text);
+		await Assert.That(created.Runs.SequenceEqual(concatenated.Runs)).IsTrue();
+	}
+
+	[Test]
+	public async Task Create_SortsClipsDropsAndMerges()
+	{
+		var created = MarkupText.Create("abcdef", [new Run(4, 10, Red), new Run(0, 2, Bold), new Run(2, 2, Bold), new Run(3, 0, Red)]);
+
+		await Assert.That(created.Runs.SequenceEqual([new Run(0, 4, Bold), new Run(4, 2, Red)])).IsTrue();
+	}
+
+	[Test]
+	public async Task Create_CopiesTheRuns()
+	{
+		Run[] runs = [new Run(0, 2, Bold)];
+		var created = MarkupText.Create("abc", runs);
+		runs[0] = new Run(1, 2, Red);
+
+		await Assert.That(created.Runs[0]).IsEqualTo(new Run(0, 2, Bold));
+	}
+
+	[Test]
+	public async Task Create_WithNoRunsOrNoText_IsPlainOrEmpty()
+	{
+		await Assert.That(MarkupText.Create("", [new Run(0, 1, Bold)])).IsSameReferenceAs(MarkupText.Empty);
+		await Assert.That(MarkupText.Create("abc", []).Runs.IsEmpty).IsTrue();
+	}
+
+	[Test]
+	public async Task Create_RefusesOverlapsMissingSetsAndMisplacedPoints()
+	{
+		await Assert.That(() => MarkupText.Create("abcd", [new Run(0, 3, Bold), new Run(2, 2, Red)])).Throws<ArgumentException>();
+		await Assert.That(() => MarkupText.Create("abcd", [default])).Throws<ArgumentException>();
+		await Assert.That(() => MarkupText.Create("abcd", [new Run(0, 1, MarkupSet.Of(BellMarkup.Instance))])).Throws<ArgumentException>();
+		var bell = MarkupText.Create($"a{BellMarkup.Character}", [new Run(1, 1, MarkupSet.Of(BellMarkup.Instance))]);
+		await Assert.That(bell.ToPlainText()).IsEqualTo("a");
+	}
+}
