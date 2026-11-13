@@ -44,6 +44,10 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   Rendering 40 coloured runs to ANSI allocates 4.6 KB instead of 19.2 KB and takes a third of the time;
   an 8-run line to HTML allocates 960 B instead of 4.5 KB.
 - `AnsiColor.ToHex` returns a shared string for the palette colours.
+- Kana, CJK ideographs and Hangul syllables are measured without the Unicode category and wide-range
+  lookups: a line of Chinese and Korean measures in less than half the time.
+- Wrapping styled text in another layer (`Wrap(IMarkup, MarkupText)`, and `Insert` inside a run) builds its
+  runs in an array of exactly the right size: a third less allocated and a third faster for an 8-run line.
 - `Concat` and `Join` build their runs in an array of exactly the right size, and plain text builds none:
   concatenating two short plain texts allocates 96 B instead of 152 B.
 - `AnsiEscapeParser.Parse` finds escapes with a vectorised search and reuses the shared palette colours.

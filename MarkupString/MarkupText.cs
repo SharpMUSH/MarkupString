@@ -199,16 +199,34 @@ public sealed partial class MarkupText : IEquatable<MarkupText>
 		// Plain text, the usual case for ansi() and its kin: one run, nothing to merge.
 		if (inner.Runs.IsDefaultOrEmpty) return new MarkupText(inner.Text, [new Run(0, inner.Length, outer)]);
 
-		var builder = ImmutableArray.CreateBuilder<Run>(inner.Runs.Length * 2 + 1);
+		var runs = new Run[CountWithGaps(inner)];
+		var r = 0;
 		var position = 0;
 		foreach (var run in inner.Runs)
 		{
-			if (run.Start > position) builder.Add(new Run(position, run.Start - position, outer));
-			builder.Add(new Run(run.Start, run.Length, run.Markups.Append(markup)));
+			if (run.Start > position) runs[r++] = new Run(position, run.Start - position, outer);
+			runs[r++] = new Run(run.Start, run.Length, run.Markups.Append(markup));
 			position = run.End;
 		}
-		if (position < inner.Length) builder.Add(new Run(position, inner.Length - position, outer));
-		return new MarkupText(inner.Text, builder.ToImmutable());
+		if (position < inner.Length) runs[r] = new Run(position, inner.Length - position, outer);
+		return new MarkupText(inner.Text, ImmutableCollectionsMarshal.AsImmutableArray(runs));
+	}
+
+	/// <summary>
+	/// How many runs <paramref name="inner"/> has once every plain gap between, before and after its runs is a
+	/// run too: the size of the array wrapping it in another layer fills.
+	/// </summary>
+	private static int CountWithGaps(MarkupText inner)
+	{
+		var runs = inner.Runs;
+		var count = runs.Length;
+		var position = 0;
+		foreach (var run in runs)
+		{
+			if (run.Start > position) count++;
+			position = run.End;
+		}
+		return position < inner.Length ? count + 1 : count;
 	}
 
 	public static MarkupText Concat(MarkupText a, MarkupText b)

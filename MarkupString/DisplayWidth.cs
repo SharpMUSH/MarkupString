@@ -50,6 +50,10 @@ public static partial class DisplayWidth
 		var value = rune.Value;
 		if (value < 0x20 || value is >= 0x7F and <= 0x9F) return controls == ControlCharacterWidth.One ? 1 : 0;
 		if (value < 0x300) return 1;
+		// The bulk of Chinese, Japanese and Korean text: kana, CJK ideographs (extension A and the unified
+		// block) and precomposed Hangul syllables, all letters and all wide, answered without the lookups below.
+		if (value is >= 0x3041 and <= 0x3096 or >= 0x30A1 and <= 0x30FA
+			or >= 0x3400 and <= 0x4DBF or >= 0x4E00 and <= 0x9FFF or >= 0xAC00 and <= 0xD7A3) return 2;
 		if (value is >= HangulJungseongStart and <= HangulJongseongEnd) return 0;
 		if (IsZeroWidthCategory(Rune.GetUnicodeCategory(rune))) return 0;
 		return IsWide(value) ? 2 : 1;

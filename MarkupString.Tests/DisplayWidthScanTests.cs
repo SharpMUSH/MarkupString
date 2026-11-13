@@ -71,6 +71,27 @@ public class DisplayWidthScanTests
 		return text.Length;
 	}
 
+	/// <summary>
+	/// The kana, ideograph and Hangul ranges answered before the category and wide-range lookups get what the lookups
+	/// give: two cells, as letters.
+	/// </summary>
+	[Test]
+	public async Task OfRune_IdeographAndHangulShortcut_AgreesWithTheTables()
+	{
+		var disagreeing = new List<int>();
+		foreach (var (start, end) in new[] { (0x3041, 0x3096), (0x30A1, 0x30FA), (0x3400, 0x4DBF), (0x4E00, 0x9FFF), (0xAC00, 0xD7A3) })
+		{
+			for (var value = start; value <= end; value++)
+			{
+				var rune = new Rune(value);
+				var wide = DisplayWidthTable.WideRanges.Any(r => r.Start <= value && value <= r.End);
+				if (Rune.GetUnicodeCategory(rune) != UnicodeCategory.OtherLetter || !wide || DisplayWidth.OfRune(rune) != 2)
+					disagreeing.Add(value);
+			}
+		}
+		await Assert.That(disagreeing).IsEmpty();
+	}
+
 	[Test]
 	public async Task Of_MatchesThePerCharacterWalk()
 	{

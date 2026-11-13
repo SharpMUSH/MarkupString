@@ -651,16 +651,17 @@ public sealed partial class MarkupText
 	/// <summary>Layers <paramref name="outer"/> over every run and gap of <paramref name="inner"/>.</summary>
 	private static MarkupText WrapWith(MarkupText inner, MarkupSet outer)
 	{
-		var builder = ImmutableArray.CreateBuilder<Run>(inner.Runs.Length * 2 + 1);
+		var runs = new Run[CountWithGaps(inner)];
+		var r = 0;
 		var position = 0;
 		foreach (var run in inner.Runs)
 		{
-			if (run.Start > position) builder.Add(new Run(position, run.Start - position, outer));
-			builder.Add(new Run(run.Start, run.Length, Layer(run.Markups, outer)));
+			if (run.Start > position) runs[r++] = new Run(position, run.Start - position, outer);
+			runs[r++] = new Run(run.Start, run.Length, Layer(run.Markups, outer));
 			position = run.End;
 		}
-		if (position < inner.Length) builder.Add(new Run(position, inner.Length - position, outer));
-		return new MarkupText(inner.Text, builder.ToImmutable());
+		if (position < inner.Length) runs[r] = new Run(position, inner.Length - position, outer);
+		return new MarkupText(inner.Text, ImmutableCollectionsMarshal.AsImmutableArray(runs));
 	}
 
 	private static MarkupSet Layer(MarkupSet inner, MarkupSet outer)
