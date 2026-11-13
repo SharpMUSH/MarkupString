@@ -6,36 +6,16 @@ All notable changes to `MarkupString`, `MarkupString.Ansi`, `MarkupString.Html`,
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## 2.31.0 — 2026-11-12
 
 ### Added
 
 - `MarkupText.Create(string, ReadOnlySpan<Run>)`: text and its runs in one step, normalised as every
   text's runs are, for a reader that already knows where each style starts and ends. Refuses overlapping
   runs, a run without a set, and a point off its carrier, as `Wrap` does.
-- `UrlPolicy.RefusingControlCharacters()`: the same policy, also refusing a link address that holds a
-  control character (U+0000–U+001F, U+007F–U+009F) or starts or ends with a space. A browser removes those
-  before reading the scheme, so an MXP or Pueblo `href="java&#9;script:alert(1)"` passes `UrlPolicy.Safe` as a
-  relative address and runs as `javascript:` when clicked. Opt-in; `UrlPolicy.Safe` is unchanged.
-  `MarkupStringOptions.RefuseControlCharactersInLinks` turns it on for `AddMarkupString`.
-- `ElementMarkup`, data markup that numbers the element text is in, and `DecodeContext.NextElement()`. Stored by
-  the serializer like the other shared markup.
-- `MarkupText.Split(string, StringSplitOptions)` and `Split(MarkupText, StringSplitOptions)`.
-  `RemoveEmptyEntries` drops empty segments and `TrimEntries` trims white space off each, in the same pass
-  as the split, so splitting a list into its words no longer needs a second array to filter.
 
 ### Changed
 
-- Appending to long text no longer copies it. `MarkupText.Concat` of 1,024 characters or more keeps its
-  parts and joins them the first time `Text` or `Runs` is read; `Length` and `Trim` with nothing to trim
-  don't join. A softcode accumulator (`setq(0,%q0…)` or `fold()` over 1,000 items) went from about 50 MB
-  to about 3 MB allocated per call in SharpMUSH. `Text`, `Runs` and the serializer see the same values as
-  before, and a text read from several threads at once is joined safely.
-- `Splice`, and `Insert`, `Remove`, `Replace` and `ReplaceAll` on top of it, write the result once at its
-  final length instead of through a growing builder: about a third less allocated per `edit()`.
-- `Substring` and `Split` on styled text copy the runs they keep into an array of exactly that size.
-  Splitting a list of 1,000 coloured words allocates 132 KB instead of 312 KB.
-- Enumerating a `MarkupSet` inside the library no longer boxes an enumerator.
 - `DisplayWidth.Of` and `IndexAtWidth` count a stretch of printable ASCII with one vectorised scan:
   2,000 characters measure in about 32 ns instead of 6 µs.
 - `WrapLines`, `Shape` and `FormatColumn` measure each line only as far as the line. They measured the
@@ -57,11 +37,52 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   escapes with a vectorised search, and reuses the markup of the last four styles it read: 2,000 characters
   of coloured text parse in 12 µs and 6.4 KB instead of 32 µs and 44 KB.
 
+## 2.30.0 — 2026-11-12
+
+### Added
+
+- `MarkupText.Split(string, StringSplitOptions)` and `Split(MarkupText, StringSplitOptions)`.
+  `RemoveEmptyEntries` drops empty segments and `TrimEntries` trims white space off each, in the same pass
+  as the split, so splitting a list into its words no longer needs a second array to filter.
+
+### Changed
+
+- Appending to long text no longer copies it. `MarkupText.Concat` of 1,024 characters or more keeps its
+  parts and joins them the first time `Text` or `Runs` is read; `Length` and `Trim` with nothing to trim
+  don't join. A softcode accumulator (`setq(0,%q0…)` or `fold()` over 1,000 items) went from about 50 MB
+  to about 3 MB allocated per call in SharpMUSH. `Text`, `Runs` and the serializer see the same values as
+  before, and a text read from several threads at once is joined safely.
+- `Splice`, and `Insert`, `Remove`, `Replace` and `ReplaceAll` on top of it, write the result once at its
+  final length instead of through a growing builder: about a third less allocated per `edit()`.
+- `Substring` and `Split` on styled text copy the runs they keep into an array of exactly that size.
+  Splitting a list of 1,000 coloured words allocates 132 KB instead of 312 KB.
+- Enumerating a `MarkupSet` inside the library no longer boxes an enumerator.
+
 ### Fixed
 
 - A screen reader hears one row of a fixed-width table as one line. `BlockLayout.Relayout` with
   `LayoutContext.Linear` now wraps a block that is not fluid at the reader's width, as it does a fluid one;
   before, it wrapped at the width the block's columns took, so a 35-cell WHO listing broke each player's row in two. The same holds for one nested in another block (`Bounded`).
+
+## 2.29.1 — 2026-11-10
+
+### Added
+
+- `UrlPolicy.RefusingControlCharacters()`: the same policy, also refusing a link address that holds a
+  control character (U+0000–U+001F, U+007F–U+009F) or starts or ends with a space. A browser removes those
+  before reading the scheme, so an MXP or Pueblo `href="java&#9;script:alert(1)"` passes `UrlPolicy.Safe` as a
+  relative address and runs as `javascript:` when clicked. Opt-in; `UrlPolicy.Safe` is unchanged.
+  `MarkupStringOptions.RefuseControlCharactersInLinks` turns it on for `AddMarkupString`.
+
+## 2.29.0 — 2026-11-10
+
+### Added
+
+- `ElementMarkup`, data markup that numbers the element text is in, and `DecodeContext.NextElement()`. Stored by
+  the serializer like the other shared markup.
+
+### Fixed
+
 - Two equal elements side by side stay two. Before, an element closed and an equal one opened straight after it
   became one run, so a client saw one thing where the server sent two. This happened with two exits of one
   flagged element (`<Exit>north</Exit><Exit>south</Exit>` read as one exit, `northsouth`), two `<SEND>`s, `<A>`s
