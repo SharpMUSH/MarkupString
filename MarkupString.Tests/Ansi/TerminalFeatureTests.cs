@@ -43,6 +43,10 @@ public class TerminalFeatureTests
 		return new TerminalPicture("red-blue", width, height, rgba);
 	}
 
+	/// <summary>A picture one pixel wide, its upper half one colour and its lower half another, opaque.</summary>
+	private static TerminalPicture TopBottom(byte r1, byte g1, byte b1, byte r2, byte g2, byte b2) =>
+		new("top-bottom", 1, 2, new byte[] { r1, g1, b1, 255, r2, g2, b2, 255 });
+
 	private static readonly ImageMarkup Cat = new("cat.png", "A cat");
 
 	private static MarkupText Render(MarkupText text, AnsiOutputOptions options) =>
@@ -783,7 +787,34 @@ public class TerminalFeatureTests
 
 		var output = RenderString(Laid(new Figure(Cat, MarkupText.Empty), 10, new PictureCells(2, 1)), options);
 
-		await Assert.That(output).IsEqualTo($"{Esc}[38;2;255;0;0;48;2;255;0;0m▀{Esc}[38;2;0;0;255;48;2;0;0;255m▀{Esc}[0m" + new string(' ', 8));
+		await Assert.That(output).IsEqualTo($"{Esc}[38;2;255;0;0m█{Esc}[38;2;0;0;255m█{Esc}[0m" + new string(' ', 8));
+	}
+
+	/// <summary>A cell whose halves differ keeps the half block, the upper pixel its foreground and the lower its background.</summary>
+	[Test]
+	public async Task BlockArtKeepsTheHalfBlockWhenTheHalvesDiffer()
+	{
+		var options = new AnsiOutputOptions(Features: TerminalFeatures.BlockArt) { Pictures = new Source(TopBottom(255, 0, 0, 0, 0, 255)) };
+
+		var output = RenderString(Laid(new Figure(Cat, MarkupText.Empty), 1, new PictureCells(1, 1)), options);
+
+		await Assert.That(output).IsEqualTo($"{Esc}[38;2;255;0;0;48;2;0;0;255m▀{Esc}[0m");
+	}
+
+	/// <summary>
+	/// Halves that differ in true colour but come out the same at the client's depth are one colour on its
+	/// screen, so they are a full block too, with no background equal to the foreground.
+	/// </summary>
+	[Test]
+	public async Task BlockArtMergesHalvesTheDepthMakesEqual()
+	{
+		var options = new AnsiOutputOptions(AnsiColorDepth.Xterm256, TerminalFeatures.BlockArt) { Pictures = new Source(TopBottom(0, 245, 183, 0, 244, 182)) };
+
+		var output = RenderString(Laid(new Figure(Cat, MarkupText.Empty), 1, new PictureCells(1, 1)), options);
+
+		await Assert.That(output).Contains("█");
+		await Assert.That(output).DoesNotContain("▀");
+		await Assert.That(output).DoesNotContain("48;");
 	}
 
 	[Test]
@@ -794,7 +825,7 @@ public class TerminalFeatureTests
 		var output = RenderString(Laid(new Figure(Cat, MarkupText.Empty), 2, new PictureCells(2, 1)), options);
 
 		await Assert.That(output).DoesNotContain("38;2");
-		await Assert.That(output.Count(c => c == '▀')).IsEqualTo(2);
+		await Assert.That(output.Count(c => c == '█')).IsEqualTo(2);
 	}
 
 	[Test]
