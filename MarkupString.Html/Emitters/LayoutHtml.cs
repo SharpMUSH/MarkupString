@@ -228,15 +228,19 @@ internal static class LayoutHtml
 		}
 		html.Write("\">");
 
+		// As in a terminal, a row with an item of no set width gives all its spare width to those items.
+		var hasAuto = items.Any(block => Layout.Flex.SizeOf(block).Basis.Kind == BlockSizeKind.Auto);
 		foreach (var block in items)
 		{
 			// Each item asks for its terminal width and grows to fill its row, so items that do not fit
 			// side by side wrap onto rows of their own. Spare width is left alone only when the layout
 			// asked for it to be placed somewhere.
 			var item = Layout.Flex.SizeOf(block);
-			// A Bounded item keeps its width, as in a terminal: the spare goes after it, not into it.
-			var grow = block is not Bounded && (flex.Justify == FlexJustify.Start || item.Basis.Kind == BlockSizeKind.Auto)
-				? Math.Max(1, item.Grow)
+			// A Bounded item keeps its width, as in a terminal: the spare goes after it, not into it. So
+			// does an item with a set width beside one without: the spare goes to the one without.
+			var grow = item.Basis.Kind == BlockSizeKind.Auto ? Math.Max(1, item.Grow)
+				: hasAuto ? 0
+				: block is not Bounded && flex.Justify == FlexJustify.Start ? Math.Max(1, item.Grow)
 				: item.Grow;
 			html.Write("<div class=\"ms-item\" style=\"flex:");
 			html.Write(Number(grow));

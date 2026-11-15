@@ -579,6 +579,18 @@ public class BlockLayoutTests
 	}
 
 	[Test]
+	public async Task Flex_ASetWidthBesideAnAutoItem_KeepsItsWidthInHtmlAsInATerminal()
+	{
+		var row = new Flex([T("*").Sized(BlockSize.Cells(2)), T("The reply")]) { Gap = 0 };
+
+		await Assert.That(BlockLayout.Lines(row, 20).Select(line => line.ToPlainText().TrimEnd()).ToArray()).IsEquivalentTo(new[] { "* The reply" });
+		var html = BlockLayout.Build(row, 20).Render(MarkupFormat.Html, Registry);
+		await Assert.That(html).Contains("<div class=\"ms-item\" style=\"flex:0 1 2ch\">")
+			.Because("the spare width goes to the item with no set width, not half to the marker");
+		await Assert.That(html).Contains("<div class=\"ms-item\" style=\"flex:1 1 0\">");
+	}
+
+	[Test]
 	public async Task Flex_BoundedItemsTooWideTogether_ShrinkSideBySide()
 	{
 		var box = BlockLayout.Build(T("x").Bordered(border: BorderStyle.Ascii), 10);
