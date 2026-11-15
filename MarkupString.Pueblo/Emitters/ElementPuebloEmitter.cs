@@ -11,6 +11,13 @@ namespace MarkupString.Pueblo;
 /// sound module in <see href="https://github.com/uecasm/pueblo">uecasm/pueblo</see>). Pueblo has two
 /// players, one for wave files and one for MIDI, and chooses between them by the file; it has no channel
 /// for music as such, and it plays a sound once or loops it, without a count.
+/// <para>
+/// Preformatted text has no element here: it is written as the rest of the stream is, a <c>&lt;BR&gt;</c>
+/// and a newline at each line end. <c>&lt;xch_mudtext&gt;</c> would put the Pueblo client back on MUD text,
+/// where a tag is text, and the clients in use read it differently: MUSHclient does not know the element
+/// and, after <c>xch_mode=purehtml</c>, breaks a line only at <c>&lt;BR&gt;</c>, so every line of the region
+/// ran into the next; BeipMU breaks at the newline and ignores both.
+/// </para>
 /// </remarks>
 internal sealed class ElementPuebloEmitter(Type markupType) : IMarkupEmitter
 {
@@ -18,7 +25,7 @@ internal sealed class ElementPuebloEmitter(Type markupType) : IMarkupEmitter
 	internal static readonly Type[] Types =
 	[
 		typeof(SoundMarkup), typeof(SoundStopMarkup), typeof(ClearScreenMarkup), typeof(PrefetchMarkup),
-		typeof(ImageMarkup), typeof(PaneMarkup), typeof(PreformattedMarkup),
+		typeof(ImageMarkup), typeof(PaneMarkup),
 	];
 
 	/// <summary>The pane name Pueblo reads as "back to wherever text was going before".</summary>
@@ -76,15 +83,6 @@ internal sealed class ElementPuebloEmitter(Type markupType) : IMarkupEmitter
 
 				// A figure's rows keep their cells, so what is beside the picture stays where it was.
 				if (image.Row is not null) output.Write(new string(' ', DisplayWidth.Of(body, context)));
-				return;
-
-			case PreformattedMarkup:
-				// The client is back on MUD-text conventions inside this: it breaks the lines itself, and
-				// the font is fixed-width. PreformattedMarkup suspends the <BR> substitution to match.
-				// One element around the whole region, however many runs its content is in.
-				if (context.StartsRegion(markup)) output.Write("<xch_mudtext>");
-				output.Write(body);
-				if (context.EndsRegion(markup)) output.Write("</xch_mudtext>");
 				return;
 
 			case PaneMarkup pane:

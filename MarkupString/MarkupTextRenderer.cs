@@ -200,14 +200,16 @@ public static class MarkupTextRenderer
 	/// </summary>
 	private static void EncodeStretch(ReadOnlySpan<char> content, int start, int end, TextEncoding encoding, IBufferWriter<char> output)
 	{
+		// The newline of a CRLF split between two stretches ended its line with the CR already.
+		if (encoding is TextEncoding.Markdown or TextEncoding.HtmlLineBreaks
+			&& start > 0 && start < end && content[start - 1] == '\r' && content[start] == '\n') start++;
+
 		if (encoding != TextEncoding.Markdown)
 		{
 			EncodeText(content[start..end], encoding, output);
 			return;
 		}
 
-		// The newline of a CRLF split between two stretches ended its line with the CR already.
-		if (start > 0 && start < end && content[start - 1] == '\r' && content[start] == '\n') start++;
 		MarkdownEncode(content[start..end], StartsLine(content, start) ? LinePosition.LineStart : LinePosition.MidLine, output);
 	}
 
@@ -491,10 +493,9 @@ public static class MarkupTextRenderer
 	/// is.
 	/// </summary>
 	/// <remarks>
-	/// A layer only governs the text it covers if it is actually written. Preformatting that reaches a
-	/// registry without the package that writes <c>&lt;xch_mudtext&gt;</c> marks nothing, so the client is
-	/// still reading HTML and still needs the line endings the format would have written — suspending
-	/// them there would lose every break in the region.
+	/// A layer only governs the text it covers if it is actually written. Preformatting in a format with no
+	/// element for it — Pueblo — marks nothing, so the client is still reading HTML and still needs the line
+	/// endings the format would have written; suspending them there would lose every break in the region.
 	/// </remarks>
 	private static TextEncoding EncodingFor(MarkupSet markups, MarkupFormat format, MarkupRegistry registry)
 	{

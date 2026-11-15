@@ -424,16 +424,17 @@ public class SharedVocabularyTests
 	// ── A region with its own layout ────────────────────────────────────────────
 
 	/// <summary>
-	/// Inside <c>&lt;xch_mudtext&gt;</c> the client is back on MUD-text conventions and breaks the lines
-	/// itself, so the <c>&lt;BR&gt;</c> the format writes everywhere else would double every one of them.
+	/// Pueblo writes no element for a preformatted region: MUSHclient, after <c>xch_mode=purehtml</c>,
+	/// breaks a line only at <c>&lt;BR&gt;</c> and does not know <c>&lt;xch_mudtext&gt;</c>, so every line
+	/// of a table ran into the next. Each line ends as the rest of the stream does.
 	/// </summary>
 	[Test]
-	public async Task PreformattedKeepsItsOwnLineEndings()
+	public async Task PreformattedEndsEachLineWithABreakInPueblo()
 	{
 		var table = MarkupText.Preformatted(MarkupText.Plain("north  2\nsouth  1\n"));
 
 		await Assert.That(Render(table, MarkupFormat.Pueblo))
-			.IsEqualTo("<xch_mudtext>north  2\nsouth  1\n</xch_mudtext>");
+			.IsEqualTo("north  2<BR>\nsouth  1<BR>\n");
 	}
 
 	[Test]
@@ -457,8 +458,8 @@ public class SharedVocabularyTests
 			MarkupText.Preformatted(MarkupText.Plain("a  1\nb  2\n")),
 			MarkupText.Plain("Nothing else.\n")]);
 
-		await Assert.That(Render(line, MarkupFormat.Pueblo)).IsEqualTo(
-			"You see:<BR>\n<xch_mudtext>a  1\nb  2\n</xch_mudtext>Nothing else.<BR>\n");
+		await Assert.That(Render(line, MarkupFormat.Html)).IsEqualTo(
+			"You see:\n<pre class=\"ms-preformatted\">a  1\nb  2\n</pre>Nothing else.\n");
 	}
 
 	/// <summary>Everything else the encoding does is still done: this suspends the line breaks alone.</summary>
@@ -467,8 +468,9 @@ public class SharedVocabularyTests
 	{
 		var table = MarkupText.Preformatted(MarkupText.Plain("a < b & c\n"));
 
-		await Assert.That(Render(table, MarkupFormat.Pueblo))
-			.IsEqualTo("<xch_mudtext>a &lt; b &amp; c\n</xch_mudtext>");
+		await Assert.That(Render(table, MarkupFormat.Html))
+			.IsEqualTo("<pre class=\"ms-preformatted\">a &lt; b &amp; c\n</pre>");
+		await Assert.That(Render(table, MarkupFormat.Pueblo)).IsEqualTo("a &lt; b &amp; c<BR>\n");
 	}
 
 	[Test]
@@ -477,7 +479,7 @@ public class SharedVocabularyTests
 		var table = MarkupText.Preformatted(
 			MarkupText.Wrap(AnsiMarkup.Create(bold: true), MarkupText.Plain("north\n")));
 
-		await Assert.That(Render(table, MarkupFormat.Pueblo)).Contains("north\n");
+		await Assert.That(Render(table, MarkupFormat.Pueblo)).Contains("north<BR>\n");
 		await Assert.That(Render(table, MarkupFormat.Ansi)).Contains("north");
 	}
 
@@ -490,6 +492,22 @@ public class SharedVocabularyTests
 			MarkupTextSerializer.Serialize(table, MarkupRegistry.Empty), MarkupRegistry.Empty);
 
 		await Assert.That(Render(back, MarkupFormat.Pueblo)).IsEqualTo(Render(table, MarkupFormat.Pueblo));
+		await Assert.That(Render(back, MarkupFormat.Html)).IsEqualTo(Render(table, MarkupFormat.Html))
+			.Because("Pueblo writes nothing for the region, so only HTML shows it survived");
+	}
+
+	/// <summary>A CRLF split between two runs is one line ending, not one per half.</summary>
+	[Test]
+	public async Task ACrlfSplitBetweenRunsIsOneBreakInPueblo()
+	{
+		var table = MarkupText.Preformatted(MarkupText.Concat([
+			MarkupText.Plain("a\r"),
+			MarkupText.Wrap(AnsiMarkup.Create(bold: true), MarkupText.Plain("\nb"))]));
+
+		var pueblo = Render(table, MarkupFormat.Pueblo);
+
+		await Assert.That(pueblo.Split("<BR>").Length - 1).IsEqualTo(1);
+		await Assert.That(pueblo).StartsWith("a<BR>\n");
 	}
 
 	// ── One element per region ──────────────────────────────────────────────────
@@ -504,13 +522,6 @@ public class SharedVocabularyTests
 		var table = MarkupText.Preformatted(MarkupText.Concat([
 			MarkupText.Wrap(AnsiMarkup.Create(bold: true), MarkupText.Plain("north")),
 			MarkupText.Plain("  2\n")]));
-
-		var pueblo = Render(table, MarkupFormat.Pueblo);
-
-		await Assert.That(pueblo.Split("<xch_mudtext>").Length - 1).IsEqualTo(1);
-		await Assert.That(pueblo.Split("</xch_mudtext>").Length - 1).IsEqualTo(1);
-		await Assert.That(pueblo).StartsWith("<xch_mudtext>");
-		await Assert.That(pueblo).EndsWith("</xch_mudtext>");
 
 		var html = Render(table, MarkupFormat.Html);
 
@@ -561,19 +572,17 @@ public class SharedVocabularyTests
 	}
 
 	/// <summary>
-	/// Preformatting that reaches a registry without the package that writes <c>&lt;xch_mudtext&gt;</c>
-	/// marks nothing, so the client is still reading HTML and still needs its line endings. Suspending
-	/// them there would lose every break in the region.
+	/// Preformatting in a format with no element for it marks nothing, so the client is still reading
+	/// HTML and still needs its line endings. Suspending them there would lose every break in the region.
 	/// </summary>
 	[Test]
-	public async Task WithoutThePackageThatMarksTheRegion_TheLineEndingsStay()
+	public async Task WhereNothingMarksTheRegion_TheLineEndingsStay()
 	{
 		var table = MarkupText.Preformatted(MarkupText.Plain("a\nb\n"));
 		var withoutPueblo = MarkupRegistry.Empty.WithAnsi().WithHtml();
 
 		await Assert.That(table.Render(MarkupFormat.Pueblo, withoutPueblo)).IsEqualTo("a<BR>\nb<BR>\n");
-		await Assert.That(Render(table, MarkupFormat.Pueblo)).IsEqualTo("<xch_mudtext>a\nb\n</xch_mudtext>")
-			.Because("with the package, the region is marked and keeps its own endings");
+		await Assert.That(Render(table, MarkupFormat.Pueblo)).IsEqualTo("a<BR>\nb<BR>\n");
 	}
 
 	/// <summary>
@@ -623,7 +632,6 @@ public class SharedVocabularyTests
 			MarkupText.Plain("y")]));
 
 		await Assert.That(Render(nested, MarkupFormat.Html)).IsEqualTo("<pre class=\"ms-preformatted\">xy</pre>");
-		await Assert.That(Render(nested, MarkupFormat.Pueblo)).IsEqualTo("<xch_mudtext>xy</xch_mudtext>");
 	}
 
 	[Test]

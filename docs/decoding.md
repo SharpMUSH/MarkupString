@@ -657,4 +657,5 @@ switches back, and its region is a `PreformattedMarkup`. ANSI is read in both.
 
 `strong` and `em` close `b` and `i`, and `strike` and `del` close `s`. Links end with their line.
 
-What `MarkupFormat.Pueblo` writes reads back to the same markup.
+What `MarkupFormat.Pueblo` writes reads back to the same markup, except preformatting: Pueblo writes no
+element for it, so its lines read back as plain lines.
