@@ -13,6 +13,7 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Pueblo writes no `<xch_mudtext>` around preformatted text, and each of its lines ends in `<BR>` like
   the rest of the stream. MUSHclient does not know the element and, after `xch_mode=purehtml`, breaks a
   line only at `<BR>`, so every line of a table or layout ran into the next.
+- In Pueblo, a CRLF split between two runs (plain text, then styled) is one `<BR>`, not two.
 - In HTML, an item of a `Flex` row with a set width keeps that width beside an item with none, as a
   terminal draws it: the spare width goes to the item with none. A two-cell marker beside a reply took
   half the row and pushed the reply to the right.

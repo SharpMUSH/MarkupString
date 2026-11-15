@@ -492,6 +492,22 @@ public class SharedVocabularyTests
 			MarkupTextSerializer.Serialize(table, MarkupRegistry.Empty), MarkupRegistry.Empty);
 
 		await Assert.That(Render(back, MarkupFormat.Pueblo)).IsEqualTo(Render(table, MarkupFormat.Pueblo));
+		await Assert.That(Render(back, MarkupFormat.Html)).IsEqualTo(Render(table, MarkupFormat.Html))
+			.Because("Pueblo writes nothing for the region, so only HTML shows it survived");
+	}
+
+	/// <summary>A CRLF split between two runs is one line ending, not one per half.</summary>
+	[Test]
+	public async Task ACrlfSplitBetweenRunsIsOneBreakInPueblo()
+	{
+		var table = MarkupText.Preformatted(MarkupText.Concat([
+			MarkupText.Plain("a\r"),
+			MarkupText.Wrap(AnsiMarkup.Create(bold: true), MarkupText.Plain("\nb"))]));
+
+		var pueblo = Render(table, MarkupFormat.Pueblo);
+
+		await Assert.That(pueblo.Split("<BR>").Length - 1).IsEqualTo(1);
+		await Assert.That(pueblo).StartsWith("a<BR>\n");
 	}
 
 	// ── One element per region ──────────────────────────────────────────────────

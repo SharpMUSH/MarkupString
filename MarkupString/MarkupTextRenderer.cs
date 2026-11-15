@@ -200,14 +200,16 @@ public static class MarkupTextRenderer
 	/// </summary>
 	private static void EncodeStretch(ReadOnlySpan<char> content, int start, int end, TextEncoding encoding, IBufferWriter<char> output)
 	{
+		// The newline of a CRLF split between two stretches ended its line with the CR already.
+		if (encoding is TextEncoding.Markdown or TextEncoding.HtmlLineBreaks
+			&& start > 0 && start < end && content[start - 1] == '\r' && content[start] == '\n') start++;
+
 		if (encoding != TextEncoding.Markdown)
 		{
 			EncodeText(content[start..end], encoding, output);
 			return;
 		}
 
-		// The newline of a CRLF split between two stretches ended its line with the CR already.
-		if (start > 0 && start < end && content[start - 1] == '\r' && content[start] == '\n') start++;
 		MarkdownEncode(content[start..end], StartsLine(content, start) ? LinePosition.LineStart : LinePosition.MidLine, output);
 	}
 
