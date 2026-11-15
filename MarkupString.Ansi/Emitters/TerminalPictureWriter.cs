@@ -344,6 +344,7 @@ internal static class TerminalPictureWriter
 		var width = key.Columns;
 		var pixels = PictureScaler.Letterbox(picture, width, key.Rows * 2);
 		var plain = key.Effective with { Foreground = null };
+		var plainShown = plain.AtDepth(key.Depth);
 		var rows = new string[key.Rows];
 		using var line = new PooledCharWriter(width * 40);
 
@@ -365,6 +366,14 @@ internal static class TerminalPictureWriter
 					_ => (plain, ' '),
 				};
 				style = style.AtDepth(key.Depth);
+				// Both halves the same colour at this depth: a full block in the foreground alone, so no cell is
+				// written with its foreground equal to its background (some clients flag that as hidden text).
+				if (glyph != ' ' && style.Background is { } shown && Equals(style.Foreground, shown))
+				{
+					style = style with { Background = plainShown.Background };
+					glyph = '█';
+				}
+
 				SgrWriter.Transition(current, style, line);
 				current = style;
 				line.GetSpan(1)[0] = glyph;

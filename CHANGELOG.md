@@ -17,6 +17,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - In HTML, an item of a `Flex` row with a set width keeps that width beside an item with none, as a
   terminal draws it: the spare width goes to the item with none. A two-cell marker beside a reply took
   half the row and pushed the reply to the right.
+- Half-block pictures write a cell whose two halves are the same colour (at the client's colour depth) as
+  `█` in that colour alone, not `▀` with equal foreground and background. Clients such as BeipMU flag a
+  cell whose foreground matches its background as hidden text, and the cell needed one colour code, not two.
 
 ## 2.31.0 — 2026-11-12
 
