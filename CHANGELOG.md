@@ -6,6 +6,14 @@ All notable changes to `MarkupString`, `MarkupString.Ansi`, `MarkupString.Html`,
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project
 follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Fixed
+
+- In HTML, an item of a `Flex` row with a set width keeps that width beside an item with none, as a
+  terminal draws it: the spare width goes to the item with none. A two-cell marker beside a reply took
+  half the row and pushed the reply to the right.
+
 ## 2.31.0 — 2026-11-12
 
 ### Added
