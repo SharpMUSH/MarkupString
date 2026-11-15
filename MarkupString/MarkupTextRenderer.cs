@@ -491,10 +491,9 @@ public static class MarkupTextRenderer
 	/// is.
 	/// </summary>
 	/// <remarks>
-	/// A layer only governs the text it covers if it is actually written. Preformatting that reaches a
-	/// registry without the package that writes <c>&lt;xch_mudtext&gt;</c> marks nothing, so the client is
-	/// still reading HTML and still needs the line endings the format would have written — suspending
-	/// them there would lose every break in the region.
+	/// A layer only governs the text it covers if it is actually written. Preformatting in a format with no
+	/// element for it — Pueblo — marks nothing, so the client is still reading HTML and still needs the line
+	/// endings the format would have written; suspending them there would lose every break in the region.
 	/// </remarks>
 	private static TextEncoding EncodingFor(MarkupSet markups, MarkupFormat format, MarkupRegistry registry)
 	{

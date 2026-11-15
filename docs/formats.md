@@ -165,22 +165,27 @@ browser page decides its own line handling in its stylesheet, and whether a brea
 paragraph belongs to the document rather than to this library. An MXP client is a line-oriented MUD
 client that reads a newline as a break already.
 
-This is the line discipline of the whole stream. A region laid out by its own spacing suspends it:
+This is the line discipline of the whole stream, and a region laid out by its own spacing keeps it:
 
 ```csharp
 MarkupText.Preformatted(MarkupText.Plain("north  2\nsouth  1\n")).Render(MarkupFormat.Pueblo);
-// <xch_mudtext>north  2\nsouth  1\n</xch_mudtext>
+// north  2<BR>\nsouth  1<BR>\n
 ```
 
+Pueblo writes no element for preformatted text. `<xch_mudtext>` would put the client back on MUD text,
+where a tag is text, and the clients in use read it differently: MUSHclient does not know the element
+and, after `xch_mode=purehtml`, breaks a line only at `<BR>`; BeipMU breaks at the newline and ignores
+both. `<BR>` and a newline at every line end is the one form both draw.
+
 `PreformattedMarkup` is an `ITextEncodingSource`: a markup that decides how the text it covers is
-encoded, in place of the format's own. Inside Pueblo's `<xch_mudtext>` the client is back on MUD-text
-conventions and breaks the lines itself, so the `<BR>` would double every one of them — everything else
-the encoding does, the entities and the dropped control characters, still happens. A browser gets
-`<pre>`, and every other format the text as it stands. The innermost layer that answers wins, the way
-the innermost styling does, and text between runs carries no markup and always takes the format's own
-encoding. A layer's encoding applies only where that layer is actually written — preformatting that
-reaches a registry without `WithPueblo()` marks nothing, so the region keeps the line endings the
-format would have given it instead of losing every break in it.
+encoded, in place of the format's own. Where a format writes an element for it that the client reads as
+preformatted, the line-break substitution is suspended, since the client breaks the lines itself —
+everything else the encoding does, the entities and the dropped control characters, still happens. A
+browser gets `<pre>`, and every other format the text as it stands. The innermost layer that answers
+wins, the way the innermost styling does, and text between runs carries no markup and always takes the
+format's own encoding. A layer's encoding applies only where that layer is actually written —
+preformatting in a format with no element for it marks nothing, so the region keeps the line endings
+the format would have given it instead of losing every break in it.
 
 A wrapping markup covers as many runs as its content has, so the emitters ask
 `EmitContext.StartsRegion` and `EndsRegion` and write one element around the whole stretch rather than
