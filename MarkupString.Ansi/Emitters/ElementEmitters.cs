@@ -2,17 +2,23 @@ using System.Buffers;
 namespace MarkupString.Ansi;
 
 /// <summary>
-/// Clears a terminal's screen. The rest of the shared vocabulary is left to the core rule for a
-/// terminal: a point writes nothing, and a markup wrapping text writes the text.
+/// Clears the screen with the terminal's erase, in <see cref="MarkupFormat.Ansi"/> and in
+/// <see cref="MarkupFormat.Mxp"/>, which has no clear of its own but already carries SGR. The rest of
+/// the shared vocabulary is left to the core rule for a terminal: a point writes nothing, and a markup
+/// wrapping text writes the text.
 /// </summary>
-internal sealed class ClearScreenAnsiEmitter : IMarkupEmitter
+/// <remarks>
+/// An MXP client that keeps a scrolling window reads the erase and drops it (Mudlet, MUSHclient), so it
+/// costs nothing there and clears wherever the client honours it.
+/// </remarks>
+internal sealed class ClearScreenAnsiEmitter(MarkupFormat format) : IMarkupEmitter
 {
 	/// <summary>Home the cursor, then erase the display.</summary>
 	internal const string Sequence = "\u001b[H\u001b[2J";
 
 	public Type MarkupType => typeof(ClearScreenMarkup);
 
-	public MarkupFormat Format => MarkupFormat.Ansi;
+	public MarkupFormat Format { get; } = format;
 
 	public void Emit(IMarkup markup, ReadOnlySpan<char> body, in EmitContext context, IBufferWriter<char> output)
 	{

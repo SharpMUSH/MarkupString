@@ -5,7 +5,12 @@ namespace MarkupString;
 /// </summary>
 /// <remarks>
 /// A terminal gets <c>ESC[H ESC[2J</c>, Pueblo <c>&lt;xch_page clear="text"&gt;</c>, and an HTML page an
-/// empty <c>ms-clear</c> element to act on. MXP has no such instruction and is sent nothing.
+/// empty <c>ms-clear</c> element to act on. MXP has no clear of its own and is sent the terminal's.
+/// <para>
+/// Most MUD clients keep a scrolling window and drop both instructions, so a clear is a request, not a
+/// promise: send nothing after it that only makes sense on an empty screen. docs/formats.md lists which
+/// clients clear.
+/// </para>
 /// </remarks>
 public sealed class ClearScreenMarkup : IPointMarkup
 {

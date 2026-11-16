@@ -10,6 +10,12 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- `MarkupText.ClearScreen()` is written in MXP as `ESC[H ESC[2J` when `WithAnsi()` is registered, in place of
+  nothing: MXP has no clear of its own, and its clients already read SGR in the same stream. Pueblo keeps
+  `<xch_page clear="text">` alone. [Formats](docs/formats.md#clearing-the-screen) has a table of which clients
+  clear: MUSHclient, Mudlet and BeipMU drop both instructions, so a game should not count on a clear having
+  happened (#109).
+
 - Half-block pictures write a cell whose two halves are the same colour as a space on that background, not
   as `█`. A background fills the whole cell in every client, but clients that draw `█` from the font (BeipMU
   among them) fill only the glyph's height, which is shorter than a line, so solid areas came out striped.

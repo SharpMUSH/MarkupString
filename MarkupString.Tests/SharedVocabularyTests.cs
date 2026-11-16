@@ -145,7 +145,7 @@ public class SharedVocabularyTests
 		await Assert.That(Render(clear, MarkupFormat.Ansi)).IsEqualTo("\e[H\e[2J");
 		await Assert.That(Render(clear, MarkupFormat.Pueblo)).IsEqualTo("<xch_page clear=\"text\">");
 		await Assert.That(Render(clear, MarkupFormat.Html)).IsEqualTo("<span class=\"ms-clear\"></span>");
-		await Assert.That(Render(clear, MarkupFormat.Mxp)).IsEqualTo(string.Empty).Because("MXP has no such instruction");
+		await Assert.That(Render(clear, MarkupFormat.Mxp)).IsEqualTo("\e[H\e[2J").Because("MXP has no clear of its own");
 		await Assert.That(Render(clear, MarkupFormat.Plain)).IsEqualTo(string.Empty);
 	}
 
