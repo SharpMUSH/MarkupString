@@ -787,7 +787,22 @@ public class TerminalFeatureTests
 
 		var output = RenderString(Laid(new Figure(Cat, MarkupText.Empty), 10, new PictureCells(2, 1)), options);
 
-		await Assert.That(output).IsEqualTo($"{Esc}[38;2;255;0;0m█{Esc}[38;2;0;0;255m█{Esc}[0m" + new string(' ', 8));
+		await Assert.That(output).IsEqualTo($"{Esc}[48;2;255;0;0m {Esc}[48;2;0;0;255m {Esc}[0m" + new string(' ', 8));
+	}
+
+	/// <summary>
+	/// A cell whose halves are one colour is a space on that colour, never a <c>█</c>: a background fills the whole
+	/// cell in every client, while a client that draws <c>█</c> from its font fills only the glyph's height and
+	/// leaves a stripe between rows.
+	/// </summary>
+	[Test]
+	public async Task BlockArtDrawsASolidCellAsItsBackground()
+	{
+		var options = new AnsiOutputOptions(Features: TerminalFeatures.BlockArt) { Pictures = new Source(TopBottom(0, 245, 183, 0, 245, 183)) };
+
+		var output = RenderString(Laid(new Figure(Cat, MarkupText.Empty), 1, new PictureCells(1, 1)), options);
+
+		await Assert.That(output).IsEqualTo($"{Esc}[48;2;0;245;183m {Esc}[0m");
 	}
 
 	/// <summary>A cell whose halves differ keeps the half block, the upper pixel its foreground and the lower its background.</summary>
@@ -803,7 +818,7 @@ public class TerminalFeatureTests
 
 	/// <summary>
 	/// Halves that differ in true colour but come out the same at the client's depth are one colour on its
-	/// screen, so they are a full block too, with no background equal to the foreground.
+	/// screen, so they are a solid cell too: that colour's background, with no foreground equal to it.
 	/// </summary>
 	[Test]
 	public async Task BlockArtMergesHalvesTheDepthMakesEqual()
@@ -812,9 +827,10 @@ public class TerminalFeatureTests
 
 		var output = RenderString(Laid(new Figure(Cat, MarkupText.Empty), 1, new PictureCells(1, 1)), options);
 
-		await Assert.That(output).Contains("█");
+		await Assert.That(output).DoesNotContain("█");
 		await Assert.That(output).DoesNotContain("▀");
-		await Assert.That(output).DoesNotContain("48;");
+		await Assert.That(output).DoesNotContain("38;");
+		await Assert.That(output).Contains("48;5;");
 	}
 
 	[Test]
@@ -825,7 +841,8 @@ public class TerminalFeatureTests
 		var output = RenderString(Laid(new Figure(Cat, MarkupText.Empty), 2, new PictureCells(2, 1)), options);
 
 		await Assert.That(output).DoesNotContain("38;2");
-		await Assert.That(output.Count(c => c == '█')).IsEqualTo(2);
+		await Assert.That(output).DoesNotContain("48;2");
+		await Assert.That(output).DoesNotContain("█");
 	}
 
 	[Test]
