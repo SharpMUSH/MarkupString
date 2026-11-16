@@ -366,12 +366,15 @@ internal static class TerminalPictureWriter
 					_ => (plain, ' '),
 				};
 				style = style.AtDepth(key.Depth);
-				// Both halves the same colour at this depth: a full block in the foreground alone, so no cell is
-				// written with its foreground equal to its background (some clients flag that as hidden text).
+				// Both halves the same colour at this depth: a space on that background, with no foreground, so no
+				// cell is written with its foreground equal to its background (some clients flag that as hidden
+				// text). Not a █: a client that draws █ from its font fills only the glyph's height, which is less
+				// than a line in most clients (BeipMU among them), and a solid picture comes out striped, while a
+				// background fills the whole cell everywhere.
 				if (glyph != ' ' && style.Background is { } shown && Equals(style.Foreground, shown))
 				{
-					style = style with { Background = plainShown.Background };
-					glyph = '█';
+					style = style with { Foreground = plainShown.Foreground };
+					glyph = ' ';
 				}
 
 				SgrWriter.Transition(current, style, line);

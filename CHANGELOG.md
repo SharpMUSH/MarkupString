@@ -8,6 +8,13 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+
+- Half-block pictures write a cell whose two halves are the same colour as a space on that background, not
+  as `█`. A background fills the whole cell in every client, but clients that draw `█` from the font (BeipMU
+  among them) fill only the glyph's height, which is shorter than a line, so solid areas came out striped.
+  No cell has a foreground equal to its background, so 2.31.3's hidden-text fix still holds.
+
 ## 2.31.3 — 2026-11-15
 
 ### Fixed
