@@ -6,7 +6,7 @@ public static class AnsiRegistration
 	/// <summary>
 	/// Returns a registry that renders <see cref="AnsiMarkup"/> in all seven formats and serialises
 	/// it under kind <c>"ansi"</c>. Plain needs nothing: the body passes through. It also writes the
-	/// bell, a <see cref="ClearScreenMarkup"/> for a terminal, an <see cref="ImageMarkup"/> as
+	/// bell, a <see cref="ClearScreenMarkup"/> for a terminal and an MXP client, an <see cref="ImageMarkup"/> as
 	/// BBCode's <c>[img]</c> and Markdown's <c>![]()</c>, and a laid-out block as Markdown's own
 	/// structure — a table, a list, a rule.
 	/// </summary>
@@ -36,7 +36,8 @@ public static class AnsiRegistration
 			.With(new BellEmitter(MarkupFormat.Mxp))
 			.With(new BellEmitter(MarkupFormat.Html))
 			// From the shared vocabulary, what a terminal, BBCode and Markdown can express.
-			.With(new ClearScreenAnsiEmitter())
+			.With(new ClearScreenAnsiEmitter(MarkupFormat.Ansi))
+			.With(new ClearScreenAnsiEmitter(MarkupFormat.Mxp))
 			.With(new ImageBBCodeEmitter())
 			.With(new ImageMarkdownEmitter())
 			// A layout as Markdown's own structure. Markdown has no styling this package does not already

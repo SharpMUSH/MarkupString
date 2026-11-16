@@ -34,6 +34,18 @@ public class MxpDecodingTests
 		await Assert.That(spans[2].Style.Foreground).IsEqualTo(new RgbColor(255, 0, 0));
 	}
 
+	/// <summary>MXP has no clear of its own; the terminal's erase a server writes for one reads back as one clear.</summary>
+	[Test]
+	public async Task ClearScreen_AsAServerWritesIt_IsOneClear()
+	{
+		var written = MarkupText.Concat([MarkupText.ClearScreen(), MarkupText.Plain("top")])
+			.Render(MarkupFormat.Mxp, MarkupRegistry.Empty.WithAnsi().WithMxp().WithMxpSecureLines());
+
+		var (lines, _, _) = Decode(written + "\n");
+		await Assert.That(Markups(lines[0]).OfType<ClearScreenMarkup>().Count()).IsEqualTo(1);
+		await Assert.That(lines[0].Content.ToPlainText()).IsEqualTo("top");
+	}
+
 	[Test]
 	public async Task SecureTags_AreDroppedOnAnOpenLine()
 	{

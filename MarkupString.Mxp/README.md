@@ -8,6 +8,10 @@ You say a thing once; this package is how an MXP client hears it. The same text 
 client through `MarkupString.Pueblo`, to a browser through `MarkupString.Html`, and to a terminal,
 which gets a picture's description, a pane's text, and nothing for a sound.
 
+MXP has no clear of its own, so `MarkupText.ClearScreen()` is written as the terminal's `ESC[H ESC[2J`
+when `WithAnsi()` is registered. Mudlet and MUSHclient drop it; see
+[the client table](https://github.com/SharpMUSH/MarkupString/blob/main/docs/formats.md#clearing-the-screen).
+
 ```sh
 dotnet add package MarkupString.Mxp
 ```

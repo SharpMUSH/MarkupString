@@ -85,7 +85,7 @@ line.Render(MarkupFormat.Ansi);    // A map of the city The door creaks.
 | `StopSound` | `<SOUND Off>` / `<MUSIC Off>` | `<img xch_sound="stop" xch_device>` | `ms-sound-stop` | nothing |
 | `Image` | `<IMAGE>` | `<img>` | `<img>` | the description, or the address; BBCode `[img]`, Markdown `![description](address)` |
 | `Pane` | `<FRAME name><DEST name>…</DEST>` | `<xch_pane action="redirect">…` and back to `_previous` | `ms-pane` around the text | the text |
-| `ClearScreen` | nothing | `<xch_page clear="text">` | `ms-clear` | ANSI `ESC[H ESC[2J` |
+| `ClearScreen` | `ESC[H ESC[2J` (with `WithAnsi`) | `<xch_page clear="text">` | `ms-clear` | ANSI `ESC[H ESC[2J` |
 | `Prefetch` | nothing | `<xch_prefetch href xch_prob>` | `<link rel="prefetch">` | nothing |
 | `ExpireLinks` | `<EXPIRE>` | nothing | `ms-expire` | nothing |
 | `Variable`, `Gauge`, `Status` | `<VAR>`, `<GAUGE>`, `<STAT>` | the text | `ms-variable`, `ms-gauge`, `ms-status` around the text | the text |
@@ -116,6 +116,31 @@ A point marks its carrier and nothing else. `MarkupText.Wrap` refuses a point ov
 carrier, so a point can never stand over words that a format would then swallow, and a cover read back
 with one out of place drops the point rather than the text. Styling *around* a point is fine: the
 styling is written only if the point is.
+
+### Clearing the screen
+
+`MarkupText.ClearScreen()` asks the client to clear. MXP has no clear of its own, so it is sent the
+terminal's erase, which its clients already read alongside SGR. Pueblo keeps `<xch_page clear="text">`
+alone: the Pueblo client turns `ESC[2J` into that same tag, and the other Pueblo clients act on neither,
+so adding the erase would clear nothing more and would make one clear read back as two.
+
+Most MUD clients keep a scrolling window and drop both, without showing anything:
+
+| Client | `ESC[H ESC[2J` | `<xch_page clear="text">` | Where |
+|---|---|---|---|
+| A terminal (telnet and the like) | clears | shown as text | — |
+| Pueblo | clears (rewritten as `xch_page clear=text`) | clears | `ChWConn.cpp`, `ChHeadElement.cpp` |
+| MUSHclient | dropped: only `m` and `z` are read after `ESC[` | dropped: `xch_page` only turns MXP off | `telnet_phases.cpp`, `mxp/mxpOpenAtomic.cpp` |
+| Mudlet | dropped: erase in display is refused | no Pueblo | `src/TBuffer.cpp` |
+| BeipMU | dropped: only SGR and OSC 8 are read | dropped: its attributes are skipped | `src/AnsiParser.cpp`, `src/TextToLine.cpp` |
+| SharpMUTerm | read as a `ClearScreenMarkup`, not acted on | the same | `MarkupLineParser.Point` |
+| SharpClient | read as a clear, then ignored to keep scrollback | the same | `OutputView.razor` |
+| A `MarkupString.Web` page | — | — | `ms-clear` removes what came before |
+
+Nothing is written in place of a clear for a client that will drop it: the server cannot tell which
+clients those are, and a blank line or a rule would stay on a screen that did clear. So a clear is a
+request, not a promise. Send nothing after it that only makes sense on an empty screen, such as the
+same screen again on the assumption the first one is gone.
 
 ### What an MXP client said it supports
 
