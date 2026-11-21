@@ -13,6 +13,10 @@ namespace MarkupString.Html;
 /// Without a policy the tag name and attributes are written exactly as the markup carries them. With
 /// one, every tag is held to it as it is written — see <see cref="HtmlTagPolicy.Apply"/> — and a tag it
 /// refuses leaves its body in place, unwrapped. The body is encoded by the renderer either way.
+/// <para>A tag over several runs is one element: text split by an inner layer (a link inside <c>&lt;pre&gt;</c>)
+/// is written <c>&lt;pre&gt;&lt;a&gt;a&lt;/a&gt; &lt;a&gt;b&lt;/a&gt;&lt;/pre&gt;</c>, not one <c>&lt;pre&gt;</c> per run. The open
+/// tag is left out where the run before carries the same layer with the same layers around it, and the close
+/// tag where the run after does, so the elements still nest.</para>
 /// </remarks>
 public sealed class HtmlTagEmitter : IMarkupEmitter
 {
@@ -56,17 +60,46 @@ public sealed class HtmlTagEmitter : IMarkupEmitter
 			html = held;
 		}
 
-		output.Write("<");
-		output.Write(html.TagName);
-		if (html.Attributes is { Length: > 0 } attributes)
+		if (!Continues(markup, context.Markups, context.Previous))
 		{
-			output.Write(" ");
-			output.Write(attributes);
+			output.Write("<");
+			output.Write(html.TagName);
+			if (html.Attributes is { Length: > 0 } attributes)
+			{
+				output.Write(" ");
+				output.Write(attributes);
+			}
+			output.Write(">");
 		}
-		output.Write(">");
 		output.Write(body);
-		output.Write("</");
-		output.Write(html.TagName);
-		output.Write(">");
+		if (!Continues(markup, context.Markups, context.Next))
+		{
+			output.Write("</");
+			output.Write(html.TagName);
+			output.Write(">");
+		}
+	}
+
+	/// <summary>
+	/// Whether <paramref name="markup"/>'s element goes on through <paramref name="neighbour"/>: the neighbour
+	/// carries it, and the layers outside it in <paramref name="own"/> are the ones outside it there.
+	/// </summary>
+	private static bool Continues(IMarkup markup, MarkupSet own, MarkupSet? neighbour)
+	{
+		if (neighbour is null || Outside(own, markup) is not { } mine || Outside(neighbour, markup) is not { } theirs) return false;
+		return mine.SequenceEqual(theirs);
+	}
+
+	/// <summary><paramref name="markup"/> and the drawn layers outside it, outermost last; null when the set lacks it.</summary>
+	private static List<IMarkup>? Outside(MarkupSet markups, IMarkup markup)
+	{
+		List<IMarkup>? outside = null;
+		foreach (var layer in markups)
+		{
+			if (outside is null && layer.Equals(markup)) outside = [];
+			if (outside is not null && layer is not (IDataMarkup or IPointMarkup)) outside.Add(layer);
+		}
+
+		return outside;
 	}
 }

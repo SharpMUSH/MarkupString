@@ -53,6 +53,37 @@ public class HtmlMarkupTests
 			.IsEqualTo("<div class=\"outer\"><span class=\"inner\">Inner</span></div>");
 	}
 
+	/// <summary>
+	/// A tag over text an inner layer splits into runs is one element, not one per run: tagwrap(pre,...) over two
+	/// command links and the spaces between them.
+	/// </summary>
+	[Test]
+	public async Task TagOverSeveralRuns_IsOneElement()
+	{
+		var link = AnsiMarkup.Create(linkUrl: "look", linkKind: LinkKind.Command);
+		var text = MarkupText.Wrap(HtmlMarkup.Create("pre"),
+			MarkupText.Concat([MarkupText.Wrap(link, "aaa"), MarkupText.Plain("     "), MarkupText.Wrap(link, "bbb")]));
+
+		var html = Render(text, MarkupFormat.Html);
+		await Assert.That(html).StartsWith("<pre><a").And.EndsWith("</a></pre>");
+		await Assert.That(html.Split("<pre>").Length - 1).IsEqualTo(1);
+		await Assert.That(html.Split("</pre>").Length - 1).IsEqualTo(1);
+		await Assert.That(html).Contains("</a>     <a");
+		var pueblo = Render(text, MarkupFormat.Pueblo);
+		await Assert.That(pueblo.Split("<pre>").Length - 1).IsEqualTo(1);
+	}
+
+	/// <summary>A tag that does not cover its neighbour's outer layers closes before them, so the elements nest.</summary>
+	[Test]
+	public async Task TagInsideALayerItDoesNotShare_ClosesWhereItEnds()
+	{
+		var b = HtmlMarkup.Create("b");
+		var i = HtmlMarkup.Create("i");
+		var text = MarkupText.Concat(MarkupText.Wrap(b, MarkupText.Wrap(i, "x")), MarkupText.Wrap(i, "y"));
+
+		await Assert.That(Render(text, MarkupFormat.Html)).IsEqualTo("<b><i>x</i></b><i>y</i>");
+	}
+
 	[Test]
 	public async Task EmptyTag_StillWritesOpenAndClose()
 	{

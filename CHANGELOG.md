@@ -10,6 +10,11 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- An `HtmlMarkup` tag over text that an inner layer splits into runs is written as one element in HTML, Pueblo
+  and MXP. `tagwrap(pre,[cmdlink(aaa,look)][space(5)][cmdlink(bbb,look)])` was written as three `<pre>`
+  elements, one per run, so a client drew three blocks on three lines. A tag still closes before an outer layer
+  it does not share, so the elements nest.
+
 - `MarkupText.ClearScreen()` is written in MXP as `ESC[H ESC[2J` when `WithAnsi()` is registered, in place of
   nothing: MXP has no clear of its own, and its clients already read SGR in the same stream. Pueblo keeps
   `<xch_page clear="text">` alone. [Formats](docs/formats.md#clearing-the-screen) has a table of which clients
