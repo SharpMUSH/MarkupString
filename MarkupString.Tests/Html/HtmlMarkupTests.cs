@@ -53,6 +53,83 @@ public class HtmlMarkupTests
 			.IsEqualTo("<div class=\"outer\"><span class=\"inner\">Inner</span></div>");
 	}
 
+	/// <summary>
+	/// A tag over text an inner layer splits into runs is one element, not one per run: tagwrap(pre,...) over two
+	/// command links and the spaces between them.
+	/// </summary>
+	[Test]
+	public async Task TagOverSeveralRuns_IsOneElement()
+	{
+		var link = AnsiMarkup.Create(linkUrl: "look", linkKind: LinkKind.Command);
+		var text = MarkupText.Wrap(HtmlMarkup.Create("pre"),
+			MarkupText.Concat([MarkupText.Wrap(link, "aaa"), MarkupText.Plain("     "), MarkupText.Wrap(link, "bbb")]));
+
+		var html = Render(text, MarkupFormat.Html);
+		await Assert.That(html).StartsWith("<pre><a").And.EndsWith("</a></pre>");
+		await Assert.That(html.Split("<pre>").Length - 1).IsEqualTo(1);
+		await Assert.That(html.Split("</pre>").Length - 1).IsEqualTo(1);
+		await Assert.That(html).Contains("</a>     <a");
+		var pueblo = Render(text, MarkupFormat.Pueblo);
+		await Assert.That(pueblo.Split("<pre>").Length - 1).IsEqualTo(1);
+	}
+
+	/// <summary>A tag that does not cover its neighbour's outer layers closes before them, so the elements nest.</summary>
+	[Test]
+	public async Task TagInsideALayerItDoesNotShare_ClosesWhereItEnds()
+	{
+		var b = HtmlMarkup.Create("b");
+		var i = HtmlMarkup.Create("i");
+		var text = MarkupText.Concat(MarkupText.Wrap(b, MarkupText.Wrap(i, "x")), MarkupText.Wrap(i, "y"));
+
+		await Assert.That(Render(text, MarkupFormat.Html)).IsEqualTo("<b><i>x</i></b><i>y</i>");
+	}
+
+	/// <summary>
+	/// A colour span is closed and opened again on every run, so a tag inside it is too, and the spans and tags
+	/// still nest.
+	/// </summary>
+	[Test]
+	public async Task TagInsideAColour_ClosesWithEachSpan()
+	{
+		var b = HtmlMarkup.Create("b");
+		var i = HtmlMarkup.Create("i");
+		var text = MarkupText.Wrap(Red, MarkupText.Wrap(b, MarkupText.Concat(MarkupText.Wrap(i, "x"), MarkupText.Plain("y"))));
+
+		var html = Render(text, MarkupFormat.Html);
+		await Assert.That(html.Split("<b>").Length).IsEqualTo(html.Split("</b>").Length);
+		await Assert.That(html).Contains("<b><i>x</i></b></span>");
+		await Assert.That(html).Contains("<b>y</b></span>");
+	}
+
+	/// <summary>A tag closes before a point the format leaves out, so the element is not left open.</summary>
+	[Test]
+	public async Task TagBeforeADroppedPoint_IsClosed()
+	{
+		var registry = MarkupRegistry.Empty.WithHtml();
+		var text = MarkupText.Wrap(HtmlMarkup.Create("pre"), MarkupText.Concat(MarkupText.Plain("x"), MarkupText.Bell()));
+
+		var html = text.Render(MarkupFormat.Html, registry);
+		await Assert.That(html.Split("<pre>").Length).IsEqualTo(html.Split("</pre>").Length);
+		await Assert.That(html).StartsWith("<pre>x</pre>");
+	}
+
+	/// <summary>Tags stay balanced around a point whether or not the format draws it, before or after the text.</summary>
+	[Test]
+	[Arguments(true)]
+	[Arguments(false)]
+	public async Task TagAroundAPoint_IsBalanced(bool pointFirst)
+	{
+		var body = pointFirst ? MarkupText.Concat(MarkupText.Bell(), MarkupText.Plain("x")) : MarkupText.Concat(MarkupText.Plain("x"), MarkupText.Bell());
+		var text = MarkupText.Wrap(HtmlMarkup.Create("pre"), body);
+
+		foreach (var registry in new[] { Registry, MarkupRegistry.Empty.WithHtml() })
+		{
+			var html = text.Render(MarkupFormat.Html, registry);
+			await Assert.That(html.Split("<pre>").Length).IsEqualTo(html.Split("</pre>").Length);
+			await Assert.That(html).StartsWith("<pre>").And.EndsWith("</pre>");
+		}
+	}
+
 	[Test]
 	public async Task EmptyTag_StillWritesOpenAndClose()
 	{
