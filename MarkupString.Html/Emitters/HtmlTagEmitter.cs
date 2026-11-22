@@ -87,11 +87,11 @@ public sealed class HtmlTagEmitter : IMarkupEmitter
 	/// <remarks>
 	/// Only tags are known to continue: another layer outside, such as a colour span, is closed and opened again
 	/// on every run, so an element inside it cannot go on past the run. A neighbour holding a point may be left out
-	/// by a format that does not draw it, so the element is closed before it.
+	/// by a format that does not draw it, so the element is closed before it and opened again after it, and a point run is its own element.
 	/// </remarks>
 	private static bool Continues(IMarkup markup, MarkupSet own, MarkupSet? neighbour)
 	{
-		if (neighbour is null || HoldsPoint(neighbour) || Outside(own, markup) is not { } mine || Outside(neighbour, markup) is not { } theirs) return false;
+		if (neighbour is null || HoldsPoint(own) || HoldsPoint(neighbour) || Outside(own, markup) is not { } mine || Outside(neighbour, markup) is not { } theirs) return false;
 		return mine.SequenceEqual(theirs);
 	}
 

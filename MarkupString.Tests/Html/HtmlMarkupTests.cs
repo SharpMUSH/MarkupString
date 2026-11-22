@@ -113,6 +113,23 @@ public class HtmlMarkupTests
 		await Assert.That(html).StartsWith("<pre>x</pre>");
 	}
 
+	/// <summary>Tags stay balanced around a point whether or not the format draws it, before or after the text.</summary>
+	[Test]
+	[Arguments(true)]
+	[Arguments(false)]
+	public async Task TagAroundAPoint_IsBalanced(bool pointFirst)
+	{
+		var body = pointFirst ? MarkupText.Concat(MarkupText.Bell(), MarkupText.Plain("x")) : MarkupText.Concat(MarkupText.Plain("x"), MarkupText.Bell());
+		var text = MarkupText.Wrap(HtmlMarkup.Create("pre"), body);
+
+		foreach (var registry in new[] { Registry, MarkupRegistry.Empty.WithHtml() })
+		{
+			var html = text.Render(MarkupFormat.Html, registry);
+			await Assert.That(html.Split("<pre>").Length).IsEqualTo(html.Split("</pre>").Length);
+			await Assert.That(html).StartsWith("<pre>").And.EndsWith("</pre>");
+		}
+	}
+
 	[Test]
 	public async Task EmptyTag_StillWritesOpenAndClose()
 	{
