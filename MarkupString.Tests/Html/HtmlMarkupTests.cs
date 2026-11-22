@@ -84,6 +84,35 @@ public class HtmlMarkupTests
 		await Assert.That(Render(text, MarkupFormat.Html)).IsEqualTo("<b><i>x</i></b><i>y</i>");
 	}
 
+	/// <summary>
+	/// A colour span is closed and opened again on every run, so a tag inside it is too, and the spans and tags
+	/// still nest.
+	/// </summary>
+	[Test]
+	public async Task TagInsideAColour_ClosesWithEachSpan()
+	{
+		var b = HtmlMarkup.Create("b");
+		var i = HtmlMarkup.Create("i");
+		var text = MarkupText.Wrap(Red, MarkupText.Wrap(b, MarkupText.Concat(MarkupText.Wrap(i, "x"), MarkupText.Plain("y"))));
+
+		var html = Render(text, MarkupFormat.Html);
+		await Assert.That(html.Split("<b>").Length).IsEqualTo(html.Split("</b>").Length);
+		await Assert.That(html).Contains("<b><i>x</i></b></span>");
+		await Assert.That(html).Contains("<b>y</b></span>");
+	}
+
+	/// <summary>A tag closes before a point the format leaves out, so the element is not left open.</summary>
+	[Test]
+	public async Task TagBeforeADroppedPoint_IsClosed()
+	{
+		var registry = MarkupRegistry.Empty.WithHtml();
+		var text = MarkupText.Wrap(HtmlMarkup.Create("pre"), MarkupText.Concat(MarkupText.Plain("x"), MarkupText.Bell()));
+
+		var html = text.Render(MarkupFormat.Html, registry);
+		await Assert.That(html.Split("<pre>").Length).IsEqualTo(html.Split("</pre>").Length);
+		await Assert.That(html).StartsWith("<pre>x</pre>");
+	}
+
 	[Test]
 	public async Task EmptyTag_StillWritesOpenAndClose()
 	{

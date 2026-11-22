@@ -84,20 +84,40 @@ public sealed class HtmlTagEmitter : IMarkupEmitter
 	/// Whether <paramref name="markup"/>'s element goes on through <paramref name="neighbour"/>: the neighbour
 	/// carries it, and the layers outside it in <paramref name="own"/> are the ones outside it there.
 	/// </summary>
+	/// <remarks>
+	/// Only tags are known to continue: another layer outside, such as a colour span, is closed and opened again
+	/// on every run, so an element inside it cannot go on past the run. A neighbour holding a point may be left out
+	/// by a format that does not draw it, so the element is closed before it.
+	/// </remarks>
 	private static bool Continues(IMarkup markup, MarkupSet own, MarkupSet? neighbour)
 	{
-		if (neighbour is null || Outside(own, markup) is not { } mine || Outside(neighbour, markup) is not { } theirs) return false;
+		if (neighbour is null || HoldsPoint(neighbour) || Outside(own, markup) is not { } mine || Outside(neighbour, markup) is not { } theirs) return false;
 		return mine.SequenceEqual(theirs);
 	}
 
-	/// <summary><paramref name="markup"/> and the drawn layers outside it, outermost last; null when the set lacks it.</summary>
+	private static bool HoldsPoint(MarkupSet markups)
+	{
+		foreach (var layer in markups)
+		{
+			if (layer is IPointMarkup) return true;
+		}
+
+		return false;
+	}
+
+	/// <summary>
+	/// <paramref name="markup"/> and the drawn layers outside it, outermost last; null when the set lacks it, or a
+	/// drawn layer outside it is not a tag.
+	/// </summary>
 	private static List<IMarkup>? Outside(MarkupSet markups, IMarkup markup)
 	{
 		List<IMarkup>? outside = null;
 		foreach (var layer in markups)
 		{
 			if (outside is null && layer.Equals(markup)) outside = [];
-			if (outside is not null && layer is not (IDataMarkup or IPointMarkup)) outside.Add(layer);
+			if (outside is null || layer is IDataMarkup) continue;
+			if (layer is not HtmlMarkup) return null;
+			outside.Add(layer);
 		}
 
 		return outside;
