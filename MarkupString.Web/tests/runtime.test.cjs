@@ -118,6 +118,11 @@ const check = (ok, name, extra = '') => { console.log((ok ? 'PASS ' : 'FAIL ') +
   const n = await ev(() => sent.length);
   await page.click('#out a[xch_cmd="look"]');
   check((await ev(() => sent.length)) === n, 'detach stops handling');
+  await add('rules');
+  const ruleWidths = await ev(() => [...document.querySelectorAll('#out .ms-rule')].map(rule => rule.classList.contains('ms-titles')
+    ? getComputedStyle(rule.querySelector('.ms-line')).borderTopWidth
+    : getComputedStyle(rule, '::before').borderTopWidth + ' ' + getComputedStyle(rule, '::after').borderTopWidth));
+  check(JSON.stringify(ruleWidths) === '["1px 1px","2px 2px","3px 3px","2px"]', 'heavy rule draws a thicker line than single', JSON.stringify(ruleWidths));
   await browser.close();
   console.log(fails ? `${fails} FAILED` : 'ALL PASSED');
   process.exit(fails ? 1 : 0);

@@ -10,6 +10,9 @@ follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 
+- A heavy rule, and the line between several titles on a heavy rule or box edge, is drawn 2px thick in HTML, as a
+  heavy box's border is. It was drawn 1px, the same as a single rule (SharpMUSH#2912).
+
 - An `HtmlMarkup` tag over text that an inner layer splits into runs is written as one element in HTML, Pueblo
   and MXP. `tagwrap(pre,[cmdlink(aaa,look)][space(5)][cmdlink(bbb,look)])` was written as three `<pre>`
   elements, one per run, so a client drew three blocks on three lines. A tag still closes before an outer layer

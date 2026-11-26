@@ -40,12 +40,14 @@ public static class LayoutCss
 		".ms-line { flex: 1 1 0; min-width: 1ch; border-top: 1px solid var(--ms-border, var(--ms-border-default, currentColor)); }\n" +
 		".ms-line.ms-end { flex: 0 0 1ch; }\n" +
 		".ms-border-double.ms-titles > .ms-line { border-top: 3px double var(--ms-border, var(--ms-border-default, currentColor)); }\n" +
+		".ms-border-heavy.ms-titles > .ms-line { border-top-width: 2px; }\n" +
 		".ms-border-none.ms-titles > .ms-line { border-top: none; }\n" +
 		".ms-box-title.ms-titles { display: flex; align-items: center; gap: 1ch; flex-wrap: wrap; padding: 0; margin-inline: calc(-1 * var(--ms-pad)); width: calc(100% + 2 * var(--ms-pad)); box-sizing: border-box; }\n" +
 		".ms-box:has(> .ms-box-bottom) { border-bottom: none; }\n" +
 		".ms-box-bottom { display: flex; align-items: center; gap: 1ch; flex-wrap: wrap; margin: 0 calc(-1 * var(--ms-pad, 1ch)); }\n" +
 		".ms-box.ms-border-none > .ms-divider { margin: 0; }\n" +
 		".ms-border-double.ms-rule::before, .ms-border-double.ms-rule::after { border-top: 3px double var(--ms-border, var(--ms-border-default, currentColor)); }\n" +
+		".ms-border-heavy.ms-rule::before, .ms-border-heavy.ms-rule::after { border-top-width: 2px; }\n" +
 		".ms-border-none.ms-rule::before, .ms-border-none.ms-rule::after { border-top: none; }\n" +
 		".ms-flex { display: flex; flex-wrap: wrap; }\n" +
 		".ms-flex.ms-vertical { flex-direction: column; }\n" +
