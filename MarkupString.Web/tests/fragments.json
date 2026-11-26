@@ -10,6 +10,7 @@
   "pane": "<span class=\"ms-pane\" data-pane=\"chat\" data-title=\"Chat\">chat line</span>",
   "prompt": "<span class=\"ms-menu ms-prompt\" role=\"button\" tabindex=\"0\" data-commands=\"[{&quot;label&quot;:&quot;Say&quot;,&quot;command&quot;:&quot;say &quot;}]\">talk</span>",
   "relocate": "<span class=\"ms-relocate\" data-host=\"h\" data-port=\"23\"></span>",
+  "rules": "<div class=\"ms-layout\" style=\"max-width:40ch\"><div class=\"ms-stack\"><div class=\"ms-rule ms-border-single\" role=\"separator\"><span class=\"ms-rule-title\">Single</span></div><div class=\"ms-rule ms-border-heavy\" role=\"separator\"><span class=\"ms-rule-title\">Heavy</span></div><div class=\"ms-rule ms-border-double\" role=\"separator\"><span class=\"ms-rule-title\">Double</span></div><div class=\"ms-rule ms-titles ms-border-heavy\" role=\"separator\"><span class=\"ms-line\"></span><span class=\"ms-rule-title\">Left</span><span class=\"ms-line\"></span><span class=\"ms-rule-title\">Right</span><span class=\"ms-line ms-end\"></span></div></div></div>",
   "sound": "door<audio class=\"ms-sound\" data-channel=\"effects\" src=\"door.wav\" preload=\"none\"></audio>",
   "stop": "<span class=\"ms-sound-stop\"></span>",
   "vars": "<span class=\"ms-variable\" data-name=\"maxhp\">50</span><span class=\"ms-variable\" data-name=\"hp\">25</span>"

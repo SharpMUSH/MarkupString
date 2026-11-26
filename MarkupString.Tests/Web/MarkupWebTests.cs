@@ -2,6 +2,7 @@ using MarkupString.Ansi;
 using MarkupString.Ansi.Decoding;
 using MarkupString.Decoding;
 using MarkupString.Html;
+using MarkupString.Layout;
 using MarkupString.Mxp.Decoding;
 using MarkupString.Web;
 
@@ -77,6 +78,11 @@ public class MarkupWebTests
 			["vars"] = Html(MarkupText.Concat([MarkupText.Variable(MarkupText.Plain("50"), "maxhp"), MarkupText.Variable(MarkupText.Plain("25"), "hp")])),
 			["pane"] = Html(MarkupText.Pane(MarkupText.Plain("chat line"), "chat", "Chat")),
 			["relocate"] = Html(Point(new RelocateMarkup("h", 23))),
+			["rules"] = Html(BlockLayout.Build(new Stack([
+				new Rule(MarkupText.Plain("Single")) { Border = BorderStyle.Single },
+				new Rule(MarkupText.Plain("Heavy")) { Border = BorderStyle.Heavy },
+				new Rule(MarkupText.Plain("Double")) { Border = BorderStyle.Double },
+				new Rule(MarkupText.Plain("Left")) { Border = BorderStyle.Heavy, Titles = [new EdgeTitle(MarkupText.Plain("Right"), Alignment.Right)] }]), 40)),
 		};
 		var json = System.Text.Json.JsonSerializer.Serialize(fragments, new System.Text.Json.JsonSerializerOptions { WriteIndented = true, NewLine = "\n", Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping }) + "\n";
 
